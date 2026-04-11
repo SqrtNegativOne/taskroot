@@ -55,6 +55,8 @@
     })
   );
 
+  const today = new Date().toISOString().slice(0, 10);
+
   const lowThought = $derived(todayTasks.filter((t) => t.is_low_thought === true));
   const thoughtful = $derived(
     todayTasks.filter((t) => t.is_low_thought !== true)
@@ -91,21 +93,18 @@
 
 <section class="plan">
   <header>
-    <h1>Plan</h1>
-    <div class="nav">
-      <button type="button" onclick={() => onNavigateMonth(-1)}>←</button>
-      <span class="month">{monthName}</span>
-      <button type="button" onclick={() => onNavigateMonth(1)}>→</button>
-    </div>
-    <label class="recurring">
+    <button type="button" class="nav-btn" onclick={() => onNavigateMonth(-1)} aria-label="Previous month">‹</button>
+    <span class="month">{monthName}</span>
+    <button type="button" class="nav-btn" onclick={() => onNavigateMonth(1)} aria-label="Next month">›</button>
+    <label class="recurring" title="Show projected recurring tasks">
       <input
         type="checkbox"
         checked={showRecurring}
         onchange={onToggleRecurring}
       />
-      show recurring
+      recurring
     </label>
-    <button type="button" class="advance" onclick={onAdvance}>Advance →</button>
+    <button type="button" class="advance" onclick={onAdvance} aria-label="Advance to Do phase">›</button>
   </header>
 
   <div class="calendar">
@@ -119,7 +118,7 @@
         {#each week as day (day)}
           {@const dayTasks = tasksOn(day)}
           {@const dayEvents = eventsOn(day)}
-          <div class="cell">
+          <div class="cell" class:is-today={day === today}>
             <span class="num">{Number(day.slice(-2))}</span>
             {#each dayEvents as e (e.id)}
               <span class="chip event">{e.name}</span>
@@ -163,41 +162,40 @@
 
 <style>
   .plan {
-    padding: 2.5rem 3rem;
+    padding: 2rem 2.5rem;
   }
   header {
     display: flex;
-    align-items: baseline;
-    gap: 1.5rem;
-    margin-bottom: 1.5rem;
-  }
-  h1 {
-    font-weight: 300;
-    margin: 0;
-  }
-  .nav {
-    display: flex;
-    align-items: baseline;
+    align-items: center;
     gap: 0.75rem;
+    margin-bottom: 1.25rem;
   }
-  .nav button {
+  .nav-btn {
     background: none;
     border: none;
     color: var(--tr-ink-soft);
     cursor: pointer;
-    font-size: 1.1rem;
+    font-size: 1.3rem;
+    line-height: 1;
+    padding: 0.1rem 0.3rem;
+    transition: color 100ms ease;
   }
-  .nav .month {
-    min-width: 10rem;
-    text-align: center;
+  .nav-btn:hover {
     color: var(--tr-ink);
   }
-  .recurring {
+  .month {
     font-size: 0.85rem;
+    color: var(--tr-ink-soft);
+    min-width: 9rem;
+    text-align: center;
+  }
+  .recurring {
+    font-size: 0.75rem;
     color: var(--tr-ink-soft);
     display: flex;
     align-items: center;
     gap: 0.35rem;
+    margin-left: 0.5rem;
   }
   .advance {
     margin-left: auto;
@@ -205,7 +203,10 @@
     border: none;
     color: var(--tr-ink-soft);
     cursor: pointer;
-    font: inherit;
+    font-size: 1.4rem;
+    line-height: 1;
+    padding: 0.1rem 0.25rem;
+    transition: color 100ms ease;
   }
   .advance:hover {
     color: var(--tr-ink);
@@ -236,12 +237,19 @@
   }
   .cell {
     background: var(--tr-bg);
-    min-height: 5rem;
+    min-height: 4.5rem;
     padding: 0.35rem 0.5rem;
     font-size: 0.75rem;
     display: flex;
     flex-direction: column;
     gap: 0.2rem;
+  }
+  .cell.is-today {
+    background: var(--tr-surface);
+  }
+  .cell.is-today .num {
+    color: var(--tr-ink);
+    font-weight: 600;
   }
   .cell .num {
     color: var(--tr-ink-soft);

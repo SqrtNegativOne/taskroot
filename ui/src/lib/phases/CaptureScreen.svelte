@@ -47,104 +47,118 @@
       draft = '';
     }
   }
+
+  const hasSuggestions = $derived(draft.length > 0 && suggestions.length > 0);
 </script>
 
 <section class="capture">
-  <header>
-    <h1>Capture</h1>
-    <button type="button" class="advance" onclick={onAdvance}>
-      Advance →
-    </button>
-  </header>
+  <button type="button" class="advance" onclick={onAdvance} aria-label="Advance to next phase">
+    ›
+  </button>
 
-  <input
-    class="field"
-    type="text"
-    placeholder="Add a task (start with a verb)…"
-    value={draft}
-    oninput={handleInput}
-    onkeydown={handleKey}
-    autofocus
-  />
+  <div class="center">
+    <div class="field-group" class:has-suggestions={hasSuggestions}>
+      <input
+        class="field"
+        type="text"
+        placeholder="Add a task (start with a verb)…"
+        value={draft}
+        oninput={handleInput}
+        onkeydown={handleKey}
+        autofocus
+      />
 
-  {#if error}
-    <p class="error" role="alert">{error}</p>
-  {/if}
+      {#if hasSuggestions}
+        <ul class="suggestions" role="listbox" aria-label="Similar existing tasks">
+          {#each suggestions as s (s.task.id)}
+            <li role="option" aria-selected="false">{s.task.name}</li>
+          {/each}
+        </ul>
+      {/if}
+    </div>
 
-  {#if suggestions.length > 0}
-    <aside class="suggestions">
-      <h2>Similar existing tasks</h2>
-      <ul>
-        {#each suggestions as s (s.task.id)}
-          <li>{s.task.name}</li>
-        {/each}
-      </ul>
-    </aside>
-  {/if}
+    {#if error}
+      <p class="error" role="alert">{error}</p>
+    {/if}
+  </div>
 </section>
 
 <style>
   .capture {
-    padding: 4rem;
-    max-width: 42rem;
-    margin: 0 auto;
-  }
-  header {
+    min-height: 100vh;
     display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    margin-bottom: 2rem;
+    align-items: center;
+    padding: 2rem;
+    position: relative;
   }
-  h1 {
-    font-weight: 300;
-    letter-spacing: 0.02em;
-    margin: 0;
-  }
+
   .advance {
+    position: absolute;
+    top: 1.25rem;
+    right: 1.25rem;
     background: none;
     border: none;
     color: var(--tr-ink-soft);
+    font-size: 1.5rem;
+    line-height: 1;
     cursor: pointer;
-    font: inherit;
+    padding: 0.25rem 0.4rem;
+    transition: color 100ms ease;
   }
   .advance:hover {
     color: var(--tr-ink);
   }
+  .advance:focus-visible {
+    outline: 2px solid var(--tr-accent);
+    outline-offset: 2px;
+    color: var(--tr-ink);
+  }
+
+  .center {
+    width: 100%;
+    max-width: 34rem;
+    margin: 0 auto;
+  }
+
+  .field-group {
+    border: 1px solid var(--tr-line);
+    transition: border-color 100ms ease;
+  }
+  .field-group:focus-within {
+    border-color: var(--tr-ink-soft);
+  }
+
   .field {
     width: 100%;
-    padding: 1rem 0;
-    font-size: 1.25rem;
+    padding: 0.875rem 1rem;
+    font: inherit;
+    font-size: 1rem;
     border: none;
-    border-bottom: 1px solid var(--tr-line);
     background: transparent;
     color: var(--tr-ink);
     outline: none;
+    display: block;
   }
-  .field:focus {
-    border-bottom-color: var(--tr-ink);
-  }
+
   .error {
-    color: var(--tr-error);
     margin-top: 0.5rem;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
+    color: var(--tr-error);
   }
+
   .suggestions {
-    margin-top: 2.5rem;
-    color: var(--tr-ink-soft);
-  }
-  .suggestions h2 {
-    font-size: 0.75rem;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    margin: 0 0 0.5rem;
-  }
-  .suggestions ul {
     list-style: none;
     padding: 0;
     margin: 0;
+    border-top: 1px solid var(--tr-line);
   }
   .suggestions li {
-    padding: 0.25rem 0;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    color: var(--tr-ink-soft);
+    border-bottom: 1px solid var(--tr-line);
+  }
+  .suggestions li:last-child {
+    border-bottom: none;
   }
 </style>

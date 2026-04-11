@@ -52,8 +52,8 @@
 
 <section class="reorient">
   <header>
-    <h1>Reorient</h1>
-    <button type="button" class="close" onclick={onClose}>✕</button>
+    <span class="phase-label">reorient</span>
+    <button type="button" class="close" onclick={onClose} aria-label="Return to Do">×</button>
   </header>
 
   <div class="grid">
@@ -105,12 +105,14 @@
   }
   header {
     display: flex;
-    align-items: baseline;
-    margin-bottom: 2rem;
+    align-items: center;
+    margin-bottom: 1.75rem;
   }
-  h1 {
-    font-weight: 300;
-    margin: 0;
+  .phase-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--tr-ink-soft);
     flex: 1;
   }
   .close {
@@ -118,7 +120,10 @@
     border: none;
     color: var(--tr-ink-soft);
     cursor: pointer;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
+    line-height: 1;
+    padding: 0.1rem 0.25rem;
+    transition: color 100ms ease;
   }
   .close:hover {
     color: var(--tr-ink);

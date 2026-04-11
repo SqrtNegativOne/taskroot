@@ -86,8 +86,8 @@
 
 <section class="shutdown">
   <header>
-    <h1>Shutdown</h1>
-    <button type="button" class="close" onclick={onCancel}>Cancel</button>
+    <span class="phase-label">shutdown</span>
+    <button type="button" class="close" onclick={onCancel} aria-label="Cancel shutdown">×</button>
   </header>
 
   <section class="block">
@@ -190,12 +190,14 @@
   }
   header {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     margin-bottom: 2rem;
   }
-  h1 {
-    font-weight: 300;
-    margin: 0;
+  .phase-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--tr-ink-soft);
     flex: 1;
   }
   .close {
@@ -203,7 +205,13 @@
     border: none;
     color: var(--tr-ink-soft);
     cursor: pointer;
-    font: inherit;
+    font-size: 1.1rem;
+    line-height: 1;
+    padding: 0.1rem 0.25rem;
+    transition: color 100ms ease;
+  }
+  .close:hover {
+    color: var(--tr-ink);
   }
   .block {
     margin-bottom: 2.5rem;

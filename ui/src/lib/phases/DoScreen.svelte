@@ -103,13 +103,8 @@
 
 <section class="do">
   <header>
-    <h1>Do</h1>
-    <button type="button" class="secondary" onclick={onReorient}>
-      Reorient
-    </button>
-    <button type="button" class="secondary" onclick={onShutdown}>
-      Shutdown
-    </button>
+    <button type="button" class="hdr-btn" onclick={onReorient}>reorient</button>
+    <button type="button" class="hdr-btn" onclick={onShutdown}>end day</button>
   </header>
 
   <!-- TASK LISTS -->
@@ -226,22 +221,23 @@
   }
   header {
     display: flex;
-    gap: 1rem;
-    align-items: baseline;
-    margin-bottom: 2rem;
+    gap: 1.25rem;
+    align-items: center;
+    justify-content: flex-end;
+    margin-bottom: 1.5rem;
   }
-  h1 {
-    font-weight: 300;
-    margin: 0;
-    flex: 1;
-  }
-  .secondary {
+  .hdr-btn {
     background: none;
-    border: 1px solid var(--tr-line);
-    color: var(--tr-ink);
-    padding: 0.35rem 0.85rem;
+    border: none;
+    color: var(--tr-ink-soft);
     cursor: pointer;
     font: inherit;
+    font-size: 0.8rem;
+    padding: 0;
+    transition: color 100ms ease;
+  }
+  .hdr-btn:hover {
+    color: var(--tr-ink);
   }
 
   .block {

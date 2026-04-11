@@ -61,9 +61,9 @@
 
 <section class="clarify">
   <header>
-    <h1>Clarify</h1>
+    <span class="phase-label">clarify</span>
     <span class="meta">{remaining} remaining</span>
-    <button type="button" class="advance" onclick={onAdvance}>Advance →</button>
+    <button type="button" class="advance" onclick={onAdvance} aria-label="Advance to Plan phase">›</button>
   </header>
 
   {#if task === null}
@@ -135,9 +135,11 @@
     gap: 1rem;
     margin-bottom: 2rem;
   }
-  h1 {
-    font-weight: 300;
-    margin: 0;
+  .phase-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--tr-ink-soft);
     flex: 1;
   }
   .meta {
@@ -149,7 +151,10 @@
     border: none;
     color: var(--tr-ink-soft);
     cursor: pointer;
-    font: inherit;
+    font-size: 1.4rem;
+    line-height: 1;
+    padding: 0.1rem 0.25rem;
+    transition: color 100ms ease;
   }
   .advance:hover {
     color: var(--tr-ink);

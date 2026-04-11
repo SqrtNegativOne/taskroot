@@ -1,0 +1,102 @@
+name: Build Windows release
+
+# Triggers:
+#   - ``release.published`` — the canonical path. Cut a GitHub release and
+#     the zipped .exe bundle attaches itself as a release asset.
+#   - ``workflow_dispatch`` — manual smoke-test runs from the Actions tab.
+#     Emits an artifact instead of touching any release.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write  # needed for ``gh release upload`` on release events
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: ui/package-lock.json
+
+      - name: Build Svelte bundle
+        working-directory: ui
+        run: |
+          npm ci
+          npm run build
+
+      # Vendor the built UI into the Python package so PyInstaller picks it
+      # up through the data files in taskroot.spec. The directory is
+      # .gitignore-d at rest; CI always reproduces it from the npm build.
+      - name: Vendor UI into package data
+        shell: pwsh
+        run: |
+          $dest = "src/taskroot/data/ui"
+          if (Test-Path $dest) { Remove-Item -Recurse -Force $dest }
+          New-Item -ItemType Directory -Force -Path $dest | Out-Null
+          Copy-Item -Recurse -Force ui/build/* $dest
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          python-version: "3.12"
+
+      - name: Install Python deps
+        run: uv sync
+
+      - name: Run type check
+        run: uv run ty check src tests
+
+      - name: Run tests
+        run: uv run pytest
+
+      - name: Build executable
+        run: uv run pyinstaller taskroot.spec --clean --noconfirm
+
+      # Resolve the release tag once so we can reuse it for the archive
+      # filename. For workflow_dispatch runs we fall back to the short SHA.
+      - name: Compute version label
+        id: version
+        shell: pwsh
+        run: |
+          if ("${{ github.event_name }}" -eq "release") {
+            $label = "${{ github.event.release.tag_name }}"
+          } else {
+            $label = "dev-$($env:GITHUB_SHA.Substring(0,7))"
+          }
+          "label=$label" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Write-Host "Version label: $label"
+
+      - name: Package archive
+        id: package
+        shell: pwsh
+        run: |
+          $label = "${{ steps.version.outputs.label }}"
+          $zipName = "TaskRoot-$label-windows-x64.zip"
+          Compress-Archive -Path dist/TaskRoot/* -DestinationPath $zipName -CompressionLevel Optimal
+          "path=$zipName" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Write-Host "Built $zipName"
+
+      - name: Upload build artifact (dispatch)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: taskroot-windows
+          path: ${{ steps.package.outputs.path }}
+          if-no-files-found: error
+
+      - name: Attach to release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" "${{ steps.package.outputs.path }}" --clobber

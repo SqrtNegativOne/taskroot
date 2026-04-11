@@ -1,0 +1,27 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+.DS_Store
+.env
+
+# Runtime data (user's local database)
+taskroot.db
+taskroot.db-journal
+taskroot.db-wal
+taskroot.db-shm
+
+# Svelte / node (when added)
+ui/node_modules/
+ui/dist/
+ui/build/
+ui/.svelte-kit/
+
+# Vendored UI bundle produced by the release workflow; never committed.
+src/taskroot/data/ui/

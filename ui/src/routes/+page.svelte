@@ -36,6 +36,7 @@
     Task,
     TimeSession
   } from '$lib/types';
+  import type { CaptureResult } from '$lib/phases/CaptureScreen.svelte';
 
   let api: TaskRootApi | null = $state(null);
   let phase: Phase = $state('capture');
@@ -125,11 +126,17 @@
     }, 150);
   }
 
-  async function onCapture(name: string) {
+  async function onCapture(result: CaptureResult) {
     if (!api) return;
     captureError = null;
     try {
-      const task = await api.captureTask({ name });
+      const task = await api.captureTask({
+        name: result.name,
+        work_date: result.work_date ?? undefined,
+        deadline: result.deadline ?? undefined,
+        expected_duration: result.expected_duration ?? undefined,
+        is_low_thought: result.is_low_thought ?? undefined,
+      });
       clarifyQueue = [...clarifyQueue, task];
       captureSuggestions = [];
     } catch (err) {

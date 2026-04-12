@@ -10,22 +10,33 @@
     error        string | null      inline validation error to show
                                     (e.g. "Task must begin with a verb")
 
-  Events (actions out, via callback props):
-    onQueryChange(query)  user typed; orchestrator may debounce and
-                          call similarTasks under the hood
-    onCapture(name)       user pressed Enter to capture the task
-    onAdvance()           user asked to move to the Clarify phase
+  Events (actions out):
+    onQueryChange(query)     user typed; orchestrator may debounce and
+                             call similarTasks under the hood
+    onCapture(parsed)        user pressed Enter; carries the parsed fields
+                             so the orchestrator doesn't need to re-parse
+    onAdvance()              user asked to move to the Clarify phase
 
   This component is pure. It does not know what a "backend" is.
 -->
 <script lang="ts">
   import type { Suggestion } from '$lib/types';
+  import SmartInput from '$lib/smart-input/SmartInput.svelte';
+  import { parseTask, type Token } from '$lib/smart-input/parser';
+
+  export type CaptureResult = {
+    name: string;
+    work_date: string | null;
+    deadline: string | null;
+    expected_duration: number | null;
+    is_low_thought: boolean | null;
+  };
 
   type Props = {
     suggestions: Suggestion[];
     error: string | null;
     onQueryChange: (query: string) => void;
-    onCapture: (name: string) => void;
+    onCapture: (result: CaptureResult) => void;
     onAdvance: () => void;
   };
 
@@ -33,22 +44,44 @@
     $props();
 
   let draft = $state('');
+  let suppressed = $state<Array<{ start: number; end: number }>>([]);
 
-  function handleInput(event: Event) {
-    const value = (event.target as HTMLInputElement).value;
+  let parsed = $derived(parseTask(draft, { suppress: suppressed }));
+  let tokens = $derived(parsed.tokens);
+
+  const hasSuggestions = $derived(draft.length > 0 && suggestions.length > 0);
+
+  function handleInput(value: string) {
     draft = value;
+    // If the user edits text, clear suppressed spans that no longer make
+    // sense (simplest heuristic: reset on every edit).
+    suppressed = [];
     onQueryChange(value);
   }
 
-  function handleKey(event: KeyboardEvent) {
-    if (event.key === 'Enter' && draft.trim().length > 0) {
-      event.preventDefault();
-      onCapture(draft.trim());
-      draft = '';
+  function handleCommit(value: string) {
+    if (value.trim().length === 0) return;
+
+    function tokenValue<T>(type: string): T | null {
+      const tok = tokens.find((t: Token) => t.type === type);
+      return tok ? (tok.value as T) : null;
     }
+
+    onCapture({
+      name: parsed.title || value.trim(),
+      work_date: tokenValue<string>('work_date'),
+      deadline: tokenValue<string>('deadline'),
+      expected_duration: tokenValue<number>('duration'),
+      is_low_thought: tokenValue<boolean>('low_thought'),
+    });
+
+    draft = '';
+    suppressed = [];
   }
 
-  const hasSuggestions = $derived(draft.length > 0 && suggestions.length > 0);
+  function handleSuppress(start: number, end: number) {
+    suppressed = [...suppressed, { start, end }];
+  }
 </script>
 
 <section class="capture">
@@ -58,15 +91,13 @@
 
   <div class="center">
     <div class="input-wrap">
-      <!-- svelte-ignore a11y_autofocus -->
-      <input
-        class="field"
-        type="text"
-        placeholder="Add a task…"
+      <SmartInput
         value={draft}
-        oninput={handleInput}
-        onkeydown={handleKey}
-        autofocus
+        {tokens}
+        suppress={suppressed}
+        onInput={handleInput}
+        onCommit={handleCommit}
+        onSuppress={handleSuppress}
       />
       <div class="line"></div>
     </div>
@@ -123,18 +154,8 @@
     position: relative;
   }
 
-  .field {
-    width: 100%;
-    background: transparent;
-    border: none;
-    outline: none;
-    color: var(--tr-ink);
-    font: inherit;
-    font-size: 1.05rem;
-    text-align: center;
-    padding: 0.5rem 2rem 0.65rem;
-    display: block;
-    caret-color: var(--tr-ink-soft);
+  .input-wrap {
+    position: relative;
   }
 
   .line {

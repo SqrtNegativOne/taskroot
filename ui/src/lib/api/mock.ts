@@ -13,8 +13,8 @@ import type {
   BootstrapPayload,
   TaskRootApi
 } from './index';
-import type { Distraction, Suggestion, Task, TimeSession } from '$lib/types';
-import { FIXTURE_DISTRACTIONS, FIXTURE_TASKS } from './fixtures';
+import type { CalendarEvent, Distraction, Suggestion, Task, TimeSession } from '$lib/types';
+import { FIXTURE_DISTRACTIONS, FIXTURE_EVENTS, FIXTURE_TASKS } from './fixtures';
 
 function uuid(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
@@ -48,6 +48,8 @@ const BASE_VERBS = new Set([
 export function createMockApi(): TaskRootApi {
   const tasks = new Map<string, Task>();
   for (const t of FIXTURE_TASKS) tasks.set(t.id, { ...t });
+  const calEvents = new Map<string, CalendarEvent>();
+  for (const e of FIXTURE_EVENTS) calEvents.set(e.id, { ...e });
   const distractions: Distraction[] = [...FIXTURE_DISTRACTIONS];
   let active: TimeSession | null = null;
 
@@ -74,6 +76,7 @@ export function createMockApi(): TaskRootApi {
         recur_rule: input.recur_rule ?? null,
         expected_duration: input.expected_duration ?? null,
         is_low_thought: input.is_low_thought ?? null,
+        scheduled_start: (input.scheduled_start as string | null) ?? null,
         created_at: nowISO(),
         completed_at: null
       };
@@ -130,6 +133,47 @@ export function createMockApi(): TaskRootApi {
       const d: Distraction = { id: uuid(), text, logged_at: nowISO() };
       distractions.unshift(d);
       return d;
+    },
+
+    async listDayEvents(): Promise<CalendarEvent[]> {
+      return [...calEvents.values()];
+    },
+
+    async createEvent(payload): Promise<CalendarEvent> {
+      const event: CalendarEvent = {
+        id: uuid(),
+        name: payload.name,
+        description: payload.description ?? null,
+        start: payload.start,
+        end: payload.end ?? null
+      };
+      calEvents.set(event.id, event);
+      return event;
+    },
+
+    async updateEvent(payload): Promise<CalendarEvent> {
+      const existing = calEvents.get(payload.id!);
+      if (!existing) throw new Error('Event not found');
+      const updated: CalendarEvent = { ...existing, ...payload };
+      calEvents.set(updated.id, updated);
+      return updated;
+    },
+
+    async deleteEvent(eventId): Promise<void> {
+      calEvents.delete(eventId);
+    },
+
+    async scheduleTask(taskId, start, end): Promise<Task> {
+      const task = tasks.get(taskId);
+      if (!task) throw new Error('Task not found');
+      const durationMs = new Date(end).getTime() - new Date(start).getTime();
+      const updated: Task = {
+        ...task,
+        scheduled_start: start,
+        expected_duration: Math.max(1, Math.round(durationMs / 60000))
+      };
+      tasks.set(taskId, updated);
+      return updated;
     }
   };
 }

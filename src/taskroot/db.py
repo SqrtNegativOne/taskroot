@@ -61,6 +61,7 @@ CREATE TABLE IF NOT EXISTS tasks (
     recur_rule TEXT,           -- JSON or NULL
     expected_duration INTEGER,
     is_low_thought INTEGER,    -- 0/1 or NULL
+    scheduled_start TEXT,
     created_at TEXT NOT NULL,
     completed_at TEXT,
     extras TEXT NOT NULL DEFAULT '{}',
@@ -131,6 +132,7 @@ _TASK_CORE_FIELDS = frozenset({
     "recur_rule",
     "expected_duration",
     "is_low_thought",
+    "scheduled_start",
     "created_at",
     "completed_at",
 })
@@ -257,11 +259,11 @@ class Database:
                 INSERT INTO tasks (
                     id, name, description, work_date, deadline,
                     parent_id, recur_rule, expected_duration,
-                    is_low_thought, created_at, completed_at, extras
+                    is_low_thought, scheduled_start, created_at, completed_at, extras
                 ) VALUES (
                     :id, :name, :description, :work_date, :deadline,
                     :parent_id, :recur_rule, :expected_duration,
-                    :is_low_thought, :created_at, :completed_at, :extras
+                    :is_low_thought, :scheduled_start, :created_at, :completed_at, :extras
                 )
                 ON CONFLICT(id) DO UPDATE SET
                     name              = excluded.name,
@@ -272,6 +274,7 @@ class Database:
                     recur_rule        = excluded.recur_rule,
                     expected_duration = excluded.expected_duration,
                     is_low_thought    = excluded.is_low_thought,
+                    scheduled_start   = excluded.scheduled_start,
                     created_at        = excluded.created_at,
                     completed_at      = excluded.completed_at,
                     extras            = excluded.extras
@@ -296,6 +299,7 @@ class Database:
                         if core.get("is_low_thought") is not None
                         else None
                     ),
+                    "scheduled_start": core.get("scheduled_start"),
                     "created_at": core["created_at"],
                     "completed_at": core.get("completed_at"),
                     "extras": json.dumps(extras),
@@ -362,6 +366,7 @@ class Database:
                 if row["is_low_thought"] is not None
                 else None
             ),
+            "scheduled_start": row["scheduled_start"],
             "created_at": row["created_at"],
             "completed_at": row["completed_at"],
             "tag_ids": [tr["tag_id"] for tr in tag_rows],
@@ -405,6 +410,15 @@ class Database:
             (start.isoformat(), end.isoformat()),
         ).fetchall()
         return [self._row_to_event(r) for r in rows]
+
+    def get_event(self, event_id: UUID) -> Event | None:
+        row = self._conn.execute(
+            "SELECT * FROM events WHERE id = ?", (str(event_id),)
+        ).fetchone()
+        return self._row_to_event(row) if row else None
+
+    def delete_event(self, event_id: UUID) -> None:
+        self._conn.execute("DELETE FROM events WHERE id = ?", (str(event_id),))
 
     def _row_to_event(self, row: sqlite3.Row) -> Event:
         core = {

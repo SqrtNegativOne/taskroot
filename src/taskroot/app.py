@@ -92,6 +92,25 @@ def _find_ui_index() -> Path | None:
     return None
 
 
+def _find_widget_index() -> Path | None:
+    """Locate the built widget route's ``index.html``.
+
+    Mirrors :func:`_find_ui_index` but looks for ``widget/index.html``
+    next to the main ``index.html``.
+    """
+    here = Path(__file__).resolve().parent
+    packaged = here / "data" / "ui" / "widget" / "index.html"
+    if packaged.exists():
+        return packaged
+    for parent in here.parents:
+        dev = parent / "ui" / "build" / "widget" / "index.html"
+        if dev.exists():
+            return dev
+        if (parent / ".git").exists():
+            break
+    return None
+
+
 def _tray_image() -> Image.Image:
     """Draw the tray icon at runtime so we don't ship a binary asset."""
     size = 64
@@ -102,16 +121,27 @@ def _tray_image() -> Image.Image:
 
 
 class _WindowController:
-    """Thread-safe handle shared with the tray thread and the JS API."""
+    """Thread-safe handle shared with the tray thread and the JS API.
+
+    The widget window is independent of the main window — show/hide only
+    affect the main window. The widget stays visible unless the user
+    explicitly toggles it via the tray menu or quits the app.
+    """
 
     def __init__(self) -> None:
         self._window: webview.Window | None = None
+        self._widget: webview.Window | None = None
         self._icon: pystray.Icon | None = None
+        self._widget_visible = True
         self._lock = threading.Lock()
 
     def bind_window(self, window: webview.Window) -> None:
         with self._lock:
             self._window = window
+
+    def bind_widget(self, window: webview.Window) -> None:
+        with self._lock:
+            self._widget = window
 
     def bind_icon(self, icon: pystray.Icon) -> None:
         with self._lock:
@@ -137,14 +167,36 @@ class _WindowController:
         except Exception as exc:  # noqa: BLE001
             log.warning("window.hide failed: %s", exc)
 
+    def toggle_widget(self) -> None:
+        with self._lock:
+            widget = self._widget
+            visible = self._widget_visible
+            self._widget_visible = not visible
+        if widget is None:
+            return
+        try:
+            if visible:
+                widget.hide()
+            else:
+                widget.show()
+        except Exception as exc:  # noqa: BLE001
+            log.warning("widget.toggle failed: %s", exc)
+
     def quit(self) -> None:
         with self._lock:
             window = self._window
+            widget = self._widget
             icon = self._icon
             self._window = None
+            self._widget = None
         if icon is not None:
             try:
                 icon.stop()
+            except Exception:  # noqa: BLE001
+                pass
+        if widget is not None:
+            try:
+                widget.destroy()
             except Exception:  # noqa: BLE001
                 pass
         if window is not None:
@@ -163,6 +215,7 @@ def _run_tray(controller: _WindowController) -> None:
     menu = pystray.Menu(
         pystray.MenuItem("Show TaskRoot", lambda icon, item: controller.show(), default=True),
         pystray.MenuItem("Hide", lambda icon, item: controller.hide()),
+        pystray.MenuItem("Toggle widget", lambda icon, item: controller.toggle_widget()),
         pystray.Menu.SEPARATOR,
         pystray.MenuItem("Quit TaskRoot", lambda icon, item: controller.quit()),
     )
@@ -205,13 +258,40 @@ def run() -> None:
         raise RuntimeError("pywebview failed to create the main window")
     controller.bind_window(window)
 
+    def _on_started() -> None:
+        widget_index = _find_widget_index()
+        if widget_index is None:
+            log.info("Widget bundle not found; widget window skipped")
+            return
+        screens = webview.screens
+        sw = screens[0].width if screens else 1920
+        sh = screens[0].height if screens else 1080
+        widget_window = webview.create_window(
+            title="",
+            url=widget_index.as_uri(),
+            js_api=api,
+            width=308,
+            height=sh,
+            x=sw - 308,
+            y=0,
+            frameless=True,
+            on_top=True,
+            transparent=True,
+            easy_drag=False,
+        )
+        if widget_window is None:
+            log.warning("pywebview failed to create the widget window")
+            return
+        controller.bind_widget(widget_window)
+        log.info("Widget window created at x=%d, height=%d", sw - 308, sh)
+
     tray_thread = threading.Thread(
         target=_run_tray, args=(controller,), name="pystray", daemon=True
     )
     tray_thread.start()
 
     # Blocks on the main thread until the last window is destroyed.
-    webview.start(debug=False)
+    webview.start(func=_on_started, debug=False)
 
     # Once the webview exits, make sure the tray thread is torn down too.
     controller.quit()

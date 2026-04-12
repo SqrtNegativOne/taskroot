@@ -17,6 +17,7 @@
  * for `window.pywebview`.
  */
 import type {
+  CalendarEvent,
   Distraction,
   Suggestion,
   Task,
@@ -46,6 +47,13 @@ export interface TaskRootApi {
 
   // Distractions
   logDistraction(text: string): Promise<Distraction>;
+
+  // Widget / calendar events
+  listDayEvents(): Promise<CalendarEvent[]>;
+  createEvent(event: Partial<CalendarEvent> & { name: string; start: string }): Promise<CalendarEvent>;
+  updateEvent(event: Partial<CalendarEvent> & { id: string }): Promise<CalendarEvent>;
+  deleteEvent(eventId: string): Promise<void>;
+  scheduleTask(taskId: string, start: string, end: string): Promise<Task>;
 }
 
 let _api: TaskRootApi | null = null;

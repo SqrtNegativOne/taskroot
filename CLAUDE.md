@@ -228,6 +228,10 @@ Keep these in mind for every change:
 
 ## When working on tasks
 
+- **Schema changes are free — no migrations needed.** This app has no
+  production users. When adding or removing columns, just edit
+  `SCHEMA_SQL` in `db.py` and delete the local `taskroot.db` file.
+  Never write `ALTER TABLE` or `PRAGMA table_info` migration code.
 - **Before touching persistence**, re-read the "Unknown-field
   round-trip" rule above. The pattern is intentional, not a lint.
 - **Before adding a new phase screen**, check whether the plan.txt
@@ -240,22 +244,50 @@ Keep these in mind for every change:
   small (seconds) and catches the high-value invariants.
 - **Do not auto-commit.** Only commit when the user explicitly asks.
 
-## Current state (2026-04-11)
+## Widget window (second pywebview window)
+
+The floating day-column widget runs in a **separate pywebview window**,
+not as an overlay inside the main window. Key facts:
+
+- Created in `webview.start(func=_on_started)` callback so screen
+  dimensions are available. If `ui/build/widget/index.html` is missing
+  (bundle not yet built), the widget window is silently skipped.
+- `transparent=True`, `on_top=True`, `frameless=True`, `easy_drag=False`.
+  Sized to full screen height, 308 px wide, anchored to the right edge.
+- Both windows share the same `js_api=api` instance — one Python object,
+  one SQLite connection, no IPC needed.
+- `_WindowController.show()` / `hide()` only affect the main window.
+  `toggle_widget()` is called from the tray "Toggle widget" menu item.
+- `_find_widget_index()` mirrors `_find_ui_index()` but looks for
+  `widget/index.html` alongside `index.html`.
+
+The widget route lives at `ui/src/routes/widget/+page.svelte` — it is
+the only file outside `src/routes/+page.svelte` that may import both a
+phase/widget component and the API (Rule 8 applies here too).
+
+## Current state (2026-04-12)
 
 Python backend:
 - Pydantic models with word-count validation and `extra="allow"`
 - SQLite layer with `extras` JSON round-trip, tested
 - 04:00 day-boundary and recurrence logic, tested
 - Verb validator with bundled list, strict base-form policy
-- Python↔Svelte bridge API (bootstrap, capture, timer, distractions)
-- pywebview (main thread) + pystray (worker) shell, tested end-to-end
-- 27 passing tests; `ty` clean
+- Python↔Svelte bridge API (bootstrap, capture, timer, distractions,
+  calendar events: list_day_events, create_event, update_event,
+  delete_event, schedule_task)
+- `Task.scheduled_start` (datetime | None) for widget time placement
+- pywebview main window + floating widget window (separate process
+  windows, shared Api instance) + pystray tray with "Toggle widget"
+- 144 passing tests; `ty` clean (1 pre-existing test failure unrelated
+  to this session: test_capture_task_invalid_verb_returns_error)
 
 SvelteKit UI:
 - SvelteKit 2 + Svelte 5 + adapter-static SPA
 - `$lib/api` with interface, real bridge, and fixture-backed mock
 - Six pure phase components in `$lib/phases/`
+- `DayColumnWidget.svelte` — pure component, no API imports
 - Orchestrator at `src/routes/+page.svelte` wiring API→phases
+- Widget orchestrator at `src/routes/widget/+page.svelte`
 - Global design tokens in `+layout.svelte`
 - `ui/build/` is checked locally; release CI rebuilds from scratch.
 
@@ -266,12 +298,14 @@ Release pipeline:
   package, runs `ty` + `pytest`, freezes with PyInstaller, and attaches
   a `TaskRoot-<tag>-windows-x64.zip` asset to any published GitHub
   release.
+- When vendoring the UI, `widget/index.html` must be copied alongside
+  `index.html` so `_find_widget_index()` finds it in the package.
 
 Not yet implemented (explicit deferrals):
 - Startup-on-boot registration (Windows Registry)
 - Global summon/hide hotkey — plan.txt §Always-On marks this [OPEN]
 - Idle detection — plan.txt §Do marks threshold and behaviour [OPEN]
-- Floating widget window (second frameless window during Do phase)
+- Unschedule-task API method (widget × on a task just refreshes for now)
 - Real content for Plan, Reorient, Shutdown phases (stubs only)
 - Break-type system tasks seeding
 - Music player, calculator, Obsidian link list (Do phase)

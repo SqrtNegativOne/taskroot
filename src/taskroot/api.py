@@ -25,7 +25,7 @@ from uuid import UUID
 from pydantic import ValidationError
 
 from .db import Database
-from .day import today
+from .day import day_bounds, today
 from .models import Distraction, Event, Task
 from .recurrence import materialise_due
 from .similarity import find_similar
@@ -144,6 +144,50 @@ class Api:
 
     def active_timer(self) -> dict[str, Any]:
         return _ok(self._session_payload(self._timer.active()))
+
+    # -- calendar events ---------------------------------------------- #
+
+    def list_day_events(self) -> dict[str, Any]:
+        """All CalendarEvents for today (04:00-boundary day)."""
+        start, end = day_bounds(today())
+        events = self._db.list_events_between(start, end)
+        return _ok([e.model_dump(mode="json") for e in events])
+
+    def create_event(self, payload: dict[str, Any]) -> dict[str, Any]:
+        """Create a calendar event from the widget's dateClick."""
+        try:
+            event = Event.model_validate(payload)
+        except ValidationError as e:
+            return _error(e.errors()[0]["msg"])
+        self._db.save_event(event)
+        return _ok(event.model_dump(mode="json"))
+
+    def update_event(self, payload: dict[str, Any]) -> dict[str, Any]:
+        """Update an event's start/end after drag or resize."""
+        try:
+            event = Event.model_validate(payload)
+        except ValidationError as e:
+            return _error(e.errors()[0]["msg"])
+        self._db.save_event(event)
+        return _ok(event.model_dump(mode="json"))
+
+    def delete_event(self, event_id: str) -> dict[str, Any]:
+        """Remove an event (× button on widget)."""
+        self._db.delete_event(UUID(event_id))
+        return _ok()
+
+    def schedule_task(self, task_id: str, start: str, end: str) -> dict[str, Any]:
+        """Place a task at a specific time on the day column."""
+        task = self._db.get_task(UUID(task_id))
+        if not task:
+            return _error("Task not found")
+        task.scheduled_start = datetime.fromisoformat(start)
+        end_dt = datetime.fromisoformat(end)
+        task.expected_duration = int(
+            (end_dt - task.scheduled_start).total_seconds() / 60
+        )
+        self._db.save_task(task)
+        return _ok(self._task_payload(task))
 
     # -- distractions ------------------------------------------------- #
 

@@ -61,6 +61,7 @@ class Task(BaseModel):
     recur_rule: RecurRule | None = None
     expected_duration: int | None = None  # minutes
     is_low_thought: bool | None = None
+    scheduled_start: datetime | None = None
     created_at: datetime = Field(default_factory=datetime.now)
     completed_at: datetime | None = None
 

@@ -35,6 +35,7 @@ export interface Task {
   recur_rule: RecurRule | null;
   expected_duration: number | null; // minutes
   is_low_thought: boolean | null;
+  scheduled_start: ISODateTime | null;
   created_at: ISODateTime;
   completed_at: ISODateTime | null;
   [key: string]: unknown;

@@ -14,6 +14,7 @@ import type {
   TaskRootApi
 } from './index';
 import type {
+  CalendarEvent,
   Distraction,
   Suggestion,
   Task,
@@ -36,6 +37,11 @@ interface PyWebViewApi {
   stop_timer(): Promise<Envelope<TimeSession | null>>;
   active_timer(): Promise<Envelope<TimeSession | null>>;
   log_distraction(text: string): Promise<Envelope<Distraction>>;
+  list_day_events(): Promise<Envelope<CalendarEvent[]>>;
+  create_event(payload: unknown): Promise<Envelope<CalendarEvent>>;
+  update_event(payload: unknown): Promise<Envelope<CalendarEvent>>;
+  delete_event(event_id: string): Promise<Envelope<null>>;
+  schedule_task(task_id: string, start: string, end: string): Promise<Envelope<Task>>;
 }
 
 function unwrap<T>(response: Envelope<T>): T {
@@ -73,6 +79,11 @@ export async function createBridgeApi(): Promise<TaskRootApi> {
     startTimer: async (taskId) => unwrap(await py.start_timer(taskId)),
     stopTimer: async () => unwrap(await py.stop_timer()),
     activeTimer: async () => unwrap(await py.active_timer()),
-    logDistraction: async (text) => unwrap(await py.log_distraction(text))
+    logDistraction: async (text) => unwrap(await py.log_distraction(text)),
+    listDayEvents: async () => unwrap(await py.list_day_events()),
+    createEvent: async (event) => unwrap(await py.create_event(event)),
+    updateEvent: async (event) => unwrap(await py.update_event(event)),
+    deleteEvent: async (eventId) => { unwrap(await py.delete_event(eventId)); },
+    scheduleTask: async (taskId, start, end) => unwrap(await py.schedule_task(taskId, start, end))
   };
 }

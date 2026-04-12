@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from rapidfuzz import fuzz, process
+from rapidfuzz import fuzz, process, utils
 
 from .models import Task
 
@@ -46,6 +46,7 @@ def find_similar(
         query,
         names,
         scorer=fuzz.WRatio,
+        processor=utils.default_process,
         limit=limit,
         score_cutoff=threshold,
     )

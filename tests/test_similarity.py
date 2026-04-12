@@ -43,10 +43,8 @@ def test_limit_is_respected():
 
 
 def test_case_insensitive_matching():
-    # process.extract applies default_process which lowercases both strings.
-    # Use title-case (not all-caps) to stay within the scorer's normalisation.
     task = make_task("fix the bug")
-    results = find_similar("Fix The Bug", [task])
+    results = find_similar("FIX THE BUG", [task])
     assert len(results) == 1
     assert results[0].task.id == task.id
 

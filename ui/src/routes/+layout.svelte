@@ -8,11 +8,11 @@
 
 <style>
   :global(:root) {
-    --tr-bg: #161614;
+    --tr-bg: #0c0c0a;
     --tr-ink: #deded9;
-    --tr-ink-soft: #5c5c57;
-    --tr-line: #252523;
-    --tr-surface: #1d1d1b;
+    --tr-ink-soft: #555550;
+    --tr-line: #1e1e1c;
+    --tr-surface: #151513;
     --tr-error: #cc5f54;
     --tr-accent: #5070a8;
     color-scheme: dark;

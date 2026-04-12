@@ -83,7 +83,12 @@
   }
 
   function tasksOn(day: ISODate): Task[] {
-    return tasks.filter((t) => t.work_date === day || t.deadline === day);
+    const seen = new Set<string>();
+    return [...tasks, ...todayTasks].filter((t) => {
+      if (seen.has(t.id)) return false;
+      seen.add(t.id);
+      return t.work_date === day || t.deadline === day;
+    });
   }
 
   function eventsOn(day: ISODate): CalendarEvent[] {
@@ -108,25 +113,19 @@
   </header>
 
   <div class="calendar">
-    <div class="weekdays">
-      {#each ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as d}
-        <span>{d}</span>
-      {/each}
-    </div>
-    {#each monthGrid as week}
-      <div class="week">
-        {#each week as day (day)}
-          {@const dayTasks = tasksOn(day)}
-          {@const dayEvents = eventsOn(day)}
-          <div class="cell" class:is-today={day === today}>
-            <span class="num">{Number(day.slice(-2))}</span>
-            {#each dayEvents as e (e.id)}
-              <span class="chip event">{e.name}</span>
-            {/each}
-            {#each dayTasks as t (t.id)}
-              <span class="chip task">{t.name}</span>
-            {/each}
-          </div>
+    {#each ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as d}
+      <span class="weekday">{d}</span>
+    {/each}
+    {#each monthGrid.flat() as day (day)}
+      {@const dayTasks = tasksOn(day)}
+      {@const dayEvents = eventsOn(day)}
+      <div class="cell" class:is-today={day === today}>
+        <span class="num">{Number(day.slice(-2))}</span>
+        {#each dayEvents as e (e.id)}
+          <span class="chip event">{e.name}</span>
+        {/each}
+        {#each dayTasks as t (t.id)}
+          <span class="chip task">{t.name}</span>
         {/each}
       </div>
     {/each}
@@ -213,27 +212,19 @@
   }
 
   .calendar {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
     gap: 1px;
     background: var(--tr-line);
     border: 1px solid var(--tr-line);
   }
-  .weekdays {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    background: var(--tr-bg);
-    padding: 0.35rem 0.5rem;
-    font-size: 0.7rem;
+  .weekday {
+    background: var(--tr-surface);
+    padding: 0.3rem 0.5rem;
+    font-size: 0.65rem;
     color: var(--tr-ink-soft);
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-  }
-  .week {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 1px;
-    background: var(--tr-line);
+    letter-spacing: 0.1em;
   }
   .cell {
     background: var(--tr-bg);

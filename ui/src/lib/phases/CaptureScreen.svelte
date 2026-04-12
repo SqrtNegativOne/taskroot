@@ -57,28 +57,30 @@
   </button>
 
   <div class="center">
-    <div class="field-group" class:has-suggestions={hasSuggestions}>
+    <div class="input-wrap">
+      <!-- svelte-ignore a11y_autofocus -->
       <input
         class="field"
         type="text"
-        placeholder="Add a task (start with a verb)…"
+        placeholder="Add a task…"
         value={draft}
         oninput={handleInput}
         onkeydown={handleKey}
         autofocus
       />
-
-      {#if hasSuggestions}
-        <ul class="suggestions" role="listbox" aria-label="Similar existing tasks">
-          {#each suggestions as s (s.task.id)}
-            <li role="option" aria-selected="false">{s.task.name}</li>
-          {/each}
-        </ul>
-      {/if}
+      <div class="line"></div>
     </div>
 
     {#if error}
       <p class="error" role="alert">{error}</p>
+    {/if}
+
+    {#if hasSuggestions}
+      <ul class="suggestions" role="listbox" aria-label="Similar existing tasks">
+        {#each suggestions as s (s.task.id)}
+          <li role="option" aria-selected="false">{s.task.name}</li>
+        {/each}
+      </ul>
     {/if}
   </div>
 </section>
@@ -88,6 +90,7 @@
     min-height: 100vh;
     display: flex;
     align-items: center;
+    justify-content: center;
     padding: 2rem;
     position: relative;
   }
@@ -117,45 +120,83 @@
   .center {
     width: 100%;
     max-width: 34rem;
-    margin: 0 auto;
-  }
-
-  .field-group {
-    border: 1px solid var(--tr-line);
-    transition: border-color 100ms ease;
-  }
-  .field-group:focus-within {
-    border-color: var(--tr-ink-soft);
+    position: relative;
   }
 
   .field {
     width: 100%;
-    padding: 0.875rem 1rem;
-    font: inherit;
-    font-size: 1rem;
-    border: none;
     background: transparent;
-    color: var(--tr-ink);
+    border: none;
     outline: none;
+    color: var(--tr-ink);
+    font: inherit;
+    font-size: 1.05rem;
+    text-align: center;
+    padding: 0.5rem 2rem 0.65rem;
     display: block;
+    caret-color: var(--tr-ink-soft);
+  }
+
+  .line {
+    height: 1px;
+    margin: 0 auto;
+    width: 52%;
+    background: linear-gradient(
+      to right,
+      transparent,
+      var(--tr-ink-soft) 20%,
+      var(--tr-ink-soft) 80%,
+      transparent
+    );
+    transition:
+      width 280ms ease,
+      background 180ms ease;
+  }
+
+  .input-wrap:focus-within .line {
+    width: 88%;
+    background: linear-gradient(
+      to right,
+      transparent,
+      var(--tr-ink) 10%,
+      var(--tr-ink) 90%,
+      transparent
+    );
   }
 
   .error {
-    margin-top: 0.5rem;
+    text-align: center;
+    margin-top: 0.75rem;
     font-size: 0.8rem;
     color: var(--tr-error);
   }
 
+  /* Absolutely positioned so they never push the input upward */
   .suggestions {
+    position: absolute;
+    top: calc(100% + 1.25rem);
+    left: 0;
+    right: 0;
     list-style: none;
     padding: 0;
     margin: 0;
-    border-top: 1px solid var(--tr-line);
+    animation: suggestion-fade 220ms ease forwards;
   }
+
+  @keyframes suggestion-fade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
   .suggestions li {
-    padding: 0.5rem 1rem;
+    padding: 0.4rem 0;
     font-size: 0.875rem;
     color: var(--tr-ink-soft);
+    text-align: center;
     border-bottom: 1px solid var(--tr-line);
   }
   .suggestions li:last-child {

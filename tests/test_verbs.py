@@ -27,12 +27,12 @@ def test_verb_led_passes_base_form():
 
 
 def test_verb_led_rejects_noun():
-    assert not is_task_name_verb_led("Bug in login")
+    assert not is_task_name_verb_led("Laptop needs charging")
 
 
 def test_validate_raises_on_non_verb():
     with pytest.raises(VerbValidationError):
-        validate_task_name("Bug in login")
+        validate_task_name("Laptop needs charging")
 
 
 def test_validate_accepts_verb():

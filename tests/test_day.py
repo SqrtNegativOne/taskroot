@@ -1,6 +1,6 @@
 from datetime import date, datetime
 
-from taskroot.day import day_bounds, day_key, is_in_day
+from taskroot.day import day_bounds, day_key, is_in_day, today
 
 
 def test_before_4am_rolls_back():
@@ -32,3 +32,18 @@ def test_is_in_day_excludes_end():
     assert is_in_day(datetime(2026, 4, 12, 3, 59), key)
     assert not is_in_day(datetime(2026, 4, 12, 4, 0), key)
     assert not is_in_day(datetime(2026, 4, 11, 3, 59), key)
+
+
+# -- today() wrapper ---------------------------------------------------------
+
+def test_today_with_override_before_4am():
+    assert today(datetime(2026, 4, 11, 2, 30)) == date(2026, 4, 10)
+
+
+def test_today_with_override_after_4am():
+    assert today(datetime(2026, 4, 11, 5, 0)) == date(2026, 4, 11)
+
+
+def test_today_without_override_returns_a_date():
+    result = today()
+    assert isinstance(result, date)

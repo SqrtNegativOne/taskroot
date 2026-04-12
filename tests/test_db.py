@@ -94,3 +94,140 @@ def test_event_round_trip(tmp_path):
     )
     assert len(rows) == 1
     assert rows[0].name == "standup"
+
+
+# -- list_open_tasks ---------------------------------------------------------
+
+def test_list_open_tasks_excludes_completed(tmp_path):
+    db = make_db(tmp_path)
+    db.save_task(Task(name="fix open"))
+    db.save_task(Task(name="fix done", completed_at=datetime(2026, 4, 11, 12, 0)))
+    names = [t.name for t in db.list_open_tasks()]
+    assert "fix open" in names
+    assert "fix done" not in names
+
+
+def test_list_open_tasks_empty_db(tmp_path):
+    assert make_db(tmp_path).list_open_tasks() == []
+
+
+# -- list_sessions_for_task / list_sessions_between --------------------------
+
+def test_list_sessions_for_task(tmp_path):
+    db = make_db(tmp_path)
+    task = Task(name="fix the bug")
+    db.save_task(task)
+    s1 = TimeSession(task_id=task.id, started_at=datetime(2026, 4, 11, 10, 0),
+                     ended_at=datetime(2026, 4, 11, 10, 30))
+    s2 = TimeSession(task_id=task.id, started_at=datetime(2026, 4, 11, 11, 0),
+                     ended_at=datetime(2026, 4, 11, 11, 15))
+    db.save_time_session(s1)
+    db.save_time_session(s2)
+    sessions = db.list_sessions_for_task(task.id)
+    assert len(sessions) == 2
+    assert sessions[0].started_at == datetime(2026, 4, 11, 10, 0)
+    assert sessions[1].started_at == datetime(2026, 4, 11, 11, 0)
+
+
+def test_list_sessions_for_task_returns_empty_when_none(tmp_path):
+    db = make_db(tmp_path)
+    task = Task(name="fix the bug")
+    db.save_task(task)
+    assert db.list_sessions_for_task(task.id) == []
+
+
+def test_list_sessions_between(tmp_path):
+    db = make_db(tmp_path)
+    task = Task(name="fix the bug")
+    db.save_task(task)
+    s_in = TimeSession(task_id=task.id, started_at=datetime(2026, 4, 11, 10, 0))
+    s_out = TimeSession(task_id=task.id, started_at=datetime(2026, 4, 12, 10, 0))
+    db.save_time_session(s_in)
+    db.save_time_session(s_out)
+    sessions = db.list_sessions_between(
+        datetime(2026, 4, 11, 4, 0), datetime(2026, 4, 12, 4, 0)
+    )
+    assert len(sessions) == 1
+    assert sessions[0].task_id == task.id
+
+
+# -- tags --------------------------------------------------------------------
+
+def test_tag_save_and_list(tmp_path):
+    from taskroot.models import Tag
+    db = make_db(tmp_path)
+    tag = Tag(name="deep-work")
+    db.save_tag(tag)
+    tags = db.list_tags()
+    assert len(tags) == 1
+    assert tags[0].name == "deep-work"
+    assert tags[0].id == tag.id
+
+
+def test_tags_listed_alphabetically(tmp_path):
+    from taskroot.models import Tag
+    db = make_db(tmp_path)
+    db.save_tag(Tag(name="work"))
+    db.save_tag(Tag(name="admin"))
+    db.save_tag(Tag(name="health"))
+    assert [t.name for t in db.list_tags()] == ["admin", "health", "work"]
+
+
+def test_tag_update_on_conflict(tmp_path):
+    from taskroot.models import Tag
+    db = make_db(tmp_path)
+    tag = Tag(name="original")
+    db.save_tag(tag)
+    tag.name = "updated"
+    db.save_tag(tag)
+    tags = db.list_tags()
+    assert len(tags) == 1
+    assert tags[0].name == "updated"
+
+
+# -- transaction rollback ----------------------------------------------------
+
+def test_transaction_rollback_on_exception(tmp_path):
+    import pytest
+    db = make_db(tmp_path)
+    with pytest.raises(RuntimeError):
+        with db.transaction() as conn:
+            conn.execute(
+                "INSERT INTO meta(key, value) VALUES (?, ?)",
+                ("rollback_sentinel", "1"),
+            )
+            raise RuntimeError("forced rollback")
+    row = db._conn.execute(
+        "SELECT value FROM meta WHERE key = ?", ("rollback_sentinel",)
+    ).fetchone()
+    assert row is None
+
+
+# -- NULL / bool field handling -----------------------------------------------
+
+def test_task_null_recur_rule_round_trips(tmp_path):
+    db = make_db(tmp_path)
+    task = Task(name="fix the bug", recur_rule=None)
+    db.save_task(task)
+    assert db.get_task(task.id).recur_rule is None
+
+
+def test_task_is_low_thought_true_round_trips(tmp_path):
+    db = make_db(tmp_path)
+    task = Task(name="fix the bug", is_low_thought=True)
+    db.save_task(task)
+    assert db.get_task(task.id).is_low_thought is True
+
+
+def test_task_is_low_thought_false_round_trips(tmp_path):
+    db = make_db(tmp_path)
+    task = Task(name="fix the bug", is_low_thought=False)
+    db.save_task(task)
+    assert db.get_task(task.id).is_low_thought is False
+
+
+def test_task_is_low_thought_none_round_trips(tmp_path):
+    db = make_db(tmp_path)
+    task = Task(name="fix the bug", is_low_thought=None)
+    db.save_task(task)
+    assert db.get_task(task.id).is_low_thought is None

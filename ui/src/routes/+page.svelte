@@ -28,6 +28,7 @@
   } from '$lib/phases/ShutdownScreen.svelte';
 
   import { getApi, type TaskRootApi } from '$lib/api';
+  import { advanceClarify } from '$lib/clarify-nav';
   import type {
     CalendarEvent,
     Distraction,
@@ -160,19 +161,14 @@
     // wired here yet.
   }
 
-  function onClarifyAccept() {
-    if (clarifyIndex < clarifyQueue.length - 1) {
-      clarifyIndex += 1;
-    } else {
-      phase = 'plan';
-    }
+  function advanceClarifyOrPlan() {
+    const { index, done } = advanceClarify(clarifyIndex, clarifyQueue.length);
+    clarifyIndex = index;
+    if (done) phase = 'plan';
   }
 
-  function onClarifySkip() {
-    if (clarifyIndex < clarifyQueue.length - 1) {
-      clarifyIndex += 1;
-    }
-  }
+  function onClarifyAccept() { advanceClarifyOrPlan(); }
+  function onClarifySkip()   { advanceClarifyOrPlan(); }
 
   function onAdvanceFromClarify() {
     phase = 'plan';

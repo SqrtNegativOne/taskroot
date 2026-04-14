@@ -6,10 +6,7 @@ Guidance for Claude Code working in the TaskRoot repository.
 
 TaskRoot is an opinionated, **single-user** task-management system for
 Windows. It is always-on, keyboard-driven, and structured around a
-fixed daily cycle: **Capture → Clarify → Plan → Do → Shutdown**. The
-authoritative requirements doc is [`plan.txt`](plan.txt) at the repo
-root — read it before making design decisions. Anything in plan.txt
-marked **[OPEN]** is deliberately unresolved; ask before deciding.
+fixed daily cycle: **Capture → Clarify → Plan → Do → Shutdown**.
 
 ## Tech stack
 

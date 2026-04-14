@@ -39,7 +39,7 @@ from .models import (
     TimeSession,
 )
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 # Core schema. ``extras`` columns are JSON blobs for the unknown-fields
 # round-trip. Dates and datetimes are stored as ISO 8601 strings — SQLite
@@ -197,16 +197,30 @@ class Database:
 
     def __init__(self, path: Path | str = "taskroot.db") -> None:
         self._path = Path(path)
-        self._conn = sqlite3.connect(
+        self._conn = self._open()
+        self._maybe_wipe_and_recreate()
+
+    def _open(self) -> sqlite3.Connection:
+        conn = sqlite3.connect(
             self._path,
             detect_types=sqlite3.PARSE_DECLTYPES,
             check_same_thread=False,
-            isolation_level=None,  # autocommit; we use explicit transactions
+            isolation_level=None,
         )
-        self._conn.row_factory = sqlite3.Row
-        self._conn.execute("PRAGMA journal_mode = WAL")
-        self._conn.execute("PRAGMA foreign_keys = ON")
+        conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA journal_mode = WAL")
+        conn.execute("PRAGMA foreign_keys = ON")
+        return conn
+
+    def _maybe_wipe_and_recreate(self) -> None:
         self._conn.executescript(SCHEMA_SQL)
+        stored = self._get_meta("schema_version")
+        if stored != str(SCHEMA_VERSION):
+            self._conn.close()
+            for p in self._path.parent.glob(self._path.name + "*"):
+                p.unlink(missing_ok=True)
+            self._conn = self._open()
+            self._conn.executescript(SCHEMA_SQL)
         self._set_meta("schema_version", str(SCHEMA_VERSION))
 
     @property

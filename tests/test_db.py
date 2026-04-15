@@ -96,6 +96,41 @@ def test_event_round_trip(tmp_path):
     assert rows[0].name == "standup"
 
 
+def test_get_event_returns_saved_event(tmp_path):
+    db = make_db(tmp_path)
+    e = Event(name="standup", start=datetime(2026, 4, 11, 9, 0))
+    db.save_event(e)
+    loaded = db.get_event(e.id)
+    assert loaded is not None
+    assert loaded.id == e.id
+    assert loaded.name == "standup"
+
+
+def test_get_event_returns_none_for_missing_id(tmp_path):
+    from uuid import uuid4
+    db = make_db(tmp_path)
+    assert db.get_event(uuid4()) is None
+
+
+def test_delete_event_removes_it(tmp_path):
+    db = make_db(tmp_path)
+    e = Event(name="standup", start=datetime(2026, 4, 11, 9, 0))
+    db.save_event(e)
+    db.delete_event(e.id)
+    assert db.get_event(e.id) is None
+
+
+def test_delete_event_absent_from_list(tmp_path):
+    db = make_db(tmp_path)
+    e = Event(name="standup", start=datetime(2026, 4, 11, 9, 0))
+    db.save_event(e)
+    db.delete_event(e.id)
+    rows = db.list_events_between(
+        datetime(2026, 4, 11, 0, 0), datetime(2026, 4, 12, 0, 0)
+    )
+    assert rows == []
+
+
 # -- list_open_tasks ---------------------------------------------------------
 
 def test_list_open_tasks_excludes_completed(tmp_path):

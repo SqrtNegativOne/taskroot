@@ -305,7 +305,7 @@ Not yet implemented (explicit deferrals):
 - Unschedule-task API method (widget × on a task just refreshes for now)
 - Real content for Plan, Reorient, Shutdown phases (stubs only)
 - Break-type system tasks seeding
-- Music player, calculator, Obsidian link list (Do phase)
+- Music player, Obsidian link list (Do phase)
 - Android sync / JSON export
 
 When extending this scaffold, prefer filling out the existing modules

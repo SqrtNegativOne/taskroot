@@ -19,9 +19,13 @@ function App() {
   // Seed store on first load & clean up empty items
   React.useEffect(() => { 
     seedDefaults(); 
-    setTasks(ts => ts.filter(t => t.title && t.title.trim() !== ''));
-    setEvents(es => es.filter(e => e.taskId || (e.title && e.title.trim() !== '')));
-  }, [setTasks, setEvents]);
+    const validTasks = tasks.filter(t => t.title && t.title.trim() !== '');
+    setTasks(validTasks);
+    setEvents(es => es.filter(e => {
+      if (e.taskId) return validTasks.some(t => t.id === e.taskId);
+      return e.title && e.title.trim() !== '';
+    }));
+  }, [setTasks, setEvents, tasks]);
 
   // UI state — task list
   const [query, setQuery] = React.useState('');
@@ -36,6 +40,9 @@ function App() {
   const [dragState, setDragState] = React.useState(null);
   const dragRef = React.useRef(null);
   dragRef.current = dragState;
+
+  // Inspector state
+  const [inspectorState, setInspectorState] = React.useState(null); // { type: 'task', id } or { type: 'event', id }
 
   // Apply accent dynamically
   React.useEffect(() => {
@@ -69,13 +76,16 @@ function App() {
     const up = (ev) => {
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
-      const ds = dragRef.current;
-      if (active && ds && ds.target) {
-        if (ds.target.kind === 'month-day') {
-          // Schedule for that date — default 9am, est-length
-          createEvent(task, ds.target.date, 9 * 60, task.est || 60);
-        } else if (ds.target.kind === 'day-time') {
-          createEvent(task, ymd(TODAY), ds.target.minute, task.est || 60);
+      if (!active) {
+        setInspectorState({ type: 'task', id: task.id });
+      } else {
+        const ds = dragRef.current;
+        if (ds && ds.target) {
+          if (ds.target.kind === 'month-day') {
+            createEvent(task, ds.target.date, 9 * 60, task.est || 60);
+          } else if (ds.target.kind === 'day-time') {
+            createEvent(task, ymd(TODAY), ds.target.minute, task.est || 60);
+          }
         }
       }
       setDragState(null);
@@ -111,13 +121,17 @@ function App() {
     const up = (ev) => {
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
-      const ds = dragRef.current;
-      if (active && ds && ds.target) {
-        if (ds.target.kind === 'month-day') {
-          setEvents(prev => prev.map(evnt => evnt.id === eventToMove.id ? { ...evnt, date: ds.target.date } : evnt));
-        } else if (ds.target.kind === 'day-time') {
-          const duration = eventToMove.end - eventToMove.start;
-          setEvents(prev => prev.map(evnt => evnt.id === eventToMove.id ? { ...evnt, date: ymd(TODAY), start: ds.target.minute, end: ds.target.minute + duration } : evnt));
+      if (!active) {
+        setInspectorState({ type: 'event', id: eventToMove.id });
+      } else {
+        const ds = dragRef.current;
+        if (ds && ds.target) {
+          if (ds.target.kind === 'month-day') {
+            setEvents(prev => prev.map(evnt => evnt.id === eventToMove.id ? { ...evnt, date: ds.target.date } : evnt));
+          } else if (ds.target.kind === 'day-time') {
+            const duration = eventToMove.end - eventToMove.start;
+            setEvents(prev => prev.map(evnt => evnt.id === eventToMove.id ? { ...evnt, date: ymd(TODAY), start: ds.target.minute, end: ds.target.minute + duration } : evnt));
+          }
         }
       }
       setDragState(null);
@@ -139,6 +153,27 @@ function App() {
     setEvents(prev => [...prev, newEvent]);
   };
 
+  const onAddTask = () => {
+    const id = `t${Date.now()}`;
+    setTasks(ts => [{
+       id, title: 'New Task', status: 'todo', priority: 'P2', tags: [], subtasks: [], est: 60, added: new Date().toISOString()
+    }, ...ts]);
+    setInspectorState({ type: 'task', id });
+  };
+
+  const onAddEvent = () => {
+    const id = `e${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    setEvents(es => [...es, {
+       id,
+       title: 'New Event',
+       date: ymd(TODAY),
+       start: 9 * 60,
+       end: 10 * 60,
+       type: 'meeting',
+    }]);
+    setInspectorState({ type: 'event', id });
+  };
+
   const onResizeEvent = (id, start, end) => {
     setEvents(prev => prev.map(e => e.id === id ? { ...e, start, end } : e));
   };
@@ -158,6 +193,7 @@ function App() {
           query={query} setQuery={setQuery}
           onDragStart={onTaskDragStart}
           activeDragId={dragState?.task?.id}
+          onAddTask={onAddTask}
         />
         <div className="right-pane">
           <MonthCalendar
@@ -167,6 +203,7 @@ function App() {
             today={TODAY}
             dragState={dragState}
             onEventDragStart={onEventDragStart}
+            onAddEvent={onAddEvent}
           />
           <div className="pane-sep">
             <span className="pane-sep-dots">··········································································</span>
@@ -178,9 +215,18 @@ function App() {
             setDragState={setDragState}
             onResizeEvent={onResizeEvent}
             onMoveEvent={onMoveEvent}
+            onEventClick={(ev) => setInspectorState({ type: 'event', id: ev.id })}
+            onAddEvent={onAddEvent}
           />
         </div>
       </main>
+
+      <InspectorPane 
+        inspectorState={inspectorState} 
+        onClose={() => setInspectorState(null)} 
+        tasks={tasks} setTasks={setTasks} 
+        events={events} setEvents={setEvents} 
+      />
 
       {(dragState && (dragState.task || dragState.event)) && (
         <DragGhost
@@ -262,7 +308,6 @@ function DragGhost({ task, event, x, y, style }) {
   );
 }
 
-// Hit-test: given the element under the pointer, work out what we'd drop into.
 function resolveDropTarget(el, x, y, task, event) {
   if (!el) return null;
   // Day calendar grid
@@ -280,6 +325,87 @@ function resolveDropTarget(el, x, y, task, event) {
     return { kind: 'month-day', date: day.dataset.dropDate };
   }
   return null;
+}
+
+function InspectorPane({ inspectorState, onClose, tasks, setTasks, events, setEvents }) {
+  if (!inspectorState) return null;
+  const isTask = inspectorState.type === 'task';
+  const item = isTask 
+    ? tasks.find(t => t.id === inspectorState.id)
+    : events.find(e => e.id === inspectorState.id);
+  
+  if (!item) return null;
+
+  const title = isTask ? item.title : (item.taskId ? tasks.find(t => t.id === item.taskId)?.title : item.title);
+
+  const updateTask = (id, updates) => setTasks(ts => ts.map(t => t.id === id ? { ...t, ...updates } : t));
+  const deleteTask = (id) => setTasks(ts => ts.filter(t => t.id !== id));
+  const updateEvent = (id, updates) => setEvents(es => es.map(e => e.id === id ? { ...e, ...updates } : e));
+  const deleteEvent = (id) => setEvents(es => es.filter(e => e.id !== id));
+
+  return (
+    <div className="inspector-pane">
+      <div className="inspector-hd">
+        <div className="inspector-title">{isTask ? 'TASK DETAILS' : 'EVENT DETAILS'}</div>
+        <button className="inspector-close" onClick={onClose}>×</button>
+      </div>
+      <div className="inspector-body">
+         <div className="inspector-field">
+            <label>Title</label>
+            <input 
+              value={title || ''} 
+              onChange={e => {
+                if (isTask) updateTask(item.id, { title: e.target.value });
+                else updateEvent(item.id, { title: e.target.value });
+              }}
+              disabled={!isTask && item.taskId}
+            />
+         </div>
+         {isTask && (
+           <>
+             <div className="inspector-field">
+               <label>Status</label>
+               <select value={item.status} onChange={e => updateTask(item.id, { status: e.target.value })}>
+                 <option value="todo">todo</option>
+                 <option value="next-up">next up</option>
+                 <option value="doing">doing</option>
+                 <option value="done">done</option>
+               </select>
+             </div>
+             <div className="inspector-field">
+               <label>Priority</label>
+               <select value={item.priority} onChange={e => updateTask(item.id, { priority: e.target.value })}>
+                 <option value="P0">P0</option>
+                 <option value="P1">P1</option>
+                 <option value="P2">P2</option>
+                 <option value="P3">P3</option>
+               </select>
+             </div>
+           </>
+         )}
+         {!isTask && (
+           <>
+             <div className="inspector-field">
+               <label>Date</label>
+               <input type="date" value={item.date} onChange={e => updateEvent(item.id, { date: e.target.value })} />
+             </div>
+           </>
+         )}
+         <div className="inspector-actions">
+           <button onClick={() => {
+             if (isTask) {
+               deleteTask(item.id);
+               // Also delete associated events
+               setEvents(es => es.filter(e => e.taskId !== item.id));
+             } else {
+               deleteEvent(item.id);
+             }
+             onClose();
+           }}>Delete {isTask ? 'Task' : 'Event'}</button>
+         </div>
+      </div>
+    </div>
+  );
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App />);

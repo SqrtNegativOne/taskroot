@@ -46,6 +46,27 @@
   }
   body { font-feature-settings: 'ss01', 'ss02'; }
 
+  /* Global Scrollbars */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) var(--bg-1);
+  }
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+    background: var(--bg-1);
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--bg-1);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--fg-dimmer);
+  }
+
   ::selection { background: var(--accent-soft); color: var(--fg); }
 
   button { font-family: inherit; font-size: inherit; color: inherit; }
@@ -174,11 +195,7 @@
   .task-list {
     flex: 1; overflow-y: auto; overflow-x: hidden;
     padding: 6px 0 6px 0;
-    scrollbar-width: thin;
-    scrollbar-color: var(--border-strong) transparent;
   }
-  .task-list::-webkit-scrollbar { width: 8px; }
-  .task-list::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 0; }
 
   .task-row {
     padding: 8px 16px 9px;
@@ -798,6 +815,69 @@ html:has(.app-do), html:has(.app-do) body {
   margin: 0 auto;
   width: 100%;
 }
+
+/* ── Inspector Pane ─────────────────────────────────────────────────── */
+
+.inspector-pane {
+  position: absolute;
+  top: 0; right: 0; bottom: 0;
+  width: 380px;
+  background: var(--bg-1);
+  border-left: 1px solid var(--border-strong);
+  box-shadow: -12px 0 40px rgba(0,0,0,0.6);
+  z-index: 1000;
+  display: flex; flex-direction: column;
+}
+.inspector-hd {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px dashed var(--border);
+  background: var(--bg-2);
+}
+.inspector-title {
+  font-weight: 600; letter-spacing: 0.1em; color: var(--fg);
+}
+.inspector-close {
+  background: none; border: none; color: var(--fg-dim);
+  font-size: 1.5em; cursor: pointer; padding: 0 4px;
+  line-height: 1;
+}
+.inspector-close:hover { color: var(--fg); }
+.inspector-body {
+  padding: 20px;
+  display: flex; flex-direction: column; gap: 16px;
+  overflow-y: auto;
+}
+.inspector-field {
+  display: flex; flex-direction: column; gap: 6px;
+}
+.inspector-field label {
+  font-size: 0.85em; color: var(--fg-dim); letter-spacing: 0.05em; text-transform: uppercase;
+}
+.inspector-field input, .inspector-field select {
+  background: var(--bg-2); border: 1px solid var(--border);
+  color: var(--fg); padding: 8px 12px;
+  font-family: var(--mono); font-size: 1em;
+}
+.inspector-field input:focus, .inspector-field select:focus {
+  border-color: var(--accent); outline: none;
+}
+.inspector-field input:disabled {
+  opacity: 0.5; cursor: not-allowed;
+}
+.inspector-actions {
+  margin-top: 24px; padding-top: 16px;
+  border-top: 1px dashed var(--border);
+}
+.inspector-actions button {
+  background: rgba(217, 119, 87, 0.1); border: 1px solid var(--p0);
+  color: var(--p0); padding: 8px 16px; width: 100%;
+  cursor: pointer; transition: all 0.1s;
+}
+.inspector-actions button:hover {
+  background: rgba(217, 119, 87, 0.2);
+}
+
 .collapsible { border-bottom: 1px dashed var(--border); }
 .collapsible.is-open { padding-bottom: 16px; }
 .collapsible-head {

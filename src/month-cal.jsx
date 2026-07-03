@@ -1,6 +1,6 @@
 // Month / week calendar — top of right pane.
 
-function MonthCalendar({ view, setView, anchor, setAnchor, events, tasks, today, dragState, onDropToDate, onEventDragStart }) {
+function MonthCalendar({ view, setView, anchor, setAnchor, events, tasks, today, dragState, onDropToDate, onEventDragStart, onAddEvent }) {
   // anchor is a Date pointing into the month or week currently shown.
   const isWeek = view === 'week';
   const cells = React.useMemo(() => buildMonthOrWeekCells(anchor, isWeek), [anchor, isWeek]);
@@ -25,6 +25,7 @@ function MonthCalendar({ view, setView, anchor, setAnchor, events, tasks, today,
           <span className="bracket">─┐</span>
         </div>
         <div className="cal-hd-right">
+          <button className="cal-nav-btn" style={{ marginRight: '8px', border: '1px solid var(--border)', padding: '2px 8px' }} onClick={onAddEvent}>+ Event</button>
           <div className="cal-nav">
             <button className="cal-nav-btn" onClick={() => shift(-1)} aria-label="previous">←</button>
             <button className="cal-nav-btn" onClick={() => setAnchor(new Date(today))}>today</button>
@@ -98,7 +99,7 @@ function DayCell({ cell, today, events, tasks, isWeek, dragState, onDropToDate, 
         {isToday && <span className="day-cell-today-flag">·today</span>}
       </div>
       <div className="day-cell-events">
-        {events.slice(0, isWeek ? 12 : 4).map(ev => {
+        {events.map(ev => {
           const task = ev.taskId ? tasks.find(t => t.id === ev.taskId) : null;
           const title = task ? task.title : ev.title;
           const pri = task ? task.priority : null;
@@ -115,9 +116,6 @@ function DayCell({ cell, today, events, tasks, isWeek, dragState, onDropToDate, 
             </div>
           );
         })}
-        {events.length > (isWeek ? 12 : 4) && (
-          <div className="day-cell-more">+{events.length - (isWeek ? 12 : 4)} more</div>
-        )}
       </div>
       {isDragOver && (
         <div className="day-cell-drop-hint">

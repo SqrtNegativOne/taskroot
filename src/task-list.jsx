@@ -1,6 +1,6 @@
 // Task list — left column. Filter, sort, draggable items.
 
-function TaskListPane({ tasks, setTasks, filter, setFilter, sort, setSort, query, setQuery, onDragStart, activeDragId }) {
+function TaskListPane({ tasks, setTasks, filter, setFilter, sort, setSort, query, setQuery, onDragStart, activeDragId, onAddTask }) {
   const updateTask = (id, updates) => setTasks(ts => ts.map(t => t.id === id ? { ...t, ...updates } : t));
   const deleteTask = (id) => setTasks(ts => ts.filter(t => t.id !== id));
   const filtered = React.useMemo(() => {
@@ -104,8 +104,12 @@ function TaskListPane({ tasks, setTasks, filter, setFilter, sort, setSort, query
         )}
       </div>
 
-      <footer className="task-pane-ft">
+      <footer className="task-pane-ft" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span className="dim">drag a task → calendar to schedule it</span>
+        <button 
+          style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', color: 'var(--fg)', cursor: 'pointer', padding: '2px 8px', fontSize: '0.9em' }}
+          onClick={onAddTask}
+        >+ Task</button>
       </footer>
     </aside>
   );
@@ -154,18 +158,6 @@ function TaskRow({ task, index, onDragStart, dragging, updateTask, deleteTask })
              e.stopPropagation();
              updateTask(task.id, { status: task.status === 'done' ? 'todo' : 'done' });
            }} title="Toggle Done">✔</button>
-           <button onClick={(e) => {
-             e.stopPropagation();
-             const title = prompt("Task title:", task.title);
-             if (!title) return;
-             const priority = prompt("Priority (P0, P1, P2, P3):", task.priority);
-             const tagsStr = prompt("Tags (comma separated):", task.tags.join(', '));
-             updateTask(task.id, {
-               title,
-               priority: ['P0','P1','P2','P3'].includes(priority) ? priority : task.priority,
-               tags: tagsStr != null ? tagsStr.split(',').map(s=>s.trim()).filter(Boolean) : task.tags
-             });
-           }} title="Edit">✎</button>
            <button onClick={(e) => {
              e.stopPropagation();
              if (confirm("Delete task?")) deleteTask(task.id);

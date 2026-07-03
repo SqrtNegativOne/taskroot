@@ -3,7 +3,7 @@
 const PX_PER_MIN = 56 / 60; // 56 px per hour
 const SNAP_MIN = 15;
 
-function DayCalendar({ events, tasks, today, dragState, setDragState, onDropToTime, onResizeEvent, onMoveEvent }) {
+function DayCalendar({ events, tasks, today, dragState, setDragState, onDropToTime, onResizeEvent, onMoveEvent, onEventClick, onAddEvent }) {
   const containerRef = React.useRef(null);
   const scrollRef = React.useRef(null);
 
@@ -40,7 +40,8 @@ function DayCalendar({ events, tasks, today, dragState, setDragState, onDropToTi
           </span>
           <span className="bracket">─┐</span>
         </div>
-        <div className="cal-hd-right">
+        <div className="cal-hd-right" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <button className="cal-nav-btn" style={{ border: '1px solid var(--border)', padding: '2px 8px', background: 'none', color: 'var(--fg-dim)', cursor: 'pointer' }} onClick={onAddEvent}>+ Event</button>
           <span className="day-pane-stats">
             <span className="dim">·</span> {todayEvents.length} events
             <span className="dim"> · </span>
@@ -82,6 +83,7 @@ function DayCalendar({ events, tasks, today, dragState, setDragState, onDropToTi
               onMove={onMoveEvent}
               dragState={dragState}
               setDragState={setDragState}
+              onEventClick={onEventClick}
             />
           ))}
 
@@ -105,7 +107,7 @@ function DayCalendar({ events, tasks, today, dragState, setDragState, onDropToTi
   );
 }
 
-function EventBlock({ event, task, lane, lanes, onResize, onMove, dragState, setDragState }) {
+function EventBlock({ event, task, lane, lanes, onResize, onMove, dragState, setDragState, onEventClick }) {
   const top = event.start * PX_PER_MIN;
   const height = (event.end - event.start) * PX_PER_MIN;
   const widthPct = 100 / lanes;
@@ -159,6 +161,9 @@ function EventBlock({ event, task, lane, lanes, onResize, onMove, dragState, set
     const up = () => {
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
+      if (!moved) {
+        onEventClick && onEventClick(event);
+      }
     };
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);

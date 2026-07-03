@@ -1,6 +1,8 @@
 // Task list — left column. Filter, sort, draggable items.
 
-function TaskListPane({ tasks, filter, setFilter, sort, setSort, query, setQuery, onDragStart, activeDragId }) {
+function TaskListPane({ tasks, setTasks, filter, setFilter, sort, setSort, query, setQuery, onDragStart, activeDragId }) {
+  const updateTask = (id, updates) => setTasks(ts => ts.map(t => t.id === id ? { ...t, ...updates } : t));
+  const deleteTask = (id) => setTasks(ts => ts.filter(t => t.id !== id));
   const filtered = React.useMemo(() => {
     let xs = tasks;
     if (filter.status !== 'all') xs = xs.filter(t => t.status === filter.status);
@@ -95,6 +97,8 @@ function TaskListPane({ tasks, filter, setFilter, sort, setSort, query, setQuery
               index={i}
               onDragStart={onDragStart}
               dragging={activeDragId === t.id}
+              updateTask={updateTask}
+              deleteTask={deleteTask}
             />
           ))
         )}
@@ -123,10 +127,10 @@ function Selector({ label, value, onChange, options }) {
   );
 }
 
-function TaskRow({ task, index, onDragStart, dragging }) {
+function TaskRow({ task, index, onDragStart, dragging, updateTask, deleteTask }) {
   const handlePointerDown = (e) => {
     if (e.button !== 0) return;
-    if (e.target.closest('.task-row-subtask-toggle')) return;
+    if (e.target.closest('.task-row-subtask-toggle') || e.target.closest('.task-row-actions')) return;
     onDragStart(e, task);
   };
 
@@ -144,6 +148,29 @@ function TaskRow({ task, index, onDragStart, dragging }) {
         <span className="task-row-title">{task.title}</span>
         {task.status === 'doing' && <span className="status-pill status-doing">doing</span>}
         {task.status === 'next-up' && <span className="status-pill status-nextup">next up</span>}
+        
+        <div className="task-row-actions">
+           <button onClick={(e) => {
+             e.stopPropagation();
+             updateTask(task.id, { status: task.status === 'done' ? 'todo' : 'done' });
+           }} title="Toggle Done">✔</button>
+           <button onClick={(e) => {
+             e.stopPropagation();
+             const title = prompt("Task title:", task.title);
+             if (!title) return;
+             const priority = prompt("Priority (P0, P1, P2, P3):", task.priority);
+             const tagsStr = prompt("Tags (comma separated):", task.tags.join(', '));
+             updateTask(task.id, {
+               title,
+               priority: ['P0','P1','P2','P3'].includes(priority) ? priority : task.priority,
+               tags: tagsStr != null ? tagsStr.split(',').map(s=>s.trim()).filter(Boolean) : task.tags
+             });
+           }} title="Edit">✎</button>
+           <button onClick={(e) => {
+             e.stopPropagation();
+             if (confirm("Delete task?")) deleteTask(task.id);
+           }} title="Delete">🗑</button>
+        </div>
       </div>
       <div className="task-row-line2">
         <span className="meta-est">{durationLabel(task.est)}</span>

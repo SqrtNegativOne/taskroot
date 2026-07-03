@@ -2,7 +2,10 @@
 
 function Stopwatch() {
   const [state, setState] = useStored('stopwatch', { elapsed: 0, runningSince: null });
+  const [tasks, setTasks] = useStored('tasks', SAMPLE_TASKS);
   const [, setTick] = React.useState(0);
+
+  const activeTask = tasks.find(t => t.status === 'doing');
 
   // While running, request animation frame to update display.
   React.useEffect(() => {
@@ -47,7 +50,7 @@ function Stopwatch() {
       <div className="stopwatch-stage">
         <div className="stopwatch-meta-top">
           <span className="bracket">┌─</span>
-          <span className="stopwatch-meta-label">FOCUS · count-up</span>
+          <span className="stopwatch-meta-label">FOCUS · {activeTask ? activeTask.title : 'count-up'}</span>
           <span className="bracket">─┐</span>
         </div>
 
@@ -78,6 +81,15 @@ function Stopwatch() {
             <span className="sw-btn-label">reset</span>
             <span className="sw-btn-key">⌘r</span>
           </button>
+          {activeTask && (
+            <button className="sw-btn" onClick={() => {
+              setTasks(ts => ts.map(t => t.id === activeTask.id ? { ...t, status: 'done' } : t));
+              reset();
+            }}>
+              <span className="sw-btn-icon">✔</span>
+              <span className="sw-btn-label">mark done</span>
+            </button>
+          )}
         </div>
 
         <div className="stopwatch-meta-bottom">

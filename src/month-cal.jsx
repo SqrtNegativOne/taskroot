@@ -1,6 +1,6 @@
 // Month / week calendar — top of right pane.
 
-function MonthCalendar({ view, setView, anchor, setAnchor, events, tasks, today, dragState, onDropToDate }) {
+function MonthCalendar({ view, setView, anchor, setAnchor, events, tasks, today, dragState, onDropToDate, onEventDragStart }) {
   // anchor is a Date pointing into the month or week currently shown.
   const isWeek = view === 'week';
   const cells = React.useMemo(() => buildMonthOrWeekCells(anchor, isWeek), [anchor, isWeek]);
@@ -54,6 +54,7 @@ function MonthCalendar({ view, setView, anchor, setAnchor, events, tasks, today,
               isWeek={isWeek}
               dragState={dragState}
               onDropToDate={onDropToDate}
+              onEventDragStart={onEventDragStart}
             />
           ))}
         </div>
@@ -62,7 +63,7 @@ function MonthCalendar({ view, setView, anchor, setAnchor, events, tasks, today,
   );
 }
 
-function DayCell({ cell, today, events, tasks, isWeek, dragState, onDropToDate }) {
+function DayCell({ cell, today, events, tasks, isWeek, dragState, onDropToDate, onEventDragStart }) {
   const ref = React.useRef(null);
   const isToday = sameDay(cell.date, today);
   const isPast = cell.date < today && !isToday;
@@ -106,6 +107,8 @@ function DayCell({ cell, today, events, tasks, isWeek, dragState, onDropToDate }
               key={ev.id}
               className={`day-cell-event ev-${ev.type} ${pri ? `pri-bar-${pri}` : ''}`}
               title={`${hhmmShort(ev.start)} — ${title}`}
+              style={{ cursor: 'grab', opacity: dragState?.event?.id === ev.id ? 0.4 : 1 }}
+              onPointerDown={(e) => onEventDragStart && onEventDragStart(e, ev, task)}
             >
               <span className="day-cell-event-time">{hhmmShort(ev.start)}</span>
               <span className="day-cell-event-title">{title}</span>

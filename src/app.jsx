@@ -12,12 +12,16 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
 function App() {
   const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
 
-  // Seed store on first load
-  React.useEffect(() => { seedDefaults(); }, []);
-
   // Data state (persisted)
   const [tasks, setTasks] = useStored('tasks', SAMPLE_TASKS);
   const [events, setEvents] = useStored('events', SAMPLE_EVENTS);
+
+  // Seed store on first load & clean up empty items
+  React.useEffect(() => { 
+    seedDefaults(); 
+    setTasks(ts => ts.filter(t => t.title && t.title.trim() !== ''));
+    setEvents(es => es.filter(e => e.taskId || (e.title && e.title.trim() !== '')));
+  }, [setTasks, setEvents]);
 
   // UI state — task list
   const [query, setQuery] = React.useState('');
@@ -80,6 +84,48 @@ function App() {
     window.addEventListener('pointerup', up);
   };
 
+  const onEventDragStart = (e, eventToMove, task) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const start = { x: e.clientX, y: e.clientY };
+    let active = false;
+
+    const move = (ev) => {
+      if (!active) {
+        const dx = ev.clientX - start.x;
+        const dy = ev.clientY - start.y;
+        if (Math.hypot(dx, dy) < 5) return;
+        active = true;
+      }
+      const el = document.elementFromPoint(ev.clientX, ev.clientY);
+      const target = resolveDropTarget(el, ev.clientX, ev.clientY, task, eventToMove);
+      setDragState({
+        event: eventToMove,
+        task,
+        pointerX: ev.clientX,
+        pointerY: ev.clientY,
+        target,
+      });
+    };
+
+    const up = (ev) => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      const ds = dragRef.current;
+      if (active && ds && ds.target) {
+        if (ds.target.kind === 'month-day') {
+          setEvents(prev => prev.map(evnt => evnt.id === eventToMove.id ? { ...evnt, date: ds.target.date } : evnt));
+        } else if (ds.target.kind === 'day-time') {
+          const duration = eventToMove.end - eventToMove.start;
+          setEvents(prev => prev.map(evnt => evnt.id === eventToMove.id ? { ...evnt, date: ymd(TODAY), start: ds.target.minute, end: ds.target.minute + duration } : evnt));
+        }
+      }
+      setDragState(null);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
+
   const createEvent = (task, date, start, duration) => {
     const id = `e${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
     const newEvent = {
@@ -106,7 +152,7 @@ function App() {
 
       <main className="main">
         <TaskListPane
-          tasks={tasks}
+          tasks={tasks} setTasks={setTasks}
           filter={filter} setFilter={setFilter}
           sort={sort} setSort={setSort}
           query={query} setQuery={setQuery}
@@ -120,6 +166,7 @@ function App() {
             events={events} tasks={tasks}
             today={TODAY}
             dragState={dragState}
+            onEventDragStart={onEventDragStart}
           />
           <div className="pane-sep">
             <span className="pane-sep-dots">··········································································</span>
@@ -135,9 +182,10 @@ function App() {
         </div>
       </main>
 
-      {dragState && dragState.task && (
+      {(dragState && (dragState.task || dragState.event)) && (
         <DragGhost
           task={dragState.task}
+          event={dragState.event}
           x={dragState.pointerX}
           y={dragState.pointerY}
           style={t.ghostStyle}
@@ -192,26 +240,30 @@ function App() {
   );
 }
 
-function DragGhost({ task, x, y, style }) {
+function DragGhost({ task, event, x, y, style }) {
+  const title = task ? task.title : (event ? event.title : '');
+  const pri = task ? task.priority : null;
+  const est = task ? task.est : (event ? event.end - event.start : 60);
+
   return (
     <div
       className={`drag-ghost is-${style}`}
       style={{ left: x + 14, top: y - 8 }}
     >
       <div className="drag-ghost-inner">
-        <span className={`pri pri-${task.priority}`}>●</span>
-        <span className="drag-ghost-pri">{task.priority}</span>
-        <span className="drag-ghost-title">{task.title}</span>
+        {pri && <span className={`pri pri-${pri}`}>●</span>}
+        {pri && <span className="drag-ghost-pri">{pri}</span>}
+        <span className="drag-ghost-title">{title}</span>
       </div>
       <div className="drag-ghost-meta">
-        <span className="bracket">└</span> {durationLabel(task.est)} block
+        <span className="bracket">└</span> {durationLabel(est)} block
       </div>
     </div>
   );
 }
 
 // Hit-test: given the element under the pointer, work out what we'd drop into.
-function resolveDropTarget(el, x, y, task) {
+function resolveDropTarget(el, x, y, task, event) {
   if (!el) return null;
   // Day calendar grid
   const grid = el.closest('[data-drop-kind="day-time"]');
@@ -220,7 +272,7 @@ function resolveDropTarget(el, x, y, task) {
     const offsetY = y - rect.top;
     const rawMin = offsetY / PX_PER_MIN;
     const snapped = Math.max(0, Math.min(24 * 60 - SNAP_MIN, Math.round(rawMin / SNAP_MIN) * SNAP_MIN));
-    return { kind: 'day-time', minute: snapped, duration: task?.est || 60 };
+    return { kind: 'day-time', minute: snapped, duration: task?.est || (event ? event.end - event.start : 60) };
   }
   // Month/week day cell
   const day = el.closest('[data-drop-kind="month-day"]');

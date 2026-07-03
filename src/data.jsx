@@ -1,7 +1,7 @@
 // Sample data + helpers for Taskroot.
 // Today is locked to 2026-05-20 (Wed) so the prototype feels populated.
 
-const TODAY = new Date(2026, 4, 20); // May 20, 2026
+const TODAY = new Date();
 
 const SAMPLE_TASKS = [
   {

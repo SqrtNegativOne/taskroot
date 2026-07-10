@@ -163,7 +163,7 @@ function TaskRow({ task, index, onDragStart, dragging, updateTask, deleteTask })
            }} title="Toggle Done">✔</button>
            <button onClick={(e) => {
              e.stopPropagation();
-             if (confirm("Delete task?")) deleteTask(task.id);
+             if (e.shiftKey || confirm("Delete task?")) deleteTask(task.id);
            }} title="Delete">🗑</button>
         </div>
       </div>

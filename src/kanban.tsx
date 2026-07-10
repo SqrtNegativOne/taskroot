@@ -1,3 +1,7 @@
+import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
+import { SAMPLE_TASKS, durationLabel } from './data';
+import { useStored } from './store';
+
 // Kanban board — pulls tasks from the shared store, drag between columns to change status.
 
 const KANBAN_COLUMNS = [
@@ -20,17 +24,17 @@ function Kanban() {
       if (!active && Math.hypot(ev.clientX - start.x, ev.clientY - start.y) < 5) return;
       active = true;
       const el = document.elementFromPoint(ev.clientX, ev.clientY);
-      const colEl = el?.closest('[data-kanban-col]');
-      setDrag({ taskId: task.id, x: ev.clientX, y: ev.clientY, overCol: colEl?.dataset.kanbanCol || null });
+      const colEl = (el as HTMLElement)?.closest('[data-kanban-col]');
+      setDrag({ taskId: task.id, x: ev.clientX, y: ev.clientY, overCol: (colEl as HTMLElement)?.dataset?.kanbanCol || null });
     };
     const up = (ev) => {
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
       if (active) {
         const el = document.elementFromPoint(ev.clientX, ev.clientY);
-        const colEl = el?.closest('[data-kanban-col]');
-        if (colEl && colEl.dataset.kanbanCol !== task.status) {
-          setTasks(ts => ts.map(t => t.id === task.id ? { ...t, status: colEl.dataset.kanbanCol } : t));
+        const colEl = (el as HTMLElement)?.closest('[data-kanban-col]');
+        if (colEl && (colEl as HTMLElement).dataset.kanbanCol !== task.status) {
+          setTasks(ts => ts.map(t => t.id === task.id ? { ...t, status: (colEl as HTMLElement).dataset.kanbanCol } : t));
         }
       }
       setDrag(null);
@@ -118,4 +122,4 @@ function KanbanCard({ task, onPointerDown, dragging }) {
   );
 }
 
-Object.assign(window, { Kanban });
+export { Kanban };

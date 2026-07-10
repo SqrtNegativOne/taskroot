@@ -1,3 +1,6 @@
+// @ts-nocheck
+import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
+
 
 // tweaks-panel.jsx
 // Reusable Tweaks shell + form-control helpers.
@@ -561,8 +564,4 @@ function TweakButton({ label, onClick, secondary = false }) {
   );
 }
 
-Object.assign(window, {
-  useTweaks, TweaksPanel, TweakSection, TweakRow,
-  TweakSlider, TweakToggle, TweakRadio, TweakSelect,
-  TweakText, TweakNumber, TweakColor, TweakButton,
-});
+export { useTweaks, TweaksPanel, TweakSection, TweakRow, TweakSlider, TweakToggle, TweakRadio, TweakSelect, TweakText, TweakNumber, TweakColor, TweakButton };

@@ -1,3 +1,6 @@
+import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
+import { TODAY, ymd, hhmmShort, durationLabel, MONTHS, DOW_SHORT, PAD2 } from './data';
+
 // Today's day calendar — vertical, 24h scrollable, with drag-to-schedule + resize.
 
 const PX_PER_MIN = 56 / 60; // 56 px per hour
@@ -227,4 +230,4 @@ function layoutEvents(events) {
   });
 }
 
-Object.assign(window, { DayCalendar, PX_PER_MIN, SNAP_MIN });
+export { DayCalendar, PX_PER_MIN, SNAP_MIN };

@@ -1,3 +1,7 @@
+import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
+import { SAMPLE_TIPS, SAMPLE_NOTES } from './data';
+import { useStored } from './store';
+
 // Tips list + Notes (Obsidian placeholder)
 
 function TipsList() {
@@ -92,4 +96,4 @@ function NotesList() {
   );
 }
 
-Object.assign(window, { TipsList, NotesList });
+export { TipsList, NotesList };

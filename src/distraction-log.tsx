@@ -1,3 +1,7 @@
+import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
+import { DEFAULT_STATUSES, DEFAULT_DISTRACTION_COLUMNS, SAMPLE_DISTRACTIONS, MONTHS, PAD2 } from './data';
+import { useStored } from './store';
+
 // Distraction log — Notion-like table.
 // Resizable columns, inline cell editing, custom status types.
 
@@ -138,8 +142,8 @@ function DLogRow({ row, columns, statuses, editingCell, setEditingCell, statusEd
                     defaultValue={row[col.id] || ''}
                     onBlur={(e) => { updateRow(row.id, { [col.id]: e.target.value }); setEditingCell(null); }}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter') e.target.blur();
-                      if (e.key === 'Escape') { setEditingCell(null); e.target.blur(); }
+                      if (e.key === 'Enter') { (e.target as HTMLElement).blur(); }
+                      if (e.key === 'Escape') { (e.target as HTMLElement).blur(); setEditingCell(null); }
                     }}
                   />
                 : (row[col.id] || <span className="dim">click to edit</span>)
@@ -263,4 +267,4 @@ function hexAlpha(hex, alpha) {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-Object.assign(window, { DistractionLog, hexAlpha });
+export { DistractionLog, hexAlpha };

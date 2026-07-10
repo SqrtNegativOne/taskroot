@@ -1,3 +1,6 @@
+import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
+import { TODAY, parseYMD, durationLabel, dueLabel } from './data';
+
 // Task list — left column. Filter, sort, draggable items.
 
 function TaskListPane({ tasks, setTasks, filter, setFilter, sort, setSort, query, setQuery, onDragStart, activeDragId, onAddTask }) {
@@ -189,4 +192,4 @@ function TaskRow({ task, index, onDragStart, dragging, updateTask, deleteTask })
   );
 }
 
-Object.assign(window, { TaskListPane });
+export { TaskListPane };

@@ -1,3 +1,20 @@
+// @ts-nocheck
+import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
+// @ts-nocheck
+import { TODAY, SAMPLE_TASKS, SAMPLE_EVENTS, ymd, durationLabel } from './data';
+// @ts-nocheck
+import { DayCalendar, PX_PER_MIN, SNAP_MIN } from './day-cal';
+// @ts-nocheck
+import { MonthCalendar } from './month-cal';
+// @ts-nocheck
+import { TopBar } from './shell';
+// @ts-nocheck
+import { load, useStored, seedDefaults } from './store';
+// @ts-nocheck
+import { TaskListPane } from './task-list';
+// @ts-nocheck
+import { useTweaks, TweaksPanel, TweakSection, TweakSlider, TweakToggle, TweakRadio, TweakColor } from './tweaks-panel';
+
 // Main app — layout, drag-and-drop orchestration, tweak state.
 
 const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
@@ -9,7 +26,7 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
   "showCurrentTime": true
 }/*EDITMODE-END*/;
 
-function App() {
+function PlanView() {
   const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
 
   // Data state (persisted)
@@ -20,11 +37,13 @@ function App() {
   React.useEffect(() => { 
     seedDefaults(); 
     const validTasks = tasks.filter(t => t.title && t.title.trim() !== '');
-    setTasks(validTasks);
-    setEvents(es => es.filter(e => {
-      if (e.taskId) return validTasks.some(t => t.id === e.taskId);
-      return e.title && e.title.trim() !== '';
-    }));
+    if (validTasks.length !== tasks.length) {
+      setTasks(validTasks);
+      setEvents(es => es.filter(e => {
+        if (e.taskId) return validTasks.some(t => t.id === e.taskId);
+        return e.title && e.title.trim() !== '';
+      }));
+    }
   }, [setTasks, setEvents, tasks]);
 
   // UI state — task list
@@ -327,6 +346,34 @@ function resolveDropTarget(el, x, y, task, event) {
   return null;
 }
 
+function TitleInput({ value, onChange, disabled }) {
+  const [localValue, setLocalValue] = React.useState(value);
+
+  React.useEffect(() => {
+    setLocalValue(value);
+  }, [value]);
+
+  const handleBlur = () => {
+    if (localValue !== value) onChange(localValue);
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.target.blur();
+    }
+  };
+
+  return (
+    <input 
+      value={localValue || ''}
+      onChange={e => setLocalValue(e.target.value)}
+      onBlur={handleBlur}
+      onKeyDown={handleKeyDown}
+      disabled={disabled}
+    />
+  );
+}
+
 function InspectorPane({ inspectorState, onClose, tasks, setTasks, events, setEvents }) {
   if (!inspectorState) return null;
   const isTask = inspectorState.type === 'task';
@@ -352,11 +399,11 @@ function InspectorPane({ inspectorState, onClose, tasks, setTasks, events, setEv
       <div className="inspector-body">
          <div className="inspector-field">
             <label>Title</label>
-            <input 
+            <TitleInput 
               value={title || ''} 
-              onChange={e => {
-                if (isTask) updateTask(item.id, { title: e.target.value });
-                else updateEvent(item.id, { title: e.target.value });
+              onChange={newTitle => {
+                if (isTask) updateTask(item.id, { title: newTitle });
+                else updateEvent(item.id, { title: newTitle });
               }}
               disabled={!isTask && item.taskId}
             />
@@ -408,4 +455,6 @@ function InspectorPane({ inspectorState, onClose, tasks, setTasks, events, setEv
   );
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+
+
+export { PlanView };

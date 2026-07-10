@@ -1,6 +1,11 @@
+import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
+import { TODAY, REST_CHECKLIST_DEFAULTS, MONTHS, DOW_SHORT } from './data';
+import { TopBar } from './shell';
+import { load, useStored, seedDefaults } from './store';
+
 // Rest screen — large checklist, editable, resets on each visit.
 
-function RestApp() {
+function RestView() {
   React.useEffect(() => { seedDefaults(); }, []);
 
   // Reset every visit: don't persist checks across reloads, but keep custom items.
@@ -69,7 +74,7 @@ function RestApp() {
                     defaultValue={item.title}
                     onBlur={(e) => updateItem(item.id, e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter') e.target.blur();
+                      if (e.key === 'Enter') { (e.target as HTMLElement).blur(); }
                       if (e.key === 'Escape') setEditing(null);
                     }}
                   />
@@ -135,4 +140,6 @@ function RestApp() {
   );
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<RestApp />);
+
+
+export { RestView };

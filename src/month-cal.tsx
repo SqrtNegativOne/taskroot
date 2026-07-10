@@ -1,3 +1,6 @@
+import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
+import { ymd, sameDay, addDays, startOfMonth, startOfWeek, hhmmShort, MONTHS, MONTHS_LONG, DOW_SHORT, PAD2 } from './data';
+
 // Month / week calendar — top of right pane.
 
 function MonthCalendar({ view, setView, anchor, setAnchor, events, tasks, today, dragState, onDropToDate, onEventDragStart, onAddEvent }) {
@@ -152,4 +155,4 @@ function weekRangeLabel(a, b) {
   return `${MONTHS[a.getMonth()]} ${a.getDate()} – ${MONTHS[b.getMonth()]} ${b.getDate()}, ${b.getFullYear()}`;
 }
 
-Object.assign(window, { MonthCalendar });
+export { MonthCalendar };

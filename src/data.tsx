@@ -1,3 +1,5 @@
+import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
+
 // Sample data + helpers for Taskroot.
 // Today is locked to 2026-05-20 (Wed) so the prototype feels populated.
 
@@ -186,7 +188,7 @@ const durationLabel = (mins) => {
 const dueLabel = (dueStr, today) => {
   if (!dueStr) return '';
   const d = parseYMD(dueStr);
-  const diff = Math.round((d - today) / 86400000);
+  const diff = Math.round((d.getTime() - today.getTime()) / 86400000);
   if (diff === 0) return 'today';
   if (diff === 1) return 'tomorrow';
   if (diff === -1) return 'yesterday';
@@ -244,11 +246,4 @@ const REST_CHECKLIST_DEFAULTS = [
   { id: 'r6', title: 'Maybe write in your journal.', type: 'check' },
 ];
 
-Object.assign(window, {
-  TODAY, SAMPLE_TASKS, SAMPLE_EVENTS,
-  DEFAULT_STATUSES, DEFAULT_DISTRACTION_COLUMNS, SAMPLE_DISTRACTIONS,
-  SAMPLE_TIPS, SAMPLE_NOTES, REST_CHECKLIST_DEFAULTS,
-  ymd, parseYMD, sameDay, addDays, startOfMonth, startOfWeek,
-  minutesToHHMM, hhmmShort, durationLabel, dueLabel,
-  MONTHS, MONTHS_LONG, DOW_SHORT, DOW_TINY, PAD2,
-});
+export { TODAY, SAMPLE_TASKS, SAMPLE_EVENTS, DEFAULT_STATUSES, DEFAULT_DISTRACTION_COLUMNS, SAMPLE_DISTRACTIONS, SAMPLE_TIPS, SAMPLE_NOTES, REST_CHECKLIST_DEFAULTS, ymd, parseYMD, sameDay, addDays, startOfMonth, startOfWeek, minutesToHHMM, hhmmShort, durationLabel, dueLabel, MONTHS, MONTHS_LONG, DOW_SHORT, DOW_TINY, PAD2 };

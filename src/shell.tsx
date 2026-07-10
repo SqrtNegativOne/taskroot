@@ -1,3 +1,6 @@
+import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
+import { MONTHS, DOW_SHORT, PAD2 } from './data';
+
 // Shared top bar + clickable stage indicator. Used across Plan, Do, Rest.
 
 function TopBar({ current, today }) {
@@ -47,4 +50,4 @@ function StageIndicator({ current }) {
   );
 }
 
-Object.assign(window, { TopBar, StageIndicator });
+export { TopBar, StageIndicator };

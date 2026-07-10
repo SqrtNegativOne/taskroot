@@ -1,3 +1,7 @@
+import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
+import { SAMPLE_TASKS, PAD2 } from './data';
+import { useStored } from './store';
+
 // Stopwatch — huge hero, count-up, start/stop/reset, persisted across reloads.
 
 function Stopwatch() {
@@ -141,4 +145,4 @@ function splitTime(ms) {
   };
 }
 
-Object.assign(window, { Stopwatch });
+export { Stopwatch };

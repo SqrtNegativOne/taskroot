@@ -32,8 +32,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loginWithGoogle = async () => {
     try {
       await signInWithPopup(auth, googleProvider);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error signing in with Google:", error);
+      alert(`Sign in failed: ${error.message}\n\nMake sure you have added your REAL Firebase config keys to a .env file!`);
     }
   };
 

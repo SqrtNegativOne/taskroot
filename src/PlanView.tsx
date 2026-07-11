@@ -54,6 +54,7 @@ function PlanView() {
   // UI state — calendar
   const [view, setView] = React.useState('month');
   const [anchor, setAnchor] = React.useState(new Date(TODAY));
+  const [timelineDate, setTimelineDate] = React.useState(new Date(TODAY));
 
   // Drag state — { task, pointerX, pointerY, target }
   const [dragState, setDragState] = React.useState(null);
@@ -103,7 +104,7 @@ function PlanView() {
           if (ds.target.kind === 'month-day') {
             createEvent(task, ds.target.date, 9 * 60, task.est || 60);
           } else if (ds.target.kind === 'day-time') {
-            createEvent(task, ymd(TODAY), ds.target.minute, task.est || 60);
+            createEvent(task, ymd(timelineDate), ds.target.minute, task.est || 60);
           }
         }
       }
@@ -149,7 +150,7 @@ function PlanView() {
             setEvents(prev => prev.map(evnt => evnt.id === eventToMove.id ? { ...evnt, date: ds.target.date } : evnt));
           } else if (ds.target.kind === 'day-time') {
             const duration = eventToMove.end - eventToMove.start;
-            setEvents(prev => prev.map(evnt => evnt.id === eventToMove.id ? { ...evnt, date: ymd(TODAY), start: ds.target.minute, end: ds.target.minute + duration } : evnt));
+            setEvents(prev => prev.map(evnt => evnt.id === eventToMove.id ? { ...evnt, date: ymd(timelineDate), start: ds.target.minute, end: ds.target.minute + duration } : evnt));
           }
         }
       }
@@ -180,12 +181,13 @@ function PlanView() {
     setInspectorState({ type: 'task', id });
   };
 
-  const onAddEvent = () => {
+  const onAddEvent = (dateArg) => {
+    const d = (dateArg instanceof Date) ? dateArg : timelineDate;
     const id = `e${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
     setEvents(es => [...es, {
        id,
        title: 'New Event',
-       date: ymd(TODAY),
+       date: ymd(d),
        start: 9 * 60,
        end: 10 * 60,
        type: 'meeting',
@@ -230,6 +232,8 @@ function PlanView() {
           <DayCalendar
             events={events} tasks={tasks}
             today={TODAY}
+            timelineDate={timelineDate}
+            setTimelineDate={setTimelineDate}
             dragState={dragState}
             setDragState={setDragState}
             onResizeEvent={onResizeEvent}

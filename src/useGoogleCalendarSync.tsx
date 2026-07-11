@@ -8,11 +8,22 @@ function toGoogleEvent(localEvent, tasks) {
   const dateStr = localEvent.date; // YYYY-MM-DD
   const startH = Math.floor(localEvent.start / 60);
   const startM = localEvent.start % 60;
-  const endH = Math.floor(localEvent.end / 60);
+  let endH = Math.floor(localEvent.end / 60);
   const endM = localEvent.end % 60;
+  let endYMD = dateStr;
+
+  if (endH >= 24) {
+    endH = 0;
+    const endDt = new Date(dateStr);
+    endDt.setDate(endDt.getDate() + 1);
+    const y = endDt.getFullYear();
+    const m = (endDt.getMonth() + 1).toString().padStart(2, '0');
+    const d = endDt.getDate().toString().padStart(2, '0');
+    endYMD = `${y}-${m}-${d}`;
+  }
 
   const startStr = `${dateStr}T${startH.toString().padStart(2, '0')}:${startM.toString().padStart(2, '0')}:00`;
-  const endStr = `${dateStr}T${endH.toString().padStart(2, '0')}:${endM.toString().padStart(2, '0')}:00`;
+  const endStr = `${endYMD}T${endH.toString().padStart(2, '0')}:${endM.toString().padStart(2, '0')}:00`;
 
   // Determine timezone based on the browser
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -77,6 +88,7 @@ export function useGoogleCalendarSync(events, setEvents, tasks) {
   const isSyncing = useRef(false);
   const tokenRef = useRef(null);
   const prevEventsRef = useRef(JSON.stringify(events));
+  const prevTasksRef = useRef(JSON.stringify(tasks));
 
   // Polling to update token from localStorage
   useEffect(() => {
@@ -94,6 +106,10 @@ export function useGoogleCalendarSync(events, setEvents, tasks) {
       timeMin.setMonth(timeMin.getMonth() - 1); // 1 month ago
       const timeMax = new Date();
       timeMax.setMonth(timeMax.getMonth() + 2); // 2 months ahead
+      
+      // Store windows for later use
+      window.lastTimeMin = timeMin;
+      window.lastTimeMax = timeMax;
 
       const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin.toISOString()}&timeMax=${timeMax.toISOString()}&singleEvents=true&maxResults=2500`, {
         headers: {
@@ -141,7 +157,7 @@ export function useGoogleCalendarSync(events, setEvents, tasks) {
     const body = toGoogleEvent(localEvent, tasks);
     try {
       await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${googleEventId}`, {
-        method: 'PUT', // or PATCH
+        method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${tokenRef.current}`,
           'Content-Type': 'application/json'
@@ -198,7 +214,13 @@ export function useGoogleCalendarSync(events, setEvents, tasks) {
             mergedEvents.push(localEvent); // Keep it anyway
           }
         } else if (!gEventIds.has(localEvent.googleEventId)) {
-           // It was deleted from Google Calendar, so we don't include it in mergedEvents
+           // Check if it's within the sync window
+           const localDate = new Date(localEvent.date);
+           if (window.lastTimeMin && window.lastTimeMax && localDate >= window.lastTimeMin && localDate <= window.lastTimeMax) {
+               // It was deleted from Google Calendar, so we don't include it in mergedEvents
+           } else {
+               mergedEvents.push(localEvent); // Keep it, it's outside the window
+           }
         } else {
            // We might need to handle updates. For now, Google Calendar wins if it's there.
            // However, if the user made changes locally while offline, they'd be overwritten.
@@ -241,10 +263,12 @@ export function useGoogleCalendarSync(events, setEvents, tasks) {
   useEffect(() => {
     if (isSyncing.current || !tokenRef.current) {
        prevEventsRef.current = JSON.stringify(events);
+       prevTasksRef.current = JSON.stringify(tasks);
        return;
     }
     
     const prevEvents = JSON.parse(prevEventsRef.current || '[]');
+    const prevTasks = JSON.parse(prevTasksRef.current || '[]');
     const currentEvents = events;
     
     const prevMap = new Map(prevEvents.map(e => [e.id, e]));
@@ -269,10 +293,14 @@ export function useGoogleCalendarSync(events, setEvents, tasks) {
                }
              }
           }
-        } else if (JSON.stringify(curr) !== JSON.stringify(prev)) {
-          // Updated locally (ignoring googleEventId addition because of stringify? Wait, we updated prevEvents above)
-          if (curr.googleEventId) {
-             await updateGoogleEvent(curr.googleEventId, curr);
+        } else {
+          // Updated locally?
+          const currGoogle = toGoogleEvent(curr, tasks);
+          const prevGoogle = toGoogleEvent(prev, prevTasks);
+          if (JSON.stringify(currGoogle) !== JSON.stringify(prevGoogle)) {
+             if (curr.googleEventId) {
+                await updateGoogleEvent(curr.googleEventId, curr);
+             }
           }
         }
       }
@@ -287,6 +315,7 @@ export function useGoogleCalendarSync(events, setEvents, tasks) {
       }
       
       prevEventsRef.current = JSON.stringify(updatedEvents);
+      prevTasksRef.current = JSON.stringify(tasks);
       if (needsStateUpdate) {
         setEvents(updatedEvents);
       }

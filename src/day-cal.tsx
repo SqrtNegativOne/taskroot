@@ -1,14 +1,17 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
-import { TODAY, ymd, hhmmShort, durationLabel, MONTHS, DOW_SHORT, PAD2 } from './data';
+import { TODAY, ymd, hhmmShort, durationLabel, MONTHS, DOW_SHORT, PAD2, addDays, sameDay } from './data';
 
 // Today's day calendar — vertical, 24h scrollable, with drag-to-schedule + resize.
 
 const PX_PER_MIN = 56 / 60; // 56 px per hour
 const SNAP_MIN = 15;
 
-function DayCalendar({ events, tasks, today, dragState, setDragState, onDropToTime, onResizeEvent, onMoveEvent, onEventClick, onAddEvent }) {
+function DayCalendar({ events, tasks, today, timelineDate, setTimelineDate, dragState, setDragState, onDropToTime, onResizeEvent, onMoveEvent, onEventClick, onAddEvent }) {
   const containerRef = React.useRef(null);
   const scrollRef = React.useRef(null);
+  
+  const viewDate = timelineDate || today;
+  const isToday = sameDay(viewDate, today);
 
   // Scroll to ~7am on first mount (after layout settles)
   React.useEffect(() => {
@@ -22,10 +25,21 @@ function DayCalendar({ events, tasks, today, dragState, setDragState, onDropToTi
     return () => cancelAnimationFrame(id);
   }, []);
 
-  // Current-time line — pinned to 10:42a for the prototype (frozen "today")
-  const nowMin = 10 * 60 + 42;
+  // Current-time line
+  const [nowMin, setNowMin] = React.useState(() => {
+    const d = new Date();
+    return d.getHours() * 60 + d.getMinutes();
+  });
 
-  const todayEvents = events.filter(e => e.date === ymd(today)).sort((a, b) => a.start - b.start);
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      const d = new Date();
+      setNowMin(d.getHours() * 60 + d.getMinutes());
+    }, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const todayEvents = events.filter(e => e.date === ymd(viewDate)).sort((a, b) => a.start - b.start);
 
   // Compute lanes for overlapping events
   const laid = layoutEvents(todayEvents);
@@ -36,12 +50,17 @@ function DayCalendar({ events, tasks, today, dragState, setDragState, onDropToTi
   return (
     <section className="day-pane">
       <header className="cal-hd">
-        <div className="cal-hd-left">
+        <div className="cal-hd-left" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button className="cal-nav-btn" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--fg-dim)' }} onClick={() => setTimelineDate(addDays(viewDate, -1))}>◀</button>
           <span className="bracket">┌─</span>
-          <span className="cal-hd-title">
-            TODAY · {DOW_SHORT[(today.getDay() + 6) % 7].toLowerCase()} {MONTHS[today.getMonth()].toLowerCase()} {today.getDate()}
+          <span className="cal-hd-title" style={{ color: isToday ? 'inherit' : 'var(--accent)' }}>
+            {isToday ? 'TODAY' : 'NOT TODAY'} · {DOW_SHORT[(viewDate.getDay() + 6) % 7].toLowerCase()} {MONTHS[viewDate.getMonth()].toLowerCase()} {viewDate.getDate()}
           </span>
           <span className="bracket">─┐</span>
+          <button className="cal-nav-btn" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--fg-dim)' }} onClick={() => setTimelineDate(addDays(viewDate, 1))}>▶</button>
+          {!isToday && (
+            <button className="cal-nav-btn" style={{ border: '1px solid var(--border)', padding: '2px 8px', background: 'none', color: 'var(--fg-dim)', cursor: 'pointer', fontSize: '11px', marginLeft: '8px', borderRadius: '4px' }} onClick={() => setTimelineDate(today)}>Today</button>
+          )}
         </div>
         <div className="cal-hd-right" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <button className="cal-nav-btn" style={{ border: '1px solid var(--border)', padding: '2px 8px', background: 'none', color: 'var(--fg-dim)', cursor: 'pointer' }} onClick={onAddEvent}>+ Event</button>
@@ -69,10 +88,12 @@ function DayCalendar({ events, tasks, today, dragState, setDragState, onDropToTi
           ))}
 
           {/* Now line */}
-          <div className="day-now" style={{ top: `${nowMin * PX_PER_MIN}px` }}>
-            <span className="day-now-label">now {hhmmShort(nowMin)}</span>
-            <div className="day-now-line" />
-          </div>
+          {isToday && (
+            <div className="day-now" style={{ top: `${nowMin * PX_PER_MIN}px` }}>
+              <span className="day-now-label">now {hhmmShort(nowMin)}</span>
+              <div className="day-now-line" />
+            </div>
+          )}
 
           {/* Events */}
           {laid.map(({ event, lane, lanes }) => (

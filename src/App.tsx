@@ -7,6 +7,9 @@ import { PlanView } from './PlanView';
 import { DoView } from './DoView';
 import { RestView } from './RestView';
 import { TopBar } from './shell';
+import { useStored } from './store';
+import { SAMPLE_TASKS, SAMPLE_EVENTS } from './data';
+import { useGoogleCalendarSync } from './useGoogleCalendarSync';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -130,11 +133,50 @@ function AppRouter() {
   );
 }
 
+function GlobalSync({ children }: { children: React.ReactNode }) {
+  const [tasks, setTasks, tasksLoaded] = useStored('tasks', SAMPLE_TASKS);
+  const [events, setEvents, eventsLoaded] = useStored('events', SAMPLE_EVENTS);
+  useGoogleCalendarSync(events, setEvents, tasks);
+
+  if (!tasksLoaded || !eventsLoaded) {
+    return (
+      <div style={{
+        display: 'flex', 
+        height: '100vh', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        flexDirection: 'column',
+        background: 'var(--bg)',
+        color: 'var(--fg)',
+        fontFamily: 'var(--sans)'
+      }}>
+        <div style={{
+          width: '40px',
+          height: '40px',
+          border: '3px solid var(--border)',
+          borderTopColor: 'var(--accent)',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite'
+        }} />
+        <style>{`
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
+    );
+  }
+
+  return <>{children}</>;
+}
+
 export default function App() {
   return (
     <AuthProvider>
       <RequireAuth>
-        <AppRouter />
+        <GlobalSync>
+          <AppRouter />
+        </GlobalSync>
       </RequireAuth>
     </AuthProvider>
   );

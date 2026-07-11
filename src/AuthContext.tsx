@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { type User, signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
 import { auth, googleProvider } from './firebase';
+import { GoogleAuthProvider } from 'firebase/auth';
 
 interface AuthContextType {
   user: User | null;
@@ -31,7 +32,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loginWithGoogle = async () => {
     try {
-      await signInWithPopup(auth, googleProvider);
+      const result = await signInWithPopup(auth, googleProvider);
+      const credential = GoogleAuthProvider.credentialFromResult(result);
+      if (credential?.accessToken) {
+        localStorage.setItem('google_access_token', credential.accessToken);
+      }
     } catch (error: any) {
       console.error("Error signing in with Google:", error);
       alert(`Sign in failed: ${error.message}\n\nMake sure you have added your REAL Firebase config keys to a .env file!`);
@@ -41,6 +46,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     try {
       await signOut(auth);
+      localStorage.removeItem('google_access_token');
     } catch (error) {
       console.error("Error signing out:", error);
     }

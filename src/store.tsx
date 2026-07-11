@@ -5,7 +5,15 @@ import { auth, db } from './firebase';
 
 // React hook: state synced to Firestore.
 function useStored(key: string, initial: any) {
-  const [val, setVal] = useState(initial);
+  const [val, setVal] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`taskroot_${key}`);
+      return saved ? JSON.parse(saved) : initial;
+    } catch (e) {
+      return initial;
+    }
+  });
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     const user = auth.currentUser;
@@ -14,12 +22,17 @@ function useStored(key: string, initial: any) {
     const docRef = doc(db, 'users', user.uid, 'store', key);
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
-        setVal(docSnap.data().value);
+        const serverVal = docSnap.data().value;
+        setVal(serverVal);
+        localStorage.setItem(`taskroot_${key}`, JSON.stringify(serverVal));
       } else {
-        // If it doesn't exist in Firestore, seed it with initial
-        setDoc(docRef, { value: initial }, { merge: true });
-        setVal(initial);
+        // If it doesn't exist in Firestore, seed it with current val
+        setDoc(docRef, { value: val }, { merge: true });
       }
+      setIsLoaded(true);
+    }, (err) => {
+      console.warn(`Firestore sync failed for ${key}:`, err);
+      setIsLoaded(true); // Still consider it loaded if it fails so we don't block forever
     });
     return unsubscribe;
   }, [key]); // removed initial from deps to avoid infinite loops if initial is an object
@@ -32,16 +45,22 @@ function useStored(key: string, initial: any) {
     if (typeof newValOrUpdater === 'function') {
       setVal((prev: any) => {
         const result = newValOrUpdater(prev);
-        setDoc(docRef, { value: result }, { merge: true });
+        localStorage.setItem(`taskroot_${key}`, JSON.stringify(result));
+        if (user) {
+          setDoc(docRef, { value: result }, { merge: true }).catch(e => console.warn('Firestore write failed', e));
+        }
         return result;
       });
     } else {
       setVal(newValOrUpdater); // Optimistic update
-      setDoc(docRef, { value: newValOrUpdater }, { merge: true });
+      localStorage.setItem(`taskroot_${key}`, JSON.stringify(newValOrUpdater));
+      if (user) {
+        setDoc(docRef, { value: newValOrUpdater }, { merge: true }).catch(e => console.warn('Firestore write failed', e));
+      }
     }
   };
 
-  return [val, setValWrapper];
+  return [val, setValWrapper, isLoaded];
 }
 
 // These are largely no-ops now since useStored handles everything via Firestore

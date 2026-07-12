@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { hydrateEvents } from './events';
+import { hydrateEvents, type AppEvent } from './events';
 
 describe('hydrateEvents', () => {
   it('should hydrate a plan event using the corresponding task data', () => {
@@ -10,7 +10,7 @@ describe('hydrateEvents', () => {
     
     const events = [
       { id: 'e1', type: 'plan', date: '2026-05-20', start: 600, end: 660, taskId: 't2' }
-    ];
+    ] as AppEvent[];
 
     const hydrated = hydrateEvents(events, tasks);
     
@@ -24,7 +24,7 @@ describe('hydrateEvents', () => {
     const tasks = [];
     const events = [
       { id: 'e1', type: 'meeting', date: '2026-05-20', start: 600, end: 660, title: 'Team Sync' }
-    ];
+    ] as AppEvent[];
 
     const hydrated = hydrateEvents(events, tasks);
     
@@ -34,7 +34,7 @@ describe('hydrateEvents', () => {
   });
 
   it('should reflect name updates dynamically (name update thing)', () => {
-    const events = [{ id: 'e1', type: 'plan', date: '2026-05-20', start: 600, end: 660, taskId: 't1' }];
+    const events = [{ id: 'e1', type: 'plan', date: '2026-05-20', start: 600, end: 660, taskId: 't1' }] as AppEvent[];
     
     // Initial state
     let tasks = [{ id: 't1', title: 'Old Name', priority: 'P1', status: 'nextup', tags: [] }];

@@ -1,22 +1,12 @@
-// @ts-nocheck
 import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
-// @ts-nocheck
 import { TODAY, SAMPLE_TASKS, SAMPLE_EVENTS, ymd, durationLabel } from '../../core/data';
-// @ts-nocheck
-import { DayTimeline, PX_PER_MIN, SNAP_MIN } from './day-cal';
-// @ts-nocheck
+import { DayTimeline, PX_PER_MIN, SNAP_MIN } from './day-timeline';
 import { MonthCalendar } from './month-cal';
-// @ts-nocheck
 import { TitleBar } from '../../components/shell';
-// @ts-nocheck
 import { load, useStored, seedDefaults } from '../../core/store';
-// @ts-nocheck
 import { TaskListPane } from './task-list';
-// @ts-nocheck
 import { useTweaks, TweaksPanel, TweakSection, TweakSlider, TweakToggle, TweakRadio, TweakColor } from './tweaks-panel';
 import { SplitPane } from '../../components/split-pane';
-
-// Main app — layout, drag-and-drop orchestration, tweak state.
 
 const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
   "accent": "var(--tag-yellow)",
@@ -85,7 +75,7 @@ function PlanScreen() {
       }
       // Hit test for drop target
       const el = document.elementFromPoint(ev.clientX, ev.clientY);
-      const target = resolveDropTarget(el, ev.clientX, ev.clientY, task);
+      const target = resolveDropTarget(el, ev.clientX, ev.clientY, task, undefined);
       setDragState({
         task,
         pointerX: ev.clientX,
@@ -239,6 +229,7 @@ function PlanScreen() {
                 dragState={dragState}
                 onEventDragStart={onEventDragStart}
                 onAddEvent={onAddEvent}
+                onDropToDate={() => {}}
               />
               <DayTimeline
                 events={events} tasks={tasks}
@@ -251,6 +242,7 @@ function PlanScreen() {
                 onMoveEvent={onMoveEvent}
                 onEventClick={(ev) => setInspectorState({ type: 'event', id: ev.id })}
                 onAddEvent={onAddEvent}
+                onDropToTime={() => {}}
               />
             </SplitPane>
           </div>

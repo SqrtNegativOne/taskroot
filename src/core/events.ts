@@ -3,6 +3,8 @@ export type BaseEvent = {
   date: string; // YYYY-MM-DD
   start: number; // minutes from midnight
   end: number;
+  endDate?: string;
+  isAllDay?: boolean;
 };
 
 // TaskEvent uses a task, does not have a title of its own.

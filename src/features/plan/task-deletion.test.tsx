@@ -1,4 +1,5 @@
 import React from 'react';
+import '@testing-library/jest-dom';
 import { MemoryRouter } from 'react-router-dom';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { expect, test, vi, beforeEach } from 'vitest';
@@ -15,13 +16,13 @@ vi.mock('../../core/api', () => ({
 }));
 
 // Mock matchMedia
-window.matchMedia = window.matchMedia || function() {
+window.matchMedia = window.matchMedia || (function() {
     return {
         matches: false,
         addListener: function() {},
         removeListener: function() {}
-    };
-};
+    } as any;
+});
 
 // Mock ResizeObserver
 class ResizeObserver {

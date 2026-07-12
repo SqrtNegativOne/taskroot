@@ -1,6 +1,4 @@
-// @ts-nocheck
 import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
-
 
 // tweaks-panel.jsx
 // Reusable Tweaks shell + form-control helpers.
@@ -205,7 +203,7 @@ function TweaksPanel({ title = 'Tweaks', noDeckControls = false, children }) {
   // copies still wait for the host's __omelette_rail_enabled postMessage —
   // same listener handles those.)
   const [railEnabled, setRailEnabled] = React.useState(
-    () => hasDeckStage && !!document.querySelector('deck-stage')?._railEnabled,
+    () => hasDeckStage && !!(document.querySelector('deck-stage') as any)?._railEnabled,
   );
   React.useEffect(() => {
     if (!hasDeckStage || railEnabled) return undefined;
@@ -316,7 +314,7 @@ function TweaksPanel({ title = 'Tweaks', noDeckControls = false, children }) {
 
 // ── Layout helpers ──────────────────────────────────────────────────────────
 
-function TweakSection({ label, children }) {
+function TweakSection({ label, children }: { label: React.ReactNode; children?: React.ReactNode }) {
   return (
     <>
       <div className="twk-sect">{label}</div>
@@ -325,7 +323,7 @@ function TweakSection({ label, children }) {
   );
 }
 
-function TweakRow({ label, value, children, inline = false }) {
+function TweakRow({ label, value, children, inline = false }: { label: React.ReactNode; value?: any; children?: React.ReactNode; inline?: boolean }) {
   return (
     <div className={inline ? 'twk-row twk-row-h' : 'twk-row'}>
       <div className="twk-lbl">

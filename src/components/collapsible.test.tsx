@@ -1,10 +1,11 @@
 import { render, screen, fireEvent } from '@testing-library/react';
+import '@testing-library/jest-dom';
 import { describe, it, expect } from 'vitest';
 import { Collapsible } from './collapsible';
 
 describe('Collapsible UI Component', () => {
   it('renders the title', () => {
-    render(<Collapsible title="My Test Section"><div>Hidden Content</div></Collapsible>);
+    render(<Collapsible title="My Test Section" badge={null}><div>Hidden Content</div></Collapsible>);
     
     // The UI should display the title
     expect(screen.getByText('My Test Section')).toBeInTheDocument();
@@ -12,7 +13,7 @@ describe('Collapsible UI Component', () => {
 
   it('toggles content visibility when clicked', () => {
     // 1. Render the component in the virtual DOM
-    render(<Collapsible title="Click Me"><div>Hidden Content</div></Collapsible>);
+    render(<Collapsible title="Click Me" badge={null}><div>Hidden Content</div></Collapsible>);
     
     // 2. Assert initial state (should be closed, meaning the content isn't visible)
     // Actually, by default in collapsible.tsx, it might be open or closed depending on its default state. 

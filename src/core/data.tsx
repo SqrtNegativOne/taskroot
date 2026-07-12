@@ -10,6 +10,8 @@ const SAMPLE_TASKS = [];
 // Events already on the calendar. Time is minutes from midnight.
 // type: 'plan' (planned task block) | 'meeting' (pre-existing) | 'block' (focus block)
 const SAMPLE_EVENTS = [];
+const SAMPLE_DISTRACTIONS: any[] = [];
+const SAMPLE_NOTES: any[] = [];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -87,4 +89,4 @@ const REST_CHECKLIST_DEFAULTS = [
   { id: 'r6', title: 'Maybe write in your journal.', type: 'check' },
 ];
 
-export { TODAY, SAMPLE_TASKS, SAMPLE_EVENTS, DEFAULT_STATUSES, DEFAULT_DISTRACTION_COLUMNS, SAMPLE_TIPS, REST_CHECKLIST_DEFAULTS, ymd, parseYMD, sameDay, addDays, startOfMonth, startOfWeek, minutesToHHMM, hhmmShort, durationLabel, dueLabel, MONTHS, MONTHS_LONG, DOW_SHORT, DOW_TINY, PAD2 };
+export { TODAY, SAMPLE_TASKS, SAMPLE_EVENTS, DEFAULT_STATUSES, DEFAULT_DISTRACTION_COLUMNS, SAMPLE_TIPS, REST_CHECKLIST_DEFAULTS, ymd, parseYMD, sameDay, addDays, startOfMonth, startOfWeek, minutesToHHMM, hhmmShort, durationLabel, dueLabel, MONTHS, MONTHS_LONG, DOW_SHORT, DOW_TINY, PAD2, SAMPLE_DISTRACTIONS, SAMPLE_NOTES };

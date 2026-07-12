@@ -39,7 +39,7 @@ function PlanScreen() {
 
   // UI state — task list
   const [query, setQuery] = React.useState('');
-  const [filter, setFilter] = React.useState({ status: 'all', priority: 'all', tag: 'all' });
+  const [filters, setFilters] = React.useState([]);
   const [sort, setSort] = React.useState('priority');
 
   // UI state — calendar
@@ -208,7 +208,7 @@ function PlanScreen() {
         <SplitPane direction="horizontal" defaultSize={360} minSize={200} snapThreshold={50}>
           <TaskListPane
             tasks={tasks} setTasks={setTasks}
-            filter={filter} setFilter={setFilter}
+            filters={filters} setFilters={setFilters}
             sort={sort} setSort={setSort}
             query={query} setQuery={setQuery}
             onDragStart={onTaskDragStart}
@@ -398,10 +398,21 @@ function timeToMin(t) {
 
 function InspectorPane({ inspectorState, onClose, tasks, setTasks, events, setEvents }) {
   const [activeState, setActiveState] = React.useState(null);
+  const paneRef = React.useRef(null);
 
   React.useEffect(() => {
     if (inspectorState) setActiveState(inspectorState);
   }, [inspectorState]);
+
+  React.useEffect(() => {
+    function handleClickOutside(e) {
+      if (inspectorState && paneRef.current && !paneRef.current.contains(e.target)) {
+        onClose();
+      }
+    }
+    document.addEventListener("pointerdown", handleClickOutside);
+    return () => document.removeEventListener("pointerdown", handleClickOutside);
+  }, [inspectorState, onClose]);
 
   const currentState = inspectorState || activeState;
   
@@ -422,7 +433,7 @@ function InspectorPane({ inspectorState, onClose, tasks, setTasks, events, setEv
   const deleteEvent = (id) => setEvents(es => es.filter(e => e.id !== id));
 
   return (
-    <div className={`inspector-pane ${isOpen ? 'is-open' : ''}`}>
+    <div ref={paneRef} className={`inspector-pane ${isOpen ? 'is-open' : ''}`}>
       {item && (
         <>
           <div className="inspector-hd">

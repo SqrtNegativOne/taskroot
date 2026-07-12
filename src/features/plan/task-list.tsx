@@ -1,9 +1,13 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
 import { TODAY, parseYMD, durationLabel, dueLabel } from '../../core/data';
+import { ListFilter, Plus, X, ArrowDownUp } from 'lucide-react';
 
 // Task list — left column. Filter, sort, draggable items.
 
-function TaskListPane({ tasks, setTasks, filter, setFilter, sort, setSort, query, setQuery, onDragStart, activeDragId, onAddTask, onDeleteTask }) {
+function TaskListPane({ tasks = [], setTasks, filters = [], setFilters, sort, setSort, query = '', setQuery, onDragStart, activeDragId, onAddTask, onDeleteTask }) {
+  const [showFilters, setShowFilters] = useState(false);
+  const [showSort, setShowSort] = useState(false);
+
   const updateTask = (id, updates) => setTasks(ts => ts.map(t => t.id === id ? { ...t, ...updates } : t));
   const deleteTask = (id) => {
     if (onDeleteTask) {
@@ -12,14 +16,32 @@ function TaskListPane({ tasks, setTasks, filter, setFilter, sort, setSort, query
       setTasks(ts => ts.filter(t => t.id !== id));
     }
   };
+
+  const allTags = React.useMemo(() => {
+    const s = new Set<string>();
+    tasks.forEach(t => t.tags.forEach(tag => s.add(tag)));
+    return Array.from(s).sort();
+  }, [tasks]);
+
   const filtered = React.useMemo(() => {
     let xs = tasks;
-    if (filter.status !== 'all') xs = xs.filter(t => t.status === filter.status);
-    if (filter.priority !== 'all') xs = xs.filter(t => t.priority === filter.priority);
-    if (filter.tag !== 'all') xs = xs.filter(t => t.tags.includes(filter.tag));
+    for (const f of filters) {
+      if (!f.column || !f.value) continue;
+      xs = xs.filter(t => {
+        let match = false;
+        if (f.column === 'status') {
+          match = t.status === f.value;
+        } else if (f.column === 'priority') {
+          match = t.priority === f.value;
+        } else if (f.column === 'tag') {
+          match = t.tags.includes(f.value);
+        }
+        return f.operator === 'is not' ? !match : match;
+      });
+    }
     if (query.trim()) {
       const q = query.toLowerCase();
-      xs = xs.filter(t => t.title.toLowerCase().includes(q) || t.tags.some(tag => tag.includes(q)));
+      xs = xs.filter(t => t.title.toLowerCase().includes(q) || t.tags.some(tag => tag.toLowerCase().includes(q)));
     }
     const cmp = {
       priority: (a, b) => a.priority.localeCompare(b.priority),
@@ -29,13 +51,28 @@ function TaskListPane({ tasks, setTasks, filter, setFilter, sort, setSort, query
       added: () => 0,
     }[sort] || (() => 0);
     return [...xs].sort(cmp);
-  }, [tasks, filter, sort, query]);
+  }, [tasks, filters, sort, query]);
 
-  const allTags = React.useMemo(() => {
-    const s = new Set();
-    tasks.forEach(t => t.tags.forEach(tag => s.add(tag)));
-    return ['all', ...[...s].sort()];
-  }, [tasks]);
+  const addFilter = () => {
+    setFilters([...filters, { id: Date.now().toString(), column: 'status', operator: 'is', value: 'todo' }]);
+  };
+
+  const updateFilter = (id, updates) => {
+    setFilters(fs => fs.map(f => {
+      if (f.id !== id) return f;
+      const nf = { ...f, ...updates };
+      if (updates.column && updates.column !== f.column) {
+        if (updates.column === 'status') nf.value = 'todo';
+        if (updates.column === 'priority') nf.value = 'P0';
+        if (updates.column === 'tag') nf.value = allTags[0] || '';
+      }
+      return nf;
+    }));
+  };
+
+  const removeFilter = (id) => {
+    setFilters(fs => fs.filter(f => f.id !== id));
+  };
 
   return (
     <aside className="task-pane">
@@ -52,38 +89,104 @@ function TaskListPane({ tasks, setTasks, filter, setFilter, sort, setSort, query
             <button className="search-clear" onClick={() => setQuery('')} aria-label="clear">×</button>
           )}
         </div>
-        <div className="task-pane-controls">
-          <Selector
-            label="status"
-            value={filter.status}
-            onChange={(v) => setFilter({ ...filter, status: v })}
-            options={[['all','all'],['todo','todo'],['next-up','next-up'],['doing','doing'],['done','done']]}
-          />
-          <Selector
-            label="priority"
-            value={filter.priority}
-            onChange={(v) => setFilter({ ...filter, priority: v })}
-            options={[['all','all'],['P0','P0'],['P1','P1'],['P2','P2'],['P3','P3']]}
-          />
-          <Selector
-            label="tag"
-            value={filter.tag}
-            onChange={(v) => setFilter({ ...filter, tag: v })}
-            options={allTags.map(t => [t, t])}
-          />
-          <Selector
-            label="sort"
-            value={sort}
-            onChange={setSort}
-            options={[
-              ['priority','priority'],
-              ['due','due'],
-              ['est','est'],
-              ['title','title'],
-              ['added','added'],
-            ]}
-          />
+        <div className="task-pane-controls" style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', width: '100%' }}>
+          <button 
+            onClick={() => setShowFilters(!showFilters)} 
+            style={{ 
+               background: showFilters || filters.length > 0 ? 'var(--bg-surface)' : 'transparent', 
+               border: '1px solid var(--border)', 
+               color: 'var(--fg)', 
+               borderRadius: '4px', 
+               padding: '4px 6px', 
+               display: 'flex', 
+               alignItems: 'center', 
+               gap: '4px',
+               cursor: 'pointer'
+            }}
+            title="Filter Tasks"
+          >
+            <ListFilter size={16} />
+            {filters.length > 0 && <span style={{ fontSize: '0.8em', fontWeight: 'bold' }}>{filters.length}</span>}
+          </button>
+          <button 
+            onClick={() => setShowSort(!showSort)} 
+            style={{ 
+               background: showSort ? 'var(--bg-surface)' : 'transparent', 
+               border: '1px solid var(--border)', 
+               color: 'var(--fg)', 
+               borderRadius: '4px', 
+               padding: '4px 6px', 
+               display: 'flex', 
+               alignItems: 'center', 
+               gap: '4px',
+               cursor: 'pointer'
+            }}
+            title="Sort Tasks"
+          >
+            <ArrowDownUp size={16} />
+          </button>
+          
+          <button 
+            style={{ 
+               marginLeft: 'auto',
+               background: 'var(--bg-surface)', 
+               border: '1px solid var(--border)', 
+               color: 'var(--fg)', 
+               borderRadius: '4px',
+               cursor: 'pointer', 
+               padding: '4px 8px', 
+               fontSize: '0.9em',
+               display: 'flex',
+               alignItems: 'center',
+               gap: '4px'
+            }}
+            onClick={onAddTask}
+          >
+            <Plus size={14} /> Task
+          </button>
         </div>
+        {showFilters && (
+          <div className="task-pane-filters" style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '8px', padding: '10px', background: 'var(--bg-surface)', borderRadius: '6px', border: '1px solid var(--border)' }}>
+            {filters.map(f => (
+              <div key={f.id} style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                <select value={f.column} onChange={e => updateFilter(f.id, { column: e.target.value })} className="selector-input" style={{ flex: 1, padding: '4px 8px', border: '1px solid var(--border)', borderRadius: '4px', background: 'var(--bg-app)', color: 'var(--fg)' }}>
+                  <option value="status">Status</option>
+                  <option value="priority">Priority</option>
+                  <option value="tag">Tag</option>
+                </select>
+                <select value={f.operator} onChange={e => updateFilter(f.id, { operator: e.target.value })} className="selector-input" style={{ width: '75px', padding: '4px 8px', border: '1px solid var(--border)', borderRadius: '4px', background: 'var(--bg-app)', color: 'var(--fg)' }}>
+                  <option value="is">is</option>
+                  <option value="is not">is not</option>
+                </select>
+                <select value={f.value} onChange={e => updateFilter(f.id, { value: e.target.value })} className="selector-input" style={{ flex: 1.5, padding: '4px 8px', border: '1px solid var(--border)', borderRadius: '4px', background: 'var(--bg-app)', color: 'var(--fg)' }}>
+                  {f.column === 'status' && ['todo', 'next-up', 'doing', 'done'].map(v => <option key={v} value={v}>{v}</option>)}
+                  {f.column === 'priority' && ['P0', 'P1', 'P2', 'P3'].map(v => <option key={v} value={v}>{v}</option>)}
+                  {f.column === 'tag' && allTags.map(v => <option key={v} value={v}>{v}</option>)}
+                </select>
+                <button onClick={() => removeFilter(f.id)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px', color: 'var(--fg)', opacity: 0.6 }}>
+                  <X size={16} />
+                </button>
+              </div>
+            ))}
+            <button onClick={addFilter} style={{ background: 'transparent', border: 'none', color: 'var(--fg)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', alignSelf: 'flex-start', padding: '4px 4px', fontSize: '0.9em', opacity: 0.8 }}>
+              <Plus size={14} /> Add filter
+            </button>
+          </div>
+        )}
+        {showSort && (
+          <div className="task-pane-filters" style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '8px', padding: '10px', background: 'var(--bg-surface)', borderRadius: '6px', border: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.9em', color: 'var(--fg)', opacity: 0.8 }}>Sort by</span>
+              <select value={sort} onChange={e => setSort(e.target.value)} className="selector-input" style={{ flex: 1, padding: '4px 8px', border: '1px solid var(--border)', borderRadius: '4px', background: 'var(--bg-app)', color: 'var(--fg)' }}>
+                <option value="priority">Priority</option>
+                <option value="due">Due Date</option>
+                <option value="est">Estimate</option>
+                <option value="title">Title</option>
+                <option value="added">Date Added</option>
+              </select>
+            </div>
+          </div>
+        )}
       </header>
 
       <div className="task-list">
@@ -106,31 +209,11 @@ function TaskListPane({ tasks, setTasks, filter, setFilter, sort, setSort, query
         )}
       </div>
 
-      <footer className="task-pane-ft" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <button 
-          style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', color: 'var(--fg)', cursor: 'pointer', padding: '2px 8px', fontSize: '0.9em' }}
-          onClick={onAddTask}
-        >+ Task</button>
-      </footer>
+
     </aside>
   );
 }
 
-function Selector({ label, value, onChange, options }) {
-  return (
-    <label className="selector">
-      <span className="selector-label">{label}:</span>
-      <select
-        className="selector-input"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      >
-        {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-      </select>
-      <span className="selector-caret">▾</span>
-    </label>
-  );
-}
 
 function TaskRow({ task, index, onDragStart, dragging, updateTask, deleteTask }) {
   const handlePointerDown = (e) => {

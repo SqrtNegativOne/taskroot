@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from './core/AuthContext';
 import { PlanScreen } from './features/plan/PlanScreen';
 import { DoScreen } from './features/do/DoScreen';
 import { RestScreen } from './features/rest/RestScreen';
+import { SettingsScreen } from './features/settings/SettingsScreen';
 import { TitleBar } from './components/shell';
 import { useStored } from './core/store';
 import { SAMPLE_TASKS, SAMPLE_EVENTS } from './core/data';
@@ -41,6 +42,7 @@ function AppRouter() {
       <Route path="/plan" element={<PlanScreen />} />
       <Route path="/do" element={<DoScreen />} />
       <Route path="/rest" element={<RestScreen />} />
+      <Route path="/settings" element={<SettingsScreen />} />
       <Route path="*" element={<Navigate to="/plan" replace />} />
     </Routes>
   );

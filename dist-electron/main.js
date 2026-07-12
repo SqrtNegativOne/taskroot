@@ -21,12 +21,31 @@ ipcMain.on('log-to-file', (event, level, message) => {
         console.error('Failed to write to log file:', err);
     }
 });
+// Window controls
+ipcMain.on('window-minimize', (event) => {
+    const window = BrowserWindow.fromWebContents(event.sender);
+    window?.minimize();
+});
+ipcMain.on('window-maximize', (event) => {
+    const window = BrowserWindow.fromWebContents(event.sender);
+    if (window?.isMaximized()) {
+        window?.unmaximize();
+    }
+    else {
+        window?.maximize();
+    }
+});
+ipcMain.on('window-close', (event) => {
+    const window = BrowserWindow.fromWebContents(event.sender);
+    window?.close();
+});
 function createWindow() {
     win = new BrowserWindow({
         width: 1200,
         height: 800,
+        frame: false,
         webPreferences: {
-            preload: path.join(__dirname, 'preload.js'),
+            preload: path.join(__dirname, 'preload.cjs'),
             nodeIntegration: false,
             contextIsolation: true,
         },

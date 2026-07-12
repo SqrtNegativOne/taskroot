@@ -28,18 +28,21 @@ ipcMain.on('log-to-file', (event, level, message) => {
 });
 
 // Window controls
-ipcMain.on('window-minimize', () => {
-  win?.minimize();
+ipcMain.on('window-minimize', (event) => {
+  const window = BrowserWindow.fromWebContents(event.sender);
+  window?.minimize();
 });
-ipcMain.on('window-maximize', () => {
-  if (win?.isMaximized()) {
-    win?.unmaximize();
+ipcMain.on('window-maximize', (event) => {
+  const window = BrowserWindow.fromWebContents(event.sender);
+  if (window?.isMaximized()) {
+    window?.unmaximize();
   } else {
-    win?.maximize();
+    window?.maximize();
   }
 });
-ipcMain.on('window-close', () => {
-  win?.close();
+ipcMain.on('window-close', (event) => {
+  const window = BrowserWindow.fromWebContents(event.sender);
+  window?.close();
 });
 
 function createWindow() {
@@ -48,7 +51,7 @@ function createWindow() {
     height: 800,
     frame: false,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, 'preload.cjs'),
       nodeIntegration: false,
       contextIsolation: true,
     },

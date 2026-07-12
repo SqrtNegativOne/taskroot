@@ -11,7 +11,7 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "electron:start": "electron .",
-    "start": "concurrently \"npm run dev\" \"wait-on http://localhost:5173 && cross-env VITE_DEV_SERVER_URL=http://localhost:5173 npm run electron:start\"",
+    "start": "concurrently --kill-others \"npm run dev\" \"wait-on http://localhost:5173 && cross-env VITE_DEV_SERVER_URL=http://localhost:5173 npm run electron:start\"",
     "test": "vitest"
   },
   "dependencies": {

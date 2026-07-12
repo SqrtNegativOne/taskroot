@@ -13,6 +13,7 @@ function TopBar({ current, today }) {
 
   return (
     <header className="topbar">
+      <div className="drag-region" />
       <div className="topbar-left">
         <StageIndicator current={current} />
       </div>

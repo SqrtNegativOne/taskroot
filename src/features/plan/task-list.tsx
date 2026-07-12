@@ -3,9 +3,15 @@ import { TODAY, parseYMD, durationLabel, dueLabel } from '../../core/data';
 
 // Task list — left column. Filter, sort, draggable items.
 
-function TaskListPane({ tasks, setTasks, filter, setFilter, sort, setSort, query, setQuery, onDragStart, activeDragId, onAddTask }) {
+function TaskListPane({ tasks, setTasks, filter, setFilter, sort, setSort, query, setQuery, onDragStart, activeDragId, onAddTask, onDeleteTask }) {
   const updateTask = (id, updates) => setTasks(ts => ts.map(t => t.id === id ? { ...t, ...updates } : t));
-  const deleteTask = (id) => setTasks(ts => ts.filter(t => t.id !== id));
+  const deleteTask = (id) => {
+    if (onDeleteTask) {
+      onDeleteTask(id);
+    } else {
+      setTasks(ts => ts.filter(t => t.id !== id));
+    }
+  };
   const filtered = React.useMemo(() => {
     let xs = tasks;
     if (filter.status !== 'all') xs = xs.filter(t => t.status === filter.status);
@@ -34,14 +40,7 @@ function TaskListPane({ tasks, setTasks, filter, setFilter, sort, setSort, query
   return (
     <aside className="task-pane">
       <header className="task-pane-hd">
-        <div className="task-pane-title">
-          <span className="bracket">[</span>
-          <span className="task-pane-title-label">TASKS</span>
-          <span className="task-pane-title-count">· {filtered.length}/{tasks.length}</span>
-          <span className="bracket">]</span>
-        </div>
         <div className="task-pane-search">
-          <span className="search-prompt">/</span>
           <input
             className="search-input"
             placeholder="filter by title or tag…"
@@ -55,7 +54,7 @@ function TaskListPane({ tasks, setTasks, filter, setFilter, sort, setSort, query
         </div>
         <div className="task-pane-controls">
           <Selector
-            label="filter"
+            label="status"
             value={filter.status}
             onChange={(v) => setFilter({ ...filter, status: v })}
             options={[['all','all'],['todo','todo'],['next-up','next-up'],['doing','doing'],['done','done']]}
@@ -108,7 +107,6 @@ function TaskListPane({ tasks, setTasks, filter, setFilter, sort, setSort, query
       </div>
 
       <footer className="task-pane-ft" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span className="dim">drag a task → calendar to schedule it</span>
         <button 
           style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', color: 'var(--fg)', cursor: 'pointer', padding: '2px 8px', fontSize: '0.9em' }}
           onClick={onAddTask}

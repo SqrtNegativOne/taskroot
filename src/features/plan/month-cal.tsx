@@ -25,15 +25,13 @@ function MonthCalendar({ view, setView, anchor, setAnchor, events, tasks, today,
     <section className="month-pane">
       <header className="cal-hd">
         <div className="cal-hd-left">
-          <span className="bracket">┌─</span>
           <span className="cal-hd-title">{titleLabel}</span>
-          <span className="bracket">─┐</span>
         </div>
         <div className="cal-hd-right">
           <div className="cal-nav">
-            <button className="cal-nav-btn" onClick={() => shift(-1)} aria-label="previous">←</button>
-            <button className="cal-nav-btn" onClick={() => setAnchor(new Date(today))}>today</button>
-            <button className="cal-nav-btn" onClick={() => shift(1)} aria-label="next">→</button>
+            <button className="cal-nav-btn" onClick={() => shift(-1)} aria-label="previous">◀</button>
+            <button className="cal-nav-btn" onClick={() => setAnchor(new Date(today))}>◉</button>
+            <button className="cal-nav-btn" onClick={() => shift(1)} aria-label="next">▶</button>
           </div>
           <div className="seg">
             <button className={`seg-btn ${!isWeek ? 'is-active' : ''}`} onClick={() => setView('month')}>month</button>
@@ -54,7 +52,11 @@ function MonthCalendar({ view, setView, anchor, setAnchor, events, tasks, today,
               key={i}
               cell={c}
               today={today}
-              events={hydratedEvents.filter(e => e.date === ymd(c.date))}
+              events={hydratedEvents.filter(e => {
+                const cellDate = ymd(c.date);
+                if (!e.endDate) return e.date === cellDate;
+                return cellDate >= e.date && cellDate <= e.endDate;
+              })}
               tasks={tasks}
               isWeek={isWeek}
               dragState={dragState}
@@ -116,11 +118,11 @@ function DayCell({ cell, today, events, tasks, isWeek, dragState, onDropToDate, 
             <div
               key={ev.id}
               className={`day-cell-event ev-${ev.type} ${pri ? `pri-bar-${pri}` : ''} ${isDone ? 'is-done' : ''}`}
-              title={`${hhmmShort(ev.start)} — ${title}`}
+              title={`${ev.isAllDay ? 'All Day' : hhmmShort(ev.start)} — ${title}`}
               style={{ cursor: 'grab', opacity: dragState?.event?.id === ev.id ? 0.4 : 1 }}
               onPointerDown={(e) => onEventDragStart && onEventDragStart(e, ev, ev.task)}
             >
-              <span className="day-cell-event-time">{hhmmShort(ev.start)}</span>
+              {!ev.isAllDay && <span className="day-cell-event-time">{hhmmShort(ev.start)}</span>}
               <span className="day-cell-event-title">{title}</span>
             </div>
           );

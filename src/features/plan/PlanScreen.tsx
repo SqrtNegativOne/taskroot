@@ -103,9 +103,9 @@ function PlanScreen() {
         const ds = dragRef.current;
         if (ds && ds.target) {
           if (ds.target.kind === 'month-day') {
-            createEvent(task, ds.target.date, 9 * 60, task.est || 60);
+            createEvent(task, ds.target.date, 9 * 60, task.est || 60, true);
           } else if (ds.target.kind === 'day-time') {
-            createEvent(task, ymd(timelineDate), ds.target.minute, task.est || 60);
+            createEvent(task, ymd(timelineDate), ds.target.minute, task.est || 60, false);
           }
         }
       }
@@ -148,10 +148,10 @@ function PlanScreen() {
         const ds = dragRef.current;
         if (ds && ds.target) {
           if (ds.target.kind === 'month-day') {
-            setEvents(prev => prev.map(evnt => evnt.id === eventToMove.id ? { ...evnt, date: ds.target.date } : evnt));
+            setEvents(prev => prev.map(evnt => evnt.id === eventToMove.id ? { ...evnt, date: ds.target.date, endDate: ds.target.date } : evnt));
           } else if (ds.target.kind === 'day-time') {
             const duration = eventToMove.end - eventToMove.start;
-            setEvents(prev => prev.map(evnt => evnt.id === eventToMove.id ? { ...evnt, date: ymd(timelineDate), start: ds.target.minute, end: ds.target.minute + duration } : evnt));
+            setEvents(prev => prev.map(evnt => evnt.id === eventToMove.id ? { ...evnt, date: ymd(timelineDate), endDate: ymd(timelineDate), start: ds.target.minute, end: ds.target.minute + duration, isAllDay: false } : evnt));
           }
         }
       }
@@ -161,15 +161,17 @@ function PlanScreen() {
     window.addEventListener('pointerup', up);
   };
 
-  const createEvent = (task, date, start, duration) => {
+  const createEvent = (task, date, start, duration, isAllDay = false) => {
     const id = `e${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
     const newEvent = {
       id,
       taskId: task.id,
       date,
+      endDate: date,
       start,
       end: Math.min(24 * 60, start + duration),
       type: 'plan',
+      isAllDay
     };
     setEvents(prev => [...prev, newEvent]);
   };
@@ -184,6 +186,7 @@ function PlanScreen() {
 
   const onAddEvent = (dateArg, startArg, endArg) => {
     const d = (dateArg instanceof Date) ? dateArg : timelineDate;
+    const isAllDay = typeof startArg !== 'number';
     const start = typeof startArg === 'number' ? startArg : 9 * 60;
     const end = typeof endArg === 'number' ? endArg : start + 60;
     const id = `e${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
@@ -191,9 +194,11 @@ function PlanScreen() {
        id,
        title: 'New Event',
        date: ymd(d),
+       endDate: ymd(d),
        start,
        end,
        type: 'meeting',
+       isAllDay
     }]);
     setInspectorState({ type: 'event', id });
   };
@@ -219,6 +224,10 @@ function PlanScreen() {
             onDragStart={onTaskDragStart}
             activeDragId={dragState?.task?.id}
             onAddTask={onAddTask}
+            onDeleteTask={(id) => {
+              setTasks(ts => ts.filter(t => t.id !== id));
+              setEvents(es => es.filter(e => e.taskId !== id));
+            }}
           />
           <div className="right-pane">
             <SplitPane direction="vertical" defaultSize={450} minSize={150} snapThreshold={60}>
@@ -382,6 +391,19 @@ function TitleInput({ value, onChange, disabled }) {
   );
 }
 
+function minToTime(m) {
+  if (typeof m !== 'number' || isNaN(m)) return '';
+  const hh = String(Math.floor(m / 60)).padStart(2, '0');
+  const mm = String(m % 60).padStart(2, '0');
+  return `${hh}:${mm}`;
+}
+
+function timeToMin(t) {
+  if (!t) return 0;
+  const [hh, mm] = t.split(':');
+  return parseInt(hh, 10) * 60 + parseInt(mm, 10);
+}
+
 function InspectorPane({ inspectorState, onClose, tasks, setTasks, events, setEvents }) {
   const [activeState, setActiveState] = React.useState(null);
 
@@ -427,6 +449,19 @@ function InspectorPane({ inspectorState, onClose, tasks, setTasks, events, setEv
                   disabled={!isTask && item.taskId}
                 />
              </div>
+             <div className="inspector-field" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '6px' }}>
+                <label>Description</label>
+                <textarea 
+                  value={item.description || ''} 
+                  onChange={e => {
+                    if (isTask) updateTask(item.id, { description: e.target.value });
+                    else updateEvent(item.id, { description: e.target.value });
+                  }}
+                  rows={5}
+                  style={{ width: '100%', resize: 'vertical', padding: '6px', fontFamily: 'inherit', border: '1px solid var(--border)', background: 'var(--bg-input, var(--bg-surface))', color: 'var(--fg)', borderRadius: '4px' }}
+                  placeholder="Add a description..."
+                />
+             </div>
              {isTask && (
                <>
                  <div className="inspector-field">
@@ -452,9 +487,29 @@ function InspectorPane({ inspectorState, onClose, tasks, setTasks, events, setEv
              {!isTask && (
                <>
                  <div className="inspector-field">
-                   <label>Date</label>
+                   <label>All Day</label>
+                   <input type="checkbox" checked={!!item.isAllDay} onChange={e => updateEvent(item.id, { isAllDay: e.target.checked })} />
+                 </div>
+                 <div className="inspector-field">
+                   <label>Start Date</label>
                    <input type="date" value={item.date} onChange={e => updateEvent(item.id, { date: e.target.value })} />
                  </div>
+                 <div className="inspector-field">
+                   <label>End Date</label>
+                   <input type="date" value={item.endDate || item.date} min={item.date} onChange={e => updateEvent(item.id, { endDate: e.target.value })} />
+                 </div>
+                 {!item.isAllDay && (
+                   <>
+                     <div className="inspector-field">
+                       <label>Start Time</label>
+                       <input type="time" value={minToTime(item.start)} onChange={e => updateEvent(item.id, { start: timeToMin(e.target.value) })} />
+                     </div>
+                     <div className="inspector-field">
+                       <label>End Time</label>
+                       <input type="time" value={minToTime(item.end)} onChange={e => updateEvent(item.id, { end: timeToMin(e.target.value) })} />
+                     </div>
+                   </>
+                 )}
                </>
              )}
              <div className="inspector-actions">

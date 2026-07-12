@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } fr
 import { TODAY, ymd, hhmmShort, durationLabel, MONTHS, DOW_SHORT, PAD2, addDays, sameDay } from '../../core/data';
 import { hydrateEvents } from '../../core/events';
 
-// Today's day calendar — vertical, 24h scrollable, with drag-to-schedule + resize.
+// Day timeline: vertical, 24h scrollable, with drag-to-schedule + resize.
 
 const PX_PER_MIN = 56 / 60; // 56 px per hour
 const SNAP_MIN = 15;
@@ -42,7 +42,11 @@ function DayTimeline({ events, tasks, today, timelineDate, setTimelineDate, drag
     return () => clearInterval(interval);
   }, []);
 
-  const todayEvents = hydrateEvents(events.filter(e => e.date === ymd(viewDate)), tasks).sort((a, b) => a.start - b.start);
+  const todayEvents = hydrateEvents(events.filter(e => {
+    const cellDate = ymd(viewDate);
+    const inRange = e.endDate ? (cellDate >= e.date && cellDate <= e.endDate) : (e.date === cellDate);
+    return inRange && !e.isAllDay;
+  }), tasks).sort((a, b) => a.start - b.start);
 
   // Compute lanes for overlapping events
   const laid = layoutEvents(todayEvents);
@@ -98,22 +102,13 @@ function DayTimeline({ events, tasks, today, timelineDate, setTimelineDate, drag
       <header className="cal-hd">
         <div className="cal-hd-left" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <button className="cal-nav-btn" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--fg-dim)' }} onClick={() => setTimelineDate(addDays(viewDate, -1))}>◀</button>
-          <span className="bracket">┌─</span>
           <span className="cal-hd-title" style={{ color: isToday ? 'inherit' : 'var(--accent)' }}>
-            {isToday ? 'TODAY' : 'NOT TODAY'} · {DOW_SHORT[(viewDate.getDay() + 6) % 7].toLowerCase()} {MONTHS[viewDate.getMonth()].toLowerCase()} {viewDate.getDate()}
+            {DOW_SHORT[(viewDate.getDay() + 6) % 7]} {MONTHS[viewDate.getMonth()]} {viewDate.getDate()}
           </span>
-          <span className="bracket">─┐</span>
           <button className="cal-nav-btn" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--fg-dim)' }} onClick={() => setTimelineDate(addDays(viewDate, 1))}>▶</button>
           {!isToday && (
             <button className="cal-nav-btn" style={{ border: '1px solid var(--border)', padding: '2px 8px', background: 'none', color: 'var(--fg-dim)', cursor: 'pointer', fontSize: '11px', marginLeft: '8px', borderRadius: '4px' }} onClick={() => setTimelineDate(today)}>Today</button>
           )}
-        </div>
-        <div className="cal-hd-right" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <span className="day-pane-stats">
-            <span className="dim">·</span> {todayEvents.length} events
-            <span className="dim"> · </span>
-            {durationLabel(todayEvents.reduce((s, e) => s + (e.end - e.start), 0))} scheduled
-          </span>
         </div>
       </header>
 

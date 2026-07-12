@@ -52,11 +52,6 @@ function Stopwatch() {
   return (
     <section className="stopwatch-hero">
       <div className="stopwatch-stage">
-        <div className="stopwatch-meta-top">
-          <span className="bracket">┌─</span>
-          <span className="stopwatch-meta-label">FOCUS · {activeTask ? activeTask.title : 'count-up'}</span>
-          <span className="bracket">─┐</span>
-        </div>
 
         <div className={`stopwatch-display ${running ? 'is-running' : ''}`}>
           <span className="sw-digits sw-h">{h}</span>
@@ -64,48 +59,10 @@ function Stopwatch() {
           <span className="sw-digits sw-m">{m}</span>
           <span className="sw-colon">:</span>
           <span className="sw-digits sw-s">{s}</span>
-          <span className="sw-centi">.{cs}</span>
-        </div>
-
-        <div className="stopwatch-tickbar">
-          <SecondsTicker running={running} seconds={Math.floor(currentMs / 1000) % 60} />
-        </div>
-
-        <div className="stopwatch-controls">
-          <button
-            className={`sw-btn sw-btn-primary ${running ? 'is-running' : ''}`}
-            onClick={toggle}
-          >
-            <span className="sw-btn-icon">{running ? '▌▌' : '▶'}</span>
-            <span className="sw-btn-label">{running ? 'pause' : (state.elapsed > 0 ? 'resume' : 'start')}</span>
-            <span className="sw-btn-key">space</span>
-          </button>
-          <button className="sw-btn" onClick={reset} disabled={currentMs === 0}>
-            <span className="sw-btn-icon">↺</span>
-            <span className="sw-btn-label">reset</span>
-            <span className="sw-btn-key">⌘r</span>
-          </button>
-          {activeTask && (
-            <button className="sw-btn" onClick={() => {
-              setTasks(ts => ts.map(t => t.id === activeTask.id ? { ...t, status: 'done' } : t));
-              reset();
-            }}>
-              <span className="sw-btn-icon">✔</span>
-              <span className="sw-btn-label">mark done</span>
-            </button>
-          )}
-        </div>
-
-        <div className="stopwatch-meta-bottom">
-          <span className="bracket">└─</span>
-          <span className="stopwatch-meta-status">
-            {running ? 'tracking' : (state.elapsed > 0 ? 'paused' : 'idle')}
-          </span>
-          <span className="bracket">─┘</span>
         </div>
 
         <div className="stopwatch-scroll-hint">
-          <span className="dim">scroll for distraction log, kanban, tips, notes</span>
+          <span className="dim">ctrl+r to reset</span>
           <span className="stopwatch-scroll-arrow">▼</span>
         </div>
       </div>

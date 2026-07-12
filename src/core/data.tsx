@@ -72,25 +72,10 @@ const DEFAULT_DISTRACTION_COLUMNS = [
   { id: 'created', label: 'Created', width: 160, type: 'datetime' },
 ];
 
-const SAMPLE_DISTRACTIONS = [
-  { id: 'd1', name: 'Slack DM from Priya — answered later', status: 'resolved',   created: '2026-05-20T09:12' },
-  { id: 'd2', name: 'Thought about lunch order',            status: 'resolved',   created: '2026-05-20T10:04' },
-  { id: 'd3', name: 'Email about offsite logistics',        status: 'resolving',  created: '2026-05-20T10:21' },
-  { id: 'd4', name: 'Phone buzzed — checked it',            status: 'unresolved', created: '2026-05-20T10:38' },
-];
-
 const SAMPLE_TIPS = [
-  'If a thought pops into your head, write it down — don\'t hold it.',
+  'If a thought pops into your head, write it down immediately.',
   'When you feel stuck, the timer keeps running. Don\'t pause to think.',
   'Two minutes of fake-it-til-you-make-it usually breaks the wall.',
-  'Resolve distractions in batches at the next break, not now.',
-];
-
-const SAMPLE_NOTES = [
-  { id: 'n1', title: 'Today — focus journal',          vault: 'work',    path: 'Daily/2026-05-20.md' },
-  { id: 'n2', title: 'Q2 retro — raw notes',           vault: 'work',    path: 'Quarterly/Q2-retro.md' },
-  { id: 'n3', title: 'Billing flow — sketch dump',     vault: 'design',  path: 'Wireframes/billing.md' },
-  { id: 'n4', title: 'On deep work — book highlights', vault: 'reading', path: 'Books/deep-work.md' },
 ];
 
 const REST_CHECKLIST_DEFAULTS = [
@@ -102,4 +87,4 @@ const REST_CHECKLIST_DEFAULTS = [
   { id: 'r6', title: 'Maybe write in your journal.', type: 'check' },
 ];
 
-export { TODAY, SAMPLE_TASKS, SAMPLE_EVENTS, DEFAULT_STATUSES, DEFAULT_DISTRACTION_COLUMNS, SAMPLE_DISTRACTIONS, SAMPLE_TIPS, SAMPLE_NOTES, REST_CHECKLIST_DEFAULTS, ymd, parseYMD, sameDay, addDays, startOfMonth, startOfWeek, minutesToHHMM, hhmmShort, durationLabel, dueLabel, MONTHS, MONTHS_LONG, DOW_SHORT, DOW_TINY, PAD2 };
+export { TODAY, SAMPLE_TASKS, SAMPLE_EVENTS, DEFAULT_STATUSES, DEFAULT_DISTRACTION_COLUMNS, SAMPLE_TIPS, REST_CHECKLIST_DEFAULTS, ymd, parseYMD, sameDay, addDays, startOfMonth, startOfWeek, minutesToHHMM, hhmmShort, durationLabel, dueLabel, MONTHS, MONTHS_LONG, DOW_SHORT, DOW_TINY, PAD2 };

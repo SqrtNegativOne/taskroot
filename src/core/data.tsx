@@ -61,9 +61,9 @@ const DOW_TINY = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 // ── More seed data for Do / Rest screens ────────────────────────────────────
 
 const DEFAULT_STATUSES = [
-  { id: 'unresolved', label: 'Unresolved', color: '#d97757' },
-  { id: 'resolving',  label: 'Resolving',  color: '#e9b96e' },
-  { id: 'resolved',   label: 'Resolved',   color: '#8caa9a' },
+  { id: 'unresolved', label: 'Unresolved', color: 'var(--tag-red)' },
+  { id: 'resolving',  label: 'Resolving',  color: 'var(--tag-yellow)' },
+  { id: 'resolved',   label: 'Resolved',   color: 'var(--tag-green)' },
 ];
 
 const DEFAULT_DISTRACTION_COLUMNS = [

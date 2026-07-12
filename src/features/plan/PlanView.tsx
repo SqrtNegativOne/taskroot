@@ -18,7 +18,7 @@ import { useTweaks, TweaksPanel, TweakSection, TweakSlider, TweakToggle, TweakRa
 // Main app — layout, drag-and-drop orchestration, tweak state.
 
 const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
-  "accent": "#e9b96e",
+  "accent": "var(--tag-yellow)",
   "fontScale": 1,
   "showSubtaskCounts": true,
   "weekStart": "month",
@@ -268,7 +268,7 @@ function PlanView() {
         <TweakColor
           label="Accent"
           value={t.accent}
-          options={['#e9b96e', '#c9a978', '#9eb39b', '#a8a4d2', '#d9866b']}
+          options={['var(--tag-yellow)', 'var(--tag-gold)', '#9eb39b', 'var(--tag-purple)', '#d9866b']}
           onChange={(v) => setTweak('accent', v)}
         />
         <TweakSlider

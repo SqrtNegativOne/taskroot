@@ -180,7 +180,7 @@ function StatusCell({ value, statuses, open, onOpen, onClose, onChange, onAdd })
   const popRef = React.useRef(null);
   const [addingStatus, setAddingStatus] = React.useState(false);
   const [newLabel, setNewLabel] = React.useState('');
-  const [newColor, setNewColor] = React.useState('#a8a4d2');
+  const [newColor, setNewColor] = React.useState('var(--tag-purple)');
 
   React.useEffect(() => {
     if (!open) return;
@@ -227,7 +227,7 @@ function StatusCell({ value, statuses, open, onOpen, onClose, onChange, onAdd })
                 }}
               />
               <div className="dlog-status-colors">
-                {['#d97757','#e9b96e','#8caa9a','#a8a4d2','#c9a978','#9bb0d4'].map(c => (
+                {['var(--tag-red)','var(--tag-yellow)','var(--tag-green)','var(--tag-purple)','var(--tag-gold)','#9bb0d4'].map(c => (
                   <button
                     key={c}
                     className={`dlog-status-color ${newColor === c ? 'is-selected' : ''}`}

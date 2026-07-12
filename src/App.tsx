@@ -92,7 +92,7 @@ function LoginView() {
             color: 'var(--fg)',
             border: '1px solid var(--border-strong)',
             borderRadius: '10px',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
+            boxShadow: 'var(--shadow-btn-hover)',
             display: 'flex',
             alignItems: 'center',
             gap: '0.85rem',
@@ -109,11 +109,11 @@ function LoginView() {
             e.currentTarget.style.transform = 'translateY(0)';
             e.currentTarget.style.borderColor = 'var(--border-strong)';
             e.currentTarget.style.background = 'var(--bg-surface)';
-            e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.2)';
+            e.currentTarget.style.boxShadow = 'var(--shadow-btn-hover)';
           }}
           onMouseDown={(e) => {
             e.currentTarget.style.transform = 'translateY(1px)';
-            e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.2)';
+            e.currentTarget.style.boxShadow = 'var(--shadow-btn)';
           }}
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">

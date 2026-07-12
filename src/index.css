@@ -1,30 +1,35 @@
 :root {
-    --bg:        oklch(17.98% 0.0094 75.03);
+    --shadow-btn-hover: 0 4px 12px rgba(0, 0, 0, 0.2);
+    --shadow-btn: 0 2px 8px rgba(0, 0, 0, 0.2);
+    --tag-red: #d97757;
+    --tag-yellow: #e9b96e;
+    --tag-green: #8caa9a;
+    --tag-purple: #a8a4d2;
+    --tag-gold: #c9a978;
+    --accent-glow: oklch(81.32% 0.1084 77.46 / 0.4);
+    --shadow-dark: oklch(0.00% 0.0000 0 / 0.5);
+    --p0-hover: oklch(67.24% 0.1308 38.76 / 0.2);
+
+    --bg:                oklch(17.98% 0.0094 75.03);
     --bg-highlight:      oklch(19.46% 0.0102 67.17);
-    --bg-surface:      oklch(21.32% 0.0124 67.08);
-    --bg-surface-hover:      oklch(24.35% 0.0172 74.79);
-    --border:    oklch(28.08% 0.0167 74.94);
-    --border-soft: oklch(23.41% 0.0150 76.15);
-    --border-strong: oklch(33.40% 0.0217 75.67);
-    --fg:        oklch(92.81% 0.0235 90.76);
-    --fg-muted:  oklch(67.67% 0.0283 82.34);
-    --fg-dim:    oklch(50.27% 0.0251 83.20);
-    --fg-dimmer: oklch(38.62% 0.0217 81.17);
-    --fg-dimmest:oklch(30.38% 0.0157 79.59);
-    --accent:    oklch(81.32% 0.1084 77.46);
-    --accent-dim:oklch(55.49% 0.0734 79.31);
-    --accent-soft: oklch(81.32% 0.1084 77.46 / 0.1);
+    --bg-surface:        oklch(21.32% 0.0124 67.08);
+    --bg-surface-hover:  oklch(24.35% 0.0172 74.79);
+    --border:            oklch(28.08% 0.0167 74.94);
+    --border-soft:       oklch(23.41% 0.0150 76.15);
+    --border-strong:     oklch(33.40% 0.0217 75.67);
+    --fg:                oklch(92.81% 0.0235 90.76);
+    --fg-muted:          oklch(67.67% 0.0283 82.34);
+    --fg-dim:            oklch(50.27% 0.0251 83.20);
+    --fg-dimmer:         oklch(38.62% 0.0217 81.17);
+    --fg-dimmest:        oklch(30.38% 0.0157 79.59);
+    --accent:            oklch(81.32% 0.1084 77.46);
+    --accent-dim:        oklch(55.49% 0.0734 79.31);
+    --accent-soft:       oklch(81.32% 0.1084 77.46 / 0.1);
     --accent-line: oklch(81.32% 0.1084 77.46 / 0.32);
     --p0:        oklch(67.24% 0.1308 38.76);
     --p1:        oklch(81.32% 0.1084 77.46);
     --p2:        oklch(71.07% 0.0404 161.92);
     --p3:        oklch(50.27% 0.0251 83.20);
-    --p0-soft:   oklch(67.24% 0.1308 38.76 / 0.14);
-    --p1-soft:   oklch(81.32% 0.1084 77.46 / 0.14);
-    --p2-soft:   oklch(71.07% 0.0404 161.92 / 0.12);
-    --p3-soft:   oklch(50.27% 0.0251 83.20 / 0.14);
-    --doing:     oklch(81.32% 0.1084 77.46);
-    --done:      oklch(38.62% 0.0217 81.17);
     --font-scale: 1;
     --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     --sans: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
@@ -496,7 +501,7 @@
   .day-now-line {
     position: absolute; left: 56px; right: 0; top: 0;
     border-top: 1px solid var(--accent);
-    box-shadow: 0 0 8px oklch(81.32% 0.1084 77.46 / 0.4);
+    box-shadow: 0 0 8px var(--accent-glow);
   }
 
   .day-event {
@@ -584,7 +589,7 @@
     pointer-events: none;
     background: var(--bg-surface);
     border: 1px solid var(--accent-line);
-    box-shadow: 0 8px 32px oklch(0.00% 0.0000 0 / 0.5), 0 0 0 1px var(--bg) inset;
+    box-shadow: 0 8px 32px var(--shadow-dark), 0 0 0 1px var(--bg) inset;
     padding: 8px 12px;
     max-width: 320px;
   }
@@ -784,7 +789,7 @@ html:has(.app-do), html:has(.app-do) body {
   border-color: oklch(67.24% 0.1308 38.76 / 0.4);
   color: var(--p0);
 }
-.sw-btn-primary.is-running:hover { background: oklch(67.24% 0.1308 38.76 / 0.2); }
+.sw-btn-primary.is-running:hover { background: var(--p0-hover); }
 .sw-btn-icon { font-size: 0.85em; }
 .sw-btn-label { font-weight: 500; }
 .sw-btn-key {
@@ -890,7 +895,7 @@ html:has(.app-do), html:has(.app-do) body {
   cursor: pointer; transition: all 0.1s;
 }
 .inspector-actions button:hover {
-  background: oklch(67.24% 0.1308 38.76 / 0.2);
+  background: var(--p0-hover);
 }
 
 .collapsible { border-bottom: 1px dashed var(--border); }
@@ -1071,7 +1076,7 @@ html:has(.app-do), html:has(.app-do) body {
   min-width: 200px;
   display: flex; flex-direction: column;
   gap: 2px;
-  box-shadow: 0 8px 32px oklch(0.00% 0.0000 0 / 0.5);
+  box-shadow: 0 8px 32px var(--shadow-dark);
 }
 .dlog-status-opt {
   appearance: none;
@@ -1210,7 +1215,7 @@ html:has(.app-do), html:has(.app-do) body {
   border: 1px dashed var(--accent);
   padding: 6px 10px;
   display: flex; align-items: baseline; gap: 6px;
-  box-shadow: 0 8px 32px oklch(0.00% 0.0000 0 / 0.5);
+  box-shadow: 0 8px 32px var(--shadow-dark);
   max-width: 320px;
 }
 .kanban-ghost-title { color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1328,7 +1333,7 @@ html:has(.app-do), html:has(.app-do) body {
   padding: 8px 16px;
   color: var(--fg);
   font-size: 0.92em;
-  box-shadow: 0 8px 32px oklch(0.00% 0.0000 0 / 0.5);
+  box-shadow: 0 8px 32px var(--shadow-dark);
   z-index: 200;
   letter-spacing: 0.02em;
 }

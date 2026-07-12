@@ -43,7 +43,7 @@ function LoginView() {
       justifyContent: 'center', 
       alignItems: 'center', 
       flexDirection: 'column',
-      background: 'radial-gradient(circle at top, var(--bg-3) 0%, var(--bg) 60%)',
+      background: 'radial-gradient(circle at top, var(--bg-surface-hover) 0%, var(--bg) 60%)',
       color: 'var(--fg)',
       fontFamily: 'var(--sans)'
     }}>
@@ -88,7 +88,7 @@ function LoginView() {
             fontSize: '1.05rem', 
             fontWeight: 500,
             cursor: 'pointer',
-            background: 'var(--bg-2)',
+            background: 'var(--bg-surface)',
             color: 'var(--fg)',
             border: '1px solid var(--border-strong)',
             borderRadius: '10px',
@@ -102,13 +102,13 @@ function LoginView() {
           onMouseOver={(e) => {
             e.currentTarget.style.transform = 'translateY(-2px)';
             e.currentTarget.style.borderColor = 'var(--accent-line)';
-            e.currentTarget.style.background = 'var(--bg-3)';
+            e.currentTarget.style.background = 'var(--bg-surface-hover)';
             e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.4)';
           }}
           onMouseOut={(e) => {
             e.currentTarget.style.transform = 'translateY(0)';
             e.currentTarget.style.borderColor = 'var(--border-strong)';
-            e.currentTarget.style.background = 'var(--bg-2)';
+            e.currentTarget.style.background = 'var(--bg-surface)';
             e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.2)';
           }}
           onMouseDown={(e) => {

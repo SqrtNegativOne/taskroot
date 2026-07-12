@@ -110,7 +110,7 @@ function TaskListPane({ tasks, setTasks, filter, setFilter, sort, setSort, query
       <footer className="task-pane-ft" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span className="dim">drag a task → calendar to schedule it</span>
         <button 
-          style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', color: 'var(--fg)', cursor: 'pointer', padding: '2px 8px', fontSize: '0.9em' }}
+          style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', color: 'var(--fg)', cursor: 'pointer', padding: '2px 8px', fontSize: '0.9em' }}
           onClick={onAddTask}
         >+ Task</button>
       </footer>

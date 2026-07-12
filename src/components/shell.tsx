@@ -4,20 +4,24 @@ import { MONTHS, DOW_SHORT, PAD2 } from '../core/data';
 // Shared top bar + clickable stage indicator. Used across Plan, Do, Rest.
 
 function TopBar({ current, today }) {
-  const day = DOW_SHORT[(today.getDay() + 6) % 7];
-  const dateStr = `${day} ${MONTHS[today.getMonth()]} ${PAD2(today.getDate())} ${today.getFullYear()}`;
+  // @ts-ignore - electronAPI is injected via preload
+  const handleMinimize = () => window.electronAPI?.minimizeWindow?.();
+  // @ts-ignore
+  const handleMaximize = () => window.electronAPI?.maximizeWindow?.();
+  // @ts-ignore
+  const handleClose = () => window.electronAPI?.closeWindow?.();
+
   return (
     <header className="topbar">
       <div className="topbar-left">
-        <a className="logo" href="plan.html">
-          <span className="logo-bracket">▌</span>
-          <span className="logo-name">TASKROOT</span>
-        </a>
-        <span className="topbar-sep">·</span>
-        <span className="topbar-date">{dateStr.toLowerCase()}</span>
+        <StageIndicator current={current} />
       </div>
       <div className="topbar-right">
-        <StageIndicator current={current} />
+        <div className="window-controls">
+          <button className="win-btn green" onClick={handleMaximize} title="Maximize" />
+          <button className="win-btn yellow" onClick={handleMinimize} title="Minimize" />
+          <button className="win-btn red" onClick={handleClose} title="Close" />
+        </div>
       </div>
     </header>
   );
@@ -31,8 +35,6 @@ function StageIndicator({ current }) {
   ];
   return (
     <nav className="stages" aria-label="Stages">
-      <span className="stages-label">stage</span>
-      <span className="stages-arrow">›</span>
       {stages.map((s, i) => (
         <React.Fragment key={s.key}>
           <a
@@ -40,10 +42,9 @@ function StageIndicator({ current }) {
             className={`stage ${current === s.key ? 'is-current' : ''}`}
             aria-current={current === s.key ? 'page' : undefined}
           >
-            <span className="stage-dot">{current === s.key ? '●' : '○'}</span>
             <span className="stage-name">{s.label}</span>
           </a>
-          {i < stages.length - 1 && <span className="stage-sep">─</span>}
+          {i < stages.length - 1 && <span className="stage-sep">|</span>}
         </React.Fragment>
       ))}
     </nav>

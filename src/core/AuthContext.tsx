@@ -17,6 +17,8 @@ const AuthContext = createContext<AuthContextType>({
   logout: async () => {},
 });
 
+import { api } from './api';
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -24,6 +26,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
+      api.setUserId(currentUser ? currentUser.uid : null);
       setLoading(false);
     });
 

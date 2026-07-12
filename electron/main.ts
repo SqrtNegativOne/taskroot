@@ -27,10 +27,26 @@ ipcMain.on('log-to-file', (event, level, message) => {
   }
 });
 
+// Window controls
+ipcMain.on('window-minimize', () => {
+  win?.minimize();
+});
+ipcMain.on('window-maximize', () => {
+  if (win?.isMaximized()) {
+    win?.unmaximize();
+  } else {
+    win?.maximize();
+  }
+});
+ipcMain.on('window-close', () => {
+  win?.close();
+});
+
 function createWindow() {
   win = new BrowserWindow({
     width: 1200,
     height: 800,
+    frame: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,

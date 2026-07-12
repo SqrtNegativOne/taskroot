@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { api } from './api';
 import { SAMPLE_TASKS, SAMPLE_EVENTS, DEFAULT_STATUSES, DEFAULT_DISTRACTION_COLUMNS, SAMPLE_DISTRACTIONS, SAMPLE_TIPS, SAMPLE_NOTES } from './data';
-import { doc, onSnapshot, setDoc } from 'firebase/firestore';
-import { auth, db } from './firebase';
 
-// React hook: state synced to Firestore.
+// React hook: manages local state, localStorage, and delegates remote sync to the ApiService
 function useStored(key: string, initial: any) {
   const [val, setVal] = useState(() => {
     try {
@@ -16,58 +15,47 @@ function useStored(key: string, initial: any) {
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    const user = auth.currentUser;
-    if (!user) {
-      if (import.meta.env.DEV) setIsLoaded(true);
-      return;
-    }
-    
-    const docRef = doc(db, 'users', user.uid, 'store', key);
-    const unsubscribe = onSnapshot(docRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const serverVal = docSnap.data().value;
+    // The api handles all the database logic (including checking if the user is logged in).
+    // We just provide it callbacks for when data arrives from the cloud.
+    const unsubscribe = api.subscribeToStore(
+      key, 
+      val, // fallback/seed data if cloud document doesn't exist yet
+      (serverVal) => {
         setVal(serverVal);
         localStorage.setItem(`taskroot_${key}`, JSON.stringify(serverVal));
-      } else {
-        // If it doesn't exist in Firestore, seed it with current val
-        setDoc(docRef, { value: val }, { merge: true });
+      },
+      () => {
+        // Called when subscription is ready or failed, or instantly if offline
+        setIsLoaded(true);
       }
-      setIsLoaded(true);
-    }, (err) => {
-      console.warn(`Firestore sync failed for ${key}:`, err);
-      setIsLoaded(true); // Still consider it loaded if it fails so we don't block forever
-    });
+    );
+    
     return unsubscribe;
-  }, [key]); // removed initial from deps to avoid infinite loops if initial is an object
+  }, [key]);
 
   const setValWrapper = (newValOrUpdater: any) => {
-    const user = auth.currentUser;
-    if (!user && !import.meta.env.DEV) return;
-    
+    let result;
     if (typeof newValOrUpdater === 'function') {
       setVal((prev: any) => {
-        const result = newValOrUpdater(prev);
+        result = newValOrUpdater(prev);
         localStorage.setItem(`taskroot_${key}`, JSON.stringify(result));
-        if (user) {
-          const docRef = doc(db, 'users', user.uid, 'store', key);
-          setDoc(docRef, { value: result }, { merge: true }).catch(e => console.warn('Firestore write failed', e));
-        }
         return result;
       });
     } else {
-      setVal(newValOrUpdater); // Optimistic update
-      localStorage.setItem(`taskroot_${key}`, JSON.stringify(newValOrUpdater));
-      if (user) {
-        const docRef = doc(db, 'users', user.uid, 'store', key);
-        setDoc(docRef, { value: newValOrUpdater }, { merge: true }).catch(e => console.warn('Firestore write failed', e));
-      }
+      result = newValOrUpdater;
+      setVal(result); // Optimistic update
+      localStorage.setItem(`taskroot_${key}`, JSON.stringify(result));
     }
+    
+    // Delegate to API to handle remote cloud sync. 
+    // Notice how clean this is! No `if (user)` checks needed here.
+    api.saveStoreData(key, result);
   };
 
   return [val, setValWrapper, isLoaded];
 }
 
-// These are largely no-ops now since useStored handles everything via Firestore
+// These are largely no-ops now since useStored handles everything
 function load(key: string, fallback: any) { return fallback; }
 function save(key: string, value: any) {}
 function ensure(key: string, initial: any) {}

@@ -1,30 +1,36 @@
 # Taskroot Architecture & Guide for AI Agents
 
-Taskroot is a web-based task management prototype focusing on planning, executing, and resting. It uses a lightweight React setup without a bundler for rapid prototyping.
+**CRITICAL**: When you modify the architecture, tech stack, or file structure of this project, you MUST update this `AGENTS.md` file to reflect the new state. Always verify if the information here is outdated and update any old information if needed.
+
+Taskroot is a web-based and desktop task management app focusing on planning, executing, and resting. It is built as a Single Page Application (SPA) that can run in a browser or as a native desktop app via Electron.
 
 ## Tech Stack
-- **HTML/CSS/JS**: Vanilla HTML, extensive CSS (`global.css`) with CSS variables for theming.
-- **React**: Imported via unpkg CDN (React 18).
-- **Babel**: Standalone in-browser Babel transpiler for compiling JSX on the fly.
-- **Storage**: Uses `localStorage` via a custom `useStored` hook (defined in `store.jsx`). All data persists locally.
+- **Frontend Framework**: React 19 with React Router for SPA navigation.
+- **Build Tool**: Vite (with Hot Module Replacement for fast development).
+- **Desktop Wrapper**: Electron (configured via `electron/main.ts` and `preload.ts`).
+- **Language**: TypeScript (`.tsx` and `.ts` files).
+- **Styling**: Vanilla CSS (`src/index.css`) with extensive use of CSS variables for theming.
+- **Backend / Storage**: Firebase Firestore for cloud sync, backed by `localStorage` for offline and fast local prototyping. 
+- **Google Calendar Sync**: Native two-way sync with Google Calendar API.
 
-## Project Structure
-- `plan.html`, `do.html`, `rest.html` - The main entry points/views.
-- `src/`
-  - `store.jsx`: LocalStorage wrapper and custom hook for shared state.
-  - `data.jsx`: Dummy data, constants, and helper functions (e.g., date manipulation).
-  - `global.css`: Centralized CSS, handling layout, colors (using CSS vars for themes).
-  - `shell.jsx`: The top bar and navigation for moving between Plan/Do/Rest screens.
-  - `app.jsx`: Root component for `plan.html`. Orchestrates layout, `TaskListPane`, and calendars.
-  - `do-app.jsx`: Root component for `do.html`. Includes the hero stopwatch and kanban/notes sections.
-  - `task-list.jsx`: Sidebar component containing the task filters and task rows. Tasks are draggable.
-  - `kanban.jsx`: Kanban board used in the Do screen.
+## Project Structure (`src/`)
+
+The application code is organized modularly by feature:
+
+- `src/features/plan/`: Components for the Plan screen (`PlanView.tsx`, `day-cal.tsx`, `month-cal.tsx`, `task-list.tsx`, `tweaks-panel.tsx`).
+- `src/features/do/`: Components for the Do screen (`DoView.tsx`, `kanban.tsx`, `stopwatch.tsx`, `distraction-log.tsx`, `tips-notes.tsx`).
+- `src/features/rest/`: Components for the Rest screen (`RestView.tsx`).
+- `src/components/`: Shared UI components used across multiple screens (e.g., `shell.tsx` for the top navigation, `collapsible.tsx`).
+- `src/core/`: Core business logic, context providers, and data layer.
+  - `store.tsx`: Custom `useStored` hook that syncs state between React, LocalStorage, and Firebase Firestore.
+  - `AuthContext.tsx`: Firebase Google authentication.
+  - `useGoogleCalendarSync.tsx`: Background syncing with Google Calendar.
+  - `notifications.tsx`: Global toast notification system (`NotificationProvider` and `useNotification`).
+  - `logger.ts`: Universal logger that prints to the browser console and forwards to `taskroot.log` via Electron IPC.
+  - `data.tsx`: Dummy data and helper utilities.
+- `src/App.tsx`: The root application component. Orchestrates routing, authentication bypass for dev, and global sync contexts.
 
 ## Key Concepts
-- **State Management**: `useStored(key, defaultData)` connects state to `localStorage`. Components re-rendering with the same key share state by syncing to storage, though they typically pass state down from a parent like `App` or pull it locally if independent (like `Stopwatch`).
+- **State Management**: The `useStored(key, defaultData)` hook acts as the primary state manager. It syncs optimistically to `localStorage` and persists to Firestore.
+- **Development Mode**: Running `npm run dev` or `npm start` automatically bypasses the Google login screen for rapid UI testing using `import.meta.env.DEV`, falling back to local storage offline mode.
 - **Drag and Drop**: Managed natively via pointer events (`pointerdown`, `pointermove`, `pointerup`) instead of the HTML5 Drag & Drop API for finer control and custom ghost elements.
-
-## Recent Changes
-- The `TODAY` constant in `data.jsx` has been updated to use the real date instead of a hardcoded 2026 date.
-- Added ability to edit, delete, and complete tasks from the task list pane.
-- Linked the `Stopwatch` in the Do screen to the active (`doing`) task so you can see what you are currently focusing on, and easily mark it as done.

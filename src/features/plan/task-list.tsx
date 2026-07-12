@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
-import { TODAY, parseYMD, durationLabel, dueLabel } from './data';
+import { TODAY, parseYMD, durationLabel, dueLabel } from '../../core/data';
 
 // Task list — left column. Filter, sort, draggable items.
 

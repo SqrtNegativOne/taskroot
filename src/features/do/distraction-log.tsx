@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
-import { DEFAULT_STATUSES, DEFAULT_DISTRACTION_COLUMNS, SAMPLE_DISTRACTIONS, MONTHS, PAD2 } from './data';
-import { useStored } from './store';
+import { DEFAULT_STATUSES, DEFAULT_DISTRACTION_COLUMNS, SAMPLE_DISTRACTIONS, MONTHS, PAD2 } from '../../core/data';
+import { useStored } from '../../core/store';
 
 // Distraction log — Notion-like table.
 // Resizable columns, inline cell editing, custom status types.

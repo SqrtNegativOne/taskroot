@@ -1,6 +1,7 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import fs from 'node:fs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -13,6 +14,18 @@ export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist');
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST;
 
 let win: BrowserWindow | null;
+
+// Handle file logging from renderer
+ipcMain.on('log-to-file', (event, level, message) => {
+  const logPath = path.join(process.env.APP_ROOT as string, 'taskroot.log');
+  const timestamp = new Date().toISOString();
+  const logLine = `[${timestamp}] [${level.toUpperCase()}] ${message}\n`;
+  try {
+    fs.appendFileSync(logPath, logLine);
+  } catch (err) {
+    console.error('Failed to write to log file:', err);
+  }
+});
 
 function createWindow() {
   win = new BrowserWindow({

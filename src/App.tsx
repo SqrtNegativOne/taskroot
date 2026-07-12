@@ -1,23 +1,36 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './AuthContext';
+import { AuthProvider, useAuth } from './core/AuthContext';
 
 // We'll import these once the subagent finishes porting them
-import { PlanView } from './PlanView';
-import { DoView } from './DoView';
-import { RestView } from './RestView';
-import { TopBar } from './shell';
-import { useStored } from './store';
-import { SAMPLE_TASKS, SAMPLE_EVENTS } from './data';
-import { useGoogleCalendarSync } from './useGoogleCalendarSync';
+import { PlanView } from './features/plan/PlanView';
+import { DoView } from './features/do/DoView';
+import { RestView } from './features/rest/RestView';
+import { TopBar } from './components/shell';
+import { useStored } from './core/store';
+import { SAMPLE_TASKS, SAMPLE_EVENTS } from './core/data';
+import { useGoogleCalendarSync } from './core/useGoogleCalendarSync';
+import { NotificationProvider, useNotification } from './core/notifications';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
+  const { notify } = useNotification();
+  const notified = React.useRef(false);
+  
+  if (import.meta.env.DEV) {
+    if (!notified.current) {
+      notified.current = true;
+      // Use setTimeout to ensure it doesn't fire during render
+      setTimeout(() => notify("Dev mode: Bypassed login & offline mode enabled", "info"), 500);
+    }
+    return <>{children}</>;
+  }
+
   if (loading) return <div>Loading...</div>;
   if (!user) {
     return <LoginView />;
   }
-  return children;
+  return <>{children}</>;
 }
 
 function LoginView() {
@@ -172,12 +185,14 @@ function GlobalSync({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <RequireAuth>
-        <GlobalSync>
-          <AppRouter />
-        </GlobalSync>
-      </RequireAuth>
-    </AuthProvider>
+    <NotificationProvider>
+      <AuthProvider>
+        <RequireAuth>
+          <GlobalSync>
+            <AppRouter />
+          </GlobalSync>
+        </RequireAuth>
+      </AuthProvider>
+    </NotificationProvider>
   );
 }

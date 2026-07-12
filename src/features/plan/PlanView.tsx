@@ -1,15 +1,15 @@
 // @ts-nocheck
 import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
 // @ts-nocheck
-import { TODAY, SAMPLE_TASKS, SAMPLE_EVENTS, ymd, durationLabel } from './data';
+import { TODAY, SAMPLE_TASKS, SAMPLE_EVENTS, ymd, durationLabel } from '../../core/data';
 // @ts-nocheck
-import { DayCalendar, PX_PER_MIN, SNAP_MIN } from './day-cal';
+import { DayTimeline, PX_PER_MIN, SNAP_MIN } from './day-cal';
 // @ts-nocheck
 import { MonthCalendar } from './month-cal';
 // @ts-nocheck
-import { TopBar } from './shell';
+import { TopBar } from '../../components/shell';
 // @ts-nocheck
-import { load, useStored, seedDefaults } from './store';
+import { load, useStored, seedDefaults } from '../../core/store';
 // @ts-nocheck
 import { TaskListPane } from './task-list';
 // @ts-nocheck
@@ -181,15 +181,17 @@ function PlanView() {
     setInspectorState({ type: 'task', id });
   };
 
-  const onAddEvent = (dateArg) => {
+  const onAddEvent = (dateArg, startArg, endArg) => {
     const d = (dateArg instanceof Date) ? dateArg : timelineDate;
+    const start = typeof startArg === 'number' ? startArg : 9 * 60;
+    const end = typeof endArg === 'number' ? endArg : start + 60;
     const id = `e${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
     setEvents(es => [...es, {
        id,
        title: 'New Event',
        date: ymd(d),
-       start: 9 * 60,
-       end: 10 * 60,
+       start,
+       end,
        type: 'meeting',
     }]);
     setInspectorState({ type: 'event', id });
@@ -229,7 +231,7 @@ function PlanView() {
           <div className="pane-sep">
             <span className="pane-sep-dots">··········································································</span>
           </div>
-          <DayCalendar
+          <DayTimeline
             events={events} tasks={tasks}
             today={TODAY}
             timelineDate={timelineDate}

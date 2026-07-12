@@ -1,4 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react';
+import { useNotification } from './notifications';
 
 // Convert our event to Google Calendar event format
 function toGoogleEvent(localEvent, tasks) {
@@ -85,19 +86,31 @@ function toLocalEvent(googleEvent) {
 }
 
 export function useGoogleCalendarSync(events, setEvents, tasks) {
+  const { notify } = useNotification();
   const isSyncing = useRef(false);
   const tokenRef = useRef(null);
   const prevEventsRef = useRef(JSON.stringify(events));
   const prevTasksRef = useRef(JSON.stringify(tasks));
+  const notifiedNoToken = useRef(false);
 
   // Polling to update token from localStorage
   useEffect(() => {
     const interval = setInterval(() => {
       tokenRef.current = localStorage.getItem('google_access_token');
+      if (!tokenRef.current && !notifiedNoToken.current && !import.meta.env.DEV) {
+        notifiedNoToken.current = true;
+        setTimeout(() => notify("No Google account detected. Skipping Calendar sync.", "info"), 1000);
+      }
     }, 1000);
     tokenRef.current = localStorage.getItem('google_access_token');
+    
+    if (!tokenRef.current && !notifiedNoToken.current && !import.meta.env.DEV) {
+      notifiedNoToken.current = true;
+      setTimeout(() => notify("No Google account detected. Skipping Calendar sync.", "info"), 1000);
+    }
+    
     return () => clearInterval(interval);
-  }, []);
+  }, [notify]);
 
   const fetchGoogleEvents = useCallback(async () => {
     if (!tokenRef.current) return;
@@ -108,8 +121,8 @@ export function useGoogleCalendarSync(events, setEvents, tasks) {
       timeMax.setMonth(timeMax.getMonth() + 2); // 2 months ahead
       
       // Store windows for later use
-      window.lastTimeMin = timeMin;
-      window.lastTimeMax = timeMax;
+      (window as any).lastTimeMin = timeMin;
+      (window as any).lastTimeMax = timeMax;
 
       const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin.toISOString()}&timeMax=${timeMax.toISOString()}&singleEvents=true&maxResults=2500`, {
         headers: {
@@ -120,6 +133,7 @@ export function useGoogleCalendarSync(events, setEvents, tasks) {
         if (res.status === 401) {
            console.log("Google Token expired.");
            localStorage.removeItem('google_access_token');
+           notify("Google Calendar token expired. Please log in again.", "error");
         }
         throw new Error('Failed to fetch events');
       }
@@ -216,7 +230,7 @@ export function useGoogleCalendarSync(events, setEvents, tasks) {
         } else if (!gEventIds.has(localEvent.googleEventId)) {
            // Check if it's within the sync window
            const localDate = new Date(localEvent.date);
-           if (window.lastTimeMin && window.lastTimeMax && localDate >= window.lastTimeMin && localDate <= window.lastTimeMax) {
+           if ((window as any).lastTimeMin && (window as any).lastTimeMax && localDate >= (window as any).lastTimeMin && localDate <= (window as any).lastTimeMax) {
                // It was deleted from Google Calendar, so we don't include it in mergedEvents
            } else {
                mergedEvents.push(localEvent); // Keep it, it's outside the window

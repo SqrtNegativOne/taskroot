@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
-import { MONTHS, DOW_SHORT, PAD2 } from './data';
+import { MONTHS, DOW_SHORT, PAD2 } from '../core/data';
 
 // Shared top bar + clickable stage indicator. Used across Plan, Do, Rest.
 

@@ -1,17 +1,19 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
-import { TODAY, ymd, hhmmShort, durationLabel, MONTHS, DOW_SHORT, PAD2, addDays, sameDay } from './data';
+import { TODAY, ymd, hhmmShort, durationLabel, MONTHS, DOW_SHORT, PAD2, addDays, sameDay } from '../../core/data';
 
 // Today's day calendar — vertical, 24h scrollable, with drag-to-schedule + resize.
 
 const PX_PER_MIN = 56 / 60; // 56 px per hour
 const SNAP_MIN = 15;
 
-function DayCalendar({ events, tasks, today, timelineDate, setTimelineDate, dragState, setDragState, onDropToTime, onResizeEvent, onMoveEvent, onEventClick, onAddEvent }) {
+function DayTimeline({ events, tasks, today, timelineDate, setTimelineDate, dragState, setDragState, onDropToTime, onResizeEvent, onMoveEvent, onEventClick, onAddEvent }) {
   const containerRef = React.useRef(null);
   const scrollRef = React.useRef(null);
   
   const viewDate = timelineDate || today;
   const isToday = sameDay(viewDate, today);
+
+  const [createPreview, setCreatePreview] = React.useState(null);
 
   // Scroll to ~7am on first mount (after layout settles)
   React.useEffect(() => {
@@ -47,6 +49,49 @@ function DayCalendar({ events, tasks, today, timelineDate, setTimelineDate, drag
   // Drop preview info
   const dropPreview = dragState?.target?.kind === 'day-time' ? dragState.target : null;
 
+  const onGridPointerDown = (e) => {
+    if (e.target.closest('.day-event') || e.target.closest('.day-now')) return;
+    if (e.button !== 0) return;
+    e.preventDefault();
+    
+    const grid = containerRef.current;
+    if (!grid) return;
+    const rect = grid.getBoundingClientRect();
+    const startY = e.clientY - rect.top;
+    const startMin = Math.round((startY / PX_PER_MIN) / SNAP_MIN) * SNAP_MIN;
+    
+    let active = false;
+    
+    const move = (ev) => {
+      active = true;
+      const currentY = ev.clientY - rect.top;
+      const moveMin = Math.round((currentY / PX_PER_MIN) / SNAP_MIN) * SNAP_MIN;
+      const s = Math.min(startMin, moveMin);
+      const eMin = Math.max(startMin, moveMin);
+      setCreatePreview({ start: s, end: eMin === s ? s + SNAP_MIN : eMin });
+    };
+    
+    const up = (ev) => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      if (active) {
+        setCreatePreview(prev => {
+          if (prev && onAddEvent) {
+             onAddEvent(timelineDate, prev.start, prev.end);
+          }
+          return null;
+        });
+      } else {
+        if (onAddEvent) {
+          onAddEvent(timelineDate, startMin, startMin + 60);
+        }
+      }
+    };
+    
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
+
   return (
     <section className="day-pane">
       <header className="cal-hd">
@@ -63,7 +108,6 @@ function DayCalendar({ events, tasks, today, timelineDate, setTimelineDate, drag
           )}
         </div>
         <div className="cal-hd-right" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <button className="cal-nav-btn" style={{ border: '1px solid var(--border)', padding: '2px 8px', background: 'none', color: 'var(--fg-dim)', cursor: 'pointer' }} onClick={onAddEvent}>+ Event</button>
           <span className="day-pane-stats">
             <span className="dim">·</span> {todayEvents.length} events
             <span className="dim"> · </span>
@@ -78,6 +122,7 @@ function DayCalendar({ events, tasks, today, timelineDate, setTimelineDate, drag
           ref={containerRef}
           style={{ height: `${24 * 60 * PX_PER_MIN}px` }}
           data-drop-kind="day-time"
+          onPointerDown={onGridPointerDown}
         >
           {Array.from({ length: 24 }, (_, h) => (
             <div key={h} className="day-hour" style={{ top: `${h * 60 * PX_PER_MIN}px`, height: `${60 * PX_PER_MIN}px` }}>
@@ -110,6 +155,24 @@ function DayCalendar({ events, tasks, today, timelineDate, setTimelineDate, drag
               onEventClick={onEventClick}
             />
           ))}
+
+          {/* Create preview */}
+          {createPreview && (
+            <div className="day-event ev-plan is-compact" style={{
+              top: `${createPreview.start * PX_PER_MIN}px`,
+              height: `${(createPreview.end - createPreview.start) * PX_PER_MIN}px`,
+              left: '56px',
+              width: 'calc(100% - 58px)',
+              opacity: 0.5,
+              pointerEvents: 'none',
+              zIndex: 10
+            }}>
+               <div className="day-event-inner">
+                 <div className="day-event-time">{hhmmShort(createPreview.start)} – {hhmmShort(createPreview.end)}</div>
+                 <div className="day-event-title">New Event...</div>
+               </div>
+            </div>
+          )}
 
           {/* Drop preview */}
           {dropPreview && (
@@ -251,4 +314,4 @@ function layoutEvents(events) {
   });
 }
 
-export { DayCalendar, PX_PER_MIN, SNAP_MIN };
+export { DayTimeline, PX_PER_MIN, SNAP_MIN };

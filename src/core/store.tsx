@@ -17,7 +17,10 @@ function useStored(key: string, initial: any) {
 
   useEffect(() => {
     const user = auth.currentUser;
-    if (!user) return;
+    if (!user) {
+      if (import.meta.env.DEV) setIsLoaded(true);
+      return;
+    }
     
     const docRef = doc(db, 'users', user.uid, 'store', key);
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
@@ -39,14 +42,14 @@ function useStored(key: string, initial: any) {
 
   const setValWrapper = (newValOrUpdater: any) => {
     const user = auth.currentUser;
-    if (!user) return;
+    if (!user && !import.meta.env.DEV) return;
     
-    const docRef = doc(db, 'users', user.uid, 'store', key);
     if (typeof newValOrUpdater === 'function') {
       setVal((prev: any) => {
         const result = newValOrUpdater(prev);
         localStorage.setItem(`taskroot_${key}`, JSON.stringify(result));
         if (user) {
+          const docRef = doc(db, 'users', user.uid, 'store', key);
           setDoc(docRef, { value: result }, { merge: true }).catch(e => console.warn('Firestore write failed', e));
         }
         return result;
@@ -55,6 +58,7 @@ function useStored(key: string, initial: any) {
       setVal(newValOrUpdater); // Optimistic update
       localStorage.setItem(`taskroot_${key}`, JSON.stringify(newValOrUpdater));
       if (user) {
+        const docRef = doc(db, 'users', user.uid, 'store', key);
         setDoc(docRef, { value: newValOrUpdater }, { merge: true }).catch(e => console.warn('Firestore write failed', e));
       }
     }

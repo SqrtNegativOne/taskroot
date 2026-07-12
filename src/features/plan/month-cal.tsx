@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
-import { ymd, sameDay, addDays, startOfMonth, startOfWeek, hhmmShort, MONTHS, MONTHS_LONG, DOW_SHORT, PAD2 } from './data';
+import { ymd, sameDay, addDays, startOfMonth, startOfWeek, hhmmShort, MONTHS, MONTHS_LONG, DOW_SHORT, PAD2 } from '../../core/data';
 
 // Month / week calendar — top of right pane.
 
@@ -28,7 +28,6 @@ function MonthCalendar({ view, setView, anchor, setAnchor, events, tasks, today,
           <span className="bracket">─┐</span>
         </div>
         <div className="cal-hd-right">
-          <button className="cal-nav-btn" style={{ marginRight: '8px', border: '1px solid var(--border)', padding: '2px 8px' }} onClick={onAddEvent}>+ Event</button>
           <div className="cal-nav">
             <button className="cal-nav-btn" onClick={() => shift(-1)} aria-label="previous">←</button>
             <button className="cal-nav-btn" onClick={() => setAnchor(new Date(today))}>today</button>
@@ -59,6 +58,7 @@ function MonthCalendar({ view, setView, anchor, setAnchor, events, tasks, today,
               dragState={dragState}
               onDropToDate={onDropToDate}
               onEventDragStart={onEventDragStart}
+              onAddEvent={onAddEvent}
             />
           ))}
         </div>
@@ -67,7 +67,7 @@ function MonthCalendar({ view, setView, anchor, setAnchor, events, tasks, today,
   );
 }
 
-function DayCell({ cell, today, events, tasks, isWeek, dragState, onDropToDate, onEventDragStart }) {
+function DayCell({ cell, today, events, tasks, isWeek, dragState, onDropToDate, onEventDragStart, onAddEvent }) {
   const ref = React.useRef(null);
   const isToday = sameDay(cell.date, today);
   const isPast = cell.date < today && !isToday;
@@ -96,6 +96,10 @@ function DayCell({ cell, today, events, tasks, isWeek, dragState, onDropToDate, 
         isDragOver ? 'is-drag-over' : '',
         canAccept ? 'can-accept' : '',
       ].join(' ')}
+      onDoubleClick={(e) => {
+        if ((e.target as HTMLElement).closest('.day-cell-event')) return;
+        if (onAddEvent) onAddEvent(cell.date);
+      }}
     >
       <div className="day-cell-hd">
         <span className="day-cell-num">{PAD2(cell.date.getDate())}</span>

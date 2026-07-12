@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
-import { SAMPLE_TIPS, SAMPLE_NOTES } from './data';
-import { useStored } from './store';
+import { SAMPLE_TIPS, SAMPLE_NOTES } from '../../core/data';
+import { useStored } from '../../core/store';
 
 // Tips list + Notes (Obsidian placeholder)
 

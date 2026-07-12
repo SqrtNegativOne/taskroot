@@ -112,19 +112,28 @@
   }
 
   .window-controls {
-    display: flex; gap: 8px;
+    display: flex; gap: 0;
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 100%;
+    -webkit-app-region: no-drag;
   }
   .win-btn {
-    width: 12px; height: 12px;
-    border-radius: 50%;
+    width: 46px; height: 100%;
+    border-radius: 0;
     border: none;
-    cursor: pointer;
+    cursor: default;
     padding: 0;
+    background: transparent;
+    color: var(--fg);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 100ms;
   }
-  .win-btn.green { background-color: #28c940; }
-  .win-btn.yellow { background-color: #ffbd2e; }
-  .win-btn.red { background-color: #ff5f56; }
-  .win-btn:hover { opacity: 0.8; }
+  .win-btn:hover { background-color: rgba(128, 128, 128, 0.2); }
+  .win-btn.close:hover { background-color: #e81123; color: white; }
 
   .stages { display: inline-flex; align-items: center; gap: 8px; font-size: 0.88em; -webkit-app-region: no-drag; }
   .stage {
@@ -427,6 +436,7 @@
   .day-cell-event.pri-bar-P1 { border-left-color: var(--p1); }
   .day-cell-event.pri-bar-P2 { border-left-color: var(--p2); }
   .day-cell-event.pri-bar-P3 { border-left-color: var(--p3); }
+  .day-cell-event.is-done { color: var(--fg-dim); text-decoration: line-through; opacity: 0.6; border-left-color: var(--border-soft); background: var(--bg); }
   .day-cell-event-time { color: var(--fg-dim); flex-shrink: 0; font-variant-numeric: tabular-nums; }
   .day-cell-event-title { overflow: hidden; text-overflow: ellipsis; }
   .day-cell-more {
@@ -527,6 +537,8 @@
   .day-event.pri-bar-P1 { border-left-color: var(--p1); }
   .day-event.pri-bar-P2 { border-left-color: var(--p2); }
   .day-event.pri-bar-P3 { border-left-color: var(--p3); }
+  .day-event.is-done { opacity: 0.6; border-color: var(--border-soft); background: var(--bg); border-left-color: var(--border-soft); }
+  .day-event.is-done .day-event-title { color: var(--fg-dim); text-decoration: line-through; }
   .day-event-inner { display: flex; flex-direction: column; gap: 2px; pointer-events: none; }
   .day-event-time {
     font-size: 0.74em;

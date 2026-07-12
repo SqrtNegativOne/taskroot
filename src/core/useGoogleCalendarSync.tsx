@@ -2,7 +2,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { useNotification } from './notifications';
 
 // Convert our event to Google Calendar event format
-function toGoogleEvent(localEvent, tasks) {
+export function toGoogleEvent(localEvent, tasks) {
   const task = localEvent.taskId ? tasks.find((t) => t.id === localEvent.taskId) : null;
   const title = task ? task.title : localEvent.title;
 
@@ -38,7 +38,7 @@ function toGoogleEvent(localEvent, tasks) {
 }
 
 // Convert Google Calendar event to our event format
-function toLocalEvent(googleEvent) {
+export function toLocalEvent(googleEvent) {
   let date, start, end;
 
   if (googleEvent.start.dateTime) {
@@ -85,7 +85,36 @@ function toLocalEvent(googleEvent) {
   };
 }
 
-export function useGoogleCalendarSync(events, setEvents, tasks) {
+export const defaultApiClient = {
+  fetchEvents: async (timeMin, timeMax, token) => {
+    const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&maxResults=2500`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return res;
+  },
+  createEvent: async (body, token) => {
+    return await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+  },
+  updateEvent: async (googleEventId, body, token) => {
+    return await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${googleEventId}`, {
+      method: 'PATCH',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+  },
+  deleteEvent: async (googleEventId, token) => {
+    return await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${googleEventId}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+  }
+};
+
+export function useGoogleCalendarSync(events, setEvents, tasks, apiClient = defaultApiClient) {
   const { notify } = useNotification();
   const isSyncing = useRef(false);
   const tokenRef = useRef(null);
@@ -124,11 +153,7 @@ export function useGoogleCalendarSync(events, setEvents, tasks) {
       (window as any).lastTimeMin = timeMin;
       (window as any).lastTimeMax = timeMax;
 
-      const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin.toISOString()}&timeMax=${timeMax.toISOString()}&singleEvents=true&maxResults=2500`, {
-        headers: {
-          'Authorization': `Bearer ${tokenRef.current}`
-        }
-      });
+      const res = await apiClient.fetchEvents(timeMin.toISOString(), timeMax.toISOString(), tokenRef.current);
       if (!res.ok) {
         if (res.status === 401) {
            console.log("Google Token expired.");
@@ -143,20 +168,13 @@ export function useGoogleCalendarSync(events, setEvents, tasks) {
       console.error("Error fetching Google Calendar events:", e);
       return [];
     }
-  }, []);
+  }, [apiClient, notify]);
 
   const createGoogleEvent = async (localEvent) => {
     if (!tokenRef.current) return null;
     const body = toGoogleEvent(localEvent, tasks);
     try {
-      const res = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${tokenRef.current}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(body)
-      });
+      const res = await apiClient.createEvent(body, tokenRef.current);
       if (!res.ok) throw new Error('Failed to create event');
       const data = await res.json();
       return data.id;
@@ -170,14 +188,7 @@ export function useGoogleCalendarSync(events, setEvents, tasks) {
     if (!tokenRef.current) return;
     const body = toGoogleEvent(localEvent, tasks);
     try {
-      await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${googleEventId}`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${tokenRef.current}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(body)
-      });
+      await apiClient.updateEvent(googleEventId, body, tokenRef.current);
     } catch (e) {
       console.error("Error updating Google event", e);
     }
@@ -186,12 +197,7 @@ export function useGoogleCalendarSync(events, setEvents, tasks) {
   const deleteGoogleEvent = async (googleEventId) => {
     if (!tokenRef.current) return;
     try {
-      await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${googleEventId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${tokenRef.current}`,
-        }
-      });
+      await apiClient.deleteEvent(googleEventId, tokenRef.current);
     } catch (e) {
       console.error("Error deleting Google event", e);
     }

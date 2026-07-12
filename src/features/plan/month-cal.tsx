@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
 import { ymd, sameDay, addDays, startOfMonth, startOfWeek, hhmmShort, MONTHS, MONTHS_LONG, DOW_SHORT, PAD2 } from '../../core/data';
+import { hydrateEvents } from '../../core/events';
 
 // Month / week calendar — top of right pane.
 
@@ -7,6 +8,7 @@ function MonthCalendar({ view, setView, anchor, setAnchor, events, tasks, today,
   // anchor is a Date pointing into the month or week currently shown.
   const isWeek = view === 'week';
   const cells = React.useMemo(() => buildMonthOrWeekCells(anchor, isWeek), [anchor, isWeek]);
+  const hydratedEvents = React.useMemo(() => hydrateEvents(events, tasks), [events, tasks]);
 
   const titleLabel = isWeek
     ? weekRangeLabel(cells[0].date, cells[cells.length - 1].date)
@@ -52,7 +54,7 @@ function MonthCalendar({ view, setView, anchor, setAnchor, events, tasks, today,
               key={i}
               cell={c}
               today={today}
-              events={events.filter(e => e.date === ymd(c.date))}
+              events={hydratedEvents.filter(e => e.date === ymd(c.date))}
               tasks={tasks}
               isWeek={isWeek}
               dragState={dragState}
@@ -107,16 +109,16 @@ function DayCell({ cell, today, events, tasks, isWeek, dragState, onDropToDate, 
       </div>
       <div className="day-cell-events">
         {events.map(ev => {
-          const task = ev.taskId ? tasks.find(t => t.id === ev.taskId) : null;
-          const title = task ? task.title : ev.title;
-          const pri = task ? task.priority : null;
+          const title = ev.title;
+          const pri = ev.priority;
+          const isDone = ev.isDone;
           return (
             <div
               key={ev.id}
-              className={`day-cell-event ev-${ev.type} ${pri ? `pri-bar-${pri}` : ''}`}
+              className={`day-cell-event ev-${ev.type} ${pri ? `pri-bar-${pri}` : ''} ${isDone ? 'is-done' : ''}`}
               title={`${hhmmShort(ev.start)} — ${title}`}
               style={{ cursor: 'grab', opacity: dragState?.event?.id === ev.id ? 0.4 : 1 }}
-              onPointerDown={(e) => onEventDragStart && onEventDragStart(e, ev, task)}
+              onPointerDown={(e) => onEventDragStart && onEventDragStart(e, ev, ev.task)}
             >
               <span className="day-cell-event-time">{hhmmShort(ev.start)}</span>
               <span className="day-cell-event-title">{title}</span>

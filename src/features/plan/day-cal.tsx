@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
 import { TODAY, ymd, hhmmShort, durationLabel, MONTHS, DOW_SHORT, PAD2, addDays, sameDay } from '../../core/data';
+import { hydrateEvents } from '../../core/events';
 
 // Today's day calendar — vertical, 24h scrollable, with drag-to-schedule + resize.
 
@@ -41,7 +42,7 @@ function DayTimeline({ events, tasks, today, timelineDate, setTimelineDate, drag
     return () => clearInterval(interval);
   }, []);
 
-  const todayEvents = events.filter(e => e.date === ymd(viewDate)).sort((a, b) => a.start - b.start);
+  const todayEvents = hydrateEvents(events.filter(e => e.date === ymd(viewDate)), tasks).sort((a, b) => a.start - b.start);
 
   // Compute lanes for overlapping events
   const laid = layoutEvents(todayEvents);
@@ -145,7 +146,7 @@ function DayTimeline({ events, tasks, today, timelineDate, setTimelineDate, drag
             <EventBlock
               key={event.id}
               event={event}
-              task={event.taskId ? tasks.find(t => t.id === event.taskId) : null}
+              task={event.task}
               lane={lane}
               lanes={lanes}
               onResize={onResizeEvent}
@@ -200,8 +201,8 @@ function EventBlock({ event, task, lane, lanes, onResize, onMove, dragState, set
   const widthPct = 100 / lanes;
   const leftPct = lane * widthPct;
 
-  const title = task ? task.title : event.title;
-  const pri = task ? task.priority : null;
+  const title = event.title;
+  const pri = event.priority;
 
   const onResizeStart = (edge) => (e) => {
     e.stopPropagation();
@@ -257,10 +258,11 @@ function EventBlock({ event, task, lane, lanes, onResize, onMove, dragState, set
   };
 
   const compact = height < 40;
+  const isDone = event.isDone;
 
   return (
     <div
-      className={`day-event ev-${event.type} ${pri ? `pri-bar-${pri}` : ''} ${compact ? 'is-compact' : ''}`}
+      className={`day-event ev-${event.type} ${pri ? `pri-bar-${pri}` : ''} ${compact ? 'is-compact' : ''} ${isDone ? 'is-done' : ''}`}
       style={{
         top: `${top}px`,
         height: `${Math.max(height, 18)}px`,

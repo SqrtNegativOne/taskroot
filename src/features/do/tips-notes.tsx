@@ -52,6 +52,8 @@ function TipsList() {
 function NotesList() {
   const [notes, setNotes] = useStored('notes', SAMPLE_NOTES);
   const [toast, setToast] = React.useState(null);
+  const [adding, setAdding] = React.useState(false);
+  const [draft, setDraft] = React.useState('');
 
   const openInObsidian = (note) => {
     // Mocked — would normally fire obsidian:// deep link
@@ -60,10 +62,12 @@ function NotesList() {
   };
   const remove = (id) => setNotes(ns => ns.filter(n => n.id !== id));
   const addNote = () => {
-    const title = prompt('Note title?');
-    if (!title) return;
+    const title = draft.trim();
+    if (!title) { setAdding(false); return; }
     const id = `n${Date.now()}`;
-    setNotes(ns => [...ns, { id, title: title.trim(), vault: 'work', path: `${title.toLowerCase().replace(/\s+/g, '-')}.md` }]);
+    setNotes(ns => [...ns, { id, title, vault: 'work', path: `${title.toLowerCase().replace(/\s+/g, '-')}.md` }]);
+    setDraft('');
+    setAdding(false);
   };
 
   return (
@@ -81,9 +85,27 @@ function NotesList() {
           </li>
         ))}
         <li className="notes-row notes-row-add">
-          <button className="notes-add-btn" onClick={addNote}>
-            <span className="notes-icon">+</span> add note
-          </button>
+          {adding ? (
+            <div style={{ display: 'flex', width: '100%', alignItems: 'center', padding: '6px 4px', gap: '10px' }}>
+              <span className="notes-icon">+</span>
+              <input
+                autoFocus
+                className="tips-input"
+                placeholder="note title…"
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                onBlur={addNote}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') addNote();
+                  if (e.key === 'Escape') { setAdding(false); setDraft(''); }
+                }}
+              />
+            </div>
+          ) : (
+            <button className="notes-add-btn" onClick={() => setAdding(true)}>
+              <span className="notes-icon">+</span> add note
+            </button>
+          )}
         </li>
       </ul>
       {toast && (

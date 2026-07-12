@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
 import { TODAY, REST_CHECKLIST_DEFAULTS, MONTHS, DOW_SHORT } from '../../core/data';
-import { TopBar } from '../../components/shell';
+import { TitleBar } from '../../components/shell';
 import { load, useStored, seedDefaults } from '../../core/store';
 
 // Rest screen — large checklist, editable, resets on each visit.
 
-function RestView() {
+function RestScreen() {
   React.useEffect(() => { seedDefaults(); }, []);
 
   // Reset every visit: don't persist checks across reloads, but keep custom items.
@@ -37,7 +37,7 @@ function RestView() {
 
   return (
     <div className="app app-rest">
-      <TopBar today={TODAY} current="rest" />
+      <TitleBar today={TODAY} current="rest" />
 
       <main className="rest-main">
         <div className="rest-stage">
@@ -142,4 +142,4 @@ function RestView() {
 
 
 
-export { RestView };
+export { RestScreen };

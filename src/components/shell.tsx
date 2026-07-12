@@ -3,8 +3,7 @@ import { Link } from 'react-router-dom';
 import { MONTHS, DOW_SHORT, PAD2 } from '../core/data';
 
 // Shared top bar + clickable stage indicator. Used across Plan, Do, Rest.
-
-function TopBar({ current, today }) {
+function TitleBar({ current, today }) {
   // @ts-ignore - electronAPI is injected via preload
   const handleMinimize = () => window.electronAPI?.minimizeWindow?.();
   // @ts-ignore
@@ -59,4 +58,4 @@ function StageIndicator({ current }) {
   );
 }
 
-export { TopBar, StageIndicator };
+export { TitleBar, StageIndicator };

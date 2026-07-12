@@ -3,19 +3,19 @@ import { Collapsible } from '../../components/collapsible';
 import { TODAY, SAMPLE_TASKS, SAMPLE_DISTRACTIONS, SAMPLE_TIPS, SAMPLE_NOTES } from '../../core/data';
 import { DistractionLog } from './distraction-log';
 import { Kanban } from './kanban';
-import { TopBar } from '../../components/shell';
+import { TitleBar } from '../../components/shell';
 import { Stopwatch } from './stopwatch';
 import { useStored, seedDefaults } from '../../core/store';
 import { TipsList, NotesList } from './tips-notes';
 
 // Do screen — hero stopwatch + collapsible sections.
 
-function DoView() {
+function DoScreen() {
   React.useEffect(() => { seedDefaults(); }, []);
 
   return (
     <div className="app app-do">
-      <TopBar today={TODAY} current="do" />
+      <TitleBar today={TODAY} current="do" />
 
       <main className="do-main">
         <Stopwatch />
@@ -78,4 +78,4 @@ function NotesBadge() {
 
 
 
-export { DoView };
+export { DoScreen };

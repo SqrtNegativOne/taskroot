@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import fs from 'node:fs';
+import { createServer } from 'node:http';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -61,7 +62,51 @@ function createWindow() {
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL);
   } else {
-    win.loadFile(path.join(RENDERER_DIST, 'index.html'));
+    const server = createServer((req: any, res: any) => {
+      let pathname = new URL(req.url || '', `http://${req.headers.host}`).pathname;
+      if (pathname === '/') pathname = '/index.html';
+      let filePath = path.join(RENDERER_DIST, pathname);
+      
+      if (!filePath.startsWith(RENDERER_DIST)) {
+        res.writeHead(403);
+        res.end('Forbidden');
+        return;
+      }
+      
+      if (!fs.existsSync(filePath)) {
+        filePath = path.join(RENDERER_DIST, 'index.html');
+      }
+
+      const ext = path.extname(filePath);
+      const mimeTypes: Record<string, string> = {
+        '.html': 'text/html',
+        '.js': 'text/javascript',
+        '.css': 'text/css',
+        '.json': 'application/json',
+        '.png': 'image/png',
+        '.jpg': 'image/jpg',
+        '.svg': 'image/svg+xml',
+        '.ico': 'image/x-icon'
+      };
+      
+      const contentType = mimeTypes[ext] || 'application/octet-stream';
+      
+      fs.readFile(filePath, (err, content) => {
+        if (err) {
+          res.writeHead(500);
+          res.end('Internal Server Error');
+        } else {
+          res.writeHead(200, { 'Content-Type': contentType });
+          res.end(content, 'utf-8');
+        }
+      });
+    });
+
+    server.listen(0, '127.0.0.1', () => {
+      const addr = server.address();
+      const port = typeof addr === 'string' ? 0 : addr?.port;
+      win?.loadURL(`http://localhost:${port}`);
+    });
   }
 }
 

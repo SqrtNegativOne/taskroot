@@ -34,5 +34,5 @@ The application code is organized modularly by feature:
 
 ## Key Concepts
 - **State Management**: The `useStored(key, defaultData)` hook acts as the primary state manager. It syncs optimistically to `localStorage` and persists to Firestore.
-- **Development Mode**: Running `npm run dev` or `npm start` automatically bypasses the Google login screen for rapid UI testing using `import.meta.env.DEV`, falling back to local storage offline mode.
+- **Offline/Online Mode**: Running `npm run start:offline` sets `VITE_OFFLINE_MODE=true` to automatically bypass the Google login screen for rapid UI testing and offline usage. Running `npm run start:online` requires normal authentication.
 - **Drag and Drop**: Managed natively via pointer events (`pointerdown`, `pointermove`, `pointerup`) instead of the HTML5 Drag & Drop API for finer control and custom ghost elements.

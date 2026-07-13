@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
-import { ymd, sameDay, addDays, startOfMonth, startOfWeek, hhmmShort, MONTHS, MONTHS_LONG, DOW_SHORT, PAD2 } from '../../core/data';
+import { ymd, sameDay, addDays, startOfMonth, startOfWeek, getWeekNumber, hhmmShort, MONTHS, MONTHS_LONG, DOW_SHORT, PAD2 } from '../../core/data';
 import { hydrateEvents } from '../../core/events';
 
 // Month / week calendar — top of right pane.
@@ -157,10 +157,11 @@ function buildMonthOrWeekCells(anchor, isWeek) {
 }
 
 function weekRangeLabel(a, b) {
+  const prefix = `Week #${getWeekNumber(a)}/52 `;
   if (a.getMonth() === b.getMonth()) {
-    return `${MONTHS_LONG[a.getMonth()]} ${a.getDate()}–${b.getDate()}, ${a.getFullYear()}`;
+    return `${prefix}${MONTHS_LONG[a.getMonth()]} ${a.getDate()}–${b.getDate()}, ${a.getFullYear()}`;
   }
-  return `${MONTHS[a.getMonth()]} ${a.getDate()} – ${MONTHS[b.getMonth()]} ${b.getDate()}, ${b.getFullYear()}`;
+  return `${prefix}${MONTHS[a.getMonth()]} ${a.getDate()} – ${MONTHS[b.getMonth()]} ${b.getDate()}, ${b.getFullYear()}`;
 }
 
 export { MonthCalendar };

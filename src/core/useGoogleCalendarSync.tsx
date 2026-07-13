@@ -156,9 +156,31 @@ export function useGoogleCalendarSync(events, setEvents, tasks, apiClient = defa
       const res = await apiClient.fetchEvents(timeMin.toISOString(), timeMax.toISOString(), tokenRef.current);
       if (!res.ok) {
         if (res.status === 401) {
-           console.log("Google Token expired.");
-           localStorage.removeItem('google_access_token');
-           notify("Google Calendar token expired. Please log in again.", "error");
+           console.log("Google Token expired. Attempting to refresh via backend...");
+           
+           try {
+             const { getFunctions, httpsCallable } = await import('firebase/functions');
+             const functions = getFunctions();
+             const getFreshAccessToken = httpsCallable(functions, 'getFreshAccessToken');
+             
+             const result = await getFreshAccessToken();
+             const newAccessToken = (result.data as any).accessToken;
+             
+             if (newAccessToken) {
+               localStorage.setItem('google_access_token', newAccessToken);
+               tokenRef.current = newAccessToken;
+               // Retry the fetch with the new token
+               const retryRes = await apiClient.fetchEvents(timeMin.toISOString(), timeMax.toISOString(), newAccessToken);
+               if (retryRes.ok) {
+                 const retryData = await retryRes.json();
+                 return retryData.items || [];
+               }
+             }
+           } catch (refreshError) {
+             console.error("Backend token refresh failed:", refreshError);
+             localStorage.removeItem('google_access_token');
+             notify("Google Calendar token expired. Please log in again.", "error");
+           }
         }
         throw new Error('Failed to fetch events');
       }

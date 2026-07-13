@@ -103,7 +103,7 @@ function DayTimeline({ events, tasks, today, timelineDate, setTimelineDate, drag
         <div className="cal-hd-left" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <button className="cal-nav-btn" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--fg-dim)' }} onClick={() => setTimelineDate(addDays(viewDate, -1))}>◀</button>
           <span className="cal-hd-title" style={{ color: isToday ? 'inherit' : 'var(--accent)' }}>
-            {DOW_SHORT[(viewDate.getDay() + 6) % 7]} {MONTHS[viewDate.getMonth()]} {viewDate.getDate()}
+            {DOW_SHORT[viewDate.getDay()]} {MONTHS[viewDate.getMonth()]} {viewDate.getDate()}
           </span>
           <button className="cal-nav-btn" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--fg-dim)' }} onClick={() => setTimelineDate(addDays(viewDate, 1))}>▶</button>
           {!isToday && (

@@ -44,7 +44,7 @@ function RestScreen() {
           <header className="rest-header">
             <div className="rest-bracket-row">
               <span className="bracket">┌─</span>
-              <span className="rest-label">REST · {DOW_SHORT[(TODAY.getDay() + 6) % 7].toLowerCase()} {MONTHS[TODAY.getMonth()].toLowerCase()} {TODAY.getDate()}</span>
+              <span className="rest-label">REST · {DOW_SHORT[TODAY.getDay()].toLowerCase()} {MONTHS[TODAY.getMonth()].toLowerCase()} {TODAY.getDate()}</span>
               <span className="bracket">─┐</span>
             </div>
             <h1 className="rest-title">

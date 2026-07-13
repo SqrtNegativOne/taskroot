@@ -25,11 +25,18 @@ const sameDay = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() ==
 const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
 const startOfMonth = (d) => new Date(d.getFullYear(), d.getMonth(), 1);
 const startOfWeek = (d) => {
-  // Monday-first
+  // Sunday-first
   const x = new Date(d);
-  const day = (x.getDay() + 6) % 7; // 0 = Mon
+  const day = x.getDay(); // 0 = Sun
   x.setDate(x.getDate() - day);
   return x;
+};
+const getWeekNumber = (d) => {
+  const date = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const startOfYear = new Date(date.getFullYear(), 0, 1);
+  const firstWeekStart = startOfWeek(startOfYear);
+  const diffDays = Math.round((date.getTime() - firstWeekStart.getTime()) / 86400000);
+  return Math.floor(diffDays / 7) + 1;
 };
 const minutesToHHMM = (m) => `${PAD2(Math.floor(m / 60))}:${PAD2(m % 60)}`;
 const hhmmShort = (m) => {
@@ -57,8 +64,8 @@ const dueLabel = (dueStr, today) => {
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const MONTHS_LONG = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-const DOW_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-const DOW_TINY = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+const DOW_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const DOW_TINY = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 // ── More seed data for Do / Rest screens ────────────────────────────────────
 
@@ -89,4 +96,4 @@ const REST_CHECKLIST_DEFAULTS = [
   { id: 'r6', title: 'Maybe write in your journal.', type: 'check' },
 ];
 
-export { TODAY, SAMPLE_TASKS, SAMPLE_EVENTS, DEFAULT_STATUSES, DEFAULT_DISTRACTION_COLUMNS, SAMPLE_TIPS, REST_CHECKLIST_DEFAULTS, ymd, parseYMD, sameDay, addDays, startOfMonth, startOfWeek, minutesToHHMM, hhmmShort, durationLabel, dueLabel, MONTHS, MONTHS_LONG, DOW_SHORT, DOW_TINY, PAD2, SAMPLE_DISTRACTIONS, SAMPLE_NOTES };
+export { TODAY, SAMPLE_TASKS, SAMPLE_EVENTS, DEFAULT_STATUSES, DEFAULT_DISTRACTION_COLUMNS, SAMPLE_TIPS, REST_CHECKLIST_DEFAULTS, ymd, parseYMD, sameDay, addDays, startOfMonth, startOfWeek, getWeekNumber, minutesToHHMM, hhmmShort, durationLabel, dueLabel, MONTHS, MONTHS_LONG, DOW_SHORT, DOW_TINY, PAD2, SAMPLE_DISTRACTIONS, SAMPLE_NOTES };

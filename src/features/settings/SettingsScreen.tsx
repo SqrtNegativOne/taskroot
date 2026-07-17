@@ -4,6 +4,31 @@ import { TODAY } from '../../core/data';
 import { useStored } from '../../core/store';
 import './settings.css';
 
+function SegmentedControl({ options, value, onChange }) {
+  return (
+    <div style={{ display: 'inline-flex', background: 'var(--bg-app)', padding: '3px', borderRadius: '8px', border: '1px solid var(--border)', userSelect: 'none', flexWrap: 'wrap', gap: '2px' }}>
+      {options.map(opt => (
+        <button
+          type="button"
+          key={opt.value}
+          onClick={() => onChange(opt.value)}
+          style={{
+            appearance: 'none', background: opt.value === value ? 'var(--bg-surface)' : 'transparent',
+            border: 'none', borderRadius: '5px', padding: '6px 14px', fontSize: '13px', cursor: 'pointer',
+            color: opt.value === value ? 'var(--fg)' : 'var(--fg-dim)',
+            boxShadow: opt.value === value ? '0 1px 3px rgba(0,0,0,0.12), 0 1px 1px rgba(0,0,0,0.04)' : 'none',
+            fontWeight: opt.value === value ? 500 : 400,
+            transition: 'all 0.15s cubic-bezier(0.3, 0.7, 0.4, 1)',
+            flex: '1 1 auto', textAlign: 'center', whiteSpace: 'nowrap'
+          }}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function SettingsScreen() {
   const [activeTab, setActiveTab] = useState('general');
   const [recordingKeybinding, setRecordingKeybinding] = useState<string | null>(null);
@@ -27,6 +52,12 @@ export function SettingsScreen() {
               onClick={() => setActiveTab('general')}
             >
               <div className="task-row-title">Plan screen</div>
+            </div>
+            <div 
+              className={`task-row ${activeTab === 'do_screen' ? 'is-active' : ''}`}
+              onClick={() => setActiveTab('do_screen')}
+            >
+              <div className="task-row-title">Do screen</div>
             </div>
             <div 
               className={`task-row ${activeTab === 'sync' ? 'is-active' : ''}`}
@@ -56,17 +87,16 @@ export function SettingsScreen() {
                     Set your default calendar view.
                   </div>
                   <div className="settings-section-actions">
-                    <label style={{ display: 'flex', gap: '8px', alignItems: 'center', color: 'var(--fg)' }}>
-                      <span>Default View:</span>
-                      <select 
-                        className="selector-input" 
-                        style={{ padding: '4px 8px', border: '1px solid var(--border)', borderRadius: '4px', background: 'var(--bg-app)', color: 'var(--fg)' }}
+                    <label style={{ display: 'flex', gap: '12px', alignItems: 'center', color: 'var(--fg)' }}>
+                      <span style={{ minWidth: '120px' }}>Default View:</span>
+                      <SegmentedControl
                         value={settings.defaultCalendarView || 'month'}
-                        onChange={e => setSettings({ ...settings, defaultCalendarView: e.target.value })}
-                      >
-                        <option value="month">Month</option>
-                        <option value="week">Week</option>
-                      </select>
+                        onChange={v => setSettings({ ...settings, defaultCalendarView: v })}
+                        options={[
+                          { value: 'month', label: 'Month' },
+                          { value: 'week', label: 'Week' }
+                        ]}
+                      />
                     </label>
                   </div>
                 </div>
@@ -79,26 +109,48 @@ export function SettingsScreen() {
                     Set the default estimated duration for new tasks.
                   </div>
                   <div className="settings-section-actions">
-                    <label style={{ display: 'flex', gap: '8px', alignItems: 'center', color: 'var(--fg)' }}>
-                      <span>Default Duration:</span>
-                      <select 
-                        className="selector-input" 
-                        style={{ padding: '4px 8px', border: '1px solid var(--border)', borderRadius: '4px', background: 'var(--bg-app)', color: 'var(--fg)' }}
+                    <label style={{ display: 'flex', gap: '12px', alignItems: 'center', color: 'var(--fg)' }}>
+                      <span style={{ minWidth: '120px' }}>Default Duration:</span>
+                      <SegmentedControl
                         value={settings.defaultTaskDuration !== undefined ? settings.defaultTaskDuration : 0}
-                        onChange={e => setSettings({ ...settings, defaultTaskDuration: parseInt(e.target.value, 10) })}
-                      >
-                        <option value="0">Not set</option>
-                        <option value="15">15m</option>
-                        <option value="30">30m</option>
-                        <option value="45">45m</option>
-                        <option value="60">1h</option>
-                        <option value="90">1h 30m</option>
-                        <option value="120">2h</option>
-                      </select>
+                        onChange={v => setSettings({ ...settings, defaultTaskDuration: parseInt(v, 10) })}
+                        options={[
+                          { value: 0, label: 'Not set' },
+                          { value: 15, label: '15m' },
+                          { value: 30, label: '30m' },
+                          { value: 45, label: '45m' },
+                          { value: 60, label: '1h' },
+                          { value: 90, label: '1.5h' },
+                          { value: 120, label: '2h' }
+                        ]}
+                      />
                     </label>
                   </div>
                 </div>
               </>
+            )}
+            {activeTab === 'do_screen' && (
+              <div className="settings-section">
+                <div className="settings-section-title">
+                  Clock Style
+                </div>
+                <div className="settings-section-desc dim">
+                  Choose between the Classic Stopwatch or the Guzey Clock.
+                </div>
+                <div className="settings-section-actions">
+                  <label style={{ display: 'flex', gap: '12px', alignItems: 'center', color: 'var(--fg)' }}>
+                    <span style={{ minWidth: '120px' }}>Clock Style:</span>
+                    <SegmentedControl
+                      value={settings.clockStyle || 'classic'}
+                      onChange={v => setSettings({ ...settings, clockStyle: v })}
+                      options={[
+                        { value: 'classic', label: 'Classic Stopwatch' },
+                        { value: 'guzey', label: 'Guzey Clock' }
+                      ]}
+                    />
+                  </label>
+                </div>
+              </div>
             )}
             {activeTab === 'sync' && (
               <div className="settings-section">

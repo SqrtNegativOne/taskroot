@@ -3,35 +3,110 @@ import { SAMPLE_TASKS, SAMPLE_EVENTS, PAD2, ymd } from '../../core/data';
 import { useStored } from '../../core/store';
 import { Search } from 'lucide-react';
 
-// Stopwatch — huge hero, count-up, start/stop/reset, persisted across reloads.
+function GuzeyClockDisplay({ toggleSelector }) {
+  const [now, setNow] = useState(new Date());
 
-function Stopwatch() {
-  const [state, setState] = useStored('stopwatch', { elapsed: 0, runningSince: null });
-  const [tasks, setTasks] = useStored('tasks', SAMPLE_TASKS);
-  const [events] = useStored('events', SAMPLE_EVENTS || []);
-  const [, setTick] = useState(0);
-
-  const [selectorOpen, setSelectorOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const searchInputRef = useRef(null);
-
-  // While running, request animation frame to update display.
   useEffect(() => {
-    if (state.runningSince == null) return;
     let raf;
     const loop = () => {
-      setTick(t => t + 1);
+      setNow(new Date());
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-  }, [state.runningSince]);
+  }, []);
 
-  const running = state.runningSince != null;
-  const currentMs = state.elapsed + (running ? Date.now() - state.runningSince : 0);
-  const isPristine = currentMs === 0 && !running;
+  const h = now.getHours();
+  const min = now.getMinutes();
 
-  const toggle = () => {
+  let state = "";
+  let nextMin = 0;
+  let color = "var(--fg)";
+  const isLongBreak = (h % 3 === 0);
+
+  if (isLongBreak && min < 35) {
+    state = "LONG_BREAK";
+    nextMin = 35;
+    color = "var(--tag-green)";
+  } else {
+    if (min >= 0 && min < 5) {
+      state = "BREAK";
+      nextMin = 5;
+      color = "var(--tag-green)";
+    } else if (min >= 5 && min < 30) {
+      state = "WORK";
+      nextMin = 30;
+      color = "var(--fg)";
+    } else if (min >= 30 && min < 35) {
+      state = "BREAK";
+      nextMin = 35;
+      color = "var(--tag-green)";
+    } else {
+      state = "WORK";
+      nextMin = 60;
+      color = "var(--fg)";
+    }
+  }
+
+  let target = new Date(now);
+  target.setSeconds(0);
+  target.setMilliseconds(0);
+  if (nextMin === 60) {
+    target.setMinutes(0);
+    target.setHours(target.getHours() + 1);
+  } else {
+    target.setMinutes(nextMin);
+  }
+
+  const remainingMs = target.getTime() - now.getTime();
+  const remS = Math.floor(remainingMs / 1000);
+  const remM = Math.floor(remS / 60);
+  const finalS = remS % 60;
+
+  const displayText = `${state}: ${PAD2(remM)}:${PAD2(finalS)} left`;
+
+  return (
+    <div className="stopwatch-display is-running" onClick={toggleSelector} title="Click to open task selector" style={{ color }}>
+      <span className="sw-digits sw-m" style={{ fontSize: '0.28em', whiteSpace: 'nowrap' }}>
+        {displayText}
+      </span>
+    </div>
+  );
+}
+
+function ClassicClockDisplay({ running, isPristine, currentMs, toggle }) {
+  const { m } = splitTime(currentMs);
+  return (
+    <div className={`stopwatch-display ${running ? 'is-running' : ''} ${isPristine ? 'is-pristine' : ''}`} onClick={toggle} title="Click to start/stop">
+      <span className="sw-digits sw-m" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {isPristine ? (
+          <svg width="0.8em" height="0.8em" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" style={{ marginLeft: '0.1em' }}>
+            <path d="M8 5v14l11-7z" />
+          </svg>
+        ) : m}
+      </span>
+    </div>
+  );
+}
+
+abstract class ClockStrategy {
+  abstract renderDisplay(context: any): React.ReactNode;
+  abstract requiresAnimationLoop(context: any): boolean;
+  abstract onToggle(context: any): void;
+  abstract onTaskSelected(context: any): void;
+  abstract onReset(context: any): void;
+}
+
+class ClassicClockStrategy extends ClockStrategy {
+  renderDisplay({ currentMs, running, isPristine, toggle }) {
+    return <ClassicClockDisplay running={running} isPristine={isPristine} currentMs={currentMs} toggle={toggle} />;
+  }
+
+  requiresAnimationLoop({ state }) {
+    return state.runningSince != null;
+  }
+
+  onToggle({ isPristine, setSelectorOpen, setState }) {
     if (isPristine) {
       setSelectorOpen(true);
       return;
@@ -42,7 +117,90 @@ function Stopwatch() {
       }
       return { ...s, runningSince: Date.now() };
     });
-  };
+  }
+
+  onTaskSelected({ running, setState, setSelectorOpen }) {
+    setSelectorOpen(false);
+    if (!running) {
+      setState(s => ({ ...s, runningSince: Date.now() }));
+    }
+  }
+
+  onReset({ setState, setSelectorOpen }) {
+    setState({ elapsed: 0, runningSince: null });
+    setSelectorOpen(false);
+  }
+}
+
+class GuzeyClockStrategy extends ClockStrategy {
+  renderDisplay({ toggle }) {
+    return <GuzeyClockDisplay toggleSelector={toggle} />;
+  }
+
+  requiresAnimationLoop() {
+    return false;
+  }
+
+  onToggle({ setSelectorOpen }) {
+    setSelectorOpen(prev => !prev);
+  }
+
+  onTaskSelected({ setSelectorOpen }) {
+    setSelectorOpen(false);
+  }
+
+  onReset({ setSelectorOpen }) {
+    setSelectorOpen(false);
+  }
+}
+
+const CLOCK_STRATEGIES = {
+  classic: new ClassicClockStrategy(),
+  guzey: new GuzeyClockStrategy(),
+};
+
+
+function Stopwatch() {
+  const [state, setState] = useStored('stopwatch', { elapsed: 0, runningSince: null });
+  const [tasks, setTasks] = useStored('tasks', SAMPLE_TASKS);
+  const [events] = useStored('events', SAMPLE_EVENTS || []);
+  const [settings] = useStored('settings', {});
+  
+  const strategy = CLOCK_STRATEGIES[settings.clockStyle] || CLOCK_STRATEGIES.classic;
+
+  const [, setTick] = useState(0);
+
+  const [selectorOpen, setSelectorOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const searchInputRef = useRef(null);
+
+  // While running, request animation frame to update display.
+  useEffect(() => {
+    if (!strategy.requiresAnimationLoop({ state })) return;
+    let raf;
+    const loop = () => {
+      setTick(t => t + 1);
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, [strategy, state.runningSince]);
+
+  const running = state.runningSince != null;
+  const currentMs = state.elapsed + (running ? Date.now() - state.runningSince : 0);
+  const isPristine = currentMs === 0 && !running;
+
+  const toggle = () => strategy.onToggle({
+    state, setState,
+    selectorOpen, setSelectorOpen,
+    running, isPristine, currentMs
+  });
+
+  const reset = () => strategy.onReset({
+    state, setState,
+    selectorOpen, setSelectorOpen,
+    running, isPristine, currentMs
+  });
 
   const startWithTask = (taskId) => {
     setTasks(ts => ts.map(t => {
@@ -50,19 +208,13 @@ function Stopwatch() {
        if (t.status === 'doing') return { ...t, status: 'todo' };
        return t;
     }));
-    setSelectorOpen(false);
     setSearchQuery('');
-    if (!running) {
-      setState(s => ({ ...s, runningSince: Date.now() }));
-    }
+    strategy.onTaskSelected({
+      state, setState,
+      selectorOpen, setSelectorOpen,
+      running, isPristine, currentMs
+    });
   };
-
-  const reset = () => {
-    setState({ elapsed: 0, runningSince: null });
-    setSelectorOpen(false);
-  };
-
-  const { m } = splitTime(currentMs);
 
   // Keyboard shortcut: space to toggle, r to reset, enter to switch
   useEffect(() => {
@@ -75,7 +227,7 @@ function Stopwatch() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [selectorOpen, isPristine, toggle]); // added dependencies
+  }, [selectorOpen, isPristine, strategy, state.elapsed, state.runningSince]);
 
   useEffect(() => {
     if (selectorOpen && searchInputRef.current) {
@@ -118,15 +270,7 @@ function Stopwatch() {
     <section className="stopwatch-hero">
       <div className="stopwatch-stage" style={{ position: 'relative' }}>
 
-        <div className={`stopwatch-display ${running ? 'is-running' : ''} ${isPristine ? 'is-pristine' : ''}`} onClick={toggle} title="Click to start/stop">
-          <span className="sw-digits sw-m" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            {isPristine ? (
-              <svg width="0.8em" height="0.8em" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" style={{ marginLeft: '0.1em' }}>
-                <path d="M8 5v14l11-7z" />
-              </svg>
-            ) : m}
-          </span>
-        </div>
+        {strategy.renderDisplay({ currentMs, running, isPristine, toggle })}
 
         {selectorOpen && (
           <div className="task-selector-overlay" style={{

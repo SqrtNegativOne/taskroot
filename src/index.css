@@ -641,12 +641,15 @@
   }
 
   .task-row-actions {
-    display: none;
+    display: flex;
+    opacity: 0;
+    pointer-events: none;
     margin-left: auto;
     gap: 4px;
   }
   .task-row:hover .task-row-actions {
-    display: flex;
+    opacity: 1;
+    pointer-events: auto;
   }
   .task-row-actions button {
     background: none;

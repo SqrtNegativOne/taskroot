@@ -16,23 +16,23 @@ function DayTimeline({ events, tasks, filter, filterMenu, today, timelineDate, s
 
   const [createPreview, setCreatePreview] = React.useState(null);
 
-  // Scroll to ~7am on first mount (after layout settles)
-  React.useEffect(() => {
-    const tick = () => {
-      if (scrollRef.current) {
-        scrollRef.current.scrollTop = 7 * 60 * PX_PER_MIN - 12;
-      }
-    };
-    tick();
-    const id = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(id);
-  }, []);
-
   // Current-time line
   const [nowMin, setNowMin] = React.useState(() => {
     const d = new Date();
     return d.getHours() * 60 + d.getMinutes();
   });
+
+  // Scroll to current time on first mount (after layout settles)
+  React.useEffect(() => {
+    const tick = () => {
+      if (scrollRef.current) {
+        scrollRef.current.scrollTop = Math.max(0, (nowMin - 60) * PX_PER_MIN - 12);
+      }
+    };
+    tick();
+    const id = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(id);
+  }, []); // Only run once on mount
 
   React.useEffect(() => {
     const interval = setInterval(() => {

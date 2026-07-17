@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
 import { TODAY, SAMPLE_TASKS, SAMPLE_EVENTS, ymd, durationLabel } from '../../core/data';
 import { DayTimeline, PX_PER_MIN, SNAP_MIN } from './day-timeline';
-import { MonthCalendar } from './month-cal';
+import { DateGrid } from './date-grid';
 import { TitleBar } from '../../components/shell';
 import { load, useStored, seedDefaults } from '../../core/store';
 import { TaskListPane } from './task-list';
@@ -98,7 +98,7 @@ function PlanScreen() {
       } else {
         const ds = dragRef.current;
         if (ds && ds.target) {
-          if (ds.target.kind === 'month-day') {
+          if (ds.target.kind === 'grid-day') {
             createEvent(task, ds.target.date, 9 * 60, task.est || 60, true);
           } else if (ds.target.kind === 'day-time') {
             createEvent(task, ymd(timelineDate), ds.target.minute, task.est || 60, false);
@@ -143,7 +143,7 @@ function PlanScreen() {
       } else {
         const ds = dragRef.current;
         if (ds && ds.target) {
-          if (ds.target.kind === 'month-day') {
+          if (ds.target.kind === 'grid-day') {
             setEvents(prev => prev.map(evnt => evnt.id === eventToMove.id ? { ...evnt, date: ds.target.date, endDate: ds.target.date } : evnt));
           } else if (ds.target.kind === 'day-time') {
             const duration = eventToMove.end - eventToMove.start;
@@ -229,7 +229,7 @@ function PlanScreen() {
           />
           <div className="right-pane">
             <SplitPane direction="vertical" defaultSize={450} minSize={150} snapThreshold={60}>
-              <MonthCalendar
+              <DateGrid
                 view={view} setView={setView}
                 anchor={anchor} setAnchor={setAnchor}
                 events={events} tasks={tasks}
@@ -359,10 +359,10 @@ function resolveDropTarget(el, x, y, task, event) {
     const snapped = Math.max(0, Math.min(24 * 60 - SNAP_MIN, Math.round(rawMin / SNAP_MIN) * SNAP_MIN));
     return { kind: 'day-time', minute: snapped, duration: task?.est || (event ? event.end - event.start : 60) };
   }
-  // Month/week day cell
-  const day = el.closest('[data-drop-kind="month-day"]');
+  // Date grid day cell
+  const day = el.closest('[data-drop-kind="grid-day"]');
   if (day) {
-    return { kind: 'month-day', date: day.dataset.dropDate };
+    return { kind: 'grid-day', date: day.dataset.dropDate };
   }
   return null;
 }

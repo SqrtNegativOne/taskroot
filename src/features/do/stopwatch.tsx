@@ -36,7 +36,7 @@ function Stopwatch() {
   };
   const reset = () => setState({ elapsed: 0, runningSince: null });
 
-  const { h, m, s, cs } = splitTime(currentMs);
+  const { m } = splitTime(currentMs);
 
   // Keyboard shortcut: space to toggle, r to reset
   React.useEffect(() => {
@@ -54,11 +54,7 @@ function Stopwatch() {
       <div className="stopwatch-stage">
 
         <div className={`stopwatch-display ${running ? 'is-running' : ''}`}>
-          <span className="sw-digits sw-h">{h}</span>
-          <span className="sw-colon">:</span>
           <span className="sw-digits sw-m">{m}</span>
-          <span className="sw-colon">:</span>
-          <span className="sw-digits sw-s">{s}</span>
         </div>
 
         <div className="stopwatch-scroll-hint">
@@ -87,18 +83,10 @@ function SecondsTicker({ running, seconds }) {
 }
 
 function splitTime(ms) {
-  const totalCs = Math.floor(ms / 10);
-  const cs = totalCs % 100;
-  const totalSec = Math.floor(totalCs / 100);
-  const s = totalSec % 60;
+  const totalSec = Math.floor(ms / 1000);
   const totalMin = Math.floor(totalSec / 60);
-  const m = totalMin % 60;
-  const h = Math.floor(totalMin / 60);
   return {
-    h: PAD2(h),
-    m: PAD2(m),
-    s: PAD2(s),
-    cs: PAD2(cs),
+    m: PAD2(totalMin),
   };
 }
 

@@ -4,7 +4,7 @@ import { hydrateEvents } from '../../core/events';
 
 // Month / week calendar — top of right pane.
 
-function MonthCalendar({ view, setView, anchor, setAnchor, events, tasks, filter, filterMenu, today, dragState, onDropToDate, onEventDragStart, onAddEvent }) {
+function DateGrid({ view, setView, anchor, setAnchor, events, tasks, filter, filterMenu, today, dragState, onDropToDate, onEventDragStart, onAddEvent }) {
   // anchor is a Date pointing into the month or week currently shown.
   const isWeek = view === 'week';
   const cells = React.useMemo(() => buildMonthOrWeekCells(anchor, isWeek), [anchor, isWeek]);
@@ -38,7 +38,7 @@ function MonthCalendar({ view, setView, anchor, setAnchor, events, tasks, filter
   };
 
   return (
-    <section className="month-pane">
+    <section className="date-grid-pane">
       <header className="cal-hd">
         <div className="cal-hd-left">
           <span className="cal-hd-title">{titleLabel}</span>
@@ -57,13 +57,13 @@ function MonthCalendar({ view, setView, anchor, setAnchor, events, tasks, filter
         </div>
       </header>
 
-      <div className={`cal-grid ${isWeek ? 'is-week' : 'is-month'}`}>
+      <div className={`cal-grid ${isWeek ? 'is-strip' : 'is-grid'}`}>
         <div className="cal-dow">
           {DOW_SHORT.map(d => (
             <div key={d} className="cal-dow-cell">{d.toLowerCase()}</div>
           ))}
         </div>
-        <div className={`cal-cells ${isWeek ? 'is-week' : 'is-month'}`}>
+        <div className={`cal-cells ${isWeek ? 'is-strip' : 'is-grid'}`}>
           {cells.map((c, i) => (
             <DayCell
               key={i}
@@ -92,7 +92,7 @@ function DayCell({ cell, today, events, tasks, isWeek, dragState, onDropToDate, 
   const ref = React.useRef(null);
   const isToday = sameDay(cell.date, today);
   const isPast = cell.date < today && !isToday;
-  const isDragOver = dragState?.target?.kind === 'month-day' && dragState.target.date === ymd(cell.date);
+  const isDragOver = dragState?.target?.kind === 'grid-day' && dragState.target.date === ymd(cell.date);
   const canAccept = !!dragState;
 
   React.useEffect(() => {
@@ -100,20 +100,20 @@ function DayCell({ cell, today, events, tasks, isWeek, dragState, onDropToDate, 
     const el = ref.current;
     if (!el) return;
     el.dataset.dropDate = ymd(cell.date);
-    el.dataset.dropKind = 'month-day';
+    el.dataset.dropKind = 'grid-day';
   }, [dragState, cell.date]);
 
   return (
     <div
       ref={ref}
-      data-drop-kind="month-day"
+      data-drop-kind="grid-day"
       data-drop-date={ymd(cell.date)}
       className={[
         'day-cell',
         cell.outOfMonth ? 'is-out' : '',
         isToday ? 'is-today' : '',
         isPast ? 'is-past' : '',
-        isWeek ? 'is-week' : '',
+        isWeek ? 'is-strip' : '',
         isDragOver ? 'is-drag-over' : '',
         canAccept ? 'can-accept' : '',
       ].join(' ')}
@@ -181,4 +181,4 @@ function weekRangeLabel(a, b) {
   return `${prefix}${MONTHS[a.getMonth()]} ${a.getDate()} – ${MONTHS[b.getMonth()]} ${b.getDate()}, ${b.getFullYear()}`;
 }
 
-export { MonthCalendar };
+export { DateGrid };

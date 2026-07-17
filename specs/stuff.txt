@@ -1,0 +1,1 @@
+Flexibility on whether you can do a task if its associated planned event is going or not going on.

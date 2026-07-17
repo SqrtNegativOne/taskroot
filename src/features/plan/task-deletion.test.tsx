@@ -48,7 +48,7 @@ test('deleting a task also deletes its associated events', async () => {
     
     const events = [
         { id: 'e1', taskId: testTaskId, title: 'All Day Event', date: '2026-07-12', endDate: '2026-07-12', start: 0, end: 1440, type: 'plan', isAllDay: true },
-        { id: 'e2', title: 'Unrelated Event', date: '2026-07-16', endDate: '2026-07-16', start: 600, end: 660, type: 'meeting', isAllDay: false }
+        { id: 'e2', title: 'Unrelated Event', date: '2026-07-16', endDate: '2026-07-16', start: 600, end: 660, type: 'busy', isAllDay: false }
     ];
     
     // Instead of localStorage, we'll spy on React state setters if needed or we can just mock useStored

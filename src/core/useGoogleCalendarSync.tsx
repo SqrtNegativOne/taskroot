@@ -81,7 +81,7 @@ export function toLocalEvent(googleEvent) {
     date: date,
     start: start,
     end: end,
-    type: taskId ? 'plan' : 'meeting',
+    type: taskId ? 'plan' : (googleEvent.start.date ? 'info' : 'busy'),
   };
 }
 

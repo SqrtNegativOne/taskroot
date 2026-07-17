@@ -8,7 +8,7 @@ const TODAY = new Date();
 const SAMPLE_TASKS = [];
 
 // Events already on the calendar. Time is minutes from midnight.
-// type: 'plan' (planned task block) | 'meeting' (pre-existing) | 'block' (focus block)
+// type: 'plan' (planned task block) | 'info' (informational) | 'busy' (busy block)
 const SAMPLE_EVENTS = [];
 const SAMPLE_DISTRACTIONS: any[] = [];
 const SAMPLE_NOTES: any[] = [];

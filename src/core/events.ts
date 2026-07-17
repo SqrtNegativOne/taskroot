@@ -7,23 +7,36 @@ export type BaseEvent = {
   isAllDay?: boolean;
 };
 
-// TaskEvent uses a task, does not have a title of its own.
+// Task plans: when you schedule a task for a certain time.
 export type TaskEvent = BaseEvent & {
   type: 'plan';
   taskId: string;
 };
 
-// StandaloneEvent has its own title, does not use a task.
-export type StandaloneEvent = BaseEvent & {
-  type: 'meeting';
+// Informational: Deadlines, holidays, reminders. Can be full-day or time-bound.
+export type InfoEvent = BaseEvent & {
+  type: 'info';
   title: string;
 };
 
-export type AppEvent = TaskEvent | StandaloneEvent;
+// Busy: Meetings, group projects. Can be time-bound only.
+export type BusyEvent = BaseEvent & {
+  type: 'busy';
+  title: string;
+  isAllDay?: false;
+};
+
+// Log: What you actually did. (Unimplemented features for now)
+export type LogEvent = BaseEvent & {
+  type: 'log';
+  title: string;
+};
+
+export type AppEvent = TaskEvent | InfoEvent | BusyEvent | LogEvent;
 
 // The populated output type for the UI
 export type HydratedEvent = BaseEvent & {
-  type: 'plan' | 'meeting';
+  type: 'plan' | 'info' | 'busy' | 'log';
   taskId?: string; // only if it's a plan
   title: string;
   priority?: string | null;
@@ -46,7 +59,7 @@ export function hydrateEvents(events: AppEvent[], tasks: any[]): HydratedEvent[]
         task
       };
     } else {
-      // Meetings and other non-task events
+      // Info, Busy, Log, etc.
       return {
         ...ev,
         title: ev.title || 'Untitled',

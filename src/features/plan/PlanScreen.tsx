@@ -187,7 +187,7 @@ function PlanScreen() {
        endDate: ymd(d),
        start,
        end,
-       type: 'meeting',
+       type: isAllDay ? 'info' : 'busy',
        isAllDay
     }]);
     setInspectorState({ type: 'event', id });
@@ -491,8 +491,24 @@ function InspectorPane({ inspectorState, onClose, tasks, setTasks, events, setEv
                <>
                  <div className="inspector-field">
                    <label>All Day</label>
-                   <input type="checkbox" checked={!!item.isAllDay} onChange={e => updateEvent(item.id, { isAllDay: e.target.checked })} />
+                   <input type="checkbox" checked={!!item.isAllDay} onChange={e => {
+                     const isAllDay = e.target.checked;
+                     const updates: any = { isAllDay };
+                     if (!item.taskId) {
+                       updates.type = isAllDay ? 'info' : 'busy';
+                     }
+                     updateEvent(item.id, updates);
+                   }} />
                  </div>
+                 {!item.taskId && !item.isAllDay && (
+                   <div className="inspector-field">
+                     <label>Type</label>
+                     <select value={item.type} onChange={e => updateEvent(item.id, { type: e.target.value })}>
+                       <option value="info">Informational (Reminder)</option>
+                       <option value="busy">Busy (Meeting)</option>
+                     </select>
+                   </div>
+                 )}
                  <div className="inspector-field">
                    <label>Start Date</label>
                    <input type="date" value={item.date} onChange={e => updateEvent(item.id, { date: e.target.value })} />

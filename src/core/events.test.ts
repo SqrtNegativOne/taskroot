@@ -20,17 +20,17 @@ describe('hydrateEvents', () => {
     expect(hydrated[0].isDone).toBe(true);
   });
 
-  it('should allow meetings to have their own titles and no task', () => {
+  it('should allow busy events to have their own titles and no task', () => {
     const tasks = [];
     const events = [
-      { id: 'e1', type: 'meeting', date: '2026-05-20', start: 600, end: 660, title: 'Team Sync' }
+      { id: 'e1', type: 'busy', date: '2026-05-20', start: 600, end: 660, title: 'Team Sync' }
     ] as AppEvent[];
 
     const hydrated = hydrateEvents(events, tasks);
     
     expect(hydrated.length).toBe(1);
     expect(hydrated[0].title).toBe('Team Sync');
-    expect(hydrated[0].isDone).toBe(false); // meetings are never done
+    expect(hydrated[0].isDone).toBe(false); // busy events are never done
   });
 
   it('should reflect name updates dynamically (name update thing)', () => {

@@ -29,11 +29,11 @@ describe('Google Calendar Sync Mappings', () => {
     expect(gEvent.description).toContain('Task ID: t1');
   });
 
-  it('maps a StandaloneEvent (meeting) to a Google Event correctly', () => {
+  it('maps a BusyEvent to a Google Event correctly', () => {
     const tasks = [];
     const localEvent = {
       id: 'e2',
-      type: 'meeting',
+      type: 'busy',
       title: 'Doctor Appointment',
       date: '2026-07-13',
       start: 900, // 15:00

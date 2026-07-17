@@ -173,8 +173,12 @@ function TaskRow({ task, index, onDragStart, dragging, updateTask, deleteTask })
         </div>
       </div>
       <div className="task-row-line2">
-        <span className="meta-est">{durationLabel(task.est)}</span>
-        <span className="meta-sep">·</span>
+        {!!task.est && task.est > 0 && (
+          <>
+            <span className="meta-est">{durationLabel(task.est)}</span>
+            {task.tags.length > 0 && <span className="meta-sep">·</span>}
+          </>
+        )}
         {task.tags.map((tag, i) => (
           <React.Fragment key={tag}>
             <span className="meta-tag">#{tag}</span>

@@ -46,6 +46,7 @@ const hhmmShort = (m) => {
   return mm === 0 ? `${h12}${ap}` : `${h12}:${PAD2(mm)}${ap}`;
 };
 const durationLabel = (mins) => {
+  if (!mins || mins === 0) return '';
   if (mins < 60) return `${mins}m`;
   const h = Math.floor(mins / 60), m = mins % 60;
   return m === 0 ? `${h}h` : `${h}h${m}m`;

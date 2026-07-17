@@ -6,7 +6,7 @@ import './settings.css';
 
 export function SettingsScreen() {
   const [activeTab, setActiveTab] = useState('general');
-  const [settings, setSettings] = useStored('settings', { defaultCalendarView: 'month' });
+  const [settings, setSettings] = useStored('settings', { defaultCalendarView: 'month', defaultTaskDuration: 0 });
 
   return (
     <div className="app app-settings">
@@ -49,28 +49,58 @@ export function SettingsScreen() {
           
           <div className="settings-detail-pane">
             {activeTab === 'general' && (
-              <div className="settings-section">
-                <div className="settings-section-title">
-                  Calendar
+              <>
+                <div className="settings-section">
+                  <div className="settings-section-title">
+                    Calendar
+                  </div>
+                  <div className="settings-section-desc dim">
+                    Set your default calendar view.
+                  </div>
+                  <div className="settings-section-actions" style={{ marginTop: '12px' }}>
+                    <label style={{ display: 'flex', gap: '8px', alignItems: 'center', color: 'var(--fg)' }}>
+                      <span>Default View:</span>
+                      <select 
+                        className="selector-input" 
+                        style={{ padding: '4px 8px', border: '1px solid var(--border)', borderRadius: '4px', background: 'var(--bg-app)', color: 'var(--fg)' }}
+                        value={settings.defaultCalendarView || 'month'}
+                        onChange={e => setSettings({ ...settings, defaultCalendarView: e.target.value })}
+                      >
+                        <option value="month">Month</option>
+                        <option value="week">Week</option>
+                      </select>
+                    </label>
+                  </div>
                 </div>
-                <div className="settings-section-desc dim">
-                  Set your default calendar view.
+                
+                <div className="settings-section">
+                  <div className="settings-section-title">
+                    Tasks
+                  </div>
+                  <div className="settings-section-desc dim">
+                    Set the default estimated duration for new tasks.
+                  </div>
+                  <div className="settings-section-actions" style={{ marginTop: '12px' }}>
+                    <label style={{ display: 'flex', gap: '8px', alignItems: 'center', color: 'var(--fg)' }}>
+                      <span>Default Duration:</span>
+                      <select 
+                        className="selector-input" 
+                        style={{ padding: '4px 8px', border: '1px solid var(--border)', borderRadius: '4px', background: 'var(--bg-app)', color: 'var(--fg)' }}
+                        value={settings.defaultTaskDuration !== undefined ? settings.defaultTaskDuration : 0}
+                        onChange={e => setSettings({ ...settings, defaultTaskDuration: parseInt(e.target.value, 10) })}
+                      >
+                        <option value="0">Not set</option>
+                        <option value="15">15m</option>
+                        <option value="30">30m</option>
+                        <option value="45">45m</option>
+                        <option value="60">1h</option>
+                        <option value="90">1h 30m</option>
+                        <option value="120">2h</option>
+                      </select>
+                    </label>
+                  </div>
                 </div>
-                <div className="settings-section-actions" style={{ marginTop: '12px' }}>
-                  <label style={{ display: 'flex', gap: '8px', alignItems: 'center', color: 'var(--fg)' }}>
-                    <span>Default View:</span>
-                    <select 
-                      className="selector-input" 
-                      style={{ padding: '4px 8px', border: '1px solid var(--border)', borderRadius: '4px', background: 'var(--bg-app)', color: 'var(--fg)' }}
-                      value={settings.defaultCalendarView || 'month'}
-                      onChange={e => setSettings({ ...settings, defaultCalendarView: e.target.value })}
-                    >
-                      <option value="month">Month</option>
-                      <option value="week">Week</option>
-                    </select>
-                  </label>
-                </div>
-              </div>
+              </>
             )}
             {activeTab === 'sync' && (
               <div className="settings-section">

@@ -45,7 +45,7 @@ function PlanScreen() {
   const [sort, setSort] = useStored('taskSort', 'priority');
 
   // UI state — calendar
-  const [settings] = useStored('settings', { defaultCalendarView: 'month' });
+  const [settings] = useStored('settings', { defaultCalendarView: 'month', defaultTaskDuration: 0 });
   const [view, setView] = React.useState(settings.defaultCalendarView || 'month');
   const [anchor, setAnchor] = React.useState(new Date(TODAY));
   const [timelineDate, setTimelineDate] = React.useState(new Date(TODAY));
@@ -193,7 +193,7 @@ function PlanScreen() {
   const onAddTask = () => {
     const id = `t${Date.now()}`;
     setTasks(ts => [{
-       id, title: 'New Task', status: 'todo', priority: 'P2', tags: [], subtasks: [], est: 60, added: new Date().toISOString()
+       id, title: 'New Task', status: 'todo', priority: 'P2', tags: [], subtasks: [], est: settings.defaultTaskDuration !== undefined ? settings.defaultTaskDuration : 0, added: new Date().toISOString()
     }, ...ts]);
     setInspectorState({ type: 'task', id });
   };

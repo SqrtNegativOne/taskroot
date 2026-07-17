@@ -28,7 +28,7 @@
 .settings-section {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 4px;
   max-width: 600px;
   margin-bottom: 32px;
 }
@@ -45,8 +45,9 @@
 .settings-section-desc {
   font-size: 0.9em;
   line-height: 1.5;
+  margin-bottom: 8px;
 }
 
 .settings-section-actions {
-  margin-top: 8px;
+  margin-top: 4px;
 }

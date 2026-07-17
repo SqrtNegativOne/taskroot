@@ -26,7 +26,7 @@ export function SettingsScreen() {
               className={`task-row ${activeTab === 'general' ? 'is-active' : ''}`}
               onClick={() => setActiveTab('general')}
             >
-              <div className="task-row-title">General</div>
+              <div className="task-row-title">Plan screen</div>
             </div>
             <div 
               className={`task-row ${activeTab === 'sync' ? 'is-active' : ''}`}
@@ -45,16 +45,6 @@ export function SettingsScreen() {
         </div>
         
         <div className="right-pane settings-content">
-          <div className="cal-hd">
-            <div className="cal-hd-left">
-              <span className="cal-hd-title">
-                {activeTab === 'general' && 'General Settings'}
-                {activeTab === 'sync' && 'Sync and Backup'}
-                {activeTab === 'keybindings' && 'Keybindings'}
-              </span>
-            </div>
-          </div>
-          
           <div className="settings-detail-pane">
             {activeTab === 'general' && (
               <>
@@ -65,7 +55,7 @@ export function SettingsScreen() {
                   <div className="settings-section-desc dim">
                     Set your default calendar view.
                   </div>
-                  <div className="settings-section-actions" style={{ marginTop: '12px' }}>
+                  <div className="settings-section-actions">
                     <label style={{ display: 'flex', gap: '8px', alignItems: 'center', color: 'var(--fg)' }}>
                       <span>Default View:</span>
                       <select 
@@ -88,7 +78,7 @@ export function SettingsScreen() {
                   <div className="settings-section-desc dim">
                     Set the default estimated duration for new tasks.
                   </div>
-                  <div className="settings-section-actions" style={{ marginTop: '12px' }}>
+                  <div className="settings-section-actions">
                     <label style={{ display: 'flex', gap: '8px', alignItems: 'center', color: 'var(--fg)' }}>
                       <span>Default Duration:</span>
                       <select 
@@ -147,7 +137,7 @@ export function SettingsScreen() {
                 <div className="settings-section-desc dim">
                   Navigate and control Taskroot quickly.
                 </div>
-                <div className="settings-section-actions" style={{ marginTop: '16px' }}>
+                <div className="settings-section-actions">
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', color: 'var(--fg)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border)', alignItems: 'center' }}>
                       <span>Open Settings</span>

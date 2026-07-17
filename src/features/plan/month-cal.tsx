@@ -4,11 +4,27 @@ import { hydrateEvents } from '../../core/events';
 
 // Month / week calendar — top of right pane.
 
-function MonthCalendar({ view, setView, anchor, setAnchor, events, tasks, today, dragState, onDropToDate, onEventDragStart, onAddEvent }) {
+function MonthCalendar({ view, setView, anchor, setAnchor, events, tasks, filter, filterMenu, today, dragState, onDropToDate, onEventDragStart, onAddEvent }) {
   // anchor is a Date pointing into the month or week currently shown.
   const isWeek = view === 'week';
   const cells = React.useMemo(() => buildMonthOrWeekCells(anchor, isWeek), [anchor, isWeek]);
-  const hydratedEvents = React.useMemo(() => hydrateEvents(events, tasks), [events, tasks]);
+  const hydratedEvents = React.useMemo(() => {
+    let evs = hydrateEvents(events, tasks);
+    if (filter) {
+      evs = evs.filter(e => {
+        if (!filter.types.includes(e.type)) return false;
+        const filterTags = (filter.tags || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+        if (filterTags.length > 0) {
+          const eventTags = e.tags || [];
+          const taskTags = e.task ? e.task.tags : [];
+          const allTags = [...eventTags, ...taskTags].map(t => typeof t === 'string' ? t.toLowerCase() : '');
+          if (!filterTags.some(t => allTags.includes(t))) return false;
+        }
+        return true;
+      });
+    }
+    return evs;
+  }, [events, tasks, filter]);
 
   const titleLabel = isWeek
     ? weekRangeLabel(cells[0].date, cells[cells.length - 1].date)
@@ -33,6 +49,7 @@ function MonthCalendar({ view, setView, anchor, setAnchor, events, tasks, today,
             <button className="cal-nav-btn" onClick={() => setAnchor(new Date(today))}>◉</button>
             <button className="cal-nav-btn" onClick={() => shift(1)} aria-label="next">▶</button>
           </div>
+          {filterMenu}
           <div className="seg">
             <button className={`seg-btn ${!isWeek ? 'is-active' : ''}`} onClick={() => setView('month')}>month</button>
             <button className={`seg-btn ${isWeek ? 'is-active' : ''}`} onClick={() => setView('week')}>week</button>

@@ -7,7 +7,7 @@ import { hydrateEvents } from '../../core/events';
 const PX_PER_MIN = 56 / 60; // 56 px per hour
 const SNAP_MIN = 15;
 
-function DayTimeline({ events, tasks, today, timelineDate, setTimelineDate, dragState, setDragState, onDropToTime, onResizeEvent, onMoveEvent, onEventClick, onAddEvent }) {
+function DayTimeline({ events, tasks, filter, filterMenu, today, timelineDate, setTimelineDate, dragState, setDragState, onDropToTime, onResizeEvent, onMoveEvent, onEventClick, onAddEvent }) {
   const containerRef = React.useRef(null);
   const scrollRef = React.useRef(null);
   
@@ -42,11 +42,25 @@ function DayTimeline({ events, tasks, today, timelineDate, setTimelineDate, drag
     return () => clearInterval(interval);
   }, []);
 
-  const todayEvents = hydrateEvents(events.filter(e => {
+  let todayEvents = hydrateEvents(events.filter(e => {
     const cellDate = ymd(viewDate);
     const inRange = e.endDate ? (cellDate >= e.date && cellDate <= e.endDate) : (e.date === cellDate);
     return inRange && !e.isAllDay;
   }), tasks).sort((a, b) => a.start - b.start);
+
+  if (filter) {
+    todayEvents = todayEvents.filter(e => {
+      if (!filter.types.includes(e.type)) return false;
+      const filterTags = (filter.tags || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+      if (filterTags.length > 0) {
+        const eventTags = e.tags || [];
+        const taskTags = e.task ? e.task.tags : [];
+        const allTags = [...eventTags, ...taskTags].map(t => typeof t === 'string' ? t.toLowerCase() : '');
+        if (!filterTags.some(t => allTags.includes(t))) return false;
+      }
+      return true;
+    });
+  }
 
   // Compute lanes for overlapping events
   const laid = layoutEvents(todayEvents);
@@ -109,6 +123,9 @@ function DayTimeline({ events, tasks, today, timelineDate, setTimelineDate, drag
           {!isToday && (
             <button className="cal-nav-btn" style={{ border: '1px solid var(--border)', padding: '2px 8px', background: 'none', color: 'var(--fg-dim)', cursor: 'pointer', fontSize: '11px', marginLeft: '8px', borderRadius: '4px' }} onClick={() => setTimelineDate(today)}>Today</button>
           )}
+        </div>
+        <div className="cal-hd-right">
+          {filterMenu}
         </div>
       </header>
 

@@ -5,6 +5,7 @@ import { MonthCalendar } from './month-cal';
 import { TitleBar } from '../../components/shell';
 import { load, useStored, seedDefaults } from '../../core/store';
 import { TaskListPane } from './task-list';
+import { ListFilter } from 'lucide-react';
 import { useTweaks, TweaksPanel, TweakSection, TweakSlider, TweakToggle, TweakRadio, TweakColor } from './tweaks-panel';
 import { SplitPane } from '../../components/split-pane';
 
@@ -38,14 +39,19 @@ function PlanScreen() {
   }, [setTasks, setEvents, tasks]);
 
   // UI state — task list
-  const [query, setQuery] = React.useState('');
-  const [filters, setFilters] = React.useState([]);
-  const [sort, setSort] = React.useState('priority');
+  const [query, setQuery] = useStored('taskQuery', '');
+  const [filters, setFilters] = useStored('taskFilters', [{ id: 'default-not-done', column: 'status', operator: 'is not', value: 'done' }]);
+  const [sort, setSort] = useStored('taskSort', 'priority');
 
   // UI state — calendar
-  const [view, setView] = React.useState('month');
+  const [settings] = useStored('settings', { defaultCalendarView: 'month' });
+  const [view, setView] = React.useState(settings.defaultCalendarView || 'month');
   const [anchor, setAnchor] = React.useState(new Date(TODAY));
   const [timelineDate, setTimelineDate] = React.useState(new Date(TODAY));
+
+  // Event filters
+  const [calFilter, setCalFilter] = useStored('calFilter', { types: ['info', 'plan', 'busy'], tags: '' });
+  const [timeFilter, setTimeFilter] = useStored('timeFilter', { types: ['info', 'plan', 'busy'], tags: '' });
 
   // Drag state — { task, pointerX, pointerY, target }
   const [dragState, setDragState] = React.useState(null);
@@ -161,7 +167,8 @@ function PlanScreen() {
       start,
       end: Math.min(24 * 60, start + duration),
       type: 'plan',
-      isAllDay
+      isAllDay,
+      tags: []
     };
     setEvents(prev => [...prev, newEvent]);
   };
@@ -188,7 +195,8 @@ function PlanScreen() {
        start,
        end,
        type: isAllDay ? 'info' : 'busy',
-       isAllDay
+       isAllDay,
+       tags: []
     }]);
     setInspectorState({ type: 'event', id });
   };
@@ -225,6 +233,8 @@ function PlanScreen() {
                 view={view} setView={setView}
                 anchor={anchor} setAnchor={setAnchor}
                 events={events} tasks={tasks}
+                filter={calFilter}
+                filterMenu={<EventFilterMenu filter={calFilter} setFilter={setCalFilter} />}
                 today={TODAY}
                 dragState={dragState}
                 onEventDragStart={onEventDragStart}
@@ -233,6 +243,8 @@ function PlanScreen() {
               />
               <DayTimeline
                 events={events} tasks={tasks}
+                filter={timeFilter}
+                filterMenu={<EventFilterMenu filter={timeFilter} setFilter={setTimeFilter} />}
                 today={TODAY}
                 timelineDate={timelineDate}
                 setTimelineDate={setTimelineDate}
@@ -465,6 +477,20 @@ function InspectorPane({ inspectorState, onClose, tasks, setTasks, events, setEv
                   placeholder="Add a description..."
                 />
              </div>
+             <div className="inspector-field">
+                <label>Tags</label>
+                <input 
+                  type="text"
+                  value={(item.tags || []).join(', ')} 
+                  onChange={e => {
+                    const tags = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+                    if (isTask) updateTask(item.id, { tags });
+                    else updateEvent(item.id, { tags });
+                  }}
+                  placeholder="tag1, tag2"
+                  style={{ flex: 1, padding: '4px 8px', border: '1px solid var(--border)', background: 'var(--bg-input, var(--bg-surface))', color: 'var(--fg)', borderRadius: '4px' }}
+                />
+             </div>
              {isTask && (
                <>
                  <div className="inspector-field">
@@ -551,5 +577,49 @@ function InspectorPane({ inspectorState, onClose, tasks, setTasks, events, setEv
 }
 
 
+
+function EventFilterMenu({ filter, setFilter }) {
+  const [open, setOpen] = React.useState(false);
+  const toggleType = (t) => {
+    if (filter.types.includes(t)) {
+      setFilter({ ...filter, types: filter.types.filter(x => x !== t) });
+    } else {
+      setFilter({ ...filter, types: [...filter.types, t] });
+    }
+  };
+
+  return (
+    <div style={{ position: 'relative', display: 'flex' }}>
+      <button 
+        className="cal-nav-btn" 
+        onClick={() => setOpen(!open)}
+        style={{ color: filter.types.length < 3 || filter.tags ? 'var(--accent)' : 'inherit', display: 'flex', alignItems: 'center', gap: '4px', border: '1px solid var(--border)', background: 'transparent', cursor: 'pointer', borderRadius: '4px', padding: '4px 8px' }}
+        title="Filter Events"
+      >
+        <ListFilter size={16} />
+      </button>
+      {open && (
+        <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 100, background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: '6px', padding: '10px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', minWidth: '180px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ fontWeight: 'bold', fontSize: '0.9em', color: 'var(--fg)' }}>Event Types</div>
+          {['info', 'plan', 'busy', 'log'].map(t => (
+            <label key={t} style={{ display: 'flex', gap: '6px', alignItems: 'center', color: 'var(--fg)', fontSize: '0.9em' }}>
+              <input type="checkbox" checked={filter.types.includes(t)} onChange={() => toggleType(t)} />
+              {t}
+            </label>
+          ))}
+          <div style={{ fontWeight: 'bold', fontSize: '0.9em', color: 'var(--fg)', marginTop: '4px' }}>Tags (comma sep)</div>
+          <input 
+            type="text" 
+            value={filter.tags || ''}
+            onChange={e => setFilter({ ...filter, tags: e.target.value })}
+            className="selector-input"
+            style={{ padding: '4px 8px', border: '1px solid var(--border)', borderRadius: '4px', background: 'var(--bg-app)', color: 'var(--fg)' }}
+            placeholder="e.g. work, family"
+          />
+        </div>
+      )}
+    </div>
+  );
+}
 
 export { PlanScreen };

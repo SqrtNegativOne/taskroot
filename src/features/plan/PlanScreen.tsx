@@ -418,7 +418,7 @@ function resolveDropTarget(el, x, y, task, event) {
   return null;
 }
 
-function TitleInput({ value, onChange, disabled }) {
+function TitleInput({ value, onChange, disabled, onEnter }) {
   const [localValue, setLocalValue] = React.useState(value);
 
   React.useEffect(() => {
@@ -432,6 +432,7 @@ function TitleInput({ value, onChange, disabled }) {
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
       e.target.blur();
+      if (onEnter) onEnter();
     }
   };
 
@@ -513,6 +514,7 @@ function InspectorPane({ inspectorState, onClose, tasks, setTasks, events, setEv
                     else updateEvent(item.id, { title: newTitle });
                   }}
                   disabled={!isTask && item.taskId}
+                  onEnter={onClose}
                 />
              </div>
              <div className="inspector-field" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '6px' }}>
@@ -537,6 +539,12 @@ function InspectorPane({ inspectorState, onClose, tasks, setTasks, events, setEv
                     const tags = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
                     if (isTask) updateTask(item.id, { tags });
                     else updateEvent(item.id, { tags });
+                  }}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      e.target.blur();
+                      onClose();
+                    }
                   }}
                   placeholder="tag1, tag2"
                   style={{ flex: 1, padding: '4px 8px', border: '1px solid var(--border)', background: 'var(--bg-input, var(--bg-surface))', color: 'var(--fg)', borderRadius: '4px' }}

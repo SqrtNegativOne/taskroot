@@ -1,1 +1,3 @@
 Flexibility on whether you can do a task if its associated planned event is going or not going on.
+
+Vim keybindings are probably a bad idea. One needs to move things around in the plan screen.

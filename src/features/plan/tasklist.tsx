@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
 import { TODAY, parseYMD, durationLabel, dueLabel } from '../../core/data';
-import { ListFilter, Plus, X, ArrowDownUp } from 'lucide-react';
+import { ListFilter, Plus, X, ArrowDownUp, Search } from 'lucide-react';
 import { FilterSortButtons } from './shared-menus';
 
 // Task list — left column. Filter, sort, draggable items.
@@ -57,9 +57,9 @@ function TaskListPane({ tasks = [], setTasks, filters = [], setFilters, sort, se
     <aside className="task-pane">
       <header className="task-pane-hd">
         <div className="task-pane-search">
+          <Search size={14} style={{ color: 'var(--fg-dimmer)' }} />
           <input
             className="search-input"
-            placeholder="filter by title or tag…"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             spellCheck={false}
@@ -113,10 +113,18 @@ function TaskListPane({ tasks = [], setTasks, filters = [], setFilters, sort, se
         </div>
       </header>
 
-      <div className="task-list">
+      <div 
+        className="task-list"
+        onDoubleClick={(e) => {
+          const target = e.target as Element;
+          if (!target.closest('.task-row') && !target.closest('button')) {
+            onAddTask();
+          }
+        }}
+      >
         {filtered.length === 0 ? (
           <div className="task-empty">
-            <span className="dim">no tasks match.</span>
+            <span className="dim">{tasks.length === 0 ? 'no tasks exist.' : 'no tasks match.'}</span>
           </div>
         ) : (
           filtered.map((t, i) => (

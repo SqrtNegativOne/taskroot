@@ -4,7 +4,7 @@ import { DayTimeline, PX_PER_MIN, SNAP_MIN } from './day-timeline';
 import { DateGrid } from './date-grid';
 import { TitleBar } from '../../components/shell';
 import { load, useStored, seedDefaults } from '../../core/store';
-import { TaskListPane } from './task-list';
+import { TaskListPane } from './tasklist';
 import { ListFilter } from 'lucide-react';
 import { useTweaks, TweaksPanel, TweakSection, TweakSlider, TweakToggle, TweakRadio, TweakColor } from './tweaks-panel';
 import { SplitPane } from '../../components/split-pane';

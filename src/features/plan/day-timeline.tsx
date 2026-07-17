@@ -115,12 +115,15 @@ function DayTimeline({ events, tasks, filter, sort, filterMenu, today, timelineD
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
       if (active) {
-        setCreatePreview(prev => {
-          if (prev && onAddEvent) {
-             onAddEvent(timelineDate, prev.start, prev.end);
-          }
-          return null;
-        });
+        const currentY = ev.clientY - rect.top;
+        const moveMin = Math.round((currentY / PX_PER_MIN) / SNAP_MIN) * SNAP_MIN;
+        const s = Math.min(startMin, moveMin);
+        const eMin = Math.max(startMin, moveMin);
+        const finalEnd = eMin === s ? s + SNAP_MIN : eMin;
+        setCreatePreview(null);
+        if (onAddEvent) {
+           onAddEvent(timelineDate, s, finalEnd);
+        }
       } else {
         if (onAddEvent) {
           onAddEvent(timelineDate, startMin, startMin + 60);
@@ -160,7 +163,9 @@ function DayTimeline({ events, tasks, filter, sort, filterMenu, today, timelineD
         >
           {Array.from({ length: 24 }, (_, h) => (
             <div key={h} className="day-hour" style={{ top: `${h * 60 * PX_PER_MIN}px`, height: `${60 * PX_PER_MIN}px` }}>
-              <span className="day-hour-label">{PAD2(h)}:00</span>
+              <span className="day-hour-label" style={{ opacity: isToday && Math.abs(h * 60 - nowMin) < 15 ? 0 : 1 }}>
+                {PAD2(h)}:00
+              </span>
               <div className="day-hour-line" />
               <div className="day-hour-half" />
             </div>
@@ -169,7 +174,7 @@ function DayTimeline({ events, tasks, filter, sort, filterMenu, today, timelineD
           {/* Now line */}
           {isToday && (
             <div className="day-now" style={{ top: `${nowMin * PX_PER_MIN}px` }}>
-              <span className="day-now-label">now {hhmmShort(nowMin)}</span>
+              <span className="day-now-label">{PAD2(Math.floor(nowMin / 60))}:{PAD2(nowMin % 60)}</span>
               <div className="day-now-line" />
             </div>
           )}
@@ -229,10 +234,7 @@ function DayTimeline({ events, tasks, filter, sort, filterMenu, today, timelineD
 }
 
 function EventBlock({ event, task, lane, lanes, onResize, onMove, dragState, setDragState, onEventClick }) {
-  const top = event.start * PX_PER_MIN;
-  const height = (event.end - event.start) * PX_PER_MIN;
-  const widthPct = 100 / lanes;
-  const leftPct = lane * widthPct;
+  const [dragOffset, setDragOffset] = useState(null);
 
   const title = event.title;
   const pri = event.priority;
@@ -270,19 +272,27 @@ function EventBlock({ event, task, lane, lanes, onResize, onMove, dragState, set
     const startStart = event.start;
     const startEnd = event.end;
     let moved = false;
+    let finalDm = 0;
     const move = (ev) => {
       const dy = ev.clientY - startY;
       if (!moved && Math.abs(dy) < 4) return;
       moved = true;
       const dm = Math.round((dy / PX_PER_MIN) / SNAP_MIN) * SNAP_MIN;
       const dur = startEnd - startStart;
-      const newStart = Math.max(0, Math.min(24 * 60 - dur, startStart + dm));
-      onMove(event.id, newStart, newStart + dur);
+      const minDm = -startStart;
+      const maxDm = 24 * 60 - startEnd;
+      finalDm = Math.max(minDm, Math.min(maxDm, dm));
+      setDragOffset(finalDm);
     };
     const up = () => {
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
-      if (!moved) {
+      if (moved) {
+        setDragOffset(null);
+        if (finalDm !== 0) {
+           onMove(event.id, startStart + finalDm, startStart + finalDm + (startEnd - startStart));
+        }
+      } else {
         onEventClick && onEventClick(event);
       }
     };
@@ -290,38 +300,53 @@ function EventBlock({ event, task, lane, lanes, onResize, onMove, dragState, set
     window.addEventListener('pointerup', up);
   };
 
-  const compact = height < 40;
-  const isDone = event.isDone;
+  const renderBlock = (start, end, isGhost, isFloating) => {
+    const top = start * PX_PER_MIN;
+    const height = (end - start) * PX_PER_MIN;
+    const compact = height < 40;
+    const isDone = event.isDone;
 
-  return (
-    <div
-      className={`day-event ev-${event.type} ${pri ? `pri-bar-${pri}` : ''} ${compact ? 'is-compact' : ''} ${isDone ? 'is-done' : ''}`}
-      style={{
-        top: `${top}px`,
-        height: `${Math.max(height, 18)}px`,
-        left: `calc(${leftPct}% + 56px)`,
-        width: `calc(${widthPct}% - 58px)`,
-      }}
-      onPointerDown={onBodyDown}
-    >
-      <div className="day-event-handle day-event-handle-top" onPointerDown={onResizeStart('top')} />
-      <div className="day-event-inner">
-        <div className="day-event-time">{hhmmShort(event.start)} – {hhmmShort(event.end)}</div>
-        <div className="day-event-title">
-          {pri && <span className={`pri pri-${pri}`}>●</span>}
-          {title}
-        </div>
-        {!compact && event.type === 'plan' && task && task.tags.length > 0 && (
-          <div className="day-event-tags">
-            {task.tags.map(t => <span key={t} className="day-event-tag">#{t}</span>)}
+    return (
+      <div
+        className={`day-event ev-${event.type} ${pri ? `pri-bar-${pri}` : ''} ${compact ? 'is-compact' : ''} ${isDone ? 'is-done' : ''} ${isGhost ? 'is-ghost' : ''} ${isFloating ? 'is-floating' : ''}`}
+        style={{
+          top: `${top}px`,
+          height: `${Math.max(height, 18)}px`,
+          left: `calc(56px + ((100% - 56px) / ${lanes}) * ${lane})`,
+          width: `calc(((100% - 56px) / ${lanes}) - 2px)`,
+        }}
+        onPointerDown={isGhost ? undefined : onBodyDown}
+        key={isGhost ? 'ghost' : 'main'}
+      >
+        <div className="day-event-handle day-event-handle-top" onPointerDown={isGhost ? undefined : onResizeStart('top')} />
+        <div className="day-event-inner">
+          <div className="day-event-title">
+            {pri && <span className={`pri pri-${pri}`}>●</span>}
+            {title}
           </div>
-        )}
+          <div className="day-event-time">{PAD2(Math.floor(start / 60))}:{PAD2(start % 60)} – {PAD2(Math.floor(end / 60))}:{PAD2(end % 60)}</div>
+          {!compact && event.type === 'plan' && task && task.tags.length > 0 && (
+            <div className="day-event-tags">
+              {task.tags.map(t => <span key={t} className="day-event-tag">#{t}</span>)}
+            </div>
+          )}
+        </div>
+        <div className="day-event-handle day-event-handle-bottom" onPointerDown={isGhost ? undefined : onResizeStart('bottom')}>
+          <span className="day-event-handle-grip">═</span>
+        </div>
       </div>
-      <div className="day-event-handle day-event-handle-bottom" onPointerDown={onResizeStart('bottom')}>
-        <span className="day-event-handle-grip">═</span>
-      </div>
-    </div>
-  );
+    );
+  };
+
+  if (dragOffset !== null) {
+    return (
+      <Fragment>
+        {renderBlock(event.start, event.end, true, false)}
+        {renderBlock(event.start + dragOffset, event.end + dragOffset, false, true)}
+      </Fragment>
+    );
+  }
+  return renderBlock(event.start, event.end, false, false);
 }
 
 // Simple overlap layout: assign each event to the earliest lane that's free.

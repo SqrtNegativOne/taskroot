@@ -1,0 +1,76 @@
+/* ── Notes ───────────────────────────────────────────────────────────── */
+
+.notes { position: relative; }
+.notes-list {
+  list-style: none;
+  padding: 0; margin: 0;
+  display: flex; flex-direction: column;
+}
+.notes-row {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px dashed var(--border-soft);
+}
+.notes-row:last-child { border-bottom: 0; }
+.notes-link {
+  appearance: none;
+  background: none; border: 0;
+  color: var(--fg);
+  font: inherit;
+  text-align: left;
+  padding: 10px 4px;
+  cursor: pointer;
+  flex: 1;
+  display: flex; align-items: center; gap: 10px;
+  transition: background 80ms;
+}
+.notes-link:hover { background: var(--bg-highlight); }
+.notes-link:hover .notes-arrow { color: var(--accent); transform: translateX(2px); }
+.notes-icon { color: var(--accent); flex-shrink: 0; }
+.notes-title { color: var(--fg); }
+.notes-path {
+  color: var(--fg-dim);
+  font-size: 0.85em;
+  flex: 1;
+  text-align: right;
+  letter-spacing: 0.02em;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.notes-arrow {
+  color: var(--fg-dim);
+  transition: color 80ms, transform 80ms;
+}
+.notes-x {
+  appearance: none; background: none; border: 0;
+  color: var(--fg-dimmer); cursor: pointer; padding: 0 10px;
+  font-size: 1.1em;
+  opacity: 0;
+  transition: opacity 80ms;
+}
+.notes-row:hover .notes-x { opacity: 1; }
+.notes-x:hover { color: var(--p0); }
+.notes-add-btn {
+  appearance: none; background: none; border: 0;
+  color: var(--fg-dim); cursor: pointer;
+  font: inherit;
+  padding: 10px 4px;
+  text-align: left;
+  width: 100%;
+  display: flex; align-items: center; gap: 10px;
+}
+.notes-add-btn:hover { color: var(--accent); }
+.notes-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-surface);
+  border: 1px solid var(--accent-line);
+  padding: 8px 16px;
+  color: var(--fg);
+  font-size: 0.92em;
+  box-shadow: 0 8px 32px var(--shadow-dark);
+  z-index: 200;
+  letter-spacing: 0.02em;
+}
+

@@ -149,7 +149,6 @@ function DayCell({ cell, today, events, tasks, isWeek, dragState, onDropToDate, 
     >
       <div className="day-cell-hd">
         <span className="day-cell-num">{PAD2(cell.date.getDate())}</span>
-        {isToday && <span className="day-cell-today-flag">·today</span>}
       </div>
       <div className="day-cell-events">
         {events.map(ev => {

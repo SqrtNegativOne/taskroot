@@ -1,0 +1,139 @@
+  /* ── Task pane (left) ───────────────────────────────────────────────── */
+
+  .task-pane {
+    display: flex; flex-direction: column;
+    border-right: 1px solid var(--border);
+    background: var(--bg);
+    min-height: 0;
+    flex: 1;
+  }
+  .task-pane-hd {
+    padding: 12px 16px 10px;
+    border-bottom: 1px dashed var(--border);
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .task-pane-title { display: flex; align-items: baseline; gap: 4px; }
+  .bracket { color: var(--accent); }
+  .task-pane-title-label {
+    font-weight: 600; letter-spacing: 0.1em; color: var(--fg);
+  }
+  .task-pane-title-count { color: var(--fg-dim); font-size: 0.9em; margin-left: 2px; }
+
+  .task-pane-search {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    padding: 4px 8px;
+    transition: border-color 120ms;
+  }
+  .task-pane-search:focus-within { border-color: var(--accent-line); }
+  .search-prompt { color: var(--accent); }
+  .search-input {
+    flex: 1; min-width: 0;
+    background: none; border: 0; outline: none;
+    color: var(--fg); font: inherit;
+    padding: 2px 0;
+  }
+  .search-input::placeholder { color: var(--fg-dimmer); }
+  .search-clear {
+    appearance: none; border: 0; background: none; color: var(--fg-dim);
+    cursor: pointer; padding: 0 4px; font-size: 1.1em;
+  }
+  .search-clear:hover { color: var(--fg); }
+
+  .task-pane-controls {
+    display: flex; flex-wrap: wrap; gap: 4px 12px;
+    font-size: 0.86em;
+  }
+  .selector {
+    display: inline-flex; align-items: center; gap: 4px;
+    position: relative;
+    color: var(--fg-dim);
+    cursor: pointer;
+  }
+  .selector-label { color: var(--fg-dim); }
+  .selector-input {
+    appearance: none; -webkit-appearance: none;
+    background: none; border: 0; padding: 1px 14px 1px 2px;
+    color: var(--fg); font: inherit;
+    cursor: pointer;
+  }
+  .selector-input:focus { outline: 1px dotted var(--accent-line); outline-offset: 2px; }
+  .selector-input option { background: var(--bg-surface); color: var(--fg); }
+  .selector-caret { position: absolute; right: 0; pointer-events: none; color: var(--fg-dim); font-size: 0.8em; }
+
+  .task-list {
+    flex: 1; overflow-y: auto; overflow-x: hidden;
+    padding: 6px 0 6px 0;
+  }
+
+  .task-row {
+    padding: 8px 16px 9px;
+    border-bottom: 1px dashed var(--border-soft);
+    cursor: grab;
+    position: relative;
+    user-select: none;
+    transition: background 80ms;
+  }
+  .task-row:hover { background: var(--bg-highlight); }
+  .task-row:hover::before {
+    content: '▌';
+    position: absolute; left: 4px; top: 8px;
+    color: var(--accent); font-size: 0.95em;
+  }
+  .task-row.is-dragging { opacity: 0.32; background: var(--bg-highlight); }
+  .task-row.is-done .task-row-title { color: var(--fg-dim); text-decoration: line-through; }
+
+  .task-row-line1 {
+    display: flex; align-items: baseline; gap: 6px;
+    margin-bottom: 3px;
+  }
+  .pri { font-size: 0.85em; flex-shrink: 0; line-height: 1; }
+  .pri-P0 { color: var(--p0); }
+  .pri-P1 { color: var(--p1); }
+  .pri-P2 { color: var(--p2); }
+  .pri-P3 { color: var(--p3); }
+  .task-row-pri-label { color: var(--fg-dim); font-size: 0.78em; letter-spacing: 0.04em; }
+  .task-row-title {
+    flex: 1; color: var(--fg);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .status-pill {
+    font-size: 0.72em;
+    padding: 1px 5px;
+    border: 1px solid var(--accent-dim);
+    color: var(--accent);
+    background: var(--accent-soft);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .status-pill.status-nextup {
+    border-color: var(--fg-dim);
+    color: var(--fg-muted);
+    background: oklch(67.67% 0.0283 82.34 / 0.08);
+  }
+
+  .task-row-line2 {
+    display: flex; align-items: baseline; gap: 6px;
+    font-size: 0.82em; color: var(--fg-dim);
+    padding-left: 14px;
+  }
+  .meta-est { color: var(--fg-muted); font-variant-numeric: tabular-nums; }
+  .meta-sep, .meta-tag-sep { color: var(--fg-dimmer); }
+  .meta-tag { color: var(--fg-dim); }
+  .meta-spacer { flex: 1; }
+  .meta-subtasks { color: var(--fg-dim); font-size: 0.92em; }
+  .meta-due { color: var(--fg-dim); }
+  .meta-due.is-overdue { color: var(--p0); }
+
+  .task-empty { padding: 8px 16px; color: var(--fg-dim); }
+  .dim { color: var(--fg-dim); }
+
+  .task-pane-ft {
+    padding: 8px 16px;
+    border-top: 1px dashed var(--border);
+    font-size: 0.82em;
+    color: var(--fg-dim);
+    background: var(--bg);
+  }
+

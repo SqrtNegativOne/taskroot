@@ -388,9 +388,10 @@
     background: var(--bg);
     transition: background 80ms;
   }
+  .day-cell:hover { background: var(--bg-highlight); }
+  .day-cell.is-past .day-cell-num { color: var(--fg-dim); }
   .day-cell.is-out { background: var(--bg); }
   .day-cell.is-out .day-cell-num { color: var(--fg-dimmest); }
-  .day-cell.is-past .day-cell-num { color: var(--fg-dim); }
   .day-cell.is-today { background: var(--bg-highlight); }
   .day-cell.is-today .day-cell-num { color: var(--accent); font-weight: 600; }
   .day-cell.can-accept { cursor: copy; }
@@ -431,6 +432,9 @@
     text-overflow: ellipsis;
     display: flex; gap: 4px;
     flex-shrink: 0;
+  }
+  .day-cell-event:hover {
+    filter: brightness(1.15);
   }
   .day-cell-event.ev-plan { border-left-color: var(--accent); background: var(--accent-soft); color: var(--fg); }
   .day-cell-event.ev-meeting { border-left-color: var(--fg-dim); background: var(--bg-surface); }
@@ -1537,3 +1541,34 @@ html:has(.app-rest), html:has(.app-rest) body {
   letter-spacing: 0.04em;
 }
 .rest-complete-text { color: var(--accent); }
+
+@keyframes slideDownFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUpFadeOut {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+.floating-menu {
+  animation: slideDownFadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform-origin: top center;
+}
+
+.floating-menu.is-closing {
+  animation: slideUpFadeOut 0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

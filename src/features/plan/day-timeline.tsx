@@ -7,7 +7,7 @@ import { hydrateEvents } from '../../core/events';
 const PX_PER_MIN = 56 / 60; // 56 px per hour
 const SNAP_MIN = 15;
 
-function DayTimeline({ events, tasks, filter, filterMenu, today, timelineDate, setTimelineDate, dragState, setDragState, onDropToTime, onResizeEvent, onMoveEvent, onEventClick, onAddEvent }) {
+function DayTimeline({ events, tasks, filter, sort, filterMenu, today, timelineDate, setTimelineDate, dragState, setDragState, onDropToTime, onResizeEvent, onMoveEvent, onEventClick, onAddEvent }) {
   const containerRef = React.useRef(null);
   const scrollRef = React.useRef(null);
   
@@ -46,21 +46,42 @@ function DayTimeline({ events, tasks, filter, filterMenu, today, timelineDate, s
     const cellDate = ymd(viewDate);
     const inRange = e.endDate ? (cellDate >= e.date && cellDate <= e.endDate) : (e.date === cellDate);
     return inRange && !e.isAllDay;
-  }), tasks).sort((a, b) => a.start - b.start);
+  }), tasks);
 
-  if (filter) {
-    todayEvents = todayEvents.filter(e => {
-      if (!filter.types.includes(e.type)) return false;
-      const filterTags = (filter.tags || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
-      if (filterTags.length > 0) {
-        const eventTags = e.tags || [];
-        const taskTags = e.task ? e.task.tags : [];
-        const allTags = [...eventTags, ...taskTags].map(t => typeof t === 'string' ? t.toLowerCase() : '');
-        if (!filterTags.some(t => allTags.includes(t))) return false;
-      }
-      return true;
-    });
+  if (filter && Array.isArray(filter) && filter.length > 0) {
+    for (const f of filter) {
+       if (!f.column || !f.value) continue;
+       todayEvents = todayEvents.filter(e => {
+          let match = false;
+          if (f.column === 'type') {
+             match = e.type === f.value;
+          } else if (f.column === 'tag') {
+             const eventTags = e.tags || [];
+             const taskTags = e.task ? e.task.tags : [];
+             const allTags = [...eventTags, ...taskTags].map(t => typeof t === 'string' ? t.toLowerCase() : '');
+             match = allTags.includes(f.value.toLowerCase());
+          } else if (f.column === 'taskStatus') {
+             if (f.value === 'none') {
+                match = !e.task;
+             } else if (f.value === 'done') {
+                match = e.task ? e.task.status === 'done' : e.isDone;
+             } else if (f.value === 'todo') {
+                match = e.task ? e.task.status !== 'done' : !e.isDone;
+             }
+          }
+          return f.operator === 'is not' ? !match : match;
+       });
+    }
   }
+
+  todayEvents.sort((a, b) => {
+    if (sort === 'taskStatus') {
+       const aDone = a.task ? (a.task.status === 'done' ? 1 : 0) : (a.isDone ? 1 : 0);
+       const bDone = b.task ? (b.task.status === 'done' ? 1 : 0) : (b.isDone ? 1 : 0);
+       if (aDone !== bDone) return aDone - bDone;
+    }
+    return (a.start || 0) - (b.start || 0); // fallback to time
+  });
 
   // Compute lanes for overlapping events
   const laid = layoutEvents(todayEvents);

@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
 import { TODAY, parseYMD, durationLabel, dueLabel } from '../../core/data';
 import { ListFilter, Plus, X, ArrowDownUp } from 'lucide-react';
+import { FilterSortButtons } from './shared-menus';
 
 // Task list — left column. Filter, sort, draggable items.
 
 function TaskListPane({ tasks = [], setTasks, filters = [], setFilters, sort, setSort, query = '', setQuery, onDragStart, activeDragId, onAddTask, onDeleteTask }) {
-  const [showFilters, setShowFilters] = useState(false);
-  const [showSort, setShowSort] = useState(false);
 
   const updateTask = (id, updates) => setTasks(ts => ts.map(t => t.id === id ? { ...t, ...updates } : t));
   const deleteTask = (id) => {
@@ -53,26 +52,6 @@ function TaskListPane({ tasks = [], setTasks, filters = [], setFilters, sort, se
     return [...xs].sort(cmp);
   }, [tasks, filters, sort, query]);
 
-  const addFilter = () => {
-    setFilters([...filters, { id: Date.now().toString(), column: 'status', operator: 'is', value: 'todo' }]);
-  };
-
-  const updateFilter = (id, updates) => {
-    setFilters(fs => fs.map(f => {
-      if (f.id !== id) return f;
-      const nf = { ...f, ...updates };
-      if (updates.column && updates.column !== f.column) {
-        if (updates.column === 'status') nf.value = 'todo';
-        if (updates.column === 'priority') nf.value = 'P0';
-        if (updates.column === 'tag') nf.value = allTags[0] || '';
-      }
-      return nf;
-    }));
-  };
-
-  const removeFilter = (id) => {
-    setFilters(fs => fs.filter(f => f.id !== id));
-  };
 
   return (
     <aside className="task-pane">
@@ -90,41 +69,28 @@ function TaskListPane({ tasks = [], setTasks, filters = [], setFilters, sort, se
           )}
         </div>
         <div className="task-pane-controls" style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', width: '100%' }}>
-          <button 
-            onClick={() => setShowFilters(!showFilters)} 
-            style={{ 
-               background: showFilters || filters.length > 0 ? 'var(--bg-surface)' : 'transparent', 
-               border: '1px solid var(--border)', 
-               color: 'var(--fg)', 
-               borderRadius: '4px', 
-               padding: '4px 6px', 
-               display: 'flex', 
-               alignItems: 'center', 
-               gap: '4px',
-               cursor: 'pointer'
+          <FilterSortButtons
+            filters={filters} setFilters={setFilters}
+            sort={sort} setSort={setSort}
+            columns={[
+              { id: 'status', label: 'Status' },
+              { id: 'priority', label: 'Priority' },
+              { id: 'tag', label: 'Tag' }
+            ]}
+            getValuesForColumn={(col) => {
+              if (col === 'status') return ['todo', 'next-up', 'doing', 'done'];
+              if (col === 'priority') return ['P0', 'P1', 'P2', 'P3'];
+              if (col === 'tag') return allTags;
+              return [];
             }}
-            title="Filter Tasks"
-          >
-            <ListFilter size={16} />
-            {filters.length > 0 && <span style={{ fontSize: '0.8em', fontWeight: 'bold' }}>{filters.length}</span>}
-          </button>
-          <button 
-            onClick={() => setShowSort(!showSort)} 
-            style={{ 
-               background: showSort ? 'var(--bg-surface)' : 'transparent', 
-               border: '1px solid var(--border)', 
-               color: 'var(--fg)', 
-               borderRadius: '4px', 
-               padding: '4px 6px', 
-               display: 'flex', 
-               alignItems: 'center', 
-               gap: '4px',
-               cursor: 'pointer'
-            }}
-            title="Sort Tasks"
-          >
-            <ArrowDownUp size={16} />
-          </button>
+            sortOptions={[
+              { id: 'priority', label: 'Priority' },
+              { id: 'due', label: 'Due Date' },
+              { id: 'est', label: 'Estimate' },
+              { id: 'title', label: 'Title' },
+              { id: 'added', label: 'Date Added' }
+            ]}
+          />
           
           <button 
             style={{ 
@@ -145,48 +111,6 @@ function TaskListPane({ tasks = [], setTasks, filters = [], setFilters, sort, se
             <Plus size={14} /> Task
           </button>
         </div>
-        {showFilters && (
-          <div className="task-pane-filters" style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '8px', padding: '10px', background: 'var(--bg-surface)', borderRadius: '6px', border: '1px solid var(--border)' }}>
-            {filters.map(f => (
-              <div key={f.id} style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                <select value={f.column} onChange={e => updateFilter(f.id, { column: e.target.value })} className="selector-input" style={{ flex: 1, padding: '4px 8px', border: '1px solid var(--border)', borderRadius: '4px', background: 'var(--bg-app)', color: 'var(--fg)' }}>
-                  <option value="status">Status</option>
-                  <option value="priority">Priority</option>
-                  <option value="tag">Tag</option>
-                </select>
-                <select value={f.operator} onChange={e => updateFilter(f.id, { operator: e.target.value })} className="selector-input" style={{ width: '75px', padding: '4px 8px', border: '1px solid var(--border)', borderRadius: '4px', background: 'var(--bg-app)', color: 'var(--fg)' }}>
-                  <option value="is">is</option>
-                  <option value="is not">is not</option>
-                </select>
-                <select value={f.value} onChange={e => updateFilter(f.id, { value: e.target.value })} className="selector-input" style={{ flex: 1.5, padding: '4px 8px', border: '1px solid var(--border)', borderRadius: '4px', background: 'var(--bg-app)', color: 'var(--fg)' }}>
-                  {f.column === 'status' && ['todo', 'next-up', 'doing', 'done'].map(v => <option key={v} value={v}>{v}</option>)}
-                  {f.column === 'priority' && ['P0', 'P1', 'P2', 'P3'].map(v => <option key={v} value={v}>{v}</option>)}
-                  {f.column === 'tag' && allTags.map(v => <option key={v} value={v}>{v}</option>)}
-                </select>
-                <button onClick={() => removeFilter(f.id)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px', color: 'var(--fg)', opacity: 0.6 }}>
-                  <X size={16} />
-                </button>
-              </div>
-            ))}
-            <button onClick={addFilter} style={{ background: 'transparent', border: 'none', color: 'var(--fg)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', alignSelf: 'flex-start', padding: '4px 4px', fontSize: '0.9em', opacity: 0.8 }}>
-              <Plus size={14} /> Add filter
-            </button>
-          </div>
-        )}
-        {showSort && (
-          <div className="task-pane-filters" style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '8px', padding: '10px', background: 'var(--bg-surface)', borderRadius: '6px', border: '1px solid var(--border)' }}>
-            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.9em', color: 'var(--fg)', opacity: 0.8 }}>Sort by</span>
-              <select value={sort} onChange={e => setSort(e.target.value)} className="selector-input" style={{ flex: 1, padding: '4px 8px', border: '1px solid var(--border)', borderRadius: '4px', background: 'var(--bg-app)', color: 'var(--fg)' }}>
-                <option value="priority">Priority</option>
-                <option value="due">Due Date</option>
-                <option value="est">Estimate</option>
-                <option value="title">Title</option>
-                <option value="added">Date Added</option>
-              </select>
-            </div>
-          </div>
-        )}
       </header>
 
       <div className="task-list">

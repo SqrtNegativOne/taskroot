@@ -4,27 +4,52 @@ import { hydrateEvents } from '../../core/events';
 
 // Month / week calendar — top of right pane.
 
-function DateGrid({ view, setView, anchor, setAnchor, events, tasks, filter, filterMenu, today, dragState, onDropToDate, onEventDragStart, onAddEvent }) {
+function DateGrid({ view, setView, anchor, setAnchor, events, tasks, filter, sort, filterMenu, today, dragState, onDropToDate, onEventDragStart, onAddEvent }) {
   // anchor is a Date pointing into the month or week currently shown.
   const isWeek = view === 'week';
   const cells = React.useMemo(() => buildMonthOrWeekCells(anchor, isWeek), [anchor, isWeek]);
   const hydratedEvents = React.useMemo(() => {
     let evs = hydrateEvents(events, tasks);
-    if (filter) {
-      evs = evs.filter(e => {
-        if (!filter.types.includes(e.type)) return false;
-        const filterTags = (filter.tags || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
-        if (filterTags.length > 0) {
-          const eventTags = e.tags || [];
-          const taskTags = e.task ? e.task.tags : [];
-          const allTags = [...eventTags, ...taskTags].map(t => typeof t === 'string' ? t.toLowerCase() : '');
-          if (!filterTags.some(t => allTags.includes(t))) return false;
+    
+    if (filter && Array.isArray(filter) && filter.length > 0) {
+      for (const f of filter) {
+         if (!f.column || !f.value) continue;
+         evs = evs.filter(e => {
+            let match = false;
+            if (f.column === 'type') {
+               match = e.type === f.value;
+            } else if (f.column === 'tag') {
+               const eventTags = e.tags || [];
+               const taskTags = e.task ? e.task.tags : [];
+               const allTags = [...eventTags, ...taskTags].map(t => typeof t === 'string' ? t.toLowerCase() : '');
+               match = allTags.includes(f.value.toLowerCase());
+            } else if (f.column === 'taskStatus') {
+               if (f.value === 'none') {
+                  match = !e.task;
+               } else if (f.value === 'done') {
+                  match = e.task ? e.task.status === 'done' : e.isDone;
+               } else if (f.value === 'todo') {
+                  match = e.task ? e.task.status !== 'done' : !e.isDone;
+               }
+            }
+            return f.operator === 'is not' ? !match : match;
+         });
+      }
+    }
+    
+    if (sort) {
+      evs.sort((a, b) => {
+        if (sort === 'taskStatus') {
+          const aDone = a.task ? (a.task.status === 'done' ? 1 : 0) : (a.isDone ? 1 : 0);
+          const bDone = b.task ? (b.task.status === 'done' ? 1 : 0) : (b.isDone ? 1 : 0);
+          if (aDone !== bDone) return aDone - bDone;
         }
-        return true;
+        return (a.start || 0) - (b.start || 0);
       });
     }
+    
     return evs;
-  }, [events, tasks, filter]);
+  }, [events, tasks, filter, sort]);
 
   const titleLabel = isWeek
     ? weekRangeLabel(cells[0].date, cells[cells.length - 1].date)

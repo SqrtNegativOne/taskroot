@@ -6,7 +6,8 @@ import './settings.css';
 
 export function SettingsScreen() {
   const [activeTab, setActiveTab] = useState('general');
-  const [settings, setSettings] = useStored('settings', { defaultCalendarView: 'month', defaultTaskDuration: 0 });
+  const [recordingKeybinding, setRecordingKeybinding] = useState<string | null>(null);
+  const [settings, setSettings] = useStored('settings', { defaultCalendarView: 'month', defaultTaskDuration: 0, keybindingOpenSettings: 'Ctrl+,' });
 
   return (
     <div className="app app-settings">
@@ -33,6 +34,12 @@ export function SettingsScreen() {
             >
               <div className="task-row-title">Sync and Backup</div>
             </div>
+            <div 
+              className={`task-row ${activeTab === 'keybindings' ? 'is-active' : ''}`}
+              onClick={() => setActiveTab('keybindings')}
+            >
+              <div className="task-row-title">Keybindings</div>
+            </div>
             {/* Future categories will go here */}
           </div>
         </div>
@@ -43,6 +50,7 @@ export function SettingsScreen() {
               <span className="cal-hd-title">
                 {activeTab === 'general' && 'General Settings'}
                 {activeTab === 'sync' && 'Sync and Backup'}
+                {activeTab === 'keybindings' && 'Keybindings'}
               </span>
             </div>
           </div>
@@ -128,6 +136,61 @@ export function SettingsScreen() {
                   }}>
                     Export Data
                   </button>
+                </div>
+              </div>
+            )}
+            {activeTab === 'keybindings' && (
+              <div className="settings-section">
+                <div className="settings-section-title">
+                  Keyboard Shortcuts
+                </div>
+                <div className="settings-section-desc dim">
+                  Navigate and control Taskroot quickly.
+                </div>
+                <div className="settings-section-actions" style={{ marginTop: '16px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', color: 'var(--fg)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border)', alignItems: 'center' }}>
+                      <span>Open Settings</span>
+                      <kbd 
+                        style={{
+                          padding: '4px 8px',
+                          background: recordingKeybinding === 'openSettings' ? 'var(--accent-soft)' : 'var(--bg-app)',
+                          border: '1px solid ' + (recordingKeybinding === 'openSettings' ? 'var(--accent)' : 'var(--border)'),
+                          borderRadius: '4px',
+                          fontSize: '0.9em',
+                          fontFamily: 'monospace',
+                          cursor: 'pointer'
+                        }}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setRecordingKeybinding('openSettings');
+                          const handler = (evt: KeyboardEvent) => {
+                            evt.preventDefault();
+                            evt.stopPropagation();
+                            if (evt.key === 'Escape') {
+                              setRecordingKeybinding(null);
+                              window.removeEventListener('keydown', handler);
+                              return;
+                            }
+                            const parts = [];
+                            if (evt.ctrlKey) parts.push('Ctrl');
+                            if (evt.metaKey) parts.push('Meta');
+                            if (evt.altKey) parts.push('Alt');
+                            if (evt.shiftKey) parts.push('Shift');
+                            if (!['Control', 'Meta', 'Alt', 'Shift'].includes(evt.key)) {
+                              parts.push(evt.key === ' ' ? 'Space' : evt.key.length === 1 ? evt.key.toUpperCase() : evt.key);
+                              setSettings({ ...settings, keybindingOpenSettings: parts.join('+') });
+                              setRecordingKeybinding(null);
+                              window.removeEventListener('keydown', handler);
+                            }
+                          };
+                          window.addEventListener('keydown', handler);
+                        }}
+                      >
+                        {recordingKeybinding === 'openSettings' ? 'Press any key...' : (settings.keybindingOpenSettings || 'Ctrl+,')}
+                      </kbd>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}

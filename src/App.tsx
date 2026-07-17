@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './core/AuthContext';
 
 import { PlanScreen } from './features/plan/PlanScreen';
@@ -37,6 +37,39 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
 
 
 function AppRouter() {
+  const navigate = useNavigate();
+  const [settings] = useStored('settings', { keybindingOpenSettings: 'Ctrl+,' });
+
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLElement && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable)) {
+        if (!e.ctrlKey && !e.metaKey && !e.altKey) return;
+      }
+      
+      const kb = settings.keybindingOpenSettings || 'Ctrl+,';
+      const parts = kb.split('+');
+      const key = parts.pop();
+      const needsCtrl = parts.includes('Ctrl');
+      const needsAlt = parts.includes('Alt');
+      const needsShift = parts.includes('Shift');
+      const needsMeta = parts.includes('Meta');
+
+      const keyMatch = (e.key.toUpperCase() === key?.toUpperCase()) || (e.key === ' ' && key === 'Space');
+      if (
+        e.ctrlKey === needsCtrl &&
+        e.altKey === needsAlt &&
+        e.shiftKey === needsShift &&
+        e.metaKey === needsMeta &&
+        keyMatch
+      ) {
+        e.preventDefault();
+        navigate('/settings');
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [navigate, settings.keybindingOpenSettings]);
+
   return (
     <Routes>
       <Route path="/plan" element={<PlanScreen />} />

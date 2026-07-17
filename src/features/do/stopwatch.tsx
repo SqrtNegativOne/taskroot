@@ -53,33 +53,13 @@ function Stopwatch() {
     <section className="stopwatch-hero">
       <div className="stopwatch-stage">
 
-        <div className={`stopwatch-display ${running ? 'is-running' : ''}`}>
+        <div className={`stopwatch-display ${running ? 'is-running' : ''}`} onClick={toggle} title="Click to start/stop">
           <span className="sw-digits sw-m">{m}</span>
         </div>
 
-        <div className="stopwatch-scroll-hint">
-          <span className="dim">ctrl+r to reset</span>
-          <span className="stopwatch-scroll-arrow">▼</span>
-        </div>
       </div>
     </section>
   );
-}
-
-function SecondsTicker({ running, seconds }) {
-  // 60 dots representing 60 seconds; the current second highlights amber.
-  const dots = [];
-  for (let i = 0; i < 60; i++) {
-    const active = i <= seconds;
-    const isCurrent = i === seconds;
-    dots.push(
-      <span
-        key={i}
-        className={`sw-tick ${active ? 'is-active' : ''} ${isCurrent && running ? 'is-current' : ''}`}
-      />
-    );
-  }
-  return <div className="sw-ticks">{dots}</div>;
 }
 
 function splitTime(ms) {

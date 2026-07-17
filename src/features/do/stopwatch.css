@@ -32,19 +32,23 @@
   display: flex;
   align-items: baseline;
   justify-content: center;
-  width: 100%;
+  width: max-content;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.04em;
   user-select: none;
   line-height: 1;
+  cursor: pointer;
 }
 .sw-digits {
-  font-size: clamp(80px, 14vw, 220px);
+  font-size: clamp(120px, 24vw, 320px);
   color: var(--fg-dim);
   font-feature-settings: 'ss01';
-  transition: color 200ms;
+  transition: color 200ms, opacity 200ms;
+  opacity: 1;
 }
+.stopwatch-display:hover .sw-digits { opacity: 0.6; }
 .stopwatch-display.is-running .sw-digits { color: var(--fg); }
+.stopwatch-display.is-running:hover .sw-digits { opacity: 0.6; }
 .sw-colon {
   font-size: clamp(80px, 14vw, 220px);
   color: var(--fg-dim);

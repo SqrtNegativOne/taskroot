@@ -87,7 +87,7 @@
   .day-event.pri-bar-P1 { border-left-color: var(--p1); }
   .day-event.pri-bar-P2 { border-left-color: var(--p2); }
   .day-event.pri-bar-P3 { border-left-color: var(--p3); }
-  .day-event.is-done { opacity: 0.6; border-color: var(--border-soft); background: var(--bg); border-left-color: var(--border-soft); }
+  .day-event.is-done { opacity: 0.75; border: 1px dashed var(--border); background: var(--bg-hover); border-left: 2px solid var(--border); }
   .day-event.is-done .day-event-title { color: var(--fg-dim); text-decoration: line-through; }
   .day-event.is-ghost { opacity: 0.35; pointer-events: none; border-style: dashed; background: transparent !important; }
   .day-event.is-floating { z-index: 50; box-shadow: 0 8px 24px rgba(0,0,0,0.3); border-color: var(--accent); opacity: 0.95; cursor: grabbing; }

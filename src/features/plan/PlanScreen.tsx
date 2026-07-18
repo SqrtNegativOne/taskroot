@@ -5,7 +5,7 @@ import { DateGrid } from './date-grid';
 import { TitleBar } from '../../components/shell';
 import { load, useStored, seedDefaults } from '../../core/store';
 import { TaskListPane } from './tasklist';
-import { ListFilter } from 'lucide-react';
+
 import { useTweaks, TweaksPanel, TweakSection, TweakSlider, TweakToggle, TweakRadio, TweakColor } from './tweaks-panel';
 import { SplitPane } from '../../components/split-pane';
 import { FilterSortButtons } from './shared-menus';
@@ -193,7 +193,7 @@ function PlanScreen() {
   const onAddTask = () => {
     const id = `t${Date.now()}`;
     setTasks(ts => [{
-       id, title: 'New Task', status: 'todo', priority: 'P2', tags: [], subtasks: [], est: settings.defaultTaskDuration !== undefined ? settings.defaultTaskDuration : 0, added: new Date().toISOString()
+       id, title: 'New Task', status: 'todo', priority: 'P2', tags: [], subtasks: [], est: settings.defaultTaskDuration !== undefined ? settings.defaultTaskDuration : 0, added: new Date().toISOString(), isDraft: true
     }, ...ts]);
     setInspectorState({ type: 'task', id });
   };
@@ -213,7 +213,8 @@ function PlanScreen() {
        end,
        type: isAllDay ? 'info' : 'busy',
        isAllDay,
-       tags: []
+       tags: [],
+       isDraft: true
     }]);
     setInspectorState({ type: 'event', id });
   };
@@ -316,7 +317,8 @@ function PlanScreen() {
         inspectorState={inspectorState} 
         onClose={() => setInspectorState(null)} 
         tasks={tasks} setTasks={setTasks} 
-        events={events} setEvents={setEvents} 
+        events={events} setEvents={setEvents}
+        allTags={allEventTags}
       />
 
       {(dragState && (dragState.task || dragState.event)) && (
@@ -418,7 +420,7 @@ function resolveDropTarget(el, x, y, task, event) {
   return null;
 }
 
-function TitleInput({ value, onChange, disabled, onEnter }) {
+function TitleInput({ value, onChange, disabled, onEnter, style = {}, className = '' }: any) {
   const [localValue, setLocalValue] = React.useState(value);
 
   React.useEffect(() => {
@@ -443,6 +445,8 @@ function TitleInput({ value, onChange, disabled, onEnter }) {
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
       disabled={disabled}
+      style={style}
+      className={className}
     />
   );
 }
@@ -460,7 +464,103 @@ function timeToMin(t) {
   return parseInt(hh, 10) * 60 + parseInt(mm, 10);
 }
 
-function InspectorPane({ inspectorState, onClose, tasks, setTasks, events, setEvents }) {
+function TagsInput({ tags, allTags, onChange }) {
+  const [inputValue, setInputValue] = React.useState('');
+  const [showSuggestions, setShowSuggestions] = React.useState(false);
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      addTag(inputValue);
+    } else if (e.key === 'Backspace' && inputValue === '' && tags.length > 0) {
+      onChange(tags.slice(0, -1));
+    }
+  };
+
+  const addTag = (tagStr) => {
+    const t = tagStr.trim();
+    if (t && !tags.includes(t)) {
+      onChange([...tags, t]);
+    }
+    setInputValue('');
+  };
+
+  const removeTag = (t) => {
+    onChange(tags.filter(x => x !== t));
+  };
+
+  const suggestions = allTags.filter(t => t.toLowerCase().includes(inputValue.toLowerCase()) && !tags.includes(t));
+
+  return (
+    <div className="tags-input-container">
+      {tags.map(t => (
+        <span key={t} className="tag-chip">
+          {t} <button type="button" onClick={() => removeTag(t)}>×</button>
+        </span>
+      ))}
+      <div style={{ position: 'relative', flex: 1 }}>
+        <input 
+          value={inputValue} 
+          onChange={e => setInputValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onFocus={() => setShowSuggestions(true)}
+          onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+          placeholder={tags.length === 0 ? "Add tags..." : ""}
+        />
+        {showSuggestions && inputValue && suggestions.length > 0 && (
+          <div className="tags-suggestions">
+            {suggestions.map(s => (
+              <div key={s} onMouseDown={(e) => { e.preventDefault(); addTag(s); }} className="tag-suggestion">{s}</div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function Toggle({ checked, onChange, label }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }} onClick={() => onChange(!checked)}>
+      <div className={`toggle-switch ${checked ? 'is-on' : ''}`}>
+        <div className="toggle-switch-thumb" />
+      </div>
+      <span style={{ fontSize: '0.9em' }}>{label}</span>
+    </div>
+  );
+}
+
+function DescriptionInput({ value, onChange }) {
+  const [editing, setEditing] = React.useState(false);
+  const [localValue, setLocalValue] = React.useState(value);
+
+  React.useEffect(() => { setLocalValue(value); }, [value]);
+
+  if (!editing) {
+    return (
+      <div 
+        onClick={() => setEditing(true)} 
+        style={{ minHeight: '24px', cursor: 'text', padding: '0', color: value ? 'var(--fg)' : 'var(--fg-dim)', borderRadius: '4px' }}
+      >
+        {value || 'Add description...'}
+      </div>
+    );
+  }
+
+  return (
+    <textarea 
+      autoFocus
+      value={localValue || ''}
+      onChange={e => setLocalValue(e.target.value)}
+      onBlur={() => { setEditing(false); if(localValue !== value) onChange(localValue); }}
+      rows={5}
+      style={{ width: '100%', resize: 'vertical', padding: '4px', fontFamily: 'inherit', border: '1px solid var(--border)', background: 'var(--bg-input, var(--bg-surface))', color: 'var(--fg)', borderRadius: '4px' }}
+      placeholder="Add a description..."
+    />
+  );
+}
+
+function InspectorPane({ inspectorState, onClose, tasks, setTasks, events, setEvents, allTags }) {
   const [activeState, setActiveState] = React.useState(null);
   const paneRef = React.useRef(null);
 
@@ -468,167 +568,202 @@ function InspectorPane({ inspectorState, onClose, tasks, setTasks, events, setEv
     if (inspectorState) setActiveState(inspectorState);
   }, [inspectorState]);
 
-  React.useEffect(() => {
-    function handleClickOutside(e) {
-      if (inspectorState && paneRef.current && !paneRef.current.contains(e.target)) {
-        onClose();
-      }
-    }
-    document.addEventListener("pointerdown", handleClickOutside);
-    return () => document.removeEventListener("pointerdown", handleClickOutside);
-  }, [inspectorState, onClose]);
-
   const currentState = inspectorState || activeState;
   
-  const isTask = currentState?.type === 'task';
-  const item = currentState 
-    ? (isTask 
+  const isCurrentTask = currentState?.type === 'task';
+  const currentItem = currentState 
+    ? (isCurrentTask 
       ? tasks.find(t => t.id === currentState.id)
       : events.find(e => e.id === currentState.id))
     : null;
 
-  const isOpen = !!(inspectorState && item);
-  
-  const title = item ? (isTask ? item.title : (item.taskId ? tasks.find(t => t.id === item.taskId)?.title : item.title)) : '';
+  const [showEndDate, setShowEndDate] = React.useState(false);
+  React.useEffect(() => {
+    if (currentItem?.type !== 'task' && currentItem?.endDate && currentItem?.date && currentItem.endDate !== currentItem.date) {
+      setShowEndDate(true);
+    } else {
+      setShowEndDate(false);
+    }
+  }, [currentItem?.id]);
 
-  const updateTask = (id, updates) => setTasks(ts => ts.map(t => t.id === id ? { ...t, ...updates } : t));
+  const handleClose = React.useCallback(() => {
+    if (inspectorState && currentItem && currentItem.isDraft) {
+      if (isCurrentTask) {
+        setTasks(ts => ts.filter(t => t.id !== currentItem.id));
+        setEvents(es => es.filter(e => e.taskId !== currentItem.id));
+      } else {
+        setEvents(es => es.filter(e => e.id !== currentItem.id));
+      }
+    }
+    onClose();
+  }, [inspectorState, currentItem, isCurrentTask, setTasks, setEvents, onClose]);
+
+  React.useEffect(() => {
+    function handleClickOutside(e) {
+      if (inspectorState && paneRef.current && !paneRef.current.contains(e.target)) {
+        handleClose();
+      }
+    }
+    document.addEventListener("pointerdown", handleClickOutside);
+    return () => document.removeEventListener("pointerdown", handleClickOutside);
+  }, [inspectorState, handleClose]);
+
+
+
+  const isOpen = !!(inspectorState && currentItem);
+  
+  const title = currentItem ? (isCurrentTask ? currentItem.title : (currentItem.taskId ? tasks.find(t => t.id === currentItem.taskId)?.title : currentItem.title)) : '';
+
+  const updateTask = (id, updates) => setTasks(ts => ts.map(t => t.id === id ? { ...t, ...updates, isDraft: false } : t));
   const deleteTask = (id) => setTasks(ts => ts.filter(t => t.id !== id));
-  const updateEvent = (id, updates) => setEvents(es => es.map(e => e.id === id ? { ...e, ...updates } : e));
+  const updateEvent = (id, updates) => setEvents(es => es.map(e => e.id === id ? { ...e, ...updates, isDraft: false } : e));
   const deleteEvent = (id) => setEvents(es => es.filter(e => e.id !== id));
 
   return (
     <div ref={paneRef} className={`inspector-pane ${isOpen ? 'is-open' : ''}`}>
-      {item && (
+      {currentItem && (
         <>
-          <div className="inspector-hd">
-            <div className="inspector-title">{isTask ? 'TASK DETAILS' : 'EVENT DETAILS'}</div>
-            <button className="inspector-close" onClick={onClose}>×</button>
+          <div className="inspector-hd" style={{ padding: '0 8px', borderBottom: 'none', background: 'transparent' }}>
+            <button className="inspector-icon-btn" onClick={handleClose} title="Close Pane">
+              <span className="material-symbols-outlined">keyboard_double_arrow_right</span>
+            </button>
+            <button className="inspector-icon-btn" onClick={() => {
+              if (isCurrentTask) {
+                deleteTask(currentItem.id);
+                setEvents(es => es.filter(e => e.taskId !== currentItem.id));
+              } else {
+                deleteEvent(currentItem.id);
+              }
+              handleClose();
+            }} title="Delete"><span className="material-symbols-outlined" style={{ fontSize: '20px' }}>delete</span></button>
           </div>
-          <div className="inspector-body">
-             <div className="inspector-field">
-                <label>Title</label>
+          <div className="inspector-body" style={{ paddingTop: 0 }}>
+             <div className="inspector-field" style={{ marginTop: '24px', marginBottom: '4px' }}>
                 <TitleInput 
                   value={title || ''} 
                   onChange={newTitle => {
-                    if (isTask) updateTask(item.id, { title: newTitle });
-                    else updateEvent(item.id, { title: newTitle });
+                    if (isCurrentTask) updateTask(currentItem.id, { title: newTitle });
+                    else updateEvent(currentItem.id, { title: newTitle });
                   }}
-                  disabled={!isTask && item.taskId}
-                  onEnter={onClose}
+                  disabled={!isCurrentTask && currentItem.taskId}
+                  onEnter={handleClose}
+                  style={{ fontSize: '24px', fontWeight: 'bold', border: 'none', background: 'transparent', padding: '0', outline: 'none', width: '100%', color: 'var(--fg)' }}
                 />
              </div>
-             <div className="inspector-field" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '6px' }}>
-                <label>Description</label>
-                <textarea 
-                  value={item.description || ''} 
-                  onChange={e => {
-                    if (isTask) updateTask(item.id, { description: e.target.value });
-                    else updateEvent(item.id, { description: e.target.value });
-                  }}
-                  rows={5}
-                  style={{ width: '100%', resize: 'vertical', padding: '6px', fontFamily: 'inherit', border: '1px solid var(--border)', background: 'var(--bg-input, var(--bg-surface))', color: 'var(--fg)', borderRadius: '4px' }}
-                  placeholder="Add a description..."
+             <div className="inspector-field" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
+                <DescriptionInput 
+                  value={currentItem.description || ''} 
+                  onChange={desc => {
+                    if (isCurrentTask) updateTask(currentItem.id, { description: desc });
+                    else updateEvent(currentItem.id, { description: desc });
+                  }} 
                 />
              </div>
-             <div className="inspector-field">
-                <label>Tags</label>
-                <input 
-                  type="text"
-                  value={(item.tags || []).join(', ')} 
-                  onChange={e => {
-                    const tags = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
-                    if (isTask) updateTask(item.id, { tags });
-                    else updateEvent(item.id, { tags });
-                  }}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter') {
-                      (e.target as HTMLElement).blur();
-                      onClose();
-                    }
-                  }}
-                  placeholder="tag1, tag2"
-                  style={{ flex: 1, padding: '4px 8px', border: '1px solid var(--border)', background: 'var(--bg-input, var(--bg-surface))', color: 'var(--fg)', borderRadius: '4px' }}
-                />
-             </div>
-             {isTask && (
+             
+             {isCurrentTask && (
                <>
-                 <div className="inspector-field">
-                   <label>Status</label>
-                   <select value={item.status} onChange={e => updateTask(item.id, { status: e.target.value })}>
-                     <option value="todo">todo</option>
-                     <option value="next-up">next up</option>
-                     <option value="doing">doing</option>
-                     <option value="done">done</option>
-                   </select>
+                 <div className="inspector-row">
+                   <div className="inspector-field">
+                     <label>Status</label>
+                     <select value={currentItem.status} onChange={e => updateTask(currentItem.id, { status: e.target.value })}>
+                       <option value="todo">todo</option>
+                       <option value="next-up">next up</option>
+                       <option value="doing">doing</option>
+                       <option value="done">done</option>
+                     </select>
+                   </div>
+                   <div className="inspector-field">
+                     <label>Priority</label>
+                     <select value={currentItem.priority} onChange={e => updateTask(currentItem.id, { priority: e.target.value })}>
+                       <option value="P1">P1</option>
+                       <option value="P2">P2</option>
+                       <option value="P3">P3</option>
+                     </select>
+                   </div>
                  </div>
+                 
                  <div className="inspector-field">
-                   <label>Priority</label>
-                   <select value={item.priority} onChange={e => updateTask(item.id, { priority: e.target.value })}>
-                     <option value="P0">P0</option>
-                     <option value="P1">P1</option>
-                     <option value="P2">P2</option>
-                     <option value="P3">P3</option>
-                   </select>
+                   <label>Duration (min)</label>
+                   <input type="number" value={currentItem.est || 0} onChange={e => updateTask(currentItem.id, { est: parseInt(e.target.value) || 0 })} />
                  </div>
                </>
              )}
-             {!isTask && (
+             
+             {!isCurrentTask && (
                <>
-                 <div className="inspector-field">
-                   <label>All Day</label>
-                   <input type="checkbox" checked={!!item.isAllDay} onChange={e => {
-                     const isAllDay = e.target.checked;
-                     const updates: any = { isAllDay };
-                     if (!item.taskId) {
-                       updates.type = isAllDay ? 'info' : 'busy';
+                 <div className="inspector-field" style={{ marginTop: '8px' }}>
+                   <select value={currentItem.type} onChange={e => {
+                     const type = e.target.value;
+                     if (type === 'plan') {
+                       updateEvent(currentItem.id, { type });
+                     } else {
+                       updateEvent(currentItem.id, { type, taskId: undefined });
                      }
-                     updateEvent(item.id, updates);
-                   }} />
+                   }}>
+                     <option value="busy">Busy</option>
+                     <option value="info">Informational</option>
+                     <option value="plan">Plan (task-based)</option>
+                   </select>
                  </div>
-                 {!item.taskId && !item.isAllDay && (
+                 
+                 {currentItem.type === 'plan' && (
                    <div className="inspector-field">
-                     <label>Type</label>
-                     <select value={item.type} onChange={e => updateEvent(item.id, { type: e.target.value })}>
-                       <option value="info">Informational (Reminder)</option>
-                       <option value="busy">Busy (Meeting)</option>
+                     <select value={currentItem.taskId || ''} onChange={e => {
+                       const taskId = e.target.value;
+                       updateEvent(currentItem.id, { taskId: taskId || undefined });
+                     }}>
+                       <option value="">-- No task attached --</option>
+                       {tasks.map(t => <option key={t.id} value={t.id}>{t.title}</option>)}
                      </select>
                    </div>
                  )}
-                 <div className="inspector-field">
-                   <label>Start Date</label>
-                   <input type="date" value={item.date} onChange={e => updateEvent(item.id, { date: e.target.value })} />
+
+                 <div className="inspector-field" style={{ gap: '20px', padding: '8px 0', flexDirection: 'row' }}>
+                   <Toggle 
+                     label="End date"
+                     checked={showEndDate}
+                     onChange={checked => {
+                       setShowEndDate(checked);
+                       if (!checked) updateEvent(currentItem.id, { endDate: currentItem.date });
+                     }} 
+                   />
+                   <Toggle 
+                     label="Include time"
+                     checked={!currentItem.isAllDay}
+                     onChange={checked => {
+                       const updates: any = { isAllDay: !checked };
+                       if (currentItem.type !== 'plan') updates.type = !checked ? 'busy' : 'info';
+                       updateEvent(currentItem.id, updates);
+                     }} 
+                   />
                  </div>
-                 <div className="inspector-field">
-                   <label>End Date</label>
-                   <input type="date" value={item.endDate || item.date} min={item.date} onChange={e => updateEvent(item.id, { endDate: e.target.value })} />
+
+                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '16px' }}>
+                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
+                     <input type="date" className="inspector-date-input" value={currentItem.date} onChange={e => updateEvent(currentItem.id, { date: e.target.value })} />
+                     {!currentItem.isAllDay && (
+                       <input type="time" className="inspector-date-input" value={minToTime(currentItem.start)} onChange={e => updateEvent(currentItem.id, { start: timeToMin(e.target.value) })} />
+                     )}
+                   </div>
+
+                   {showEndDate && (
+                     <div style={{ color: 'var(--fg-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                       <span className="material-symbols-outlined">arrow_forward</span>
+                     </div>
+                   )}
+
+                   {showEndDate && (
+                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
+                       <input type="date" className="inspector-date-input" value={currentItem.endDate || currentItem.date} min={currentItem.date} onChange={e => updateEvent(currentItem.id, { endDate: e.target.value })} />
+                       {!currentItem.isAllDay && (
+                         <input type="time" className="inspector-date-input" value={minToTime(currentItem.end)} onChange={e => updateEvent(currentItem.id, { end: timeToMin(e.target.value) })} />
+                       )}
+                     </div>
+                   )}
                  </div>
-                 {!item.isAllDay && (
-                   <>
-                     <div className="inspector-field">
-                       <label>Start Time</label>
-                       <input type="time" value={minToTime(item.start)} onChange={e => updateEvent(item.id, { start: timeToMin(e.target.value) })} />
-                     </div>
-                     <div className="inspector-field">
-                       <label>End Time</label>
-                       <input type="time" value={minToTime(item.end)} onChange={e => updateEvent(item.id, { end: timeToMin(e.target.value) })} />
-                     </div>
-                   </>
-                 )}
                </>
              )}
-             <div className="inspector-actions">
-               <button onClick={() => {
-                 if (isTask) {
-                   deleteTask(item.id);
-                   // Also delete associated events
-                   setEvents(es => es.filter(e => e.taskId !== item.id));
-                 } else {
-                   deleteEvent(item.id);
-                 }
-                 onClose();
-               }}>Delete {isTask ? 'Task' : 'Event'}</button>
-             </div>
-          </div>
+           </div>
         </>
       )}
     </div>

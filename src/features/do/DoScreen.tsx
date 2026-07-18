@@ -7,52 +7,77 @@ import { TitleBar } from '../../components/shell';
 import { Stopwatch } from './stopwatch';
 import { useStored, seedDefaults } from '../../core/store';
 import { TipsList, NotesList } from './tips-notes';
+import { RestScreen } from './RestScreen';
 
 // Do screen — hero stopwatch + collapsible sections.
 
 function DoScreen() {
   React.useEffect(() => { seedDefaults(); }, []);
+  const [isBreak, setIsBreak] = useState(false);
+  const [showRestOverride, setShowRestOverride] = useState(false);
+
+  useEffect(() => {
+    if (isBreak) {
+      setShowRestOverride(true);
+    } else {
+      setShowRestOverride(false);
+    }
+  }, [isBreak]);
 
   return (
     <div className="app app-do">
       <TitleBar today={TODAY} current="do" />
 
       <main className="do-main">
-        <Stopwatch />
+        <Stopwatch onBreakStatusChange={setIsBreak} />
 
-        <div className="do-sections">
-          <Collapsible
-            title="distraction log"
-            defaultOpen={true}
-            badge={<DistractionBadge />}
-          >
-            <DistractionLog />
-          </Collapsible>
+        {showRestOverride ? (
+          <div className="do-rest-container">
+            <div style={{ textAlign: 'center', margin: '16px 0' }}>
+              <button onClick={() => setShowRestOverride(false)} className="sw-btn" style={{ padding: '6px 14px', fontSize: '13px' }}>Back to Do</button>
+            </div>
+            <RestScreen />
+          </div>
+        ) : (
+          <div className="do-sections">
+            {isBreak && (
+              <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+                <button onClick={() => setShowRestOverride(true)} className="sw-btn" style={{ padding: '6px 14px', fontSize: '13px' }}>Go to Rest Screen</button>
+              </div>
+            )}
+            <Collapsible
+              title="distraction log"
+              defaultOpen={true}
+              badge={<DistractionBadge />}
+            >
+              <DistractionLog />
+            </Collapsible>
 
-          <Collapsible
-            title="current tasks"
-            defaultOpen={false}
-            badge={<KanbanBadge />}
-          >
-            <Kanban />
-          </Collapsible>
+            <Collapsible
+              title="current tasks"
+              defaultOpen={false}
+              badge={<KanbanBadge />}
+            >
+              <Kanban />
+            </Collapsible>
 
-          <Collapsible
-            title="tips"
-            defaultOpen={false}
-            badge={<TipsBadge />}
-          >
-            <TipsList />
-          </Collapsible>
+            <Collapsible
+              title="tips"
+              defaultOpen={false}
+              badge={<TipsBadge />}
+            >
+              <TipsList />
+            </Collapsible>
 
-          <Collapsible
-            title="notes"
-            defaultOpen={false}
-            badge={<NotesBadge />}
-          >
-            <NotesList />
-          </Collapsible>
-        </div>
+            <Collapsible
+              title="notes"
+              defaultOpen={false}
+              badge={<NotesBadge />}
+            >
+              <NotesList />
+            </Collapsible>
+          </div>
+        )}
       </main>
     </div>
   );

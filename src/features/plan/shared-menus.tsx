@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ListFilter, ArrowDownUp, Plus, X } from 'lucide-react';
+import { Icon } from '../../components/icon';
 
 export function FilterSortButtons({ filters, setFilters, sort, setSort, columns, getValuesForColumn, sortOptions, align = 'left' }) {
   const [showFilters, setShowFilters] = useState(false);
@@ -91,7 +91,7 @@ export function FilterSortButtons({ filters, setFilters, sort, setSort, columns,
         }}
         title="Filter"
       >
-        <ListFilter size={16} />
+        <Icon name="filter_list" size={16} />
         {filters.length > 0 && <span style={{ fontSize: '0.8em', fontWeight: 'bold' }}>{filters.length}</span>}
       </button>
       
@@ -111,7 +111,7 @@ export function FilterSortButtons({ filters, setFilters, sort, setSort, columns,
           }}
           title="Sort"
         >
-          <ArrowDownUp size={16} />
+          <Icon name="swap_vert" size={16} />
         </button>
       )}
 
@@ -145,12 +145,12 @@ export function FilterSortButtons({ filters, setFilters, sort, setSort, columns,
                 {getValuesForColumn(f.column).map(v => <option key={v} value={v}>{v}</option>)}
               </select>
               <button onClick={() => removeFilter(f.id)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px', color: 'var(--fg)', opacity: 0.6 }}>
-                <X size={16} />
+                <Icon name="close" size={16} />
               </button>
             </div>
           ))}
           <button onClick={addFilter} style={{ background: 'transparent', border: 'none', color: 'var(--fg)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', alignSelf: 'flex-start', padding: '4px 4px', fontSize: '0.9em', opacity: 0.8 }}>
-            <Plus size={14} /> Add filter
+            <Icon name="add" size={14} /> Add filter
           </button>
         </div>
       )}

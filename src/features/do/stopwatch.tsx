@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { SAMPLE_TASKS, SAMPLE_EVENTS, PAD2, ymd } from '../../core/data';
 import { useStored } from '../../core/store';
-import { Search } from 'lucide-react';
+import { Icon } from '../../components/icon';
 
-function GuzeyClockDisplay({ toggleSelector }) {
+function GuzeyClockDisplay({ toggleSelector, onBreakStatus }) {
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {
@@ -63,12 +63,17 @@ function GuzeyClockDisplay({ toggleSelector }) {
   const remM = Math.floor(remS / 60);
   const finalS = remS % 60;
 
-  const displayText = `${state}: ${PAD2(remM)}:${PAD2(finalS)} left`;
+  const isBreakNow = state === "BREAK" || state === "LONG_BREAK";
+  useEffect(() => {
+    if (onBreakStatus) onBreakStatus(isBreakNow);
+  }, [isBreakNow, onBreakStatus]);
 
   return (
     <div className="stopwatch-display is-running" onClick={toggleSelector} title="Click to open task selector" style={{ color }}>
-      <span className="sw-digits sw-m" style={{ whiteSpace: 'nowrap' }}>
-        <span style={{ fontSize: '0.28em' }}>{displayText}</span>
+      <span className="sw-digits sw-m" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1 }}>
+        <span style={{ fontSize: '0.08em', fontWeight: 600, letterSpacing: '0.12em' }}>{state}</span>
+        <span style={{ fontSize: '0.7em', margin: '2px 0' }}>{PAD2(remM)}:{PAD2(finalS)}</span>
+        <span style={{ fontSize: '0.08em', fontWeight: 600, letterSpacing: '0.12em' }}>LEFT</span>
       </span>
     </div>
   );
@@ -133,8 +138,8 @@ class ClassicClockStrategy extends ClockStrategy {
 }
 
 class GuzeyClockStrategy extends ClockStrategy {
-  renderDisplay({ toggle }) {
-    return <GuzeyClockDisplay toggleSelector={toggle} />;
+  renderDisplay({ toggle, onBreakStatus }) {
+    return <GuzeyClockDisplay toggleSelector={toggle} onBreakStatus={onBreakStatus} />;
   }
 
   requiresAnimationLoop() {
@@ -160,19 +165,42 @@ const CLOCK_STRATEGIES = {
 };
 
 
-function Stopwatch() {
+function Stopwatch({ onBreakStatusChange }) {
   const [state, setState] = useStored('stopwatch', { elapsed: 0, runningSince: null });
   const [tasks, setTasks] = useStored('tasks', SAMPLE_TASKS);
   const [events] = useStored('events', SAMPLE_EVENTS || []);
-  const [settings] = useStored('settings', {});
+  const [settings] = useStored<any>('settings', {});
   
   const strategy = CLOCK_STRATEGIES[settings.clockStyle] || CLOCK_STRATEGIES.classic;
 
   const [, setTick] = useState(0);
 
   const [selectorOpen, setSelectorOpen] = useState(false);
+  const [visible, setVisible] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
+
+  useEffect(() => {
+    if (selectorOpen) {
+      setVisible(true);
+      setIsClosing(false);
+    } else if (visible) {
+      setIsClosing(true);
+      const timer = setTimeout(() => {
+        setVisible(false);
+        setIsClosing(false);
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [selectorOpen, visible]);
   const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef(null);
+
+  useEffect(() => {
+    const hasDoing = tasks && tasks.some(t => t.status === 'doing');
+    if (!hasDoing && isPristine) {
+      setSelectorOpen(true);
+    }
+  }, []); // Run only on mount
 
   // While running, request animation frame to update display.
   useEffect(() => {
@@ -240,7 +268,7 @@ function Stopwatch() {
     const now = new Date();
     const nowMin = now.getHours() * 60 + now.getMinutes();
 
-    let filtered = tasks || [];
+    let filtered = (tasks || []).filter(t => t.status !== 'done' && t.status !== 'doing');
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       filtered = filtered.filter(t => (t.title || '').toLowerCase().includes(q));
@@ -270,62 +298,92 @@ function Stopwatch() {
     <section className="stopwatch-hero">
       <div className="stopwatch-stage" style={{ position: 'relative' }}>
 
-        {strategy.renderDisplay({ currentMs, running, isPristine, toggle })}
-
-        {selectorOpen && (
-          <div className="task-selector-overlay" style={{
-            position: 'absolute', top: 'calc(100% + 16px)', left: '50%', transform: 'translateX(-50%)',
-            background: 'var(--bg-surface)', border: '1px solid var(--border)',
-            borderRadius: '8px', padding: '12px', width: '360px', zIndex: 100,
-            boxShadow: '0 12px 32px rgba(0,0,0,0.3)', display: 'flex', flexDirection: 'column', gap: '12px',
-            maxHeight: '400px'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-base)', padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border)' }}>
-              <Search size={16} style={{ marginRight: '8px', color: 'var(--fg-dim)' }} />
-              <input 
-                ref={searchInputRef}
-                className="task-search-input"
-                style={{ background: 'transparent', border: 'none', color: 'var(--fg)', outline: 'none', width: '100%', fontSize: '15px' }}
-                placeholder="Search task to start..."
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === 'Enter' && sortedTasks.length > 0) {
-                    startWithTask(sortedTasks[0].id);
-                  }
+        {strategy.renderDisplay({ currentMs, running, isPristine, toggle, onBreakStatus: onBreakStatusChange })}
+        
+        {(() => {
+          const activeTask = tasks?.find(t => t.status === 'doing');
+          const isGuzey = settings.clockStyle === 'guzey';
+          const shouldShowTask = activeTask && (running || isGuzey);
+          if (shouldShowTask) {
+            return (
+              <div 
+                onClick={(e) => { e.stopPropagation(); setSelectorOpen(true); }}
+                style={{ 
+                  marginTop: '16px', fontSize: '18px', color: 'var(--fg)', textAlign: 'center', 
+                  cursor: 'pointer', transition: 'color 0.15s', padding: '4px 12px', borderRadius: '4px'
                 }}
-              />
-            </div>
-            <div style={{ overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px', flex: 1, paddingRight: '4px' }}>
-              {sortedTasks.length === 0 ? (
-                <div style={{ padding: '16px', textAlign: 'center', color: 'var(--fg-dim)', fontSize: '14px' }}>
-                  No tasks match your search.
-                </div>
-              ) : (
-                sortedTasks.map(t => (
-                  <div key={t.id} onClick={() => startWithTask(t.id)} style={{
-                    padding: '10px 12px', background: 'var(--bg-base)', border: '1px solid var(--border)',
-                    borderRadius: '6px', cursor: 'pointer', fontSize: '14px',
-                    display: 'flex', flexDirection: 'column', transition: 'border-color 0.15s, transform 0.1s'
+                onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--accent)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--fg)'; }}
+                title="Click to change task"
+              >
+                <span style={{ color: 'var(--fg-dim)', marginRight: '8px' }}>Working on:</span>
+                <span style={{ fontWeight: 500 }}>{activeTask.title}</span>
+              </div>
+            );
+          }
+          return null;
+        })()}
+
+        {visible && (
+          <>
+            <div 
+              style={{ position: 'fixed', inset: 0, zIndex: 90 }} 
+              onClick={(e) => { e.stopPropagation(); setSelectorOpen(false); }}
+            />
+            <div className={`task-selector-overlay ${isClosing ? 'is-closing' : 'floating-menu'}`} style={{
+              position: 'absolute', top: 'calc(100% + 16px)', left: '50%', transform: 'translateX(-50%)',
+              background: 'var(--bg-surface)', border: '1px solid var(--border)',
+              borderRadius: '8px', padding: '12px', width: '360px', zIndex: 100,
+              boxShadow: '0 12px 32px rgba(0,0,0,0.3)', display: 'flex', flexDirection: 'column', gap: '12px',
+              maxHeight: '400px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-base)', padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border)' }}>
+                <Icon name="search" size={16} style={{ marginRight: '8px', color: 'var(--fg-dim)' }} />
+                <input 
+                  ref={searchInputRef}
+                  className="task-search-input"
+                  style={{ background: 'transparent', border: 'none', color: 'var(--fg)', outline: 'none', width: '100%', fontSize: '15px' }}
+                  placeholder="Search task to start..."
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && sortedTasks.length > 0) {
+                      startWithTask(sortedTasks[0].id);
+                    }
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.transform = 'translateY(0)'; }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                       <span className={`pri pri-${t.priority}`}>●</span>
-                       <span style={{ fontWeight: 500, color: 'var(--fg)' }}>{t.title}</span>
-                       {t.status === 'doing' && <span style={{ marginLeft: 'auto', fontSize: '11px', padding: '2px 6px', background: 'var(--accent)', color: 'var(--bg-base)', borderRadius: '4px', fontWeight: 'bold' }}>DOING</span>}
-                    </div>
-                    {t.tags && t.tags.length > 0 && (
-                      <div style={{ fontSize: '12px', color: 'var(--fg-dim)', marginTop: '6px' }}>
-                        {t.tags.map(tag => <span key={tag} style={{ marginRight: '8px' }}>#{tag}</span>)}
-                      </div>
-                    )}
+                />
+              </div>
+              <div style={{ overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px', flex: 1, paddingRight: '4px' }}>
+                {sortedTasks.length === 0 ? (
+                  <div style={{ padding: '16px', textAlign: 'center', color: 'var(--fg-dim)', fontSize: '14px' }}>
+                    No tasks match your search.
                   </div>
-                ))
-              )}
+                ) : (
+                  sortedTasks.map(t => (
+                    <div key={t.id} onClick={() => startWithTask(t.id)} style={{
+                      padding: '10px 12px', background: 'var(--bg-base)', border: '1px solid var(--border)',
+                      borderRadius: '6px', cursor: 'pointer', fontSize: '14px',
+                      display: 'flex', flexDirection: 'column', transition: 'border-color 0.15s, transform 0.1s'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                         <span className={`pri pri-${t.priority}`}>●</span>
+                         <span style={{ fontWeight: 500, color: 'var(--fg)' }}>{t.title}</span>
+                         {t.status === 'doing' && <span style={{ marginLeft: 'auto', fontSize: '11px', padding: '2px 6px', background: 'var(--accent)', color: 'var(--bg-base)', borderRadius: '4px', fontWeight: 'bold' }}>DOING</span>}
+                      </div>
+                      {t.tags && t.tags.length > 0 && (
+                        <div style={{ fontSize: '12px', color: 'var(--fg-dim)', marginTop: '6px' }}>
+                          {t.tags.map(tag => <span key={tag} style={{ marginRight: '8px' }}>#{tag}</span>)}
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
-          </div>
+          </>
         )}
 
       </div>

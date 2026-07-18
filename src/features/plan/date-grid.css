@@ -92,7 +92,7 @@
   .day-cell-event.pri-bar-P1 { border-left-color: var(--p1); }
   .day-cell-event.pri-bar-P2 { border-left-color: var(--p2); }
   .day-cell-event.pri-bar-P3 { border-left-color: var(--p3); }
-  .day-cell-event.is-done { color: var(--fg-dim); text-decoration: line-through; opacity: 0.6; border-left-color: var(--border-soft); background: var(--bg); }
+  .day-cell-event.is-done { color: var(--fg-dim); text-decoration: line-through; opacity: 0.75; border-left-color: var(--border); background: var(--bg-hover); }
   .day-cell-event-time { color: var(--fg-dim); flex-shrink: 0; font-variant-numeric: tabular-nums; }
   .day-cell-event-title { overflow: hidden; text-overflow: ellipsis; }
   .day-cell-more {

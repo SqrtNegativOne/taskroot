@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
 import { Link } from 'react-router-dom';
-import { Settings } from 'lucide-react';
+import { Icon } from './icon';
 import { MONTHS, DOW_SHORT, PAD2 } from '../core/data';
 
 // Shared top bar + clickable stage indicator. Used across Plan, Do, Rest.
@@ -17,7 +17,7 @@ function TitleBar({ current, today }) {
       <div className="drag-region" />
       <div className="topbar-left">
         <Link to="/settings" className={`stage ${current === 'settings' ? 'is-current' : ''}`} style={{ padding: '0 4px', display: 'flex' }} aria-label="Settings">
-          <Settings size={18} />
+          <Icon name="settings" size={18} />
         </Link>
         <StageIndicator current={current} />
       </div>
@@ -42,7 +42,6 @@ function StageIndicator({ current }) {
   const stages = [
     { key: 'plan', label: 'plan', href: '/plan' },
     { key: 'do',   label: 'do',   href: '/do' },
-    { key: 'rest', label: 'rest', href: '/rest' },
   ];
   return (
     <nav className="stages" aria-label="Stages">

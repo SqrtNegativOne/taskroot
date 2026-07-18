@@ -32,7 +32,7 @@ function SegmentedControl({ options, value, onChange }) {
 export function SettingsScreen() {
   const [activeTab, setActiveTab] = useState('general');
   const [recordingKeybinding, setRecordingKeybinding] = useState<string | null>(null);
-  const [settings, setSettings] = useStored('settings', { defaultCalendarView: 'month', defaultTaskDuration: 0, keybindingOpenSettings: 'Ctrl+,' });
+  const [settings, setSettings] = useStored<any>('settings', { defaultCalendarView: 'month', defaultTaskDuration: 0, keybindingOpenSettings: 'Ctrl+,' });
   const [tasks, setTasks] = useStored('tasks', []);
   const [ingestText, setIngestText] = useState('');
 

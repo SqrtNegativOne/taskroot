@@ -6,8 +6,9 @@
 @import './features/do/kanban.css';
 @import './features/do/tips.css';
 @import './features/do/notes.css';
-@import './features/rest/rest.css';
+@import './features/do/rest.css';
 :root {
+    color-scheme: dark;
     --shadow-btn-hover: 0 4px 12px rgba(0, 0, 0, 0.2);
     --shadow-btn: 0 2px 8px rgba(0, 0, 0, 0.2);
     --tag-red: #d97757;
@@ -245,6 +246,23 @@ html:has(.app-do), html:has(.app-do) body {
   width: 100%;
 }
 
+.inspector-date-input {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  color: var(--fg);
+  font-family: inherit;
+  font-size: 14px;
+  padding: 4px 0;
+  outline: none;
+  cursor: pointer;
+  transition: border-bottom-color 0.2s;
+  width: 100%;
+}
+.inspector-date-input:focus {
+  border-bottom-color: var(--accent);
+}
+
 /* ── Inspector Pane ─────────────────────────────────────────────────── */
 
 .inspector-pane {
@@ -271,12 +289,21 @@ html:has(.app-do), html:has(.app-do) body {
 .inspector-title {
   font-weight: 600; letter-spacing: 0.1em; color: var(--fg);
 }
-.inspector-close {
-  background: none; border: none; color: var(--fg-dim);
-  font-size: 1.5em; cursor: pointer; padding: 0 4px;
-  line-height: 1;
+.toggle-switch {
+  position: relative; width: 36px; height: 20px;
+  background: var(--bg-surface); border: 1px solid var(--border); border-radius: 10px;
+  cursor: pointer; transition: background 0.2s, border-color 0.2s;
 }
-.inspector-close:hover { color: var(--fg); }
+.toggle-switch.is-on { background: var(--accent); border-color: var(--accent); }
+.toggle-switch-thumb {
+  position: absolute; top: 1px; left: 1px; width: 16px; height: 16px;
+  background: white; border-radius: 50%; transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.toggle-switch.is-on .toggle-switch-thumb { transform: translateX(16px); }
+.inspector-collapse-btn:hover {
+  color: var(--fg);
+  background: var(--bg-surface);
+}
 .inspector-body {
   padding: 20px;
   display: flex; flex-direction: column; gap: 16px;
@@ -299,9 +326,35 @@ html:has(.app-do), html:has(.app-do) body {
 .inspector-field input:disabled {
   opacity: 0.5; cursor: not-allowed;
 }
+
+.inspector-row {
+  display: flex; gap: 8px; width: 100%;
+}
+.inspector-row .inspector-field {
+  flex: 1; min-width: 0; margin-bottom: 0;
+}
+.inspector-icon-btn {
+  background: none; border: none; cursor: pointer; color: var(--fg-dim); padding: 4px; border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  -webkit-app-region: no-drag;
+}
+.inspector-icon-btn:hover { color: var(--fg); background: var(--bg-hover); }
+
+.tags-input-container {
+  display: flex; flex-wrap: wrap; gap: 4px; border: 1px solid var(--border); background: var(--bg-input, var(--bg-surface)); border-radius: 4px; padding: 4px; align-items: center; width: 100%;
+}
+.tag-chip { background: var(--bg-hover); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; display: flex; align-items: center; gap: 4px; }
+.tag-chip button { background: none; border: none; cursor: pointer; color: var(--fg); padding: 0; font-size: 1.1em; opacity: 0.5; }
+.tag-chip button:hover { opacity: 1; }
+.tags-input-container input { border: none !important; background: transparent !important; padding: 4px !important; flex: 1; min-width: 80px; outline: none !important; }
+.tags-suggestions { position: absolute; top: 100%; left: 0; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 4px; max-height: 150px; overflow-y: auto; width: max-content; min-width: 100%; z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+.tag-suggestion { padding: 6px 12px; cursor: pointer; }
+.tag-suggestion:hover { background: var(--bg-hover); }
+
 .inspector-actions {
   margin-top: 24px; padding-top: 16px;
   border-top: 1px dashed var(--border);
+  display: flex; flex-direction: column; gap: 8px;
 }
 .inspector-actions button {
   background: oklch(67.24% 0.1308 38.76 / 0.1); border: 1px solid var(--p0);

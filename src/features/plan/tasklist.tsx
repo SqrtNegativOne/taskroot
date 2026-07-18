@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
 import { TODAY, parseYMD, durationLabel, dueLabel } from '../../core/data';
-import { ListFilter, Plus, X, ArrowDownUp, Search } from 'lucide-react';
+import { Icon } from '../../components/icon';
 import { FilterSortButtons } from './shared-menus';
 
 // Task list — left column. Filter, sort, draggable items.
@@ -57,7 +57,7 @@ function TaskListPane({ tasks = [], setTasks, filters = [], setFilters, sort, se
     <aside className="task-pane">
       <header className="task-pane-hd">
         <div className="task-pane-search">
-          <Search size={14} style={{ color: 'var(--fg-dimmer)' }} />
+          <Icon name="search" size={14} style={{ color: 'var(--fg-dimmer)' }} />
           <input
             className="search-input"
             value={query}
@@ -108,7 +108,7 @@ function TaskListPane({ tasks = [], setTasks, filters = [], setFilters, sort, se
             }}
             onClick={onAddTask}
           >
-            <Plus size={14} /> Task
+            <Icon name="add" size={14} /> Task
           </button>
         </div>
       </header>
@@ -173,11 +173,11 @@ function TaskRow({ task, index, onDragStart, dragging, updateTask, deleteTask })
            <button onClick={(e) => {
              e.stopPropagation();
              updateTask(task.id, { status: task.status === 'done' ? 'todo' : 'done' });
-           }} title="Toggle Done">✔</button>
+           }} title="Toggle Done"><span className="material-symbols-outlined" style={{ fontSize: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>check</span></button>
            <button onClick={(e) => {
              e.stopPropagation();
              if (e.shiftKey || confirm("Delete task?")) deleteTask(task.id);
-           }} title="Delete">🗑</button>
+           }} title="Delete"><span className="material-symbols-outlined" style={{ fontSize: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>delete</span></button>
         </div>
       </div>
       <div className="task-row-line2">

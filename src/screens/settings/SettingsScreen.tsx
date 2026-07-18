@@ -18,20 +18,63 @@ function timeToMin(t: string) {
 }
 
 function SegmentedControl({ options, value, onChange }) {
+  const containerRef = React.useRef(null);
+  const [thumbStyle, setThumbStyle] = React.useState({ left: 0, top: 0, width: 0, height: 0, opacity: 0, init: false });
+
+  React.useLayoutEffect(() => {
+    const updateThumb = () => {
+      if (!containerRef.current) return;
+      const activeBtn = containerRef.current.querySelector('button[data-active="true"]');
+      if (activeBtn) {
+        setThumbStyle(prev => ({
+          left: activeBtn.offsetLeft,
+          top: activeBtn.offsetTop,
+          width: activeBtn.offsetWidth,
+          height: activeBtn.offsetHeight,
+          opacity: 1,
+          init: true
+        }));
+      } else {
+        setThumbStyle(prev => ({ ...prev, opacity: 0, init: true }));
+      }
+    };
+
+    updateThumb();
+
+    if (typeof ResizeObserver !== 'undefined' && containerRef.current) {
+      const ro = new ResizeObserver(updateThumb);
+      ro.observe(containerRef.current);
+      return () => ro.disconnect();
+    }
+  }, [value, options]);
+
   return (
-    <div style={{ display: 'inline-flex', background: 'var(--bg-app)', padding: '3px', borderRadius: '8px', border: '1px solid var(--border)', userSelect: 'none', flexWrap: 'wrap', gap: '2px' }}>
+    <div ref={containerRef} style={{ display: 'inline-flex', position: 'relative', background: 'var(--bg-app)', padding: '3px', borderRadius: '8px', border: '1px solid var(--border)', userSelect: 'none', flexWrap: 'wrap', gap: '2px', zIndex: 0 }}>
+      <div style={{
+        position: 'absolute',
+        background: 'var(--bg-surface)',
+        borderRadius: '5px',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.12), 0 1px 1px rgba(0,0,0,0.04)',
+        transition: thumbStyle.init ? 'all 0.15s cubic-bezier(0.1, 0.9, 0.2, 1)' : 'none',
+        left: thumbStyle.left,
+        top: thumbStyle.top,
+        width: thumbStyle.width,
+        height: thumbStyle.height,
+        opacity: thumbStyle.opacity,
+        zIndex: -1
+      }} />
       {options.map(opt => (
         <button
           type="button"
           key={opt.value}
+          data-active={opt.value === value}
           onClick={() => onChange(opt.value)}
           style={{
-            appearance: 'none', background: opt.value === value ? 'var(--bg-surface)' : 'transparent',
+            appearance: 'none', background: 'transparent',
             border: 'none', borderRadius: '5px', padding: '6px 14px', fontSize: '13px', cursor: 'pointer',
             color: opt.value === value ? 'var(--fg)' : 'var(--fg-dim)',
-            boxShadow: opt.value === value ? '0 1px 3px rgba(0,0,0,0.12), 0 1px 1px rgba(0,0,0,0.04)' : 'none',
             fontWeight: opt.value === value ? 500 : 400,
-            transition: 'all 0.15s cubic-bezier(0.3, 0.7, 0.4, 1)',
+            transition: 'color 0.15s cubic-bezier(0.1, 0.9, 0.2, 1)',
             flex: '1 1 auto', textAlign: 'center', whiteSpace: 'nowrap'
           }}
         >
@@ -45,7 +88,7 @@ function SegmentedControl({ options, value, onChange }) {
 export function SettingsScreen() {
   const [activeTab, setActiveTab] = useState('general');
   const [recordingKeybinding, setRecordingKeybinding] = useState<string | null>(null);
-  const [settings, setSettings] = useStored<any>('settings', { defaultCalendarView: 'month', defaultTaskDuration: 0, keybindingOpenSettings: 'Ctrl+,', earliest_wake_time: 480, last_sleep_time: 1320, recapDay: '' });
+  const [settings, setSettings] = useStored<any>('settings', { defaultCalendarView: 'month', defaultTaskDuration: 0, keybindingOpenSettings: 'Ctrl+,', earliest_wake_time: 480, last_sleep_time: 1320, recapDay: '', allowStopwatchWithoutTask: false, flowtimeBreakDivisor: 5 });
   const [tasks, setTasks] = useStored('tasks', []);
   const [ingestText, setIngestText] = useState('');
 
@@ -73,6 +116,18 @@ export function SettingsScreen() {
               onClick={() => setActiveTab('do_screen')}
             >
               <div className="task-row-title">Do screen</div>
+            </div>
+            <div 
+              className={`task-row ${activeTab === 'wrap_screen' ? 'is-active' : ''}`}
+              onClick={() => setActiveTab('wrap_screen')}
+            >
+              <div className="task-row-title">Wrap screen</div>
+            </div>
+            <div 
+              className={`task-row ${activeTab === 'recap_screen' ? 'is-active' : ''}`}
+              onClick={() => setActiveTab('recap_screen')}
+            >
+              <div className="task-row-title">Recap screen</div>
             </div>
             <div 
               className={`task-row ${activeTab === 'sync' ? 'is-active' : ''}`}
@@ -143,53 +198,61 @@ export function SettingsScreen() {
                   </div>
                 </div>
 
-                <div className="settings-section">
-                  <div className="settings-section-title">
-                    Time & Routine
-                  </div>
-                  <div className="settings-section-desc dim">
-                    Set your waking and sleeping hours for time tracking.
-                  </div>
-                  <div className="settings-section-actions">
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                      <label style={{ display: 'flex', gap: '12px', alignItems: 'center', color: 'var(--fg)' }}>
-                        <span style={{ minWidth: '150px' }}>Earliest wake time:</span>
-                        <input type="time" value={minToTime(settings.earliest_wake_time || 480)} onChange={e => setSettings({ ...settings, earliest_wake_time: timeToMin(e.target.value) })} style={{ background: 'var(--bg-input)', color: 'var(--fg)', border: '1px solid var(--border)', borderRadius: '4px', padding: '4px 8px' }} />
-                      </label>
-                      <label style={{ display: 'flex', gap: '12px', alignItems: 'center', color: 'var(--fg)' }}>
-                        <span style={{ minWidth: '150px' }}>Latest sleep time:</span>
-                        <input type="time" value={minToTime(settings.last_sleep_time || 1320)} onChange={e => setSettings({ ...settings, last_sleep_time: timeToMin(e.target.value) })} style={{ background: 'var(--bg-input)', color: 'var(--fg)', border: '1px solid var(--border)', borderRadius: '4px', padding: '4px 8px' }} />
-                      </label>
-                    </div>
-                  </div>
+              </>
+            )}
+            {activeTab === 'wrap_screen' && (
+              <div className="settings-section">
+                <div className="settings-section-title">
+                  Time & Routine
                 </div>
-
-                <div className="settings-section">
-                  <div className="settings-section-title">
-                    Recap
-                  </div>
-                  <div className="settings-section-desc dim">
-                    Set the day of the week to do a weekly recap.
-                  </div>
-                  <div className="settings-section-actions">
+                <div className="settings-section-desc dim">
+                  Set your waking and sleeping hours for time tracking.
+                </div>
+                <div className="settings-section-actions">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     <label style={{ display: 'flex', gap: '12px', alignItems: 'center', color: 'var(--fg)' }}>
-                      <span style={{ minWidth: '150px' }}>Recap Day:</span>
-                      <select value={settings.recapDay || ''} onChange={e => setSettings({ ...settings, recapDay: e.target.value })} style={{ background: 'var(--bg-input)', color: 'var(--fg)', border: '1px solid var(--border)', borderRadius: '4px', padding: '4px 8px' }}>
-                        <option value="">Never</option>
-                        <option value="monday">Monday</option>
-                        <option value="tuesday">Tuesday</option>
-                        <option value="wednesday">Wednesday</option>
-                        <option value="thursday">Thursday</option>
-                        <option value="friday">Friday</option>
-                        <option value="saturday">Saturday</option>
-                        <option value="sunday">Sunday</option>
-                      </select>
+                      <span style={{ minWidth: '150px' }}>Earliest wake time:</span>
+                      <input type="time" value={minToTime(settings.earliest_wake_time || 480)} onChange={e => setSettings({ ...settings, earliest_wake_time: timeToMin(e.target.value) })} style={{ background: 'var(--bg-input)', color: 'var(--fg)', border: '1px solid var(--border)', borderRadius: '4px', padding: '4px 8px' }} />
+                    </label>
+                    <label style={{ display: 'flex', gap: '12px', alignItems: 'center', color: 'var(--fg)' }}>
+                      <span style={{ minWidth: '150px' }}>Latest sleep time:</span>
+                      <input type="time" value={minToTime(settings.last_sleep_time || 1320)} onChange={e => setSettings({ ...settings, last_sleep_time: timeToMin(e.target.value) })} style={{ background: 'var(--bg-input)', color: 'var(--fg)', border: '1px solid var(--border)', borderRadius: '4px', padding: '4px 8px' }} />
                     </label>
                   </div>
                 </div>
-              </>
+              </div>
+            )}
+            {activeTab === 'recap_screen' && (
+              <div className="settings-section">
+                <div className="settings-section-title">
+                  Recap
+                </div>
+                <div className="settings-section-desc dim">
+                  Set the day of the week to do a weekly recap.
+                </div>
+                <div className="settings-section-actions">
+                  <label style={{ display: 'flex', gap: '12px', alignItems: 'center', color: 'var(--fg)' }}>
+                    <span style={{ minWidth: '150px' }}>Recap Day:</span>
+                    <SegmentedControl
+                      value={settings.recapDay || ''}
+                      onChange={v => setSettings({ ...settings, recapDay: v })}
+                      options={[
+                        { value: '', label: 'Never' },
+                        { value: 'monday', label: 'Mon' },
+                        { value: 'tuesday', label: 'Tue' },
+                        { value: 'wednesday', label: 'Wed' },
+                        { value: 'thursday', label: 'Thu' },
+                        { value: 'friday', label: 'Fri' },
+                        { value: 'saturday', label: 'Sat' },
+                        { value: 'sunday', label: 'Sun' }
+                      ]}
+                    />
+                  </label>
+                </div>
+              </div>
             )}
             {activeTab === 'do_screen' && (
+              <>
               <div className="settings-section">
                 <div className="settings-section-title">
                   Clock Style
@@ -201,16 +264,57 @@ export function SettingsScreen() {
                   <label style={{ display: 'flex', gap: '12px', alignItems: 'center', color: 'var(--fg)' }}>
                     <span style={{ minWidth: '120px' }}>Clock Style:</span>
                     <SegmentedControl
-                      value={settings.clockStyle || 'classic'}
+                      value={settings.clockStyle || 'axleless'}
                       onChange={v => setSettings({ ...settings, clockStyle: v })}
                       options={[
-                        { value: 'classic', label: 'Classic Stopwatch' },
+                        { value: 'axleless', label: 'Axleless Stopwatch' },
+                        { value: 'flowtime', label: 'Flowtime' },
                         { value: 'guzey', label: 'Guzey Clock' }
                       ]}
                     />
                   </label>
                 </div>
               </div>
+              <div className="settings-section">
+                <div className="settings-section-title">
+                  Stopwatch Task Requirement
+                </div>
+                <div className="settings-section-desc dim">
+                  Allow using the stopwatch without actively selecting a task first.
+                </div>
+                <div className="settings-section-actions">
+                  <label style={{ display: 'flex', gap: '12px', alignItems: 'center', color: 'var(--fg)' }}>
+                    <input 
+                      type="checkbox" 
+                      checked={!!settings.allowStopwatchWithoutTask} 
+                      onChange={e => setSettings({ ...settings, allowStopwatchWithoutTask: e.target.checked })}
+                    />
+                    <span>Allow stopwatch use without selecting task</span>
+                  </label>
+                </div>
+              </div>
+              {settings.clockStyle === 'flowtime' && (
+              <div className="settings-section">
+                <div className="settings-section-title">
+                  Flowtime Break Divisor
+                </div>
+                <div className="settings-section-desc dim">
+                  How much break time you earn (e.g. 5 means 1 min break for every 5 mins of work).
+                </div>
+                <div className="settings-section-actions">
+                  <label style={{ display: 'flex', gap: '12px', alignItems: 'center', color: 'var(--fg)' }}>
+                    <input 
+                      type="number" 
+                      min="1"
+                      style={{ background: 'var(--bg-input)', color: 'var(--fg)', border: '1px solid var(--border)', borderRadius: '4px', padding: '4px 8px', width: '60px' }}
+                      value={settings.flowtimeBreakDivisor || 5} 
+                      onChange={e => setSettings({ ...settings, flowtimeBreakDivisor: parseInt(e.target.value) || 5 })}
+                    />
+                  </label>
+                </div>
+              </div>
+              )}
+              </>
             )}
             {activeTab === 'sync' && (
               <>

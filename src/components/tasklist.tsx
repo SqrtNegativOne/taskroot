@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
-import { TODAY, parseYMD, durationLabel, dueLabel } from '../../core/data';
-import { Icon } from '../../components/icon';
-import { FilterSortButtons } from './shared-menus';
+import { TODAY, parseYMD, durationLabel, dueLabel } from '../core/data';
+import { Icon } from './icon';
+import { FilterSortButtons } from '../screens/plan/shared-menus';
 
 // Task list — left column. Filter, sort, draggable items.
 
-function TaskListPane({ tasks = [], setTasks, filters = [], setFilters, sort, setSort, query = '', setQuery, onDragStart, activeDragId, onAddTask, onDeleteTask }) {
+function TaskListPane({ tasks = [], setTasks, filters = [], setFilters, sort, setSort, query = '', setQuery, onDragStart, activeDragId, onAddTask, onDeleteTask, footer }: any) {
 
   const updateTask = (id, updates) => setTasks(ts => ts.map(t => t.id === id ? { ...t, ...updates } : t));
   const deleteTask = (id) => {
@@ -100,15 +100,15 @@ function TaskListPane({ tasks = [], setTasks, filters = [], setFilters, sort, se
                color: 'var(--fg)', 
                borderRadius: '4px',
                cursor: 'pointer', 
-               padding: '4px 8px', 
-               fontSize: '0.9em',
+               padding: '4px 6px', 
                display: 'flex',
                alignItems: 'center',
-               gap: '4px'
+               justifyContent: 'center'
             }}
+            title="Add Task"
             onClick={onAddTask}
           >
-            <Icon name="add" size={14} /> Task
+            <Icon name="add_task" size={16} />
           </button>
         </div>
       </header>
@@ -141,7 +141,7 @@ function TaskListPane({ tasks = [], setTasks, filters = [], setFilters, sort, se
         )}
       </div>
 
-
+      {footer}
     </aside>
   );
 }

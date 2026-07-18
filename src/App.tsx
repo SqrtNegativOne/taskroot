@@ -15,6 +15,7 @@ import { WrapScreen } from './screens/wrap/WrapScreen';
 import { GraphScreen } from './screens/graph/GraphScreen';
 import { StatsScreen } from './screens/stats/StatsScreen';
 import { RecapScreen } from './screens/recap/RecapScreen';
+import { MiniTrackerScreen } from './screens/minitracker/MiniTrackerScreen';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -125,6 +126,14 @@ function GlobalSync({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  if (window.location.search.includes('minitracker=true')) {
+    return (
+      <GlobalSync>
+        <MiniTrackerScreen />
+      </GlobalSync>
+    );
+  }
+
   return (
     <NotificationProvider>
       <AuthProvider>

@@ -10,6 +10,8 @@ export const MAIN_DIST = path.join(process.env.APP_ROOT, 'dist-electron');
 export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist');
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST;
 let win;
+let miniWin = null;
+let serverPort = 0;
 // Handle file logging from renderer
 ipcMain.on('log-to-file', (event, level, message) => {
     const logPath = path.join(process.env.APP_ROOT, 'taskroot.log');
@@ -25,7 +27,13 @@ ipcMain.on('log-to-file', (event, level, message) => {
 // Window controls
 ipcMain.on('window-minimize', (event) => {
     const window = BrowserWindow.fromWebContents(event.sender);
-    window?.minimize();
+    if (window === win) {
+        win?.minimize();
+        createMiniWindow();
+    }
+    else {
+        window?.minimize();
+    }
 });
 ipcMain.on('window-maximize', (event) => {
     const window = BrowserWindow.fromWebContents(event.sender);
@@ -38,8 +46,49 @@ ipcMain.on('window-maximize', (event) => {
 });
 ipcMain.on('window-close', (event) => {
     const window = BrowserWindow.fromWebContents(event.sender);
-    window?.close();
+    if (window === win) {
+        win?.hide();
+        createMiniWindow();
+    }
+    else {
+        window?.close();
+    }
 });
+ipcMain.on('window-restore-main', () => {
+    if (win) {
+        if (win.isMinimized())
+            win.restore();
+        win.show();
+    }
+    if (miniWin) {
+        miniWin.close();
+    }
+});
+function createMiniWindow() {
+    if (miniWin)
+        return;
+    miniWin = new BrowserWindow({
+        width: 300,
+        height: 100,
+        frame: false,
+        transparent: true,
+        alwaysOnTop: true,
+        skipTaskbar: true,
+        webPreferences: {
+            preload: path.join(__dirname, 'preload.cjs'),
+            nodeIntegration: false,
+            contextIsolation: true,
+        }
+    });
+    const url = VITE_DEV_SERVER_URL ? `${VITE_DEV_SERVER_URL}?minitracker=true` : `http://localhost:${serverPort}?minitracker=true`;
+    miniWin.loadURL(url);
+    miniWin.on('closed', () => {
+        miniWin = null;
+        if (!win || !win.isVisible()) {
+            app.quit();
+        }
+    });
+}
 function createWindow() {
     win = new BrowserWindow({
         width: 1200,
@@ -94,8 +143,8 @@ function createWindow() {
         });
         server.listen(0, '127.0.0.1', () => {
             const addr = server.address();
-            const port = typeof addr === 'string' ? 0 : addr?.port;
-            win?.loadURL(`http://localhost:${port}`);
+            serverPort = typeof addr === 'string' ? 0 : addr?.port || 0;
+            win?.loadURL(`http://localhost:${serverPort}`);
         });
     }
 }

@@ -22,6 +22,7 @@ The application code is organized modularly by feature:
 - `src/screens/rest/`: Components for the Rest screen (`RestScreen.tsx`).
 - `src/screens/login/`: Components for the login page (`LoginScreen.tsx`).
 - `src/screens/settings/`: Components for the settings screen (`SettingsScreen.tsx`, `settings.css`).
+- `src/screens/minitracker/`: Components for the mini tracker window (`MiniTrackerScreen.tsx`).
 - `src/components/`: Shared UI components used across multiple screens (e.g., `shell.tsx` for the top navigation, `collapsible.tsx`).
 - `src/core/`: Core business logic, context providers, and data layer.
   - `store.tsx`: Custom `useStored` hook that syncs state between React, LocalStorage, and Firebase Firestore.
@@ -33,6 +34,9 @@ The application code is organized modularly by feature:
 - `src/App.tsx`: The root application component. Orchestrates routing, authentication bypass for dev, and global sync contexts.
 
 ## Key Concepts
+- **UI Controls**: Prefer using custom components like `SegmentedControl` (e.g. as used in the Settings screen) over native `<select>` dropdowns for settings, as they provide better styling consistency and avoid OS-specific dark/light mode issues (like white text on white background).
 - **State Management**: The `useStored(key, defaultData)` hook acts as the primary state manager. It syncs optimistically to `localStorage` and persists to Firestore.
 - **Offline/Online Mode**: Running `npm run start:offline` sets `VITE_OFFLINE_MODE=true` to automatically bypass the Google login screen for rapid UI testing and offline usage. Running `npm run start:online` requires normal authentication.
 - **Drag and Drop**: Managed natively via pointer events (`pointerdown`, `pointermove`, `pointerup`) instead of the HTML5 Drag & Drop API for finer control and custom ghost elements.
+- **Time Logging**: Stopwatch sessions (Axleless, Flowtime, Guzey) are logged to the `time_logs` store, optionally associated with a task.
+- **MiniTracker**: When the main Electron window is minimized or closed, a frameless transparent window (`miniWin`) opens to show the timer in a compact form, using the `/?minitracker=true` route.

@@ -17,11 +17,11 @@ Taskroot is a web-based and desktop task management app focusing on planning, ex
 
 The application code is organized modularly by feature:
 
-- `src/features/plan/`: Components for the Plan screen (`PlanScreen.tsx`, `day-timeline.tsx`, `date-grid.tsx`, `tasklist.tsx`, `tweaks-panel.tsx`).
-- `src/features/do/`: Components for the Do screen (`DoScreen.tsx`, `kanban.tsx`, `stopwatch.tsx`, `distraction-log.tsx`, `tips-notes.tsx`).
-- `src/features/rest/`: Components for the Rest screen (`RestScreen.tsx`).
-- `src/features/login/`: Components for the login page (`LoginScreen.tsx`).
-- `src/features/settings/`: Components for the settings screen (`SettingsScreen.tsx`, `settings.css`).
+- `src/screens/plan/`: Components for the Plan screen (`PlanScreen.tsx`, `day-timeline.tsx`, `date-grid.tsx`, `tasklist.tsx`, `tweaks-panel.tsx`).
+- `src/screens/do/`: Components for the Do screen (`DoScreen.tsx`, `kanban.tsx`, `stopwatch.tsx`, `distraction-log.tsx`, `tips-notes.tsx`).
+- `src/screens/rest/`: Components for the Rest screen (`RestScreen.tsx`).
+- `src/screens/login/`: Components for the login page (`LoginScreen.tsx`).
+- `src/screens/settings/`: Components for the settings screen (`SettingsScreen.tsx`, `settings.css`).
 - `src/components/`: Shared UI components used across multiple screens (e.g., `shell.tsx` for the top navigation, `collapsible.tsx`).
 - `src/core/`: Core business logic, context providers, and data layer.
   - `store.tsx`: Custom `useStored` hook that syncs state between React, LocalStorage, and Firebase Firestore.

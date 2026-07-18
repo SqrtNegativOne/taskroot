@@ -1,12 +1,12 @@
-@import './features/plan/tasklist.css';
-@import './features/plan/date-grid.css';
-@import './features/plan/day-timeline.css';
-@import './features/do/stopwatch.css';
-@import './features/do/distraction-log.css';
-@import './features/do/kanban.css';
-@import './features/do/tips.css';
-@import './features/do/notes.css';
-@import './features/do/rest.css';
+@import './screens/plan/tasklist.css';
+@import './screens/plan/date-grid.css';
+@import './screens/plan/day-timeline.css';
+@import './screens/do/stopwatch.css';
+@import './screens/do/distraction-log.css';
+@import './screens/do/kanban.css';
+@import './screens/do/tips.css';
+@import './screens/do/notes.css';
+@import './screens/do/rest.css';
 :root {
     color-scheme: dark;
     --shadow-btn-hover: 0 4px 12px rgba(0, 0, 0, 0.2);

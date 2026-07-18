@@ -2,15 +2,15 @@ import React from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './core/AuthContext';
 
-import { PlanScreen } from './features/plan/PlanScreen';
-import { DoScreen } from './features/do/DoScreen';
-import { SettingsScreen } from './features/settings/SettingsScreen';
+import { PlanScreen } from './screens/plan/PlanScreen';
+import { DoScreen } from './screens/do/DoScreen';
+import { SettingsScreen } from './screens/settings/SettingsScreen';
 import { TitleBar } from './components/shell';
 import { useStored } from './core/store';
 import { SAMPLE_TASKS, SAMPLE_EVENTS } from './core/data';
 import { useGoogleCalendarSync } from './core/useGoogleCalendarSync';
 import { NotificationProvider, useNotification } from './core/notifications';
-import { LoginScreen } from './features/login/LoginScreen';
+import { LoginScreen } from './screens/login/LoginScreen';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();

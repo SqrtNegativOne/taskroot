@@ -11,6 +11,10 @@ import { SAMPLE_TASKS, SAMPLE_EVENTS } from './core/data';
 import { useGoogleCalendarSync } from './core/useGoogleCalendarSync';
 import { NotificationProvider, useNotification } from './core/notifications';
 import { LoginScreen } from './screens/login/LoginScreen';
+import { WrapScreen } from './screens/wrap/WrapScreen';
+import { GraphScreen } from './screens/graph/GraphScreen';
+import { StatsScreen } from './screens/stats/StatsScreen';
+import { RecapScreen } from './screens/recap/RecapScreen';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -74,6 +78,10 @@ function AppRouter() {
       <Route path="/plan" element={<PlanScreen />} />
       <Route path="/do" element={<DoScreen />} />
       <Route path="/settings" element={<SettingsScreen />} />
+      <Route path="/wrap" element={<WrapScreen />} />
+      <Route path="/graph" element={<GraphScreen />} />
+      <Route path="/stats" element={<StatsScreen />} />
+      <Route path="/recap" element={<RecapScreen />} />
       <Route path="*" element={<Navigate to="/plan" replace />} />
     </Routes>
   );

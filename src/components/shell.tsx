@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Icon } from './icon';
 import { MONTHS, DOW_SHORT, PAD2 } from '../core/data';
 
@@ -12,6 +12,20 @@ function TitleBar({ current, today }) {
   // @ts-ignore
   const handleClose = () => window.electronAPI?.closeWindow?.();
 
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleOutsideClick = (e: PointerEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+    if (dropdownOpen) document.addEventListener('pointerdown', handleOutsideClick);
+    return () => document.removeEventListener('pointerdown', handleOutsideClick);
+  }, [dropdownOpen]);
+
   return (
     <header className="topbar">
       <div className="drag-region" />
@@ -20,6 +34,56 @@ function TitleBar({ current, today }) {
           <Icon name="settings" size={18} />
         </Link>
         <StageIndicator current={current} />
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }} ref={dropdownRef}>
+          <button 
+            className={`stage ${dropdownOpen ? 'is-current' : ''}`}
+            style={{ padding: '0 4px', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex' }}
+            onClick={() => setDropdownOpen(!dropdownOpen)}
+            title="More screens"
+          >
+            <Icon name="keyboard_arrow_down" size={18} />
+          </button>
+          {dropdownOpen && (
+            <div style={{
+              position: 'absolute', top: '100%', left: 0,
+              background: 'var(--bg-surface)', border: '1px solid var(--border)',
+              borderRadius: '6px', padding: '4px 0', zIndex: 100,
+              display: 'flex', flexDirection: 'column', minWidth: '120px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+              animation: 'dropdownFadeIn 150ms cubic-bezier(0.16, 1, 0.3, 1) forwards',
+              transformOrigin: 'top left'
+            }}>
+              <style>{`
+                @keyframes dropdownFadeIn {
+                  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+                  to { opacity: 1; transform: translateY(0) scale(1); }
+                }
+                .dd-item {
+                  background: transparent;
+                  border: none;
+                  padding: 8px 16px;
+                  text-align: left;
+                  cursor: pointer;
+                  color: var(--fg-dim);
+                  transition: color 80ms, background-color 100ms;
+                }
+                .dd-item:hover {
+                  background-color: var(--bg-app);
+                  color: var(--fg);
+                }
+              `}</style>
+              {['wrap', 'graph', 'stats', 'recap'].map(screen => (
+                <button
+                  key={screen}
+                  className="dd-item"
+                  onClick={() => { setDropdownOpen(false); navigate(`/${screen}`); }}
+                >
+                  <span className="stage-name" style={{ textTransform: 'lowercase' }}>{screen}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
       <div className="topbar-right">
       </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
-import { TODAY, ymd, hhmmShort, durationLabel, MONTHS, DOW_SHORT, PAD2, addDays, sameDay } from '../../core/data';
-import { hydrateEvents } from '../../core/events';
+import { TODAY, ymd, hhmmShort, durationLabel, MONTHS, DOW_SHORT, PAD2, addDays, sameDay } from '../core/data';
+import { hydrateEvents } from '../core/events';
 
 // Day timeline: vertical, 24h scrollable, with drag-to-schedule + resize.
 

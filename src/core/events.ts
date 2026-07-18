@@ -28,9 +28,11 @@ export type BusyEvent = BaseEvent & {
 };
 
 // Log: What you actually did. (Unimplemented features for now)
-export type LogEvent = BaseEvent & {
+export type LogEvent = Omit<BaseEvent, 'isAllDay' | 'endDate'> & {
   type: 'log';
   title: string;
+  isAllDay: false;
+  endDate?: never;
 };
 
 export type AppEvent = TaskEvent | InfoEvent | BusyEvent | LogEvent;

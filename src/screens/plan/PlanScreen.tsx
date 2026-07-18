@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
 import { TODAY, SAMPLE_TASKS, SAMPLE_EVENTS, ymd, durationLabel } from '../../core/data';
-import { DayTimeline, PX_PER_MIN, SNAP_MIN } from './day-timeline';
+import { DayTimeline, PX_PER_MIN, SNAP_MIN } from '../../components/day-timeline';
 import { DateGrid } from './date-grid';
 import { TitleBar } from '../../components/shell';
 import { load, useStored, seedDefaults } from '../../core/store';
@@ -193,7 +193,7 @@ function PlanScreen() {
   const onAddTask = () => {
     const id = `t${Date.now()}`;
     setTasks(ts => [{
-       id, title: 'New Task', status: 'todo', priority: 'P2', tags: [], subtasks: [], est: settings.defaultTaskDuration !== undefined ? settings.defaultTaskDuration : 0, added: new Date().toISOString(), isDraft: true
+       id, title: 'New Task', status: 'todo', priority: 'P2', tags: [], subtasks: [], parent_task: null, dependency: null, est: settings.defaultTaskDuration !== undefined ? settings.defaultTaskDuration : 0, added: new Date().toISOString(), isDraft: true
     }, ...ts]);
     setInspectorState({ type: 'task', id });
   };

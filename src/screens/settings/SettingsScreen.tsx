@@ -4,6 +4,19 @@ import { TODAY } from '../../core/data';
 import { useStored } from '../../core/store';
 import './settings.css';
 
+function minToTime(m: number) {
+  if (typeof m !== 'number' || isNaN(m)) return '';
+  const hh = String(Math.floor(m / 60)).padStart(2, '0');
+  const mm = String(m % 60).padStart(2, '0');
+  return `${hh}:${mm}`;
+}
+
+function timeToMin(t: string) {
+  if (!t) return 0;
+  const [hh, mm] = t.split(':');
+  return parseInt(hh, 10) * 60 + parseInt(mm, 10);
+}
+
 function SegmentedControl({ options, value, onChange }) {
   return (
     <div style={{ display: 'inline-flex', background: 'var(--bg-app)', padding: '3px', borderRadius: '8px', border: '1px solid var(--border)', userSelect: 'none', flexWrap: 'wrap', gap: '2px' }}>
@@ -32,7 +45,7 @@ function SegmentedControl({ options, value, onChange }) {
 export function SettingsScreen() {
   const [activeTab, setActiveTab] = useState('general');
   const [recordingKeybinding, setRecordingKeybinding] = useState<string | null>(null);
-  const [settings, setSettings] = useStored<any>('settings', { defaultCalendarView: 'month', defaultTaskDuration: 0, keybindingOpenSettings: 'Ctrl+,' });
+  const [settings, setSettings] = useStored<any>('settings', { defaultCalendarView: 'month', defaultTaskDuration: 0, keybindingOpenSettings: 'Ctrl+,', earliest_wake_time: 480, last_sleep_time: 1320, recapDay: '' });
   const [tasks, setTasks] = useStored('tasks', []);
   const [ingestText, setIngestText] = useState('');
 
@@ -126,6 +139,51 @@ export function SettingsScreen() {
                           { value: 120, label: '2h' }
                         ]}
                       />
+                    </label>
+                  </div>
+                </div>
+
+                <div className="settings-section">
+                  <div className="settings-section-title">
+                    Time & Routine
+                  </div>
+                  <div className="settings-section-desc dim">
+                    Set your waking and sleeping hours for time tracking.
+                  </div>
+                  <div className="settings-section-actions">
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      <label style={{ display: 'flex', gap: '12px', alignItems: 'center', color: 'var(--fg)' }}>
+                        <span style={{ minWidth: '150px' }}>Earliest wake time:</span>
+                        <input type="time" value={minToTime(settings.earliest_wake_time || 480)} onChange={e => setSettings({ ...settings, earliest_wake_time: timeToMin(e.target.value) })} style={{ background: 'var(--bg-input)', color: 'var(--fg)', border: '1px solid var(--border)', borderRadius: '4px', padding: '4px 8px' }} />
+                      </label>
+                      <label style={{ display: 'flex', gap: '12px', alignItems: 'center', color: 'var(--fg)' }}>
+                        <span style={{ minWidth: '150px' }}>Latest sleep time:</span>
+                        <input type="time" value={minToTime(settings.last_sleep_time || 1320)} onChange={e => setSettings({ ...settings, last_sleep_time: timeToMin(e.target.value) })} style={{ background: 'var(--bg-input)', color: 'var(--fg)', border: '1px solid var(--border)', borderRadius: '4px', padding: '4px 8px' }} />
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="settings-section">
+                  <div className="settings-section-title">
+                    Recap
+                  </div>
+                  <div className="settings-section-desc dim">
+                    Set the day of the week to do a weekly recap.
+                  </div>
+                  <div className="settings-section-actions">
+                    <label style={{ display: 'flex', gap: '12px', alignItems: 'center', color: 'var(--fg)' }}>
+                      <span style={{ minWidth: '150px' }}>Recap Day:</span>
+                      <select value={settings.recapDay || ''} onChange={e => setSettings({ ...settings, recapDay: e.target.value })} style={{ background: 'var(--bg-input)', color: 'var(--fg)', border: '1px solid var(--border)', borderRadius: '4px', padding: '4px 8px' }}>
+                        <option value="">Never</option>
+                        <option value="monday">Monday</option>
+                        <option value="tuesday">Tuesday</option>
+                        <option value="wednesday">Wednesday</option>
+                        <option value="thursday">Thursday</option>
+                        <option value="friday">Friday</option>
+                        <option value="saturday">Saturday</option>
+                        <option value="sunday">Sunday</option>
+                      </select>
                     </label>
                   </div>
                 </div>
@@ -225,6 +283,8 @@ export function SettingsScreen() {
                             priority: 'P2',
                             tags: [],
                             subtasks: [],
+                            parent_task: null,
+                            dependency: null,
                             est: settings.defaultTaskDuration !== undefined ? settings.defaultTaskDuration : 0,
                             added: new Date().toISOString()
                           }));

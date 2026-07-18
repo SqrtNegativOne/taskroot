@@ -33,6 +33,8 @@ export function SettingsScreen() {
   const [activeTab, setActiveTab] = useState('general');
   const [recordingKeybinding, setRecordingKeybinding] = useState<string | null>(null);
   const [settings, setSettings] = useStored('settings', { defaultCalendarView: 'month', defaultTaskDuration: 0, keybindingOpenSettings: 'Ctrl+,' });
+  const [tasks, setTasks] = useStored('tasks', []);
+  const [ingestText, setIngestText] = useState('');
 
   return (
     <div className="app app-settings">
@@ -153,33 +155,134 @@ export function SettingsScreen() {
               </div>
             )}
             {activeTab === 'sync' && (
-              <div className="settings-section">
-                <div className="settings-section-title">
-                  Export Data <span className="status-pill status-nextup">BETA</span>
+              <>
+                <div className="settings-section">
+                  <div className="settings-section-title">
+                    Export Data <span className="status-pill status-nextup">BETA</span>
+                  </div>
+                  <div className="settings-section-desc dim">
+                    Export all your local data as JSON. 
+                  </div>
+                  <div className="settings-section-actions">
+                    <button className="sw-btn" onClick={() => {
+                      const data: Record<string, any> = {};
+                      for (let i = 0; i < localStorage.length; i++) {
+                        const key = localStorage.key(i);
+                        if (key && key.startsWith('taskroot_')) {
+                          try {
+                            data[key.replace('taskroot_', '')] = JSON.parse(localStorage.getItem(key) || 'null');
+                          } catch (e) {
+                            data[key.replace('taskroot_', '')] = localStorage.getItem(key);
+                          }
+                        }
+                      }
+                      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `taskroot-backup-${new Date().toISOString().slice(0,10)}.json`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                    }}>
+                      Export Data
+                    </button>
+                  </div>
                 </div>
-                <div className="settings-section-desc dim">
-                  Export all your local data as JSON. 
-                  <br /><br />
-                  {/* Note: This is temporary code. The final input/output schema and functionality will be decided later. */}
-                  Note: This feature is currently in beta and uses temporary code. The final import/export data scheme will be designed and implemented later.
+
+                <div className="settings-section">
+                  <div className="settings-section-title">
+                    Bulk Import Tasks
+                  </div>
+                  <div className="settings-section-desc dim">
+                    Paste in tasks separated by newlines. They will be added as new tasks to the top of your list.
+                  </div>
+                  <div className="settings-section-actions" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <textarea 
+                      value={ingestText}
+                      onChange={e => setIngestText(e.target.value)}
+                      placeholder="Task 1&#10;Task 2&#10;Task 3"
+                      style={{ 
+                        width: '100%', 
+                        minHeight: '100px', 
+                        background: 'var(--bg-app)', 
+                        color: 'var(--fg)', 
+                        border: '1px solid var(--border)', 
+                        borderRadius: '4px', 
+                        padding: '8px',
+                        fontFamily: 'inherit',
+                        resize: 'vertical'
+                      }}
+                    />
+                    <button 
+                      className="sw-btn" 
+                      onClick={() => {
+                        const lines = ingestText.split('\n').map(l => l.trim()).filter(Boolean);
+                        if (lines.length > 0) {
+                          const newTasks = lines.map(line => ({
+                            id: `t${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+                            title: line,
+                            status: 'todo',
+                            priority: 'P2',
+                            tags: [],
+                            subtasks: [],
+                            est: settings.defaultTaskDuration !== undefined ? settings.defaultTaskDuration : 0,
+                            added: new Date().toISOString()
+                          }));
+                          setTasks(ts => [...newTasks, ...(ts || [])]);
+                          setIngestText('');
+                          alert(`Imported ${newTasks.length} tasks!`);
+                        }
+                      }}
+                      disabled={!ingestText.trim()}
+                      style={{ alignSelf: 'flex-start' }}
+                    >
+                      Import Tasks
+                    </button>
+                  </div>
                 </div>
-                <div className="settings-section-actions">
-                  <button className="sw-btn" onClick={() => {
-                    const data = {
-                      tasks: localStorage.getItem('tasks'),
-                      events: localStorage.getItem('events')
-                    };
-                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'taskroot-backup.json';
-                    a.click();
-                  }}>
-                    Export Data
-                  </button>
+
+                <div className="settings-section">
+                  <div className="settings-section-title">
+                    Restore from Backup
+                  </div>
+                  <div className="settings-section-desc dim">
+                    If your data got corrupted, restore it from today's automatic backup snapshot. This will reload the application.
+                  </div>
+                  <div className="settings-section-actions">
+                    <button className="sw-btn" style={{ borderColor: 'var(--red)', color: 'var(--red)' }} onClick={() => {
+                      if (!window.confirm("Are you sure? This will overwrite your current state with the last known good snapshot from today, and reload the app.")) return;
+                      const today = new Date().toISOString().slice(0, 10);
+                      let restoredAny = false;
+                      
+                      // Find all backup keys for today
+                      const backupKeys = [];
+                      for (let i = 0; i < localStorage.length; i++) {
+                        const key = localStorage.key(i);
+                        if (key && key.startsWith('taskroot_backup_') && key.endsWith(`_${today}`)) {
+                          backupKeys.push(key);
+                        }
+                      }
+                      
+                      for (const key of backupKeys) {
+                        const originalKey = key.replace('taskroot_backup_', 'taskroot_').replace(`_${today}`, '');
+                        const backupData = localStorage.getItem(key);
+                        if (backupData) {
+                          localStorage.setItem(originalKey, backupData);
+                          restoredAny = true;
+                        }
+                      }
+                      
+                      if (restoredAny) {
+                        window.location.reload();
+                      } else {
+                        alert("No backups found for today.");
+                      }
+                    }}>
+                      Restore Today's Backup
+                    </button>
+                  </div>
                 </div>
-              </div>
+              </>
             )}
             {activeTab === 'keybindings' && (
               <div className="settings-section">

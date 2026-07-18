@@ -67,8 +67,8 @@ function GuzeyClockDisplay({ toggleSelector }) {
 
   return (
     <div className="stopwatch-display is-running" onClick={toggleSelector} title="Click to open task selector" style={{ color }}>
-      <span className="sw-digits sw-m" style={{ fontSize: '0.28em', whiteSpace: 'nowrap' }}>
-        {displayText}
+      <span className="sw-digits sw-m" style={{ whiteSpace: 'nowrap' }}>
+        <span style={{ fontSize: '0.28em' }}>{displayText}</span>
       </span>
     </div>
   );

@@ -431,7 +431,7 @@ function TitleInput({ value, onChange, disabled, onEnter }) {
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
-      e.target.blur();
+      (e.target as HTMLElement).blur();
       if (onEnter) onEnter();
     }
   };
@@ -542,7 +542,7 @@ function InspectorPane({ inspectorState, onClose, tasks, setTasks, events, setEv
                   }}
                   onKeyDown={e => {
                     if (e.key === 'Enter') {
-                      e.target.blur();
+                      (e.target as HTMLElement).blur();
                       onClose();
                     }
                   }}

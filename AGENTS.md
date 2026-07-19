@@ -39,4 +39,4 @@ The application code is organized modularly by feature:
 - **Offline/Online Mode**: Running `npm run start:offline` sets `VITE_OFFLINE_MODE=true` to automatically bypass the Google login screen for rapid UI testing and offline usage. Running `npm run start:online` requires normal authentication.
 - **Drag and Drop**: Managed natively via pointer events (`pointerdown`, `pointermove`, `pointerup`) instead of the HTML5 Drag & Drop API for finer control and custom ghost elements.
 - **Time Logging**: Stopwatch sessions (Axleless, Flowtime, Guzey) are logged to the `time_logs` store, optionally associated with a task.
-- **MiniTracker**: When the main Electron window is minimized or closed, a frameless transparent window (`miniWin`) opens to show the timer in a compact form, using the `/?minitracker=true` route.
+- **MiniTracker**: When the main Electron window is minimized or closed, a frameless transparent window (`miniWin`) opens to show the timer in a compact form, using the `/?minitracker=true` route. **CRITICAL:** There should be NO buttons on the mini tracker window. Restoring the app or other actions should be done via keyboard shortcuts.

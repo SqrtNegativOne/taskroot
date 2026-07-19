@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage } from 'electron';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import fs from 'node:fs';
@@ -11,6 +11,7 @@ export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist');
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST;
 let win;
 let miniWin = null;
+let tray = null;
 let serverPort = 0;
 // Handle file logging from renderer
 ipcMain.on('log-to-file', (event, level, message) => {
@@ -88,12 +89,23 @@ function createMiniWindow() {
             app.quit();
         }
     });
+    miniWin.on('maximize', () => {
+        if (win) {
+            if (win.isMinimized())
+                win.restore();
+            win.show();
+        }
+        if (miniWin) {
+            miniWin.close();
+        }
+    });
 }
 function createWindow() {
     win = new BrowserWindow({
         width: 1200,
         height: 800,
         frame: false,
+        icon: path.join(process.env.VITE_PUBLIC, 'icon.png'),
         webPreferences: {
             preload: path.join(__dirname, 'preload.cjs'),
             nodeIntegration: false,
@@ -159,4 +171,54 @@ app.on('activate', () => {
         createWindow();
     }
 });
-app.whenReady().then(createWindow);
+function createTray() {
+    if (tray)
+        return;
+    const iconPath = path.join(process.env.VITE_PUBLIC, 'icon.png');
+    const icon = nativeImage.createFromPath(iconPath);
+    tray = new Tray(icon);
+    tray.setToolTip('Taskroot');
+    const contextMenu = Menu.buildFromTemplate([
+        {
+            label: 'Open Taskroot',
+            click: () => {
+                if (win) {
+                    if (win.isMinimized())
+                        win.restore();
+                    win.show();
+                }
+                else {
+                    createWindow();
+                }
+                if (miniWin) {
+                    miniWin.close();
+                }
+            }
+        },
+        { type: 'separator' },
+        {
+            label: 'Exit',
+            click: () => {
+                app.quit();
+            }
+        }
+    ]);
+    tray.setContextMenu(contextMenu);
+    tray.on('click', () => {
+        if (win) {
+            if (win.isMinimized())
+                win.restore();
+            win.show();
+        }
+        else {
+            createWindow();
+        }
+        if (miniWin) {
+            miniWin.close();
+        }
+    });
+}
+app.whenReady().then(() => {
+    createWindow();
+    createTray();
+});

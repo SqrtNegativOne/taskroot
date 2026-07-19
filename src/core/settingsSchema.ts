@@ -184,13 +184,23 @@ export const SETTINGS_SCHEMA: SettingSchema[] = [
   },
   {
     id: 'keybindingOpenSettings',
-    section: 'Keyboard Shortcuts',
+    section: 'Global',
     tab: 'keybindings',
     label: 'Open Settings',
     description: 'Navigate and control Taskroot quickly.',
     keywords: ['keyboard', 'shortcut', 'settings', 'open'],
     type: 'keybinding',
     defaultValue: 'Ctrl+,'
+  },
+  {
+    id: 'keybindingRestoreApp',
+    section: 'Mini Tracker',
+    tab: 'keybindings',
+    label: 'Restore App',
+    description: 'Restore the main application window from the mini tracker.',
+    keywords: ['keyboard', 'shortcut', 'restore', 'maximize', 'mini tracker'],
+    type: 'keybinding',
+    defaultValue: 'Ctrl+Alt+R'
   }
 ];
 

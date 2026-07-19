@@ -119,6 +119,32 @@ export function MiniTrackerScreen() {
     }
   };
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const kb = settings.keybindingRestoreApp || 'Ctrl+Alt+R';
+      const parts = kb.split('+');
+      const key = parts.pop();
+      const needsCtrl = parts.includes('Ctrl');
+      const needsAlt = parts.includes('Alt');
+      const needsShift = parts.includes('Shift');
+      const needsMeta = parts.includes('Meta');
+
+      const keyMatch = (e.key.toUpperCase() === key?.toUpperCase()) || (e.key === ' ' && key === 'Space');
+      if (
+        e.ctrlKey === needsCtrl &&
+        e.altKey === needsAlt &&
+        e.shiftKey === needsShift &&
+        e.metaKey === needsMeta &&
+        keyMatch
+      ) {
+        e.preventDefault();
+        handleDoubleClick();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [settings.keybindingRestoreApp]);
+
   return (
     <div 
       onDoubleClick={handleDoubleClick}

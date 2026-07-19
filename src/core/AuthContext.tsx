@@ -18,20 +18,30 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 import { api } from './api';
+import { useNotification } from './notifications';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const { notify } = useNotification();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      api.setUserId(currentUser ? currentUser.uid : null);
-      setLoading(false);
-    });
+    const unsubscribe = onAuthStateChanged(
+      auth, 
+      (currentUser) => {
+        setUser(currentUser);
+        api.setUserId(currentUser ? currentUser.uid : null);
+        setLoading(false);
+      },
+      (error) => {
+        console.error("Auth State Error:", error);
+        notify(`Authentication error: ${error.message}`, 'error');
+        setLoading(false);
+      }
+    );
 
     return unsubscribe;
-  }, []);
+  }, [notify]);
 
   const loginWithGoogle = async () => {
     try {
@@ -62,6 +72,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                        }
                    } catch (err) {
                        console.error("Failed to exchange auth code:", err);
+                       notify("Failed to exchange auth code for calendar sync", "error");
                    }
                }
            }
@@ -72,7 +83,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     } catch (error: any) {
       console.error("Error signing in with Google:", error);
-      alert(`Sign in failed: ${error.message}\n\nMake sure you have added your REAL Firebase config keys to a .env file!`);
+      notify(`Sign in failed: ${error.message}\nMake sure you have added your REAL Firebase config keys to a .env file!`, 'error');
     }
   };
 
@@ -80,8 +91,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await signOut(auth);
       localStorage.removeItem('google_access_token');
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error signing out:", error);
+      notify(`Logout failed: ${error.message}`, 'error');
     }
   };
 

@@ -1,4 +1,4 @@
-import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, deleteDoc } from 'firebase/firestore';
 import { db } from './firebase';
 
 /**
@@ -15,6 +15,40 @@ class ApiService {
 
   public getUserId(): string | null {
     return this.uid;
+  }
+
+  // Wipes all data from localStorage and optionally Firestore
+  public async clearAllData(): Promise<void> {
+    const keysToRemove: string[] = [];
+    const cloudKeysToDelete: string[] = [];
+    
+    // Identify all local keys
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('taskroot_')) {
+        keysToRemove.push(key);
+        // Only delete real store keys from cloud, ignore backups
+        if (!key.startsWith('taskroot_backup_')) {
+          cloudKeysToDelete.push(key.replace('taskroot_', ''));
+        }
+      }
+    }
+    
+    // Wipe local storage
+    keysToRemove.forEach(k => localStorage.removeItem(k));
+    
+    // Wipe remote cloud data if signed in
+    if (this.uid) {
+      try {
+        await Promise.all(
+          cloudKeysToDelete.map(storeKey => 
+            deleteDoc(doc(db, 'users', this.uid as string, 'store', storeKey))
+          )
+        );
+      } catch (e) {
+        console.warn('Failed to clear cloud data:', e);
+      }
+    }
   }
 
   // Saves data to remote cloud

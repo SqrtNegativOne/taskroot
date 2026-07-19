@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { TitleBar } from '../../components/shell';
 import { TODAY } from '../../core/data';
 import { useStored } from '../../core/store';
+import { api } from '../../core/api';
 import './settings.css';
 
 function minToTime(m: number) {
@@ -519,6 +520,26 @@ export function SettingsScreen() {
                       }
                     }}>
                       Restore Today's Backup
+                    </button>
+                  </div>
+                </div>
+
+                <div className="settings-section">
+                  <div className="settings-section-title" style={{ color: 'var(--red)' }}>
+                    Danger Zone
+                  </div>
+                  <div className="settings-section-desc dim">
+                    Permanently delete all your tasks, settings, logs, and other data from both this device and the cloud. This cannot be undone.
+                  </div>
+                  <div className="settings-section-actions">
+                    <button className="sw-btn" style={{ borderColor: 'var(--red)', color: 'var(--red)' }} onClick={async () => {
+                      if (!window.confirm("WARNING: This will permanently wipe all your data from both local storage and the cloud. Are you absolutely sure?")) return;
+                      if (!window.confirm("This action cannot be undone. Click OK to proceed with the wipe.")) return;
+                      
+                      await api.clearAllData();
+                      window.location.reload();
+                    }}>
+                      Clear All Data
                     </button>
                   </div>
                 </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import '@fontsource/atkinson-hyperlegible-next';
 import { useStored } from '../../core/store';
 import { PAD2 } from '../../core/data';
 
@@ -129,7 +130,7 @@ export function MiniTrackerScreen() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontFamily: 'monospace',
+        fontFamily: "'Atkinson Hyperlegible Next', monospace",
         fontSize: '16px',
         userSelect: 'none',
         WebkitAppRegion: 'drag', // allows dragging the window

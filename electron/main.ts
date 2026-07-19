@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage } from 'electron';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import fs from 'node:fs';
@@ -16,6 +16,7 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 
 
 let win: BrowserWindow | null;
 let miniWin: BrowserWindow | null = null;
+let tray: Tray | null = null;
 let serverPort = 0;
 
 // Handle file logging from renderer
@@ -182,4 +183,54 @@ app.on('activate', () => {
   }
 });
 
-app.whenReady().then(createWindow);
+function createTray() {
+  if (tray) return;
+  const iconPath = path.join(process.env.VITE_PUBLIC as string, 'icon.png');
+  const icon = nativeImage.createFromPath(iconPath);
+  
+  tray = new Tray(icon);
+  tray.setToolTip('Taskroot');
+  
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: 'Open Taskroot',
+      click: () => {
+        if (win) {
+          if (win.isMinimized()) win.restore();
+          win.show();
+        } else {
+          createWindow();
+        }
+        if (miniWin) {
+          miniWin.close();
+        }
+      }
+    },
+    { type: 'separator' },
+    {
+      label: 'Exit',
+      click: () => {
+        app.quit();
+      }
+    }
+  ]);
+  
+  tray.setContextMenu(contextMenu);
+  
+  tray.on('click', () => {
+    if (win) {
+      if (win.isMinimized()) win.restore();
+      win.show();
+    } else {
+      createWindow();
+    }
+    if (miniWin) {
+      miniWin.close();
+    }
+  });
+}
+
+app.whenReady().then(() => {
+  createWindow();
+  createTray();
+});

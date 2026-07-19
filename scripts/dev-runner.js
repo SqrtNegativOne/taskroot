@@ -7,12 +7,12 @@ if (isOffline) {
 }
 
 console.log('Starting Vite dev server...');
-const vite = spawn('npm', ['run', 'dev'], { shell: true, stdio: 'inherit' });
+const vite = spawn('bun', ['run', 'dev'], { shell: true, stdio: 'inherit' });
 
 waitOn({ resources: ['http://localhost:5173'] }).then(() => {
   console.log('Vite server is ready. Launching Electron...');
   process.env.VITE_DEV_SERVER_URL = 'http://localhost:5173';
-  const electron = spawn('npm', ['run', 'electron:start'], { shell: true, stdio: 'inherit' });
+  const electron = spawn('bun', ['run', 'electron:start'], { shell: true, stdio: 'inherit' });
   
   electron.on('close', () => {
     console.log('Electron closed. Cleaning up background processes...');

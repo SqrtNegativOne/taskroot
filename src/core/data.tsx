@@ -49,7 +49,7 @@ const durationLabel = (mins) => {
   if (!mins || mins === 0) return '';
   if (mins < 60) return `${mins}m`;
   const h = Math.floor(mins / 60), m = mins % 60;
-  return m === 0 ? `${h}h` : `${h}h${m}m`;
+  return m === 0 ? `${h}h` : `${h}h ${m}m`;
 };
 const dueLabel = (dueStr, today) => {
   if (!dueStr) return '';

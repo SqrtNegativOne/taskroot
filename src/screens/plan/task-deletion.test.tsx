@@ -64,15 +64,16 @@ test('deleting a task also deletes its associated events', async () => {
     );
 
     // Give it time to load from localStorage (it's synchronous actually)
-    const taskRow = await screen.findByText('Test Task for Deletion');
-    expect(taskRow).toBeInTheDocument();
+    const taskRow = document.querySelector('.task-row-title');
+    expect(taskRow).toBeTruthy();
+    expect(taskRow?.textContent).toBe('Test Task for Deletion');
 
-    const deleteButton = screen.getAllByTitle('Delete')[0];
-    fireEvent.click(deleteButton);
+    const deleteButton = document.querySelector('.task-row-actions button[title="Delete"]');
+    fireEvent.click(deleteButton!);
     
     // Wait for task to disappear
     await waitFor(() => {
-        expect(screen.queryByText('Test Task for Deletion')).not.toBeInTheDocument();
+        expect(document.querySelector('.task-row-title')).toBeNull();
     });
     
     // Now trigger an action that would write to localStorage, or simply wait

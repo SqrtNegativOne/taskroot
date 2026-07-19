@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } fr
 import Fuse from 'fuse.js';
 import { TODAY, parseYMD, durationLabel, dueLabel } from '../core/data';
 import { Icon } from './icon';
+import { SearchBar } from './search-bar';
 import { FilterSortButtons } from '../screens/plan/shared-menus';
 
 // Task list — left column. Filter, sort, draggable items.
@@ -60,18 +61,7 @@ function TaskListPane({ tasks = [], setTasks, filters = [], setFilters, sort, se
   return (
     <aside className="task-pane">
       <header className="task-pane-hd">
-        <div className="task-pane-search">
-          <Icon name="search" size={14} style={{ color: 'var(--fg-dimmer)' }} />
-          <input
-            className="search-input"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            spellCheck={false}
-          />
-          {query && (
-            <button className="search-clear" onClick={() => setQuery('')} aria-label="clear">×</button>
-          )}
-        </div>
+        <SearchBar value={query} onChange={setQuery} />
         <div className="task-pane-controls" style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', width: '100%' }}>
           <FilterSortButtons
             filters={filters} setFilters={setFilters}

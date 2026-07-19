@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import Fuse from 'fuse.js';
 import { TitleBar } from '../../components/shell';
+import { SearchBar } from '../../components/search-bar';
 import { TODAY } from '../../core/data';
 import { useStored } from '../../core/store';
 import { api } from '../../core/api';
@@ -412,30 +413,8 @@ export function SettingsScreen() {
       <TitleBar current="settings" today={TODAY} />
       <div className="main settings-main">
         <div className="task-pane settings-sidebar" style={{ display: 'flex', flexDirection: 'column' }}>
-          <div className="task-pane-hd" style={{ padding: '16px' }}>
-            <div className="task-pane-title">
-              <span className="bracket">[</span>
-              <span className="task-pane-title-label">SETTINGS</span>
-              <span className="bracket">]</span>
-            </div>
-          </div>
-          
-          <div style={{ padding: '0 16px 16px 16px' }}>
-            <input
-              type="text"
-              placeholder="Search settings..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                background: 'var(--bg-input)',
-                color: 'var(--fg)',
-                border: '1px solid var(--border)',
-                borderRadius: '6px',
-                outline: 'none'
-              }}
-            />
+          <div className="task-pane-hd">
+            <SearchBar value={searchQuery} onChange={setSearchQuery} />
           </div>
 
           {!searchQuery && (

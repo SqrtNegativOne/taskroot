@@ -92,6 +92,16 @@ function createMiniWindow() {
       app.quit();
     }
   });
+
+  miniWin.on('maximize', () => {
+    if (win) {
+      if (win.isMinimized()) win.restore();
+      win.show();
+    }
+    if (miniWin) {
+      miniWin.close();
+    }
+  });
 }
 
 

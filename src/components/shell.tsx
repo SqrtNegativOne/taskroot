@@ -107,6 +107,8 @@ function StageIndicator({ current }) {
     { key: 'plan', label: 'plan', href: '/plan' },
     { key: 'do',   label: 'do',   href: '/do' },
   ];
+  const isDefault = ['plan', 'do', 'settings'].includes(current);
+
   return (
     <nav className="stages" aria-label="Stages">
       {stages.map((s, i) => (
@@ -118,9 +120,14 @@ function StageIndicator({ current }) {
           >
             <span className="stage-name">{s.label}</span>
           </Link>
-          {i < stages.length - 1 && <span className="stage-sep">|</span>}
+          {(i < stages.length - 1 || !isDefault) && <span className="stage-sep">|</span>}
         </React.Fragment>
       ))}
+      {!isDefault && current && (
+        <div className="stage is-current" style={{ display: 'flex' }}>
+          <span className="stage-name">{current}</span>
+        </div>
+      )}
     </nav>
   );
 }

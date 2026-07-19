@@ -163,8 +163,7 @@ function TaskRow({ task, index, onDragStart, dragging, updateTask, deleteTask })
       onPointerDown={handlePointerDown}
     >
       <div className="task-row-line1">
-        <span className={`pri pri-${task.priority}`} aria-label={task.priority}>●</span>
-        <span className="task-row-pri-label">{task.priority}</span>
+        <div className={`task-row-pri-bar pri-bg-${task.priority}`} aria-label={task.priority} />
         <span className="task-row-title">{task.title}</span>
         {task.status === 'doing' && <span className="status-pill status-doing">doing</span>}
         {task.status === 'next-up' && <span className="status-pill status-nextup">next up</span>}

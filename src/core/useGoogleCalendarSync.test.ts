@@ -79,6 +79,10 @@ describe('useGoogleCalendarSync Integration via DI', () => {
   it('calls fetchEvents on mount and pushes un-synced local events', async () => {
     // 1. Setup Mock API Client
     const mockApiClient = {
+      fetchCalendars: vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ items: [] })
+      }),
       fetchEvents: vi.fn().mockResolvedValue({
         ok: true,
         json: async () => ({ items: [] }) // return empty calendar

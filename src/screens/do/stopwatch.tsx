@@ -288,6 +288,7 @@ function Stopwatch({ onBreakStatusChange }) {
   const [selectorOpen, setSelectorOpen] = useState(false);
   const [visible, setVisible] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+  const [stagedTaskId, setStagedTaskId] = useState<string | null>(null);
 
   const audioRef = useRef(null);
   if (!audioRef.current) {
@@ -298,6 +299,8 @@ function Stopwatch({ onBreakStatusChange }) {
     if (selectorOpen) {
       setVisible(true);
       setIsClosing(false);
+      setStagedTaskId(null);
+      setSearchQuery('');
     } else if (visible) {
       setIsClosing(true);
       const timer = setTimeout(() => {
@@ -519,59 +522,141 @@ function Stopwatch({ onBreakStatusChange }) {
                 onClick={(e) => { e.stopPropagation(); setSelectorOpen(false); }}
               />
             )}
-            <div className={`task-selector-overlay ${isClosing ? 'is-closing' : 'floating-menu'}`} style={{
-              position: 'absolute', top: 'calc(100% + 16px)', left: '50%', transform: 'translateX(-50%)',
-              background: 'var(--bg-surface)', border: '1px solid var(--border)',
-              borderRadius: '8px', padding: '12px', width: '360px', zIndex: 100,
-              boxShadow: '0 12px 32px rgba(0,0,0,0.3)', display: 'flex', flexDirection: 'column', gap: '12px',
-              maxHeight: '400px'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-base)', padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border)' }}>
-                <Icon name="search" size={16} style={{ marginRight: '8px', color: 'var(--fg-dim)' }} />
-                <input 
-                  ref={searchInputRef}
-                  className="task-search-input"
-                  style={{ background: 'transparent', border: 'none', color: 'var(--fg)', outline: 'none', width: '100%', fontSize: '15px' }}
-                  placeholder="Search task to start..."
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' && sortedTasks.length > 0) {
-                      startWithTask(sortedTasks[0].id);
-                    }
-                  }}
-                />
+            
+            {((tasks || []).filter(t => t.status !== 'done' && t.status !== 'doing').length === 0) ? (
+              <div className={`task-selector-overlay ${isClosing ? 'is-closing' : 'floating-menu'}`} style={{
+                position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none'
+              }}>
+                <div style={{ color: 'var(--fg-dim)', fontSize: '24px', pointerEvents: 'auto', textAlign: 'center' }}>
+                  Create some tasks to start working on them.
+                </div>
               </div>
-              <div style={{ overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px', flex: 1, paddingRight: '4px' }}>
-                {sortedTasks.length === 0 ? (
-                  <div style={{ padding: '16px', textAlign: 'center', color: 'var(--fg-dim)', fontSize: '14px' }}>
-                    No tasks match your search.
-                  </div>
-                ) : (
-                  sortedTasks.map(t => (
-                    <div key={t.id} onClick={() => startWithTask(t.id)} style={{
-                      padding: '10px 12px', background: 'var(--bg-base)', border: '1px solid var(--border)',
-                      borderRadius: '6px', cursor: 'pointer', fontSize: '14px',
-                      display: 'flex', flexDirection: 'column', transition: 'border-color 0.15s, transform 0.1s'
+            ) : (
+              <div className={`task-selector-overlay ${isClosing ? 'is-closing' : 'floating-menu'}`} style={{
+                position: 'fixed', inset: 0, zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none'
+              }}>
+                <style>{`
+                  .modern-task-input::placeholder {
+                    color: var(--fg-dim);
+                    opacity: 0.5;
+                  }
+                  .modern-task-item {
+                    cursor: pointer;
+                    font-size: 18px;
+                    color: var(--fg-dim);
+                    padding: 8px 16px;
+                    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+                    text-align: center;
+                    width: 100%;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                  }
+                  .modern-task-item:hover {
+                    color: var(--fg);
+                    transform: scale(1.05);
+                  }
+                  .modern-task-list::-webkit-scrollbar {
+                    display: none;
+                  }
+                `}</style>
+                <div style={{ width: '100%', maxWidth: '800px', pointerEvents: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <input 
+                    ref={searchInputRef}
+                    autoFocus
+                    className="modern-task-input"
+                    style={{ 
+                      background: 'transparent', border: 'none', outline: 'none', 
+                      width: '100%', fontSize: '32px', textAlign: 'center', fontWeight: 300,
+                      color: stagedTaskId ? 'var(--tag-gold)' : 'var(--fg)'
                     }}
-                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.transform = 'translateY(0)'; }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                         <span className={`pri pri-${t.priority}`}>●</span>
-                         <span style={{ fontWeight: 500, color: 'var(--fg)' }}>{t.title}</span>
-                         {t.status === 'doing' && <span style={{ marginLeft: 'auto', fontSize: '11px', padding: '2px 6px', background: 'var(--accent)', color: 'var(--bg-base)', borderRadius: '4px', fontWeight: 'bold' }}>DOING</span>}
-                      </div>
-                      {t.tags && t.tags.length > 0 && (
-                        <div style={{ fontSize: '12px', color: 'var(--fg-dim)', marginTop: '6px' }}>
-                          {t.tags.map(tag => <span key={tag} style={{ marginRight: '8px' }}>#{tag}</span>)}
-                        </div>
-                      )}
-                    </div>
-                  ))
-                )}
+                    placeholder="Type a task"
+                    value={searchQuery}
+                    onChange={e => {
+                      setSearchQuery(e.target.value);
+                      if (stagedTaskId) setStagedTaskId(null);
+                    }}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        if (stagedTaskId) {
+                          startWithTask(stagedTaskId);
+                        } else if (sortedTasks.length > 0) {
+                          setStagedTaskId(sortedTasks[0].id);
+                          setSearchQuery(sortedTasks[0].title);
+                        }
+                      } else if (e.key === 'Escape') {
+                        if (stagedTaskId) {
+                          setStagedTaskId(null);
+                          setSearchQuery('');
+                          e.stopPropagation();
+                        }
+                      }
+                    }}
+                  />
+                  
+                  <div style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    margin: '24px 0', height: '1px',
+                    width: (stagedTaskId || searchQuery.trim().length > 0) ? '400px' : '100px',
+                    transition: 'width 0.4s cubic-bezier(0.16, 1, 0.3, 1), background 0.4s ease',
+                    background: stagedTaskId 
+                      ? 'linear-gradient(90deg, transparent, var(--tag-gold), transparent)'
+                      : 'linear-gradient(90deg, transparent, var(--fg-dim), transparent)',
+                    position: 'relative'
+                  }}>
+                    <div style={{
+                      width: '4px', height: '4px', borderRadius: '50%',
+                      background: stagedTaskId ? 'var(--tag-gold)' : 'var(--fg-dim)',
+                      position: 'absolute',
+                      transition: 'background 0.4s ease'
+                    }} />
+                  </div>
+                  
+                  <div className="modern-task-list" style={{ width: '100%', maxHeight: '40vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', scrollbarWidth: 'none' }}>
+                    {stagedTaskId ? (
+                      <button
+                        onClick={() => startWithTask(stagedTaskId)}
+                        style={{
+                          background: 'transparent',
+                          border: '1px solid var(--tag-gold)',
+                          color: 'var(--tag-gold)',
+                          fontSize: '16px',
+                          padding: '10px 32px',
+                          borderRadius: '32px',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.1em',
+                          marginTop: '8px'
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'var(--tag-gold)'; e.currentTarget.style.color = 'var(--bg)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--tag-gold)'; }}
+                      >
+                        Start working
+                      </button>
+                    ) : (
+                      <>
+                        {sortedTasks.length === 0 ? (
+                          <div style={{ color: 'var(--fg-dim)', fontSize: '16px', marginTop: '16px' }}>
+                            No tasks match your search.
+                          </div>
+                        ) : (
+                          sortedTasks.map(t => (
+                            <div key={t.id} className="modern-task-item" onClick={() => {
+                              setStagedTaskId(t.id);
+                              setSearchQuery(t.title);
+                              if (searchInputRef.current) searchInputRef.current.focus();
+                            }}>
+                              {t.title}
+                            </div>
+                          ))
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
           </>
         )}
 

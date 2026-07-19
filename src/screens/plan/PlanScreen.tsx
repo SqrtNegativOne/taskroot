@@ -29,12 +29,12 @@ function PlanScreen() {
   // Seed store on first load & clean up empty items
   React.useEffect(() => { 
     seedDefaults(); 
-    const validTasks = tasks.filter(t => t.title && t.title.trim() !== '');
+    const validTasks = tasks.filter(t => t.isDraft || (t.title && t.title.trim() !== ''));
     if (validTasks.length !== tasks.length) {
       setTasks(validTasks);
       setEvents(es => es.filter(e => {
         if (e.taskId) return validTasks.some(t => t.id === e.taskId);
-        return e.title && e.title.trim() !== '';
+        return e.isDraft || (e.title && e.title.trim() !== '');
       }));
     }
   }, [setTasks, setEvents, tasks]);
@@ -193,7 +193,7 @@ function PlanScreen() {
   const onAddTask = () => {
     const id = `t${Date.now()}`;
     setTasks(ts => [{
-       id, title: 'New Task', status: 'todo', priority: 'P2', tags: [], subtasks: [], parent_task: null, dependency: null, est: settings.defaultTaskDuration !== undefined ? settings.defaultTaskDuration : 0, added: new Date().toISOString(), isDraft: true
+       id, title: '', status: 'todo', priority: 'P2', tags: [], subtasks: [], parent_task: null, dependency: null, est: settings.defaultTaskDuration !== undefined ? settings.defaultTaskDuration : 0, added: new Date().toISOString(), isDraft: true
     }, ...ts]);
     setInspectorState({ type: 'task', id });
   };
@@ -206,7 +206,7 @@ function PlanScreen() {
     const id = `e${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
     setEvents(es => [...es, {
        id,
-       title: 'New Event',
+       title: '',
        date: ymd(d),
        endDate: ymd(d),
        start,
@@ -319,6 +319,7 @@ function PlanScreen() {
         tasks={tasks} setTasks={setTasks} 
         events={events} setEvents={setEvents}
         allTags={allEventTags}
+        settings={settings}
       />
 
       {(dragState && (dragState.task || dragState.event)) && (
@@ -390,8 +391,7 @@ function DragGhost({ task, event, x, y, style }) {
       style={{ left: x + 14, top: y - 8 }}
     >
       <div className="drag-ghost-inner">
-        {pri && <span className={`pri pri-${pri}`}>●</span>}
-        {pri && <span className="drag-ghost-pri">{pri}</span>}
+        {pri && <div className={`task-row-pri-bar pri-bg-${pri}`} aria-label={pri} />}
         <span className="drag-ghost-title">{title}</span>
       </div>
       <div className="drag-ghost-meta">
@@ -420,12 +420,19 @@ function resolveDropTarget(el, x, y, task, event) {
   return null;
 }
 
-function TitleInput({ value, onChange, disabled, onEnter, style = {}, className = '' }: any) {
+function TitleInput({ value, onChange, disabled, onEnter, style = {}, className = '', autoFocus = false }: any) {
   const [localValue, setLocalValue] = React.useState(value);
+  const inputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
     setLocalValue(value);
   }, [value]);
+
+  React.useEffect(() => {
+    if (autoFocus && inputRef.current) {
+      inputRef.current.focus({ preventScroll: true });
+    }
+  }, [autoFocus]);
 
   const handleBlur = () => {
     if (localValue !== value) onChange(localValue);
@@ -440,6 +447,7 @@ function TitleInput({ value, onChange, disabled, onEnter, style = {}, className 
 
   return (
     <input 
+      ref={inputRef}
       value={localValue || ''}
       onChange={e => setLocalValue(e.target.value)}
       onBlur={handleBlur}
@@ -560,7 +568,7 @@ function DescriptionInput({ value, onChange }) {
   );
 }
 
-function InspectorPane({ inspectorState, onClose, tasks, setTasks, events, setEvents, allTags }) {
+function InspectorPane({ inspectorState, onClose, tasks, setTasks, events, setEvents, allTags, settings }) {
   const [activeState, setActiveState] = React.useState(null);
   const paneRef = React.useRef(null);
 
@@ -589,10 +597,20 @@ function InspectorPane({ inspectorState, onClose, tasks, setTasks, events, setEv
   const handleClose = React.useCallback(() => {
     if (inspectorState && currentItem && currentItem.isDraft) {
       if (isCurrentTask) {
-        setTasks(ts => ts.filter(t => t.id !== currentItem.id));
-        setEvents(es => es.filter(e => e.taskId !== currentItem.id));
+        setTasks(ts => {
+          const t = ts.find(x => x.id === currentItem.id);
+          if (t && t.isDraft) {
+            setEvents(es => es.filter(e => e.taskId !== currentItem.id));
+            return ts.filter(x => x.id !== currentItem.id);
+          }
+          return ts;
+        });
       } else {
-        setEvents(es => es.filter(e => e.id !== currentItem.id));
+        setEvents(es => {
+          const e = es.find(x => x.id === currentItem.id);
+          if (e && e.isDraft) return es.filter(x => x.id !== currentItem.id);
+          return es;
+        });
       }
     }
     onClose();
@@ -622,7 +640,7 @@ function InspectorPane({ inspectorState, onClose, tasks, setTasks, events, setEv
   return (
     <div ref={paneRef} className={`inspector-pane ${isOpen ? 'is-open' : ''}`}>
       {currentItem && (
-        <>
+        <React.Fragment key={currentItem.id}>
           <div className="inspector-hd" style={{ padding: '0 8px', borderBottom: 'none', background: 'transparent' }}>
             <button className="inspector-icon-btn" onClick={handleClose} title="Close Pane">
               <span className="material-symbols-outlined">keyboard_double_arrow_right</span>
@@ -648,6 +666,7 @@ function InspectorPane({ inspectorState, onClose, tasks, setTasks, events, setEv
                   disabled={!isCurrentTask && currentItem.taskId}
                   onEnter={handleClose}
                   style={{ fontSize: '24px', fontWeight: 'bold', border: 'none', background: 'transparent', padding: '0', outline: 'none', width: '100%', color: 'var(--fg)' }}
+                  autoFocus={currentItem.isDraft}
                 />
              </div>
              <div className="inspector-field" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
@@ -718,6 +737,22 @@ function InspectorPane({ inspectorState, onClose, tasks, setTasks, events, setEv
                    </div>
                  )}
 
+                 <div className="inspector-field" style={{ marginTop: '8px' }}>
+                   <label>Calendar Category (optional)</label>
+                   <input 
+                     type="text" 
+                     placeholder="e.g. Work, Personal"
+                     value={currentItem.category || ''}
+                     onChange={e => updateEvent(currentItem.id, { category: e.target.value })}
+                     list="category-options"
+                   />
+                   <datalist id="category-options">
+                     {Object.keys(settings?.categoryCalendars || {}).map(cat => (
+                       <option key={cat} value={cat} />
+                     ))}
+                   </datalist>
+                 </div>
+
                  <div className="inspector-field" style={{ gap: '20px', padding: '8px 0', flexDirection: 'row' }}>
                    <Toggle 
                      label="End date"
@@ -764,7 +799,7 @@ function InspectorPane({ inspectorState, onClose, tasks, setTasks, events, setEv
                </>
              )}
            </div>
-        </>
+        </React.Fragment>
       )}
     </div>
   );

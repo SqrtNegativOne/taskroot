@@ -85,6 +85,81 @@ function SegmentedControl({ options, value, onChange }) {
   );
 }
 
+function CalendarCategories({ settings, setSettings }) {
+  const [calendars, setCalendars] = useState<{id: string, summary: string}[]>([]);
+  const [newCat, setNewCat] = useState('');
+  const [newCalId, setNewCalId] = useState('primary');
+
+  React.useEffect(() => {
+    const token = localStorage.getItem('google_access_token');
+    if (token) {
+      fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      }).then(r => r.json()).then(data => {
+        if (data.items) {
+          setCalendars([{ id: 'primary', summary: 'Primary Calendar' }, ...data.items.filter(c => c.id !== 'primary')]);
+        }
+      }).catch(e => {
+         console.error('Failed to fetch calendars', e);
+      });
+    } else {
+      setCalendars([{ id: 'primary', summary: 'Primary Calendar' }]);
+    }
+  }, []);
+
+  const cats = settings.categoryCalendars || {};
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
+      <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--fg)' }}>Calendar Categories</div>
+      <div style={{ fontSize: '13px', color: 'var(--fg-dim)', marginBottom: '8px' }}>Map specific event categories to different Google Calendars.</div>
+      
+      {Object.entries(cats).map(([cat, calId]) => (
+        <div key={cat} style={{ display: 'flex', gap: '12px', alignItems: 'center', color: 'var(--fg)' }}>
+          <span style={{ minWidth: '120px' }}>{cat}</span>
+          <select 
+            value={calId as string}
+            onChange={e => {
+              const newCats = { ...cats, [cat]: e.target.value };
+              setSettings({ ...settings, categoryCalendars: newCats });
+            }}
+            style={{ background: 'var(--bg-input)', color: 'var(--fg)', border: '1px solid var(--border)', borderRadius: '4px', padding: '4px 8px', flex: 1 }}
+          >
+            {calendars.map(c => <option key={c.id} value={c.id}>{c.summary}</option>)}
+          </select>
+          <button className="sw-btn" style={{ padding: '4px 8px' }} onClick={() => {
+            const newCats = { ...cats };
+            delete newCats[cat];
+            setSettings({ ...settings, categoryCalendars: newCats });
+          }}>Remove</button>
+        </div>
+      ))}
+      <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: '8px' }}>
+         <input 
+            placeholder="New category name..."
+            value={newCat}
+            onChange={e => setNewCat(e.target.value)}
+            style={{ background: 'var(--bg-input)', color: 'var(--fg)', border: '1px solid var(--border)', borderRadius: '4px', padding: '4px 8px', width: '120px' }}
+         />
+         <select 
+            value={newCalId}
+            onChange={e => setNewCalId(e.target.value)}
+            style={{ background: 'var(--bg-input)', color: 'var(--fg)', border: '1px solid var(--border)', borderRadius: '4px', padding: '4px 8px', flex: 1 }}
+          >
+            {calendars.map(c => <option key={c.id} value={c.id}>{c.summary}</option>)}
+         </select>
+         <button className="sw-btn" style={{ padding: '4px 8px' }} onClick={() => {
+            if (newCat) {
+              setSettings({ ...settings, categoryCalendars: { ...cats, [newCat]: newCalId } });
+              setNewCat('');
+              setNewCalId('primary');
+            }
+         }}>Add</button>
+      </div>
+    </div>
+  );
+}
+
 export function SettingsScreen() {
   const [activeTab, setActiveTab] = useState('general');
   const [recordingKeybinding, setRecordingKeybinding] = useState<string | null>(null);
@@ -168,6 +243,7 @@ export function SettingsScreen() {
                         ]}
                       />
                     </label>
+                    <CalendarCategories settings={settings} setSettings={setSettings} />
                   </div>
                 </div>
                 

@@ -105,6 +105,7 @@
     background: linear-gradient(180deg, var(--bg-highlight), var(--bg));
     user-select: none;
     position: relative;
+    z-index: 1000;
   }
   .drag-region {
     position: absolute;

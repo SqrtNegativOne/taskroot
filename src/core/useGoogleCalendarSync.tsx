@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useNotification } from './notifications';
+import { useStored } from './store';
 
 // Convert our event to Google Calendar event format
 export function toGoogleEvent(localEvent, tasks) {
@@ -38,7 +39,7 @@ export function toGoogleEvent(localEvent, tasks) {
 }
 
 // Convert Google Calendar event to our event format
-export function toLocalEvent(googleEvent) {
+export function toLocalEvent(googleEvent, calendarId = 'primary', categoryMap = {}) {
   let date, start, end;
 
   if (googleEvent.start.dateTime) {
@@ -73,41 +74,58 @@ export function toLocalEvent(googleEvent) {
   const idMatch = desc.match(/Taskroot Event ID: (e[0-9a-zA-Z-]+)/);
   const id = idMatch ? idMatch[1] : googleEvent.id;
 
+  let category = '';
+  if (calendarId !== 'primary') {
+    for (const [cat, cid] of Object.entries(categoryMap || {})) {
+      if (cid === calendarId) {
+        category = cat;
+        break;
+      }
+    }
+  }
+
   return {
     id: id,
     googleEventId: googleEvent.id, // Store to keep track
+    googleCalendarId: calendarId,
     taskId: taskId,
     title: googleEvent.summary || 'Untitled Event',
     date: date,
     start: start,
     end: end,
     type: taskId ? 'plan' : (googleEvent.start.date ? 'info' : 'busy'),
+    category: category,
   };
 }
 
 export const defaultApiClient = {
-  fetchEvents: async (timeMin, timeMax, token) => {
-    const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&maxResults=2500`, {
+  fetchCalendars: async (token) => {
+    return await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+  },
+  fetchEvents: async (timeMin, timeMax, token, calendarId = 'primary') => {
+    const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&maxResults=2500`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     return res;
   },
-  createEvent: async (body, token) => {
-    return await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+  createEvent: async (body, token, calendarId = 'primary') => {
+    return await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`, {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     });
   },
-  updateEvent: async (googleEventId, body, token) => {
-    return await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${googleEventId}`, {
+  updateEvent: async (googleEventId, body, token, calendarId = 'primary') => {
+    return await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${googleEventId}`, {
       method: 'PATCH',
       headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     });
   },
-  deleteEvent: async (googleEventId, token) => {
-    return await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${googleEventId}`, {
+  deleteEvent: async (googleEventId, token, calendarId = 'primary') => {
+    return await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${googleEventId}`, {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -116,6 +134,7 @@ export const defaultApiClient = {
 
 export function useGoogleCalendarSync(events, setEvents, tasks, apiClient = defaultApiClient) {
   const { notify } = useNotification();
+  const [settings] = useStored('settings', {} as any);
   const isSyncing = useRef(false);
   const tokenRef = useRef(null);
   const prevEventsRef = useRef(JSON.stringify(events));
@@ -153,73 +172,104 @@ export function useGoogleCalendarSync(events, setEvents, tasks, apiClient = defa
       (window as any).lastTimeMin = timeMin;
       (window as any).lastTimeMax = timeMax;
 
-      const res = await apiClient.fetchEvents(timeMin.toISOString(), timeMax.toISOString(), tokenRef.current);
-      if (!res.ok) {
-        if (res.status === 401) {
-           console.log("Google Token expired. Attempting to refresh via backend...");
-           
-           try {
-             const { getFunctions, httpsCallable } = await import('firebase/functions');
-             const functions = getFunctions();
-             const getFreshAccessToken = httpsCallable(functions, 'getFreshAccessToken');
-             
-             const result = await getFreshAccessToken();
-             const newAccessToken = (result.data as any).accessToken;
-             
-             if (newAccessToken) {
-               localStorage.setItem('google_access_token', newAccessToken);
-               tokenRef.current = newAccessToken;
-               // Retry the fetch with the new token
-               const retryRes = await apiClient.fetchEvents(timeMin.toISOString(), timeMax.toISOString(), newAccessToken);
-               if (retryRes.ok) {
-                 const retryData = await retryRes.json();
-                 return retryData.items || [];
-               }
-             }
-           } catch (refreshError) {
-             console.error("Backend token refresh failed:", refreshError);
-             localStorage.removeItem('google_access_token');
-             notify("Google Calendar token expired. Please log in again.", "error");
-           }
-        }
-        throw new Error('Failed to fetch events');
+      const categoryMap = settings?.categoryCalendars || {};
+      const calendarIdsToSync = new Set(['primary']);
+      for (const cid of Object.values(categoryMap)) {
+        if (typeof cid === 'string' && cid) calendarIdsToSync.add(cid);
       }
-      const data = await res.json();
-      return data.items || [];
+
+      const allEvents = [];
+      let needsRefresh = false;
+
+      for (const calendarId of Array.from(calendarIdsToSync)) {
+        const res = await apiClient.fetchEvents(timeMin.toISOString(), timeMax.toISOString(), tokenRef.current, calendarId);
+        if (!res.ok) {
+          if (res.status === 401) {
+            needsRefresh = true;
+            break;
+          }
+          console.warn(`Failed to fetch events for calendar ${calendarId}`);
+          continue;
+        }
+        const data = await res.json();
+        const items = data.items || [];
+        allEvents.push(...items.map(e => toLocalEvent(e, calendarId, categoryMap)));
+      }
+
+      if (needsRefresh) {
+         console.log("Google Token expired. Attempting to refresh via backend...");
+         try {
+           const { getFunctions, httpsCallable } = await import('firebase/functions');
+           const functions = getFunctions();
+           const getFreshAccessToken = httpsCallable(functions, 'getFreshAccessToken');
+           
+           const result = await getFreshAccessToken();
+           const newAccessToken = (result.data as any).accessToken;
+           
+           if (newAccessToken) {
+             localStorage.setItem('google_access_token', newAccessToken);
+             tokenRef.current = newAccessToken;
+             
+             // Retry the fetches
+             const retryAllEvents = [];
+             for (const calendarId of Array.from(calendarIdsToSync)) {
+                const retryRes = await apiClient.fetchEvents(timeMin.toISOString(), timeMax.toISOString(), newAccessToken, calendarId);
+                if (retryRes.ok) {
+                  const retryData = await retryRes.json();
+                  const items = retryData.items || [];
+                  retryAllEvents.push(...items.map(e => toLocalEvent(e, calendarId, categoryMap)));
+                }
+             }
+             return retryAllEvents;
+           }
+         } catch (refreshError) {
+           console.error("Backend token refresh failed:", refreshError);
+           localStorage.removeItem('google_access_token');
+           notify("Google Calendar token expired. Please log in again.", "error");
+           return [];
+         }
+      }
+
+      return allEvents;
     } catch (e) {
       console.error("Error fetching Google Calendar events:", e);
       return [];
     }
-  }, [apiClient, notify]);
+  }, [apiClient, notify, settings?.categoryCalendars]);
 
   const createGoogleEvent = async (localEvent) => {
     if (!tokenRef.current) return null;
     const body = toGoogleEvent(localEvent, tasks);
+    let calendarId = 'primary';
+    if (localEvent.category && settings?.categoryCalendars && settings.categoryCalendars[localEvent.category]) {
+      calendarId = settings.categoryCalendars[localEvent.category];
+    }
+    
     try {
-      const res = await apiClient.createEvent(body, tokenRef.current);
+      const res = await apiClient.createEvent(body, tokenRef.current, calendarId);
       if (!res.ok) throw new Error('Failed to create event');
       const data = await res.json();
-      return data.id;
+      return { id: data.id, calendarId };
     } catch (e) {
       console.error("Error creating Google event", e);
       return null;
     }
   };
 
-  const updateGoogleEvent = async (googleEventId, localEvent) => {
+  const updateGoogleEvent = async (googleEventId, localEvent, calendarId = 'primary') => {
     if (!tokenRef.current) return;
     const body = toGoogleEvent(localEvent, tasks);
     try {
-      await apiClient.updateEvent(googleEventId, body, tokenRef.current);
+      await apiClient.updateEvent(googleEventId, body, tokenRef.current, calendarId);
     } catch (e) {
       console.error("Error updating Google event", e);
     }
   };
 
-  const deleteGoogleEvent = async (googleEventId) => {
+  const deleteGoogleEvent = async (googleEventId, calendarId = 'primary') => {
     if (!tokenRef.current) return;
     try {
-      await apiClient.deleteEvent(googleEventId, tokenRef.current);
+      await apiClient.deleteEvent(googleEventId, tokenRef.current, calendarId);
     } catch (e) {
       console.error("Error deleting Google event", e);
     }
@@ -234,8 +284,6 @@ export function useGoogleCalendarSync(events, setEvents, tasks, apiClient = defa
          isSyncing.current = false;
          return;
       }
-      const newLocalEvents = gEvents.map(toLocalEvent);
-      
       // We want to merge the events. 
       // 1. Any taskroot events that are NOT in Google Calendar should be pushed to Google Calendar (unless we assume Google Calendar is source of truth, but we want bidirectionality).
       // Since it's a prototype, let's treat the merged list as: 
@@ -243,15 +291,15 @@ export function useGoogleCalendarSync(events, setEvents, tasks, apiClient = defa
       // If a taskroot event has no googleEventId, push it to Google.
       
       const currentEvents = JSON.parse(prevEventsRef.current || '[]');
-      let mergedEvents = [...newLocalEvents];
-      const gEventIds = new Set(newLocalEvents.map(e => e.googleEventId));
+      let mergedEvents = [...gEvents];
+      const gEventIds = new Set(gEvents.map(e => e.googleEventId));
       
       for (const localEvent of currentEvents) {
         if (!localEvent.googleEventId) {
           // Push to google
-          const gid = await createGoogleEvent(localEvent);
-          if (gid) {
-            mergedEvents.push({ ...localEvent, googleEventId: gid });
+          const result = await createGoogleEvent(localEvent);
+          if (result) {
+            mergedEvents.push({ ...localEvent, googleEventId: result.id, googleCalendarId: result.calendarId });
           } else {
             mergedEvents.push(localEvent); // Keep it anyway
           }
@@ -326,22 +374,44 @@ export function useGoogleCalendarSync(events, setEvents, tasks, apiClient = defa
         if (!prev) {
           // Created locally
           if (!curr.googleEventId) {
-             const gid = await createGoogleEvent(curr);
-             if (gid) {
+             const result = await createGoogleEvent(curr);
+             if (result) {
                const idx = updatedEvents.findIndex(e => e.id === curr.id);
                if (idx !== -1) {
-                  updatedEvents[idx] = { ...updatedEvents[idx], googleEventId: gid };
+                  updatedEvents[idx] = { ...updatedEvents[idx], googleEventId: result.id, googleCalendarId: result.calendarId };
                   needsStateUpdate = true;
                }
              }
           }
         } else {
           // Updated locally?
-          const currGoogle = toGoogleEvent(curr, tasks);
-          const prevGoogle = toGoogleEvent(prev, prevTasks);
-          if (JSON.stringify(currGoogle) !== JSON.stringify(prevGoogle)) {
+          // If category changed, meaning target calendar changed:
+          let targetCalendarId = 'primary';
+          if (curr.category && settings?.categoryCalendars && settings.categoryCalendars[curr.category]) {
+            targetCalendarId = settings.categoryCalendars[curr.category];
+          }
+          
+          if (curr.googleCalendarId && curr.googleCalendarId !== targetCalendarId) {
+             // Moved to a different calendar
              if (curr.googleEventId) {
-                await updateGoogleEvent(curr.googleEventId, curr);
+                await deleteGoogleEvent(curr.googleEventId, curr.googleCalendarId);
+             }
+             const result = await createGoogleEvent(curr);
+             if (result) {
+                const idx = updatedEvents.findIndex(e => e.id === curr.id);
+                if (idx !== -1) {
+                  updatedEvents[idx] = { ...updatedEvents[idx], googleEventId: result.id, googleCalendarId: result.calendarId };
+                  needsStateUpdate = true;
+                }
+             }
+          } else {
+             // Same calendar, check if content changed
+             const currGoogle = toGoogleEvent(curr, tasks);
+             const prevGoogle = toGoogleEvent(prev, prevTasks);
+             if (JSON.stringify(currGoogle) !== JSON.stringify(prevGoogle)) {
+                if (curr.googleEventId) {
+                   await updateGoogleEvent(curr.googleEventId, curr, curr.googleCalendarId || 'primary');
+                }
              }
           }
         }
@@ -351,7 +421,7 @@ export function useGoogleCalendarSync(events, setEvents, tasks, apiClient = defa
         if (!currMap.has(prev.id)) {
            // Deleted locally
            if (prev.googleEventId) {
-              await deleteGoogleEvent(prev.googleEventId);
+              await deleteGoogleEvent(prev.googleEventId, prev.googleCalendarId || 'primary');
            }
         }
       }

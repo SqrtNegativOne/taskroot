@@ -60,9 +60,9 @@
 .kanban-card:hover { border-color: var(--accent-line); background: var(--bg-surface-hover); }
 .kanban-card.is-dragging { opacity: 0.3; }
 .kanban-card-line1 {
-  display: flex; align-items: baseline; gap: 5px;
+  display: flex; align-items: center; gap: 5px;
 }
-.kanban-card-pri { color: var(--fg-dim); font-size: 0.78em; }
+.kanban-card:hover .task-row-pri-bar { transform: scaleY(1.4); }
 .kanban-card-title {
   color: var(--fg); flex: 1;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -78,7 +78,7 @@
   background: var(--bg-surface);
   border: 1px dashed var(--accent);
   padding: 6px 10px;
-  display: flex; align-items: baseline; gap: 6px;
+  display: flex; align-items: center; gap: 6px;
   box-shadow: 0 8px 32px var(--shadow-dark);
   max-width: 320px;
 }

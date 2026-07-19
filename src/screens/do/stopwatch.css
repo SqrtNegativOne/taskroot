@@ -132,7 +132,7 @@
 }
 .sw-btn-primary.is-running:hover { background: var(--p0-hover); }
 .sw-btn-icon { font-size: 0.85em; }
-.sw-btn-label { font-weight: 500; }
+.sw-btn-label { font-weight: 400; }
 .sw-btn-key {
   margin-left: 8px;
   color: var(--fg-dim);

@@ -100,7 +100,7 @@ html:has(.app-rest), html:has(.app-rest) body {
   border-color: var(--accent);
   background: var(--accent-soft);
 }
-.rest-check { font-weight: 500; }
+.rest-check { font-weight: 400; }
 .rest-checkbox-box-add {
   border-style: dashed;
   color: var(--fg-dim);

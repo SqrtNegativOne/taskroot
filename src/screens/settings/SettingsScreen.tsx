@@ -309,7 +309,7 @@ export function SettingsScreen() {
           await api.clearAllData();
           window.location.reload();
         }}>
-          Clear All Data
+          Delete everything
         </button>
       );
     }
@@ -318,20 +318,20 @@ export function SettingsScreen() {
 
   const renderSetting = (setting: any) => {
     const val = settings[setting.id] !== undefined ? settings[setting.id] : setting.defaultValue;
-    const isAction = setting.type === 'action';
     
     return (
-      <div className="settings-section" key={setting.id}>
+      <div className="settings-section" key={setting.id} style={{ marginBottom: setting.danger ? '32px' : '12px' }}>
         <div className="settings-section-title" style={{ color: setting.danger ? 'var(--red)' : undefined }}>
           {setting.label} {setting.beta && <span className="status-pill status-nextup">BETA</span>}
         </div>
-        <div className="settings-section-desc dim">
-          {setting.description}
-        </div>
-        <div className="settings-section-actions">
+        {setting.description && (
+          <div className="settings-section-desc dim" style={{ marginBottom: '8px' }}>
+            {setting.description}
+          </div>
+        )}
+        <div className="settings-section-actions" style={{ display: setting.danger ? 'flex' : 'block', justifyContent: setting.danger ? 'flex-end' : 'flex-start' }}>
           {setting.type === 'select' && (
             <label style={{ display: 'flex', gap: '12px', alignItems: 'center', color: 'var(--fg)' }}>
-              {!isAction && <span style={{ minWidth: '150px' }}>{setting.label}:</span>}
               <SegmentedControl
                 value={val}
                 onChange={(v: any) => setSettings({ ...settings, [setting.id]: typeof val === 'number' ? Number(v) : v })}
@@ -341,26 +341,27 @@ export function SettingsScreen() {
           )}
           {setting.type === 'time' && (
             <label style={{ display: 'flex', gap: '12px', alignItems: 'center', color: 'var(--fg)' }}>
-              <span style={{ minWidth: '150px' }}>{setting.label}:</span>
               <input type="time" value={minToTime(val)} onChange={e => setSettings({ ...settings, [setting.id]: timeToMin(e.target.value) })} style={{ background: 'var(--bg-input)', color: 'var(--fg)', border: '1px solid var(--border)', borderRadius: '4px', padding: '4px 8px' }} />
             </label>
           )}
           {setting.type === 'number' && (
             <label style={{ display: 'flex', gap: '12px', alignItems: 'center', color: 'var(--fg)' }}>
-              <span style={{ minWidth: '150px' }}>{setting.label}:</span>
               <input type="number" min={setting.min} max={setting.max} value={val} onChange={e => setSettings({ ...settings, [setting.id]: Number(e.target.value) || 0 })} style={{ background: 'var(--bg-input)', color: 'var(--fg)', border: '1px solid var(--border)', borderRadius: '4px', padding: '4px 8px', width: '80px' }} />
             </label>
           )}
           {setting.type === 'checkbox' && (
-            <label style={{ display: 'flex', gap: '12px', alignItems: 'center', color: 'var(--fg)', cursor: 'pointer' }}>
-              <input type="checkbox" checked={!!val} onChange={e => setSettings({ ...settings, [setting.id]: e.target.checked })} />
-              <span>{setting.label}</span>
-            </label>
+            <div 
+              style={{ display: 'flex', gap: '12px', alignItems: 'center', color: 'var(--fg)', cursor: 'pointer' }}
+              onClick={() => setSettings({ ...settings, [setting.id]: !val })}
+            >
+              <div className={`toggle-switch ${val ? 'is-on' : ''}`}>
+                <div className="toggle-switch-thumb" />
+              </div>
+            </div>
           )}
           {setting.type === 'keybinding' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', color: 'var(--fg)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border)', alignItems: 'center' }}>
-                <span>{setting.label}</span>
                 <kbd 
                   style={{
                     padding: '4px 8px',

@@ -15,7 +15,7 @@
   .task-pane-title { display: flex; align-items: baseline; gap: 4px; }
   .bracket { color: var(--accent); }
   .task-pane-title-label {
-    font-weight: 600; letter-spacing: 0.1em; color: var(--fg);
+    font-weight: 400; letter-spacing: 0.1em; color: var(--fg);
   }
   .task-pane-title-count { color: var(--fg-dim); font-size: 0.9em; margin-left: 2px; }
 

@@ -43,7 +43,7 @@
   .day-cell.is-out { background: var(--bg); }
   .day-cell.is-out .day-cell-num { color: var(--fg-dimmest); }
   .day-cell.is-today { background: var(--bg-highlight); }
-  .day-cell.is-today .day-cell-num { color: var(--accent); font-weight: 600; }
+  .day-cell.is-today .day-cell-num { color: var(--accent); font-weight: 400; }
   .day-cell.can-accept { cursor: copy; }
   .day-cell.is-drag-over {
     background: var(--accent-soft);

@@ -29,7 +29,7 @@
   letter-spacing: 0.06em;
 }
 .kanban-col.is-accent .kanban-col-hd .bracket { color: var(--accent); }
-.kanban-col-name { color: var(--fg); font-weight: 500; flex: 1; }
+.kanban-col-name { color: var(--fg); font-weight: 400; flex: 1; }
 .kanban-col-count { color: var(--fg-dim); font-size: 0.85em; font-variant-numeric: tabular-nums; }
 .kanban-col-body {
   flex: 1;

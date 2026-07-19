@@ -5,7 +5,7 @@ export interface SettingSchema {
   section: string;
   tab: string;
   label: string;
-  description: string;
+  description?: string;
   keywords?: string[];
   type: SettingType;
   defaultValue?: any;
@@ -24,7 +24,6 @@ export const SETTINGS_SCHEMA: SettingSchema[] = [
     section: 'Calendar',
     tab: 'general',
     label: 'Default View',
-    description: 'Set your default calendar view.',
     keywords: ['calendar', 'view', 'month', 'week'],
     type: 'select',
     defaultValue: 'month',
@@ -35,7 +34,7 @@ export const SETTINGS_SCHEMA: SettingSchema[] = [
   },
   {
     id: 'categoryCalendars',
-    section: 'Calendar Categories',
+    section: 'Calendar',
     tab: 'general',
     label: 'Calendar Categories',
     description: 'Map specific event categories to different Google Calendars.',
@@ -49,7 +48,6 @@ export const SETTINGS_SCHEMA: SettingSchema[] = [
     section: 'Tasks',
     tab: 'general',
     label: 'Default Duration',
-    description: 'Set the default estimated duration for new tasks.',
     keywords: ['task', 'duration', 'estimate', 'time'],
     type: 'select',
     defaultValue: 0,
@@ -68,7 +66,6 @@ export const SETTINGS_SCHEMA: SettingSchema[] = [
     section: 'Time & Routine',
     tab: 'wrap_screen',
     label: 'Earliest wake time',
-    description: 'Set your waking and sleeping hours for time tracking.',
     keywords: ['wake', 'morning', 'start', 'time'],
     type: 'time',
     defaultValue: 480
@@ -78,7 +75,6 @@ export const SETTINGS_SCHEMA: SettingSchema[] = [
     section: 'Time & Routine',
     tab: 'wrap_screen',
     label: 'Latest sleep time',
-    description: 'Set your waking and sleeping hours for time tracking.',
     keywords: ['sleep', 'night', 'end', 'time'],
     type: 'time',
     defaultValue: 1320
@@ -88,7 +84,6 @@ export const SETTINGS_SCHEMA: SettingSchema[] = [
     section: 'Recap',
     tab: 'recap_screen',
     label: 'Recap Day',
-    description: 'Set the day of the week to do a weekly recap.',
     keywords: ['recap', 'weekly', 'review'],
     type: 'select',
     defaultValue: '',
@@ -105,10 +100,9 @@ export const SETTINGS_SCHEMA: SettingSchema[] = [
   },
   {
     id: 'clockStyle',
-    section: 'Clock Style',
+    section: 'Stopwatch',
     tab: 'do_screen',
     label: 'Clock Style',
-    description: 'Choose between the Classic Stopwatch or the Guzey Clock.',
     keywords: ['stopwatch', 'timer', 'guzey', 'axleless', 'flowtime'],
     type: 'select',
     defaultValue: 'axleless',
@@ -120,17 +114,16 @@ export const SETTINGS_SCHEMA: SettingSchema[] = [
   },
   {
     id: 'allowStopwatchWithoutTask',
-    section: 'Stopwatch Task Requirement',
+    section: 'Stopwatch',
     tab: 'do_screen',
     label: 'Allow stopwatch use without selecting task',
-    description: 'Allow using the stopwatch without actively selecting a task first.',
     keywords: ['stopwatch', 'task', 'requirement', 'allow'],
     type: 'checkbox',
     defaultValue: false
   },
   {
     id: 'flowtimeBreakDivisor',
-    section: 'Flowtime Break Divisor',
+    section: 'Stopwatch',
     tab: 'do_screen',
     label: 'Flowtime Break Divisor',
     description: 'How much break time you earn (e.g. 5 means 1 min break for every 5 mins of work).',
@@ -141,10 +134,9 @@ export const SETTINGS_SCHEMA: SettingSchema[] = [
   },
   {
     id: 'exportData',
-    section: 'Export Data',
+    section: 'Data Management',
     tab: 'sync',
     label: 'Export Data',
-    description: 'Export all your local data as JSON.',
     keywords: ['export', 'backup', 'json', 'data'],
     type: 'action',
     action: 'exportData',
@@ -152,7 +144,7 @@ export const SETTINGS_SCHEMA: SettingSchema[] = [
   },
   {
     id: 'importTasks',
-    section: 'Bulk Import Tasks',
+    section: 'Data Management',
     tab: 'sync',
     label: 'Bulk Import Tasks',
     description: 'Paste in tasks separated by newlines. They will be added as new tasks to the top of your list.',
@@ -162,7 +154,7 @@ export const SETTINGS_SCHEMA: SettingSchema[] = [
   },
   {
     id: 'restoreBackup',
-    section: 'Restore from Backup',
+    section: 'Data Management',
     tab: 'sync',
     label: 'Restore from Backup',
     description: 'If your data got corrupted, restore it from today\'s automatic backup snapshot. This will reload the application.',
@@ -184,20 +176,18 @@ export const SETTINGS_SCHEMA: SettingSchema[] = [
   },
   {
     id: 'keybindingOpenSettings',
-    section: 'Global',
+    section: 'Keybindings',
     tab: 'keybindings',
     label: 'Open Settings',
-    description: 'Navigate and control Taskroot quickly.',
     keywords: ['keyboard', 'shortcut', 'settings', 'open'],
     type: 'keybinding',
     defaultValue: 'Ctrl+,'
   },
   {
     id: 'keybindingRestoreApp',
-    section: 'Mini Tracker',
+    section: 'Keybindings',
     tab: 'keybindings',
     label: 'Restore App',
-    description: 'Restore the main application window from the mini tracker.',
     keywords: ['keyboard', 'shortcut', 'restore', 'maximize', 'mini tracker'],
     type: 'keybinding',
     defaultValue: 'Ctrl+Alt+R'

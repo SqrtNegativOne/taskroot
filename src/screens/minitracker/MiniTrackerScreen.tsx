@@ -56,7 +56,7 @@ export function MiniTrackerScreen() {
     
     if (clockStyle === 'axleless') {
       const { m } = splitTime(currentMs);
-      content = <div><span style={{ fontWeight: 'bold' }}>{m}</span> {taskName}</div>;
+      content = <div><span style={{ fontWeight: 'normal' }}>{m}</span> {taskName}</div>;
     } else if (clockStyle === 'flowtime') {
       if (state.isBreak && state.breakStartedAt) {
         const remSecs = Math.max(0, Math.ceil((state.breakAllowedMs - (now - state.breakStartedAt)) / 1000));
@@ -65,12 +65,12 @@ export function MiniTrackerScreen() {
         const color = remSecs === 0 ? "var(--red)" : "var(--tag-green)";
         content = (
           <div style={{ color }}>
-            <span style={{ fontWeight: 'bold' }}>{PAD2(remM)}:{PAD2(remS)}</span> break left
+            <span style={{ fontWeight: 'normal' }}>{PAD2(remM)}:{PAD2(remS)}</span> break left
           </div>
         );
       } else {
         const { m } = splitTime(currentMs);
-        content = <div><span style={{ fontWeight: 'bold' }}>{m}</span> {taskName}</div>;
+        content = <div><span style={{ fontWeight: 'normal' }}>{m}</span> {taskName}</div>;
       }
     } else if (clockStyle === 'guzey') {
       const d = new Date(now);
@@ -163,8 +163,7 @@ export function MiniTrackerScreen() {
         cursor: 'default',
         padding: '16px',
         boxSizing: 'border-box',
-        textAlign: 'center',
-        border: '1px solid var(--border)'
+        textAlign: 'center'
       } as any}
       title="Double-click to restore main window"
     >

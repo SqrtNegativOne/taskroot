@@ -86,9 +86,9 @@ function GuzeyClockDisplay({ toggleSelector, onBreakStatus, isPaused }) {
   return (
     <div className={`stopwatch-display ${isPaused ? '' : 'is-running'}`} onClick={toggleSelector} title="Click to open task selector" style={{ color: isPaused ? 'var(--fg-dim)' : color }}>
       <span className="sw-digits sw-m" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1 }}>
-        <span style={{ fontSize: '0.08em', fontWeight: 600, letterSpacing: '0.12em' }}>{isPaused ? "TRACKING PAUSED" : state}</span>
+        <span style={{ fontSize: '0.08em', fontWeight: 400, letterSpacing: '0.12em' }}>{isPaused ? "TRACKING PAUSED" : state}</span>
         <span style={{ fontSize: '0.7em', margin: '2px 0' }}>{PAD2(remM)}:{PAD2(finalS)}</span>
-        <span style={{ fontSize: '0.08em', fontWeight: 600, letterSpacing: '0.12em' }}>LEFT</span>
+        <span style={{ fontSize: '0.08em', fontWeight: 400, letterSpacing: '0.12em' }}>LEFT</span>
       </span>
     </div>
   );
@@ -120,7 +120,7 @@ function FlowtimeClockDisplay({ running, isPristine, currentMs, isBreak, breakRe
     const color = remSecs === 0 ? "var(--red)" : "var(--tag-green)";
     displayNode = (
       <span style={{ color, display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1 }}>
-        <span style={{ fontSize: '0.08em', fontWeight: 600, letterSpacing: '0.12em' }}>BREAK</span>
+        <span style={{ fontSize: '0.08em', fontWeight: 400, letterSpacing: '0.12em' }}>BREAK</span>
         <span style={{ fontSize: '0.7em', margin: '2px 0' }}>{PAD2(remM)}:{PAD2(remS)}</span>
       </span>
     );
@@ -499,7 +499,7 @@ function Stopwatch({ onBreakStatusChange }) {
                 title="Click to change task"
               >
                 <span style={{ color: 'var(--fg-dim)', marginRight: '8px' }}>Working on:</span>
-                <span style={{ fontWeight: 500 }}>{activeTask.title}</span>
+                <span style={{ fontWeight: 400 }}>{activeTask.title}</span>
               </div>
             );
           } else if (allowNoTask && !activeTask && (running || isGuzey || isFlowBreak)) {

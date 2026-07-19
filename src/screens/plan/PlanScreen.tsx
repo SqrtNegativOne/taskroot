@@ -665,7 +665,7 @@ function InspectorPane({ inspectorState, onClose, tasks, setTasks, events, setEv
                   }}
                   disabled={!isCurrentTask && currentItem.taskId}
                   onEnter={handleClose}
-                  style={{ fontSize: '24px', fontWeight: 'bold', border: 'none', background: 'transparent', padding: '0', outline: 'none', width: '100%', color: 'var(--fg)' }}
+                  style={{ fontSize: '24px', fontWeight: 'normal', border: 'none', background: 'transparent', padding: '0', outline: 'none', width: '100%', color: 'var(--fg)' }}
                   autoFocus={currentItem.isDraft}
                 />
              </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
+import Fuse from 'fuse.js';
 import { TODAY, parseYMD, durationLabel, dueLabel } from '../core/data';
 import { Icon } from './icon';
 import { FilterSortButtons } from '../screens/plan/shared-menus';
@@ -39,8 +40,11 @@ function TaskListPane({ tasks = [], setTasks, filters = [], setFilters, sort, se
       });
     }
     if (query.trim()) {
-      const q = query.toLowerCase();
-      xs = xs.filter(t => t.title.toLowerCase().includes(q) || t.tags.some(tag => tag.toLowerCase().includes(q)));
+      const fuse = new Fuse(xs, {
+        keys: ['title', 'tags'],
+        threshold: 0.4,
+      });
+      xs = fuse.search(query).map(result => result.item);
     }
     const cmp = {
       priority: (a, b) => a.priority.localeCompare(b.priority),

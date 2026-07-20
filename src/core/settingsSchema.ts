@@ -103,13 +103,13 @@ export const SETTINGS_SCHEMA: SettingSchema[] = [
     section: 'Stopwatch',
     tab: 'do_screen',
     label: 'Clock Style',
-    keywords: ['stopwatch', 'timer', 'guzey', 'axleless', 'flowtime'],
+    keywords: ['stopwatch', 'timer', 'guzey', 'counter', 'flowtime'],
     type: 'select',
-    defaultValue: 'axleless',
+    defaultValue: 'counter',
     options: [
-      { value: 'axleless', label: 'Axleless Stopwatch' },
+      { value: 'counter', label: 'Counter' },
       { value: 'flowtime', label: 'Flowtime' },
-      { value: 'guzey', label: 'Guzey Clock' }
+      { value: 'guzey', label: 'Guzey' }
     ]
   },
   {

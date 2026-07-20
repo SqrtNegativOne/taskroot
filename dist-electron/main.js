@@ -13,6 +13,44 @@ let win;
 let miniWin = null;
 let tray = null;
 let serverPort = 0;
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+    app.quit();
+    process.exit(0);
+}
+if (process.defaultApp) {
+    if (process.argv.length >= 2) {
+        app.setAsDefaultProtocolClient('taskroot', process.execPath, [path.resolve(process.argv[1])]);
+    }
+}
+else {
+    app.setAsDefaultProtocolClient('taskroot');
+}
+function handleDeepLink(url) {
+    if (!url.startsWith('taskroot://'))
+        return;
+    const route = url.replace('taskroot://', '').replace(/\/$/, '');
+    if (win && !win.isDestroyed() && route) {
+        win.webContents.send('deep-link', route);
+    }
+}
+app.on('second-instance', (event, commandLine) => {
+    if (win && !win.isDestroyed()) {
+        if (win.isMinimized())
+            win.restore();
+        win.show();
+        win.focus();
+    }
+    const url = commandLine.find(arg => arg.startsWith('taskroot://'));
+    if (url) {
+        handleDeepLink(url);
+    }
+});
+// macOS deep link handling
+app.on('open-url', (event, url) => {
+    event.preventDefault();
+    handleDeepLink(url);
+});
 // Handle file logging from renderer
 ipcMain.on('log-to-file', (event, level, message) => {
     const logPath = path.join(process.env.APP_ROOT, 'taskroot.log');
@@ -56,13 +94,10 @@ ipcMain.on('window-close', (event) => {
     }
 });
 ipcMain.on('window-restore-main', () => {
-    if (win) {
+    if (win && !win.isDestroyed()) {
         if (win.isMinimized())
             win.restore();
         win.show();
-    }
-    if (miniWin) {
-        miniWin.close();
     }
 });
 function createMiniWindow() {
@@ -85,18 +120,15 @@ function createMiniWindow() {
     miniWin.loadURL(url);
     miniWin.on('closed', () => {
         miniWin = null;
-        if (!win || !win.isVisible()) {
+        if (!win || win.isDestroyed() || !win.isVisible()) {
             app.quit();
         }
     });
     miniWin.on('maximize', () => {
-        if (win) {
+        if (win && !win.isDestroyed()) {
             if (win.isMinimized())
                 win.restore();
             win.show();
-        }
-        if (miniWin) {
-            miniWin.close();
         }
     });
 }
@@ -182,16 +214,13 @@ function createTray() {
         {
             label: 'Open Taskroot',
             click: () => {
-                if (win) {
+                if (win && !win.isDestroyed()) {
                     if (win.isMinimized())
                         win.restore();
                     win.show();
                 }
                 else {
                     createWindow();
-                }
-                if (miniWin) {
-                    miniWin.close();
                 }
             }
         },
@@ -205,7 +234,7 @@ function createTray() {
     ]);
     tray.setContextMenu(contextMenu);
     tray.on('click', () => {
-        if (win) {
+        if (win && !win.isDestroyed()) {
             if (win.isMinimized())
                 win.restore();
             win.show();
@@ -213,12 +242,18 @@ function createTray() {
         else {
             createWindow();
         }
-        if (miniWin) {
-            miniWin.close();
-        }
     });
 }
 app.whenReady().then(() => {
     createWindow();
+    createMiniWindow();
     createTray();
+    const url = process.argv.find(arg => arg.startsWith('taskroot://'));
+    if (url) {
+        if (win && !win.isDestroyed()) {
+            win.webContents.once('did-finish-load', () => {
+                handleDeepLink(url);
+            });
+        }
+    }
 });

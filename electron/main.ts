@@ -36,19 +36,16 @@ if (process.defaultApp) {
 function handleDeepLink(url: string) {
   if (!url.startsWith('taskroot://')) return;
   const route = url.replace('taskroot://', '').replace(/\/$/, '');
-  if (win && route) {
+  if (win && !win.isDestroyed() && route) {
     win.webContents.send('deep-link', route);
   }
 }
 
 app.on('second-instance', (event, commandLine) => {
-  if (win) {
+  if (win && !win.isDestroyed()) {
     if (win.isMinimized()) win.restore();
     win.show();
     win.focus();
-  }
-  if (miniWin) {
-    miniWin.close();
   }
   const url = commandLine.find(arg => arg.startsWith('taskroot://'));
   if (url) {
@@ -102,12 +99,9 @@ ipcMain.on('window-close', (event) => {
   }
 });
 ipcMain.on('window-restore-main', () => {
-  if (win) {
+  if (win && !win.isDestroyed()) {
     if (win.isMinimized()) win.restore();
     win.show();
-  }
-  if (miniWin) {
-    miniWin.close();
   }
 });
 
@@ -132,18 +126,15 @@ function createMiniWindow() {
 
   miniWin.on('closed', () => {
     miniWin = null;
-    if (!win || !win.isVisible()) {
+    if (!win || win.isDestroyed() || !win.isVisible()) {
       app.quit();
     }
   });
 
   miniWin.on('maximize', () => {
-    if (win) {
+    if (win && !win.isDestroyed()) {
       if (win.isMinimized()) win.restore();
       win.show();
-    }
-    if (miniWin) {
-      miniWin.close();
     }
   });
 }
@@ -239,14 +230,11 @@ function createTray() {
     {
       label: 'Open Taskroot',
       click: () => {
-        if (win) {
+        if (win && !win.isDestroyed()) {
           if (win.isMinimized()) win.restore();
           win.show();
         } else {
           createWindow();
-        }
-        if (miniWin) {
-          miniWin.close();
         }
       }
     },
@@ -262,26 +250,26 @@ function createTray() {
   tray.setContextMenu(contextMenu);
   
   tray.on('click', () => {
-    if (win) {
+    if (win && !win.isDestroyed()) {
       if (win.isMinimized()) win.restore();
       win.show();
     } else {
       createWindow();
-    }
-    if (miniWin) {
-      miniWin.close();
     }
   });
 }
 
 app.whenReady().then(() => {
   createWindow();
+  createMiniWindow();
   createTray();
 
   const url = process.argv.find(arg => arg.startsWith('taskroot://'));
   if (url) {
-    win?.webContents.once('did-finish-load', () => {
-      handleDeepLink(url);
-    });
+    if (win && !win.isDestroyed()) {
+      win.webContents.once('did-finish-load', () => {
+        handleDeepLink(url);
+      });
+    }
   }
 });

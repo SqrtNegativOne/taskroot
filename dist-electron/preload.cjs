@@ -8,4 +8,5 @@ electron_1.contextBridge.exposeInMainWorld('electronAPI', {
     maximizeWindow: () => electron_1.ipcRenderer.send('window-maximize'),
     closeWindow: () => electron_1.ipcRenderer.send('window-close'),
     restoreMainWindow: () => electron_1.ipcRenderer.send('window-restore-main'),
+    onDeepLink: (callback) => electron_1.ipcRenderer.on('deep-link', (_event, route) => callback(route)),
 });

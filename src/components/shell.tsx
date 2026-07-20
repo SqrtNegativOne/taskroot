@@ -30,7 +30,7 @@ function TitleBar({ current, today }) {
     <header className="topbar">
       <div className="drag-region" />
       <div className="topbar-left">
-        <Link to="/settings" className={`stage ${current === 'settings' ? 'is-current' : ''}`} style={{ padding: '0 4px', display: 'flex' }} aria-label="Settings">
+        <Link to="/settings" className={`stage ${current === 'settings' ? 'is-current' : ''}`} style={{ padding: '0 4px', display: 'flex' }} aria-label="Settings" data-cuelume-hover="tick" data-cuelume-toggle>
           <Icon name="settings" size={18} />
         </Link>
         <StageIndicator current={current} />
@@ -40,6 +40,8 @@ function TitleBar({ current, today }) {
             style={{ padding: '0 4px', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex' }}
             onClick={() => setDropdownOpen(!dropdownOpen)}
             title="More screens"
+            data-cuelume-hover="tick"
+            data-cuelume-toggle
           >
             <Icon name="keyboard_arrow_down" size={18} />
           </button>
@@ -77,6 +79,8 @@ function TitleBar({ current, today }) {
                   key={screen}
                   className="dd-item"
                   onClick={() => { setDropdownOpen(false); navigate(`/${screen}`); }}
+                  data-cuelume-hover="tick"
+                  data-cuelume-toggle
                 >
                   <span className="stage-name" style={{ textTransform: 'lowercase' }}>{screen}</span>
                 </button>
@@ -88,13 +92,13 @@ function TitleBar({ current, today }) {
       <div className="topbar-right">
       </div>
       <div className="window-controls">
-        <button className="win-btn minimize" onClick={handleMinimize} title="Minimize">
+        <button className="win-btn minimize" onClick={handleMinimize} title="Minimize" data-cuelume-hover="tick" data-cuelume-toggle>
           <svg width="10" height="10" viewBox="0 0 10 10"><path d="M 1,5 h 8" stroke="currentColor" strokeWidth="1"/></svg>
         </button>
-        <button className="win-btn maximize" onClick={handleMaximize} title="Maximize">
+        <button className="win-btn maximize" onClick={handleMaximize} title="Maximize" data-cuelume-hover="tick" data-cuelume-toggle>
           <svg width="10" height="10" viewBox="0 0 10 10"><rect x="1.5" y="1.5" width="7" height="7" fill="none" stroke="currentColor" strokeWidth="1"/></svg>
         </button>
-        <button className="win-btn close" onClick={handleClose} title="Close">
+        <button className="win-btn close" onClick={handleClose} title="Close" data-cuelume-hover="tick" data-cuelume-toggle>
           <svg width="10" height="10" viewBox="0 0 10 10"><path d="M 1.5,1.5 l 7,7 M 8.5,1.5 l -7,7" stroke="currentColor" strokeWidth="1"/></svg>
         </button>
       </div>
@@ -117,6 +121,8 @@ function StageIndicator({ current }) {
             to={s.href}
             className={`stage ${current === s.key ? 'is-current' : ''}`}
             aria-current={current === s.key ? 'page' : undefined}
+            data-cuelume-hover="tick"
+            data-cuelume-toggle
           >
             <span className="stage-name">{s.label}</span>
           </Link>

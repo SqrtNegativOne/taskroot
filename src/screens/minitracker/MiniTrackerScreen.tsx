@@ -42,7 +42,7 @@ export function MiniTrackerScreen() {
   }, [now, state.isBreak, state.breakStartedAt, state.breakAllowedMs, state.breakSoundPlayed]);
 
   const activeTask = tasks?.find((t: any) => t.status === 'doing');
-  const clockStyle = settings.clockStyle || 'axleless';
+  const clockStyle = settings.clockStyle || 'counter';
 
   const running = state.runningSince != null;
   const currentMs = state.elapsed + (running && !state.isBreak ? now - state.runningSince : 0);
@@ -54,7 +54,7 @@ export function MiniTrackerScreen() {
   } else {
     const taskName = activeTask ? activeTask.title : 'Work session';
     
-    if (clockStyle === 'axleless') {
+    if (clockStyle === 'counter') {
       const { m } = splitTime(currentMs);
       content = <div><span style={{ fontWeight: 'normal' }}>{m}</span> {taskName}</div>;
     } else if (clockStyle === 'flowtime') {
@@ -151,7 +151,7 @@ export function MiniTrackerScreen() {
       style={{
         width: '100vw',
         height: '100vh',
-        background: 'rgba(24, 24, 24, 0.93)',
+        background: 'rgba(24, 24, 24, 0.5)',
         color: 'var(--fg)',
         display: 'flex',
         alignItems: 'center',

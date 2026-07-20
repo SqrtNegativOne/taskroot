@@ -135,6 +135,10 @@ function GlobalSync({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  React.useEffect(() => {
+    import('cuelume').then(({ bind }) => bind());
+  }, []);
+
   if (window.location.search.includes('minitracker=true')) {
     return (
       <GlobalSync>

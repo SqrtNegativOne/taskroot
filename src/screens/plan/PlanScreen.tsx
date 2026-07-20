@@ -455,6 +455,7 @@ function TitleInput({ value, onChange, disabled, onEnter, style = {}, className 
       disabled={disabled}
       style={style}
       className={className}
+      spellCheck={false}
     />
   );
 }
@@ -564,6 +565,7 @@ function DescriptionInput({ value, onChange }) {
       rows={5}
       style={{ width: '100%', resize: 'vertical', padding: '4px', fontFamily: 'inherit', border: '1px solid var(--border)', background: 'var(--bg-input, var(--bg-surface))', color: 'var(--fg)', borderRadius: '4px' }}
       placeholder="Add a description..."
+      spellCheck={false}
     />
   );
 }

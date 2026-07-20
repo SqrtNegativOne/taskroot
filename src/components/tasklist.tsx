@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
+import { play } from 'cuelume';
 import Fuse from 'fuse.js';
 import { TODAY, parseYMD, durationLabel, dueLabel } from '../core/data';
 import { Icon } from './icon';
@@ -165,7 +166,9 @@ function TaskRow({ task, index, onDragStart, dragging, updateTask, deleteTask })
         <div className="task-row-actions">
            <button onClick={(e) => {
              e.stopPropagation();
-             updateTask(task.id, { status: task.status === 'done' ? 'todo' : 'done' });
+             const newStatus = task.status === 'done' ? 'todo' : 'done';
+             updateTask(task.id, { status: newStatus });
+             play(newStatus === 'done' ? 'success' : 'release');
            }} title="Toggle Done"><span className="material-symbols-outlined" style={{ fontSize: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>check</span></button>
            <button onClick={(e) => {
              e.stopPropagation();

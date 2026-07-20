@@ -4,23 +4,23 @@ import { logWorkSession, CLOCK_STRATEGIES } from './stopwatch';
 describe('logWorkSession', () => {
   test('ignores sessions less than 1 minute', () => {
     const setTimeLogs = vi.fn();
-    logWorkSession(setTimeLogs, 1000, 2000, 'task1', 'axleless');
+    logWorkSession(setTimeLogs, 1000, 2000, 'task1', 'counter');
     expect(setTimeLogs).not.toHaveBeenCalled();
   });
 
   test('logs sessions 1 minute or longer', () => {
     const setTimeLogs = vi.fn(updater => updater([]));
-    logWorkSession(setTimeLogs, 1000, 62000, 'task1', 'axleless');
+    logWorkSession(setTimeLogs, 1000, 62000, 'task1', 'counter');
     expect(setTimeLogs).toHaveBeenCalled();
     const result = setTimeLogs.mock.results[0].value;
     expect(result.length).toBe(1);
     expect(result[0].taskId).toBe('task1');
-    expect(result[0].clockStyle).toBe('axleless');
+    expect(result[0].clockStyle).toBe('counter');
   });
 });
 
-describe('AxlelessClockStrategy', () => {
-  const strategy = CLOCK_STRATEGIES.axleless;
+describe('CounterClockStrategy', () => {
+  const strategy = CLOCK_STRATEGIES.counter;
 
   test('requiresAnimationLoop when running', () => {
     expect(strategy.requiresAnimationLoop({ state: { runningSince: 123 } })).toBe(true);

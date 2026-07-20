@@ -94,7 +94,7 @@ function GuzeyClockDisplay({ toggleSelector, onBreakStatus, isPaused }) {
   );
 }
 
-function AxlelessClockDisplay({ running, isPristine, currentMs, toggle }) {
+function CounterClockDisplay({ running, isPristine, currentMs, toggle }) {
   const { m } = splitTime(currentMs);
   return (
     <div className={`stopwatch-display ${running ? 'is-running' : ''} ${isPristine ? 'is-pristine' : ''}`} onClick={toggle} title="Click to start/stop">
@@ -149,9 +149,9 @@ abstract class ClockStrategy {
   abstract onReset(context: any): void;
 }
 
-class AxlelessClockStrategy extends ClockStrategy {
+class CounterClockStrategy extends ClockStrategy {
   renderDisplay({ currentMs, running, isPristine, toggle }) {
-    return <AxlelessClockDisplay running={running} isPristine={isPristine} currentMs={currentMs} toggle={toggle} />;
+    return <CounterClockDisplay running={running} isPristine={isPristine} currentMs={currentMs} toggle={toggle} />;
   }
 
   requiresAnimationLoop({ state }) {
@@ -165,7 +165,7 @@ class AxlelessClockStrategy extends ClockStrategy {
     }
     setState(s => {
       if (s.runningSince) {
-        logWorkSession(setTimeLogs, s.runningSince, Date.now(), activeTask?.id, 'axleless');
+        logWorkSession(setTimeLogs, s.runningSince, Date.now(), activeTask?.id, 'counter');
         return { elapsed: s.elapsed + (Date.now() - s.runningSince), runningSince: null };
       }
       return { ...s, runningSince: Date.now() };
@@ -181,7 +181,7 @@ class AxlelessClockStrategy extends ClockStrategy {
 
   onReset({ state, setState, setSelectorOpen, setTimeLogs, activeTask }) {
     if (state.runningSince) {
-      logWorkSession(setTimeLogs, state.runningSince, Date.now(), activeTask?.id, 'axleless');
+      logWorkSession(setTimeLogs, state.runningSince, Date.now(), activeTask?.id, 'counter');
     }
     setState({ elapsed: 0, runningSince: null });
     setSelectorOpen(false);
@@ -268,7 +268,7 @@ class GuzeyClockStrategy extends ClockStrategy {
 }
 
 export const CLOCK_STRATEGIES: Record<string, ClockStrategy> = {
-  axleless: new AxlelessClockStrategy(),
+  counter: new CounterClockStrategy(),
   flowtime: new FlowtimeClockStrategy(),
   guzey: new GuzeyClockStrategy(),
 };
@@ -281,7 +281,7 @@ function Stopwatch({ onBreakStatusChange }) {
   const [settings] = useStored<any>('settings', {});
   const [timeLogs, setTimeLogs] = useStored('time_logs', []);
   
-  const strategy = CLOCK_STRATEGIES[settings.clockStyle] || CLOCK_STRATEGIES.axleless;
+  const strategy = CLOCK_STRATEGIES[settings.clockStyle] || CLOCK_STRATEGIES.counter;
 
   const [tick, setTick] = useState(0);
 

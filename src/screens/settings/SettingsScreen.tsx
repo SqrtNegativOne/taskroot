@@ -73,6 +73,7 @@ function SegmentedControl({ options, value, onChange }: any) {
           key={opt.value}
           data-active={opt.value === value}
           onClick={() => onChange(opt.value)}
+          data-cuelume-toggle
           style={{
             appearance: 'none', background: 'transparent',
             border: 'none', borderRadius: '5px', padding: '6px 14px', fontSize: '13px', cursor: 'pointer',
@@ -319,17 +320,28 @@ export function SettingsScreen() {
   const renderSetting = (setting: any) => {
     const val = settings[setting.id] !== undefined ? settings[setting.id] : setting.defaultValue;
     
+    const isComplex = setting.type === 'action' && ['calendarCategories', 'importTasks'].includes(setting.action);
+
     return (
-      <div className="settings-section" key={setting.id} style={{ marginBottom: setting.danger ? '32px' : '12px' }}>
-        <div className="settings-section-title" style={{ color: setting.danger ? 'var(--red)' : undefined }}>
-          {setting.label} {setting.beta && <span className="status-pill status-nextup">BETA</span>}
-        </div>
-        {setting.description && (
-          <div className="settings-section-desc dim" style={{ marginBottom: '8px' }}>
-            {setting.description}
+      <div className="settings-section" key={setting.id} style={{ 
+        marginBottom: setting.danger ? '32px' : '12px',
+        display: 'flex',
+        flexDirection: isComplex ? 'column' : 'row',
+        justifyContent: 'space-between',
+        alignItems: isComplex ? 'flex-start' : 'center',
+        gap: isComplex ? '8px' : '16px'
+      }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+          <div className="settings-section-title" style={{ color: setting.danger ? 'var(--red)' : undefined }}>
+            {setting.label} {setting.beta && <span className="status-pill status-nextup">BETA</span>}
           </div>
-        )}
-        <div className="settings-section-actions" style={{ display: setting.danger ? 'flex' : 'block', justifyContent: setting.danger ? 'flex-end' : 'flex-start' }}>
+          {setting.description && (
+            <div className="settings-section-desc dim" style={{ marginBottom: 0 }}>
+              {setting.description}
+            </div>
+          )}
+        </div>
+        <div className="settings-section-actions" style={{ margin: 0, flexShrink: 0, display: setting.danger ? 'flex' : 'block', justifyContent: setting.danger ? 'flex-end' : 'flex-start' }}>
           {setting.type === 'select' && (
             <label style={{ display: 'flex', gap: '12px', alignItems: 'center', color: 'var(--fg)' }}>
               <SegmentedControl
@@ -353,6 +365,7 @@ export function SettingsScreen() {
             <div 
               style={{ display: 'flex', gap: '12px', alignItems: 'center', color: 'var(--fg)', cursor: 'pointer' }}
               onClick={() => setSettings({ ...settings, [setting.id]: !val })}
+              data-cuelume-toggle
             >
               <div className={`toggle-switch ${val ? 'is-on' : ''}`}>
                 <div className="toggle-switch-thumb" />
@@ -360,48 +373,46 @@ export function SettingsScreen() {
             </div>
           )}
           {setting.type === 'keybinding' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', color: 'var(--fg)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border)', alignItems: 'center' }}>
-                <kbd 
-                  style={{
-                    padding: '4px 8px',
-                    background: recordingKeybinding === setting.id ? 'var(--accent-soft)' : 'var(--bg-app)',
-                    border: '1px solid ' + (recordingKeybinding === setting.id ? 'var(--accent)' : 'var(--border)'),
-                    borderRadius: '4px',
-                    fontSize: '0.9em',
-                    fontFamily: 'monospace',
-                    cursor: 'pointer'
-                  }}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setRecordingKeybinding(setting.id);
-                    const handler = (evt: KeyboardEvent) => {
-                      evt.preventDefault();
-                      evt.stopPropagation();
-                      if (evt.key === 'Escape') {
-                        setRecordingKeybinding(null);
-                        window.removeEventListener('keydown', handler);
-                        return;
-                      }
-                      const parts = [];
-                      if (evt.ctrlKey) parts.push('Ctrl');
-                      if (evt.metaKey) parts.push('Meta');
-                      if (evt.altKey) parts.push('Alt');
-                      if (evt.shiftKey) parts.push('Shift');
-                      if (!['Control', 'Meta', 'Alt', 'Shift'].includes(evt.key)) {
-                        parts.push(evt.key === ' ' ? 'Space' : evt.key.length === 1 ? evt.key.toUpperCase() : evt.key);
-                        setSettings({ ...settings, [setting.id]: parts.join('+') });
-                        setRecordingKeybinding(null);
-                        window.removeEventListener('keydown', handler);
-                      }
-                    };
-                    window.addEventListener('keydown', handler);
-                  }}
-                >
-                  {recordingKeybinding === setting.id ? 'Press any key...' : (val || '')}
-                </kbd>
-              </div>
-            </div>
+            <kbd 
+              style={{
+                padding: '4px 8px',
+                background: recordingKeybinding === setting.id ? 'var(--accent-soft)' : 'var(--bg-app)',
+                border: '1px solid ' + (recordingKeybinding === setting.id ? 'var(--accent)' : 'var(--border)'),
+                borderRadius: '4px',
+                fontSize: '0.9em',
+                fontFamily: 'monospace',
+                cursor: 'pointer',
+                color: 'var(--fg)',
+                display: 'inline-block'
+              }}
+              onClick={(e) => {
+                e.preventDefault();
+                setRecordingKeybinding(setting.id);
+                const handler = (evt: KeyboardEvent) => {
+                  evt.preventDefault();
+                  evt.stopPropagation();
+                  if (evt.key === 'Escape') {
+                    setRecordingKeybinding(null);
+                    window.removeEventListener('keydown', handler);
+                    return;
+                  }
+                  const parts = [];
+                  if (evt.ctrlKey) parts.push('Ctrl');
+                  if (evt.metaKey) parts.push('Meta');
+                  if (evt.altKey) parts.push('Alt');
+                  if (evt.shiftKey) parts.push('Shift');
+                  if (!['Control', 'Meta', 'Alt', 'Shift'].includes(evt.key)) {
+                    parts.push(evt.key === ' ' ? 'Space' : evt.key.length === 1 ? evt.key.toUpperCase() : evt.key);
+                    setSettings({ ...settings, [setting.id]: parts.join('+') });
+                    setRecordingKeybinding(null);
+                    window.removeEventListener('keydown', handler);
+                  }
+                };
+                window.addEventListener('keydown', handler);
+              }}
+            >
+              {recordingKeybinding === setting.id ? 'Press any key...' : (val || '')}
+            </kbd>
           )}
           {setting.type === 'action' && renderAction(setting)}
         </div>
@@ -425,6 +436,8 @@ export function SettingsScreen() {
                   key={tab.id}
                   className={`task-row ${activeTab === tab.id ? 'is-active' : ''}`}
                   onClick={() => setActiveTab(tab.id)}
+                  data-cuelume-hover="tick"
+                  data-cuelume-toggle
                 >
                   <div className="task-row-title">{tab.label}</div>
                 </div>

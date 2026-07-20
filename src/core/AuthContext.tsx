@@ -57,7 +57,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       script.onload = () => {
         const client = (window as any).google.accounts.oauth2.initCodeClient({
            client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-           scope: 'https://www.googleapis.com/auth/calendar',
+           scope: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/tasks',
            ux_mode: 'popup',
            callback: async (response: any) => {
                if (response.code) {

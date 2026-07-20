@@ -5,6 +5,7 @@
 Taskroot is a web-based and desktop task management app focusing on planning, executing, and resting. It is built as a Single Page Application (SPA) that can run in a browser or as a native desktop app via Electron.
 
 ## Tech Stack
+- **Package Manager**: Bun (`bun`). Used for package management, running scripts, and testing.
 - **Frontend Framework**: React 19 with React Router for SPA navigation.
 - **Build Tool**: Vite (with Hot Module Replacement for fast development).
 - **Desktop Wrapper**: Electron (configured via `electron/main.ts` and `preload.ts`).

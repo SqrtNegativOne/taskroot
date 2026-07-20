@@ -9,6 +9,7 @@ import { TitleBar } from './components/shell';
 import { useStored } from './core/store';
 import { SAMPLE_TASKS, SAMPLE_EVENTS } from './core/data';
 import { useGoogleCalendarSync } from './core/useGoogleCalendarSync';
+import { useGoogleTasksSync } from './core/useGoogleTasksSync';
 import { NotificationProvider, useNotification } from './core/notifications';
 import { LoginScreen } from './screens/login/LoginScreen';
 import { WrapScreen } from './screens/wrap/WrapScreen';
@@ -101,6 +102,7 @@ function GlobalSync({ children }: { children: React.ReactNode }) {
   const [tasks, setTasks, tasksLoaded] = useStored('tasks', SAMPLE_TASKS);
   const [events, setEvents, eventsLoaded] = useStored('events', SAMPLE_EVENTS);
   useGoogleCalendarSync(events, setEvents, tasks);
+  useGoogleTasksSync(tasks, setTasks);
 
   if (!tasksLoaded || !eventsLoaded) {
     return (

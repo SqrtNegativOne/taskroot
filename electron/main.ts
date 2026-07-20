@@ -19,6 +19,49 @@ let miniWin: BrowserWindow | null = null;
 let tray: Tray | null = null;
 let serverPort = 0;
 
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+  app.quit();
+  process.exit(0);
+}
+
+if (process.defaultApp) {
+  if (process.argv.length >= 2) {
+    app.setAsDefaultProtocolClient('taskroot', process.execPath, [path.resolve(process.argv[1])]);
+  }
+} else {
+  app.setAsDefaultProtocolClient('taskroot');
+}
+
+function handleDeepLink(url: string) {
+  if (!url.startsWith('taskroot://')) return;
+  const route = url.replace('taskroot://', '').replace(/\/$/, '');
+  if (win && route) {
+    win.webContents.send('deep-link', route);
+  }
+}
+
+app.on('second-instance', (event, commandLine) => {
+  if (win) {
+    if (win.isMinimized()) win.restore();
+    win.show();
+    win.focus();
+  }
+  if (miniWin) {
+    miniWin.close();
+  }
+  const url = commandLine.find(arg => arg.startsWith('taskroot://'));
+  if (url) {
+    handleDeepLink(url);
+  }
+});
+
+// macOS deep link handling
+app.on('open-url', (event, url) => {
+  event.preventDefault();
+  handleDeepLink(url);
+});
+
 // Handle file logging from renderer
 ipcMain.on('log-to-file', (event, level, message) => {
   const logPath = path.join(process.env.APP_ROOT as string, 'taskroot.log');
@@ -234,4 +277,11 @@ function createTray() {
 app.whenReady().then(() => {
   createWindow();
   createTray();
+
+  const url = process.argv.find(arg => arg.startsWith('taskroot://'));
+  if (url) {
+    win?.webContents.once('did-finish-load', () => {
+      handleDeepLink(url);
+    });
+  }
 });

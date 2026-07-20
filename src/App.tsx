@@ -45,6 +45,15 @@ function AppRouter() {
   const [settings] = useStored('settings', { keybindingOpenSettings: 'Ctrl+,' });
 
   React.useEffect(() => {
+    const api = (window as any).electronAPI;
+    if (api?.onDeepLink) {
+      api.onDeepLink((route: string) => {
+        navigate(`/${route}`);
+      });
+    }
+  }, [navigate]);
+
+  React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLElement && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable)) {
         if (!e.ctrlKey && !e.metaKey && !e.altKey) return;

@@ -62,13 +62,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
            callback: async (response: any) => {
                if (response.code) {
                    try {
-                       const { getFunctions, httpsCallable } = await import('firebase/functions');
-                       const functions = getFunctions();
-                       const exchangeAuthCode = httpsCallable(functions, 'exchangeAuthCode');
-                       const res = await exchangeAuthCode({ code: response.code });
-                       const newAccessToken = (res.data as any).accessToken;
-                       if (newAccessToken) {
-                         localStorage.setItem('google_access_token', newAccessToken);
+                       const res = await fetch('https://oauth2.googleapis.com/token', {
+                         method: 'POST',
+                         headers: { 'Content-Type': 'application/json' },
+                         body: JSON.stringify({
+                           client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+                           client_secret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET,
+                           code: response.code,
+                           grant_type: 'authorization_code',
+                           redirect_uri: 'postmessage'
+                         })
+                       });
+                       const data = await res.json();
+                       if (data.access_token) {
+                         localStorage.setItem('google_access_token', data.access_token);
+                         if (data.refresh_token) {
+                           localStorage.setItem('google_refresh_token', data.refresh_token);
+                         }
+                         window.location.reload(); // Reload to start sync
+                       } else {
+                         throw new Error(data.error_description || "Failed to exchange token");
                        }
                    } catch (err) {
                        console.error("Failed to exchange auth code:", err);

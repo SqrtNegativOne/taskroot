@@ -164,6 +164,16 @@ export const SETTINGS_SCHEMA: SettingSchema[] = [
     danger: true
   },
   {
+    id: 'logout',
+    section: 'Data Management',
+    tab: 'sync',
+    label: 'Sign out',
+    description: 'Sign out of your Google / Firebase account.',
+    keywords: ['logout', 'signout', 'google', 'firebase', 'account'],
+    type: 'action',
+    action: 'logout'
+  },
+  {
     id: 'clearAllData',
     section: 'Danger Zone',
     tab: 'sync',

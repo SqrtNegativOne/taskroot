@@ -17,9 +17,17 @@ export function MiniTrackerScreen() {
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
+    document.documentElement.style.background = 'transparent';
+    document.body.style.background = 'transparent';
+    
     if (!audioRef.current) {
       audioRef.current = new Audio('/wine-glass-alarm.ogg');
     }
+    
+    return () => {
+      document.documentElement.style.background = '';
+      document.body.style.background = '';
+    };
   }, []);
 
   useEffect(() => {

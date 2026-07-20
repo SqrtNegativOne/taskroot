@@ -5,6 +5,7 @@ import { SearchBar } from '../../components/search-bar';
 import { TODAY } from '../../core/data';
 import { useStored } from '../../core/store';
 import { api } from '../../core/api';
+import { useAuth } from '../../core/AuthContext';
 import './settings.css';
 import { SETTINGS_SCHEMA, SETTINGS_TABS, DEFAULT_SETTINGS } from '../../core/settingsSchema';
 
@@ -163,6 +164,7 @@ function CalendarCategories({ settings, setSettings }: any) {
 }
 
 export function SettingsScreen() {
+  const { logout } = useAuth();
   const [activeTab, setActiveTab] = useState('general');
   const [recordingKeybinding, setRecordingKeybinding] = useState<string | null>(null);
   const [settings, setSettings] = useStored<any>('settings', DEFAULT_SETTINGS);
@@ -298,6 +300,15 @@ export function SettingsScreen() {
           }
         }}>
           Restore Today's Backup
+        </button>
+      );
+    }
+    if (setting.action === 'logout') {
+      return (
+        <button className="sw-btn" onClick={async () => {
+          await logout();
+        }}>
+          Sign Out
         </button>
       );
     }

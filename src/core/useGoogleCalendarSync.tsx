@@ -30,12 +30,17 @@ export function toGoogleEvent(localEvent, tasks) {
   // Determine timezone based on the browser
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-  return {
+  const r: any = {
     summary: title || 'Taskroot Event',
     start: { dateTime: startStr, timeZone },
     end: { dateTime: endStr, timeZone },
     description: `Taskroot Event ID: ${localEvent.id}${localEvent.taskId ? `\nTask ID: ${localEvent.taskId}` : ''}`,
   };
+  
+  if (localEvent.rrule) {
+    r.recurrence = [`RRULE:${localEvent.rrule}`];
+  }
+  return r;
 }
 
 // Convert Google Calendar event to our event format
@@ -84,6 +89,10 @@ export function toLocalEvent(googleEvent, calendarId = 'primary', categoryMap = 
     }
   }
 
+  const rrule = googleEvent.recurrence && googleEvent.recurrence.length > 0
+    ? googleEvent.recurrence.find((r: string) => r.startsWith('RRULE:'))?.replace(/^RRULE:/i, '')
+    : undefined;
+
   return {
     id: id,
     googleEventId: googleEvent.id, // Store to keep track
@@ -93,8 +102,9 @@ export function toLocalEvent(googleEvent, calendarId = 'primary', categoryMap = 
     date: date,
     start: start,
     end: end,
-    type: taskId ? 'plan' : (googleEvent.start.date ? 'info' : 'busy'),
+    type: taskId ? 'plan' : (googleEvent.start?.date ? 'info' : 'busy'),
     category: category,
+    rrule: rrule,
   };
 }
 
@@ -105,7 +115,7 @@ export const defaultApiClient = {
     });
   },
   fetchEvents: async (timeMin, timeMax, token, calendarId = 'primary') => {
-    const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&maxResults=2500`, {
+    const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=false&maxResults=2500`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     return res;
@@ -197,14 +207,24 @@ export function useGoogleCalendarSync(events, setEvents, tasks, apiClient = defa
       }
 
       if (needsRefresh) {
-         console.log("Google Token expired. Attempting to refresh via backend...");
+         console.log("Google Token expired. Attempting to refresh via frontend...");
          try {
-           const { getFunctions, httpsCallable } = await import('firebase/functions');
-           const functions = getFunctions();
-           const getFreshAccessToken = httpsCallable(functions, 'getFreshAccessToken');
+           const refreshToken = localStorage.getItem('google_refresh_token');
+           if (!refreshToken) throw new Error("No refresh token");
+
+           const res = await fetch('https://oauth2.googleapis.com/token', {
+             method: 'POST',
+             headers: { 'Content-Type': 'application/json' },
+             body: JSON.stringify({
+               client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+               client_secret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET,
+               refresh_token: refreshToken,
+               grant_type: 'refresh_token'
+             })
+           });
            
-           const result = await getFreshAccessToken();
-           const newAccessToken = (result.data as any).accessToken;
+           const result = await res.json();
+           const newAccessToken = result.access_token;
            
            if (newAccessToken) {
              localStorage.setItem('google_access_token', newAccessToken);
@@ -221,9 +241,11 @@ export function useGoogleCalendarSync(events, setEvents, tasks, apiClient = defa
                 }
              }
              return retryAllEvents;
+           } else {
+             throw new Error(result.error_description || "Failed to refresh token");
            }
          } catch (refreshError) {
-           console.error("Backend token refresh failed:", refreshError);
+           console.error("Token refresh failed:", refreshError);
            localStorage.removeItem('google_access_token');
            notify("Google Calendar token expired. Please log in again.", "error");
            return [];

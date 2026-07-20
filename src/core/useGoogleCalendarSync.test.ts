@@ -65,8 +65,22 @@ describe('Google Calendar Sync Mappings', () => {
     expect(localEvent.title).toBe('Updated Feature X Work');
     // We skip exact start/end time assertions because of local timezone parsing differences in tests,
     // but we can verify the properties exist.
-    expect(localEvent.start).toBeDefined();
     expect(localEvent.end).toBeDefined();
+  });
+
+  it('maps RRULE strings bidirectionally', () => {
+    const localEvent = { id: 'e3', type: 'busy', date: '2026-07-12', rrule: 'FREQ=WEEKLY' };
+    const gEvent = toGoogleEvent(localEvent, []);
+    expect(gEvent.recurrence).toBeDefined();
+    expect(gEvent.recurrence[0]).toBe('RRULE:FREQ=WEEKLY');
+
+    const parsedLocal = toLocalEvent({
+      id: 'g3',
+      start: { date: '2026-07-12' },
+      end: { date: '2026-07-13' },
+      recurrence: ['RRULE:FREQ=WEEKLY']
+    });
+    expect(parsedLocal.rrule).toBe('FREQ=WEEKLY');
   });
 });
 

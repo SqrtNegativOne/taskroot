@@ -9,6 +9,7 @@ import { TaskListPane } from '../../components/tasklist';
 import { useTweaks, TweaksPanel, TweakSection, TweakSlider, TweakToggle, TweakRadio, TweakColor } from './tweaks-panel';
 import { SplitPane } from '../../components/split-pane';
 import { FilterSortButtons } from './shared-menus';
+import { expandEventsForView } from '../../core/rrule-utils';
 
 const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
   "accent": "var(--tag-yellow)",
@@ -62,6 +63,14 @@ function PlanScreen() {
     tasks.forEach(t => (t.tags || []).forEach(tag => s.add(tag)));
     return Array.from(s).sort();
   }, [events, tasks]);
+
+  const visibleEvents = React.useMemo(() => {
+    const start = new Date(anchor);
+    start.setMonth(start.getMonth() - 2);
+    const end = new Date(anchor);
+    end.setMonth(end.getMonth() + 2);
+    return expandEventsForView(events, start, end);
+  }, [events, anchor]);
 
   const getEventFilterValues = React.useCallback((col) => {
     if (col === 'type') return ['info', 'plan', 'busy', 'log'];
@@ -250,7 +259,7 @@ function PlanScreen() {
               <DateGrid
                 view={view} setView={setView}
                 anchor={anchor} setAnchor={setAnchor}
-                events={events} tasks={tasks}
+                events={visibleEvents} tasks={tasks}
                 filter={calFilter}
                 sort={calSort}
                 filterMenu={
@@ -277,7 +286,7 @@ function PlanScreen() {
                 onDropToDate={() => {}}
               />
               <DayTimeline
-                events={events} tasks={tasks}
+                events={visibleEvents} tasks={tasks}
                 filter={timeFilter}
                 sort={timeSort}
                 filterMenu={
@@ -584,7 +593,7 @@ function InspectorPane({ inspectorState, onClose, tasks, setTasks, events, setEv
   const currentItem = currentState 
     ? (isCurrentTask 
       ? tasks.find(t => t.id === currentState.id)
-      : events.find(e => e.id === currentState.id))
+      : events.find(e => e.id === currentState.id) || events.find(e => e.id === currentState.id.split('_')[0]))
     : null;
 
   const [showEndDate, setShowEndDate] = React.useState(false);
@@ -740,20 +749,39 @@ function InspectorPane({ inspectorState, onClose, tasks, setTasks, events, setEv
                  )}
 
                  <div className="inspector-field" style={{ marginTop: '8px' }}>
-                   <label>Calendar Category (optional)</label>
-                   <input 
-                     type="text" 
-                     placeholder="e.g. Work, Personal"
-                     value={currentItem.category || ''}
-                     onChange={e => updateEvent(currentItem.id, { category: e.target.value })}
-                     list="category-options"
-                   />
-                   <datalist id="category-options">
-                     {Object.keys(settings?.categoryCalendars || {}).map(cat => (
-                       <option key={cat} value={cat} />
-                     ))}
-                   </datalist>
-                 </div>
+                    <label>Calendar Category (optional)</label>
+                    <input 
+                      type="text" 
+                      placeholder="e.g. Work, Personal"
+                      value={currentItem.category || ''}
+                      onChange={e => updateEvent(currentItem.id, { category: e.target.value })}
+                      list="category-options"
+                    />
+                    <datalist id="category-options">
+                      {Object.keys(settings?.categoryCalendars || {}).map(cat => (
+                        <option key={cat} value={cat} />
+                      ))}
+                    </datalist>
+                  </div>
+                  
+                  <div className="inspector-field" style={{ marginTop: '8px' }}>
+                    <label>Repeat (RRULE)</label>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', width: '100%' }}>
+                      <select value={currentItem.rrule || ''} onChange={e => updateEvent(currentItem.id, { rrule: e.target.value || undefined })}>
+                        <option value="">None</option>
+                        <option value="FREQ=DAILY">Daily</option>
+                        <option value="FREQ=WEEKLY">Weekly</option>
+                        <option value="FREQ=MONTHLY">Monthly</option>
+                        <option value="FREQ=YEARLY">Yearly</option>
+                      </select>
+                      <input 
+                        type="text" 
+                        placeholder="Custom RRULE (e.g. FREQ=WEEKLY;BYDAY=TU,TH)" 
+                        value={currentItem.rrule || ''} 
+                        onChange={e => updateEvent(currentItem.id, { rrule: e.target.value || undefined })} 
+                      />
+                    </div>
+                  </div>
 
                  <div className="inspector-field" style={{ gap: '20px', padding: '8px 0', flexDirection: 'row' }}>
                    <Toggle 

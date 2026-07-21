@@ -321,6 +321,26 @@ html:has(.app-do), html:has(.app-do) body {
   color: var(--fg); padding: 8px 12px;
   font-family: var(--mono); font-size: 1em;
 }
+
+.inspector-field input[type="number"] {
+  padding-right: 0;
+}
+.inspector-field input[type="number"]::-webkit-inner-spin-button,
+.inspector-field input[type="number"]::-webkit-outer-spin-button {
+  opacity: 0; /* hidden by default */
+  height: auto;
+  min-height: 100%;
+  align-self: stretch;
+  margin: -8px 0; /* stretch over the top/bottom padding */
+  cursor: pointer;
+  transition: opacity 0.2s; /* smooth fade in */
+}
+.inspector-field input[type="number"]:hover::-webkit-inner-spin-button,
+.inspector-field input[type="number"]:focus::-webkit-inner-spin-button,
+.inspector-field input[type="number"]:hover::-webkit-outer-spin-button,
+.inspector-field input[type="number"]:focus::-webkit-outer-spin-button {
+  opacity: 1; /* show on hover/focus */
+}
 .inspector-field input:focus, .inspector-field select:focus {
   border-color: var(--accent); outline: none;
 }

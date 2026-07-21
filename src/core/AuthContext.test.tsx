@@ -2,31 +2,57 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, act } from '@testing-library/react';
 import { AuthProvider, useAuth } from './AuthContext';
-import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
 import { api } from './api';
+import { onAuthStateChanged } from 'firebase/auth';
 
-// Mock dependencies
-vi.mock('firebase/auth', () => ({
-  onAuthStateChanged: vi.fn(),
-  signInWithPopup: vi.fn(),
-  signOut: vi.fn(),
-  GoogleAuthProvider: class {}
-}));
+vi.mock('firebase/auth', () => {
+  const authState = {
+    currentUser: null as any,
+    listeners: new Set<Function>()
+  };
+  return {
+    __fakeAuth: authState,
+    onAuthStateChanged: (auth: any, cb: Function) => {
+      authState.listeners.add(cb);
+      // Call immediately with current state
+      cb(authState.currentUser);
+      return () => authState.listeners.delete(cb);
+    },
+    signInWithPopup: async () => {
+      const user = { uid: 'test-user-123' };
+      authState.currentUser = user;
+      authState.listeners.forEach(cb => cb(user));
+    },
+    signOut: async () => {
+      authState.currentUser = null;
+      authState.listeners.forEach(cb => cb(null));
+    },
+    GoogleAuthProvider: class {}
+  };
+});
 
 vi.mock('./firebase', () => ({
   auth: {},
   googleProvider: {}
 }));
 
-vi.mock('./api', () => ({
-  api: {
-    setUserId: vi.fn()
-  }
-}));
+vi.mock('./api', () => {
+  const apiState = {
+    userId: null as string | null
+  };
+  return {
+    api: {
+      __fakeApi: apiState,
+      setUserId: (id: string | null) => {
+        apiState.userId = id;
+      }
+    }
+  };
+});
 
 vi.mock('./notifications', () => ({
   useNotification: () => ({
-    notify: vi.fn()
+    notify: () => {}
   })
 }));
 
@@ -45,16 +71,22 @@ const TestComponent = () => {
 };
 
 describe('AuthContext', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
+  let firebaseAuthModule: any;
+
+  beforeEach(async () => {
+    firebaseAuthModule = await import('firebase/auth');
+    firebaseAuthModule.__fakeAuth.currentUser = null;
+    firebaseAuthModule.__fakeAuth.listeners.clear();
+    (api as any).__fakeApi.userId = null;
   });
 
   afterEach(() => {
-    vi.clearAllMocks();
   });
 
-  it('initially shows loading state and calls onAuthStateChanged', () => {
-    (onAuthStateChanged as any).mockImplementation(() => () => {});
+  it('initially shows loading state', () => {
+    // Prevent immediate resolution for this test
+    const originalOnAuth = firebaseAuthModule.onAuthStateChanged;
+    firebaseAuthModule.onAuthStateChanged = () => () => {};
     
     render(
       <AuthProvider>
@@ -63,38 +95,29 @@ describe('AuthContext', () => {
     );
 
     expect(screen.getByText('Loading...')).toBeInTheDocument();
-    expect(onAuthStateChanged).toHaveBeenCalled();
+    
+    // Restore
+    firebaseAuthModule.onAuthStateChanged = originalOnAuth;
   });
 
   it('updates state and calls api.setUserId when user logs in', async () => {
-    let capturedCallback: Function = () => {};
-    
-    (onAuthStateChanged as any).mockImplementation((auth: any, callback: Function) => {
-      capturedCallback = callback;
-      return () => {};
-    });
-    
     render(
       <AuthProvider>
         <TestComponent />
       </AuthProvider>
     );
 
-    act(() => {
-      capturedCallback({ uid: 'test-user-123' });
+    await act(async () => {
+      await firebaseAuthModule.signInWithPopup();
     });
 
     expect(screen.getByTestId('user-status')).toHaveTextContent('Logged in as test-user-123');
-    expect(api.setUserId).toHaveBeenCalledWith('test-user-123');
+    expect((api as any).__fakeApi.userId).toBe('test-user-123');
   });
 
   it('updates state and calls api.setUserId when user logs out', async () => {
-    let capturedCallback: Function = () => {};
-    
-    (onAuthStateChanged as any).mockImplementation((auth: any, callback: Function) => {
-      capturedCallback = callback;
-      return () => {};
-    });
+    // Start logged in
+    firebaseAuthModule.__fakeAuth.currentUser = { uid: 'test-user-123' };
     
     render(
       <AuthProvider>
@@ -102,35 +125,28 @@ describe('AuthContext', () => {
       </AuthProvider>
     );
 
-    act(() => {
-      capturedCallback(null);
+    await act(async () => {
+      await firebaseAuthModule.signOut();
     });
 
     expect(screen.getByTestId('user-status')).toHaveTextContent('Not logged in');
-    expect(api.setUserId).toHaveBeenCalledWith(null);
+    expect((api as any).__fakeApi.userId).toBeNull();
   });
 
   it('calls signOut when logout is triggered', async () => {
-    let capturedCallback: Function = () => {};
-    (onAuthStateChanged as any).mockImplementation((auth: any, callback: Function) => {
-      capturedCallback = callback;
-      return () => {};
-    });
+    firebaseAuthModule.__fakeAuth.currentUser = { uid: 'test-user-123' };
     
     render(
       <AuthProvider>
         <TestComponent />
       </AuthProvider>
     );
-
-    act(() => {
-      capturedCallback({ uid: 'test-user' });
-    });
 
     await act(async () => {
       screen.getByText('Logout').click();
     });
 
-    expect(signOut).toHaveBeenCalled();
+    expect(firebaseAuthModule.__fakeAuth.currentUser).toBeNull();
+    expect((api as any).__fakeApi.userId).toBeNull();
   });
 });

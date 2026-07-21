@@ -83,7 +83,7 @@ function Kanban() {
 
       {drag && (
         <div className="kanban-ghost" style={{ left: drag.x + 12, top: drag.y - 6 }}>
-          <div className={`task-row-pri-bar pri-bg-${tasks.find(t => t.id === drag.taskId)?.priority}`} />
+          <div className={`task-circle pri-bg-${tasks.find(t => t.id === drag.taskId)?.priority}`} />
           <span className="kanban-ghost-title">{tasks.find(t => t.id === drag.taskId)?.title}</span>
         </div>
       )}
@@ -98,7 +98,7 @@ function KanbanCard({ task, onPointerDown, dragging }) {
       onPointerDown={onPointerDown}
     >
       <div className="kanban-card-line1">
-        <div className={`task-row-pri-bar pri-bg-${task.priority}`} />
+        <div className={`task-circle pri-bg-${task.priority}`} />
         <span className="kanban-card-title">{task.title}</span>
       </div>
       <div className="kanban-card-line2">

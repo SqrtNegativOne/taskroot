@@ -81,7 +81,7 @@ export function GraphScreen() {
             onAddTask={() => {
               const id = `t${Date.now()}`;
               setTasks(ts => [{
-                 id, title: 'New Task', status: 'todo', priority: 'P2', tags: [], subtasks: [], parent_task: null, dependencies: [], est: 60, added: new Date().toISOString()
+                 id, title: 'New Task', status: 'todo', priority: 1, tags: [], subtasks: [], parent_task: null, dependencies: [], est: 60, added: new Date().toISOString()
               }, ...ts]);
             }}
             onDeleteTask={(id: string) => setTasks(ts => ts.filter(t => t.id !== id))}

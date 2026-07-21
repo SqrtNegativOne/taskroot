@@ -146,8 +146,8 @@ export const SETTINGS_SCHEMA: SettingSchema[] = [
     id: 'enableCalendarSync',
     section: 'Sync & Integrations',
     tab: 'sync',
-    label: 'Enable Google Calendar Sync',
-    description: 'Sync events bidirectionally with Google Calendar.',
+    label: 'Enable Bidirectional Google Calendar Sync',
+    description: 'Self explanatory.',
     keywords: ['google', 'calendar', 'sync', 'events'],
     type: 'checkbox',
     defaultValue: true
@@ -156,21 +156,31 @@ export const SETTINGS_SCHEMA: SettingSchema[] = [
     id: 'enableTasksSync',
     section: 'Sync & Integrations',
     tab: 'sync',
-    label: 'Enable Google Tasks Sync',
-    description: 'Sync tasks bidirectionally with Google Tasks.',
+    label: 'Enable Bidirectional Google Tasks Sync',
+    description: 'Self explanatory.',
     keywords: ['google', 'tasks', 'sync', 'todos'],
     type: 'checkbox',
     defaultValue: true
   },
   {
+    id: 'logout',
+    section: 'Sync & Integrations',
+    tab: 'sync',
+    label: 'Sign out',
+    description: 'Sign out of your Google / Firebase account.',
+    keywords: ['logout', 'signout', 'google', 'firebase', 'account'],
+    type: 'action',
+    action: 'logout'
+  },
+  {
     id: 'exportData',
     section: 'Data Management',
     tab: 'sync',
-    label: 'Export Data',
+    label: 'Export Data as JSON',
+    description: 'It stands for Json Object Notation.',
     keywords: ['export', 'backup', 'json', 'data'],
     type: 'action',
     action: 'exportData',
-    beta: true
   },
   {
     id: 'importTasks',
@@ -182,27 +192,7 @@ export const SETTINGS_SCHEMA: SettingSchema[] = [
     type: 'action',
     action: 'importTasks'
   },
-  {
-    id: 'restoreBackup',
-    section: 'Data Management',
-    tab: 'sync',
-    label: 'Restore from Backup',
-    description: 'If your data got corrupted, restore it from today\'s automatic backup snapshot. This will reload the application.',
-    keywords: ['restore', 'backup', 'snapshot', 'recover'],
-    type: 'action',
-    action: 'restoreBackup',
-    danger: true
-  },
-  {
-    id: 'logout',
-    section: 'Data Management',
-    tab: 'sync',
-    label: 'Sign out',
-    description: 'Sign out of your Google / Firebase account.',
-    keywords: ['logout', 'signout', 'google', 'firebase', 'account'],
-    type: 'action',
-    action: 'logout'
-  },
+
   {
     id: 'clearAllData',
     section: 'Danger Zone',

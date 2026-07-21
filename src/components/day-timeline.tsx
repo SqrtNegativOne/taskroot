@@ -320,7 +320,7 @@ function EventBlock({ event, task, lane, lanes, onResize, onMove, dragState, set
         <div className="day-event-handle day-event-handle-top" onPointerDown={isGhost ? undefined : onResizeStart('top')} />
         <div className="day-event-inner">
           <div className="day-event-title">
-            {pri && <span className={`pri pri-${pri}`}>●</span>}
+            {pri !== null && pri !== undefined && <span className={`pri pri-${pri}`}>●</span>}
             {title}
           </div>
           <div className="day-event-time">{PAD2(Math.floor(start / 60))}:{PAD2(start % 60)} – {PAD2(Math.floor(end / 60))}:{PAD2(end % 60)}</div>

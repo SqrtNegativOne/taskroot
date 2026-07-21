@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } fr
 import { Link, useNavigate } from 'react-router-dom';
 import { Icon } from './icon';
 import { MONTHS, DOW_SHORT, PAD2 } from '../core/data';
+import { syncEngine } from '../core/SyncEngine';
 
 // Shared top bar + clickable stage indicator. Used across Plan, Do, Rest.
 function TitleBar({ current, today }) {
@@ -15,6 +16,33 @@ function TitleBar({ current, today }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const [syncStatus, setSyncStatus] = useState('sync');
+  const syncBtnRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    return syncEngine.subscribeStatus((status) => {
+      setSyncStatus(status);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (syncStatus === 'sync_disabled') {
+      if (syncBtnRef.current) syncBtnRef.current.title = 'Sync Disabled';
+      return;
+    }
+
+    const updateTitle = () => {
+      if (!syncBtnRef.current) return;
+      const remaining = Math.max(0, syncEngine.nextSyncTime - Date.now());
+      const m = Math.floor(remaining / 60000);
+      const s = Math.floor((remaining % 60000) / 1000);
+      syncBtnRef.current.title = `Next sync in ${m}m ${s}s (Click to force sync)`;
+    };
+
+    updateTitle();
+    const interval = setInterval(updateTitle, 1000);
+    return () => clearInterval(interval);
+  }, [syncStatus]);
 
   useEffect(() => {
     const handleOutsideClick = (e: PointerEvent) => {
@@ -92,6 +120,9 @@ function TitleBar({ current, today }) {
       <div className="topbar-right">
       </div>
       <div className="window-controls">
+        <button ref={syncBtnRef} className="win-btn" onClick={() => syncEngine.forceSync()} data-cuelume-hover="tick" data-cuelume-toggle style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Icon name={syncStatus} size={18} style={{ display: 'block', transform: 'translateY(1px)' }} />
+        </button>
         <button className="win-btn minimize" onClick={handleMinimize} title="Minimize" data-cuelume-hover="tick" data-cuelume-toggle>
           <svg width="10" height="10" viewBox="0 0 10 10"><path d="M 1,5 h 8" stroke="currentColor" strokeWidth="1"/></svg>
         </button>

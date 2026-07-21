@@ -200,7 +200,7 @@ function PlanScreen() {
   const onAddTask = () => {
     const id = `t${Date.now()}`;
     setTasks(ts => [{
-       id, title: '', status: 'todo', priority: 'P2', tags: [], subtasks: [], parent_task: null, dependency: null, est: settings.defaultTaskDuration !== undefined ? settings.defaultTaskDuration : 0, added: new Date().toISOString(), isDraft: true
+       id, title: '', status: 'todo', priority: 1, tags: [], subtasks: [], parent_task: null, dependency: null, est: (settings.defaultTaskDuration === 0 || settings.defaultTaskDuration === undefined) ? undefined : settings.defaultTaskDuration, added: new Date().toISOString(), isDraft: true
     }, ...ts]);
     setInspectorState({ type: 'task', id });
   };
@@ -236,7 +236,7 @@ function PlanScreen() {
     <div className="app">
       <TitleBar today={TODAY} current="plan" />
 
-      <main className="main">
+      <main className="main" style={{ position: 'relative' }}>
         <SplitPane direction="horizontal" defaultSize={360} minSize={200} snapThreshold={50}>
           <TaskListPane
             tasks={tasks} setTasks={setTasks}
@@ -317,16 +317,16 @@ function PlanScreen() {
             </SplitPane>
           </div>
         </SplitPane>
-      </main>
 
-      <InspectorPane 
-        inspectorState={inspectorState} 
-        onClose={() => setInspectorState(null)} 
-        tasks={tasks} setTasks={setTasks} 
-        events={events} setEvents={setEvents}
-        allTags={allEventTags}
-        settings={settings}
-      />
+        <InspectorPane 
+          inspectorState={inspectorState} 
+          onClose={() => setInspectorState(null)} 
+          tasks={tasks} setTasks={setTasks} 
+          events={events} setEvents={setEvents}
+          allTags={allEventTags}
+          settings={settings}
+        />
+      </main>
 
       {(dragState && (dragState.task || dragState.event)) && (
         <DragGhost
@@ -397,7 +397,7 @@ function DragGhost({ task, event, x, y, style }) {
       style={{ left: x + 14, top: y - 8 }}
     >
       <div className="drag-ghost-inner">
-        {pri && <div className={`task-row-pri-bar pri-bg-${pri}`} aria-label={pri} />}
+        {pri !== null && pri !== undefined && <div className={`task-circle pri-bg-${pri}`} aria-label={String(pri)} />}
         <span className="drag-ghost-title">{title}</span>
       </div>
       <div className="drag-ghost-meta">
@@ -701,17 +701,13 @@ function InspectorPane({ inspectorState, onClose, tasks, setTasks, events, setEv
                    </div>
                    <div className="inspector-field">
                      <label>Priority</label>
-                     <select value={currentItem.priority} onChange={e => updateTask(currentItem.id, { priority: e.target.value })}>
-                       <option value="P1">P1</option>
-                       <option value="P2">P2</option>
-                       <option value="P3">P3</option>
-                     </select>
+                     <input type="number" min="0" max="4" value={currentItem.priority ?? 2} onChange={e => updateTask(currentItem.id, { priority: Math.max(0, Math.min(4, parseInt(e.target.value) || 0)) })} />
                    </div>
                  </div>
                  
                  <div className="inspector-field">
                    <label>Duration (min)</label>
-                   <input type="number" value={currentItem.est || 0} onChange={e => updateTask(currentItem.id, { est: parseInt(e.target.value) || 0 })} />
+                   <input type="number" placeholder="Unset" value={currentItem.est === undefined ? '' : currentItem.est} onChange={e => updateTask(currentItem.id, { est: e.target.value ? parseInt(e.target.value) : undefined })} />
                  </div>
                </>
              )}

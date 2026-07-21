@@ -27,10 +27,7 @@ class ApiService {
       const key = localStorage.key(i);
       if (key && key.startsWith('taskroot_')) {
         keysToRemove.push(key);
-        // Only delete real store keys from cloud, ignore backups
-        if (!key.startsWith('taskroot_backup_')) {
-          cloudKeysToDelete.push(key.replace('taskroot_', ''));
-        }
+        cloudKeysToDelete.push(key.replace('taskroot_', ''));
       }
     }
     

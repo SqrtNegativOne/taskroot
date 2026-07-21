@@ -9,9 +9,6 @@ function useStored<T>(key: string, initial: T): [T, (val: T | ((prev: T) => T)) 
     try {
       const saved = localStorage.getItem(`taskroot_${key}`);
       if (saved) {
-        // Save a daily snapshot backup
-        const today = new Date().toISOString().slice(0, 10);
-        localStorage.setItem(`taskroot_backup_${key}_${today}`, saved);
         return JSON.parse(saved);
       }
       return initial;

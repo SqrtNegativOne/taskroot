@@ -248,12 +248,12 @@ export function SettingsScreen() {
                   id: `t${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
                   title: line,
                   status: 'todo',
-                  priority: 'P2',
+                  priority: 1,
                   tags: [],
                   subtasks: [],
                   parent_task: null,
                   dependency: null,
-                  est: settings.defaultTaskDuration !== undefined ? settings.defaultTaskDuration : 0,
+                  est: (settings.defaultTaskDuration === 0 || settings.defaultTaskDuration === undefined) ? undefined : settings.defaultTaskDuration,
                   added: new Date().toISOString()
                 }));
                 setTasks(ts => [...newTasks, ...(ts || [])]);
@@ -269,40 +269,7 @@ export function SettingsScreen() {
         </div>
       );
     }
-    if (setting.action === 'restoreBackup') {
-      return (
-        <button className="sw-btn" style={{ borderColor: 'var(--red)', color: 'var(--red)' }} onClick={() => {
-          if (!window.confirm("Are you sure? This will overwrite your current state with the last known good snapshot from today, and reload the app.")) return;
-          const today = new Date().toISOString().slice(0, 10);
-          let restoredAny = false;
-          
-          const backupKeys = [];
-          for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key && key.startsWith('taskroot_backup_') && key.endsWith(`_${today}`)) {
-              backupKeys.push(key);
-            }
-          }
-          
-          for (const key of backupKeys) {
-            const originalKey = key.replace('taskroot_backup_', 'taskroot_').replace(`_${today}`, '');
-            const backupData = localStorage.getItem(key);
-            if (backupData) {
-              localStorage.setItem(originalKey, backupData);
-              restoredAny = true;
-            }
-          }
-          
-          if (restoredAny) {
-            window.location.reload();
-          } else {
-            alert("No backups found for today.");
-          }
-        }}>
-          Restore Today's Backup
-        </button>
-      );
-    }
+
     if (setting.action === 'logout') {
       return (
         <button className="sw-btn" onClick={async () => {

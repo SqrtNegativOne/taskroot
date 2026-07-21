@@ -62,7 +62,7 @@
 .kanban-card-line1 {
   display: flex; align-items: center; gap: 5px;
 }
-.kanban-card:hover .task-row-pri-bar { transform: scaleY(1.4); }
+.kanban-card:hover .task-circle { transform: scale(1.15); }
 .kanban-card-title {
   color: var(--fg); flex: 1;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;

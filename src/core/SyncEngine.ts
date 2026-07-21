@@ -22,6 +22,35 @@ export class SyncEngine {
   private categoryMap: any = {};
   private settings: any = { enableCalendarSync: true, enableTasksSync: true };
 
+  private statusListeners = new Set<(status: string) => void>();
+  private currentStatus = 'sync';
+  public nextSyncTime: number = 0;
+
+  subscribeStatus(listener: (status: string) => void) {
+    this.statusListeners.add(listener);
+    listener(this.currentStatus);
+    return () => this.statusListeners.delete(listener);
+  }
+
+  private updateStatus(problem: boolean = false) {
+    // @ts-ignore
+    const offline = import.meta.env && import.meta.env.VITE_OFFLINE_MODE === 'true';
+    if (offline || (this.settings.enableCalendarSync === false && this.settings.enableTasksSync === false)) {
+      this.setStatus('sync_disabled');
+    } else if (problem) {
+      this.setStatus('sync_problem');
+    } else {
+      this.setStatus('sync');
+    }
+  }
+
+  private setStatus(status: string) {
+    if (this.currentStatus !== status) {
+      this.currentStatus = status;
+      this.statusListeners.forEach(l => l(status));
+    }
+  }
+
   registerUpdater(key: string, updater: (val: any) => void) {
     this.updaters.set(key, updater);
   }
@@ -29,10 +58,13 @@ export class SyncEngine {
   setSettings(settings: any) {
     this.settings = settings || {};
     this.categoryMap = this.settings.categoryCalendars || {};
+    this.updateStatus();
   }
 
   start() {
+    this.updateStatus();
     if (this.pollInterval) return;
+    this.nextSyncTime = Date.now() + 5 * 60 * 1000;
     this.pollInterval = setInterval(() => this.poll(), 5 * 60 * 1000);
     // Initial setup for token polling
     setInterval(() => {
@@ -43,6 +75,15 @@ export class SyncEngine {
         this.poll(); // Initial poll when token arrives
       }
     }, 2000);
+  }
+
+  forceSync() {
+    if (this.pollInterval) {
+      clearInterval(this.pollInterval);
+    }
+    this.poll();
+    this.nextSyncTime = Date.now() + 5 * 60 * 1000;
+    this.pollInterval = setInterval(() => this.poll(), 5 * 60 * 1000);
   }
 
   private getLocalData(key: string) {
@@ -70,10 +111,13 @@ export class SyncEngine {
       await this.pollTasks();
       await this.pollEvents();
       await this.processPushQueue(); // Try to process queue if there's anything left
+      this.updateStatus(false);
     } catch (e) {
       console.error('SyncEngine poll error:', e);
+      this.updateStatus(true);
     } finally {
       this.isPolling = false;
+      this.nextSyncTime = Date.now() + 5 * 60 * 1000;
     }
   }
 
@@ -347,6 +391,7 @@ export class SyncEngine {
         this.pushQueue.shift();
       } catch (e) {
         console.error('Push failed, keeping in queue', e);
+        this.updateStatus(true);
         break; // Network error or something, keep in queue and try later
       }
     }

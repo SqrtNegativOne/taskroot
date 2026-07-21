@@ -86,7 +86,7 @@ export class GoogleTasksAPI {
       googleTaskId: googleTask.id,
       title: googleTask.title || '',
       status: localStatus,
-      priority: 'P2',
+      priority: 1,
       tags: [],
       subtasks: [],
       parent_task: null,

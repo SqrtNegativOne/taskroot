@@ -158,7 +158,7 @@ function DayCell({ cell, today, events, tasks, isWeek, dragState, onDropToDate, 
           return (
             <div
               key={ev.id}
-              className={`day-cell-event ev-${ev.type} ${pri ? `pri-bar-${pri}` : ''} ${isDone ? 'is-done' : ''}`}
+              className={`day-cell-event ev-${ev.type} ${pri !== null && pri !== undefined ? `pri-bar-${pri}` : ''} ${isDone ? 'is-done' : ''}`}
               title={`${ev.isAllDay ? 'All Day' : hhmmShort(ev.start)} — ${title}`}
               style={{ cursor: 'grab', opacity: dragState?.event?.id === ev.id ? 0.4 : 1 }}
               onPointerDown={(e) => onEventDragStart && onEventDragStart(e, ev, ev.task)}

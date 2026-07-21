@@ -20,7 +20,7 @@ export type Task = {
   id: string;
   title: string;
   status: 'todo' | 'next-up' | 'doing' | 'done';
-  priority: string;
+  priority: number;
   tags: string[];
   subtasks: any[];
   parent_task?: string | null;
@@ -186,7 +186,7 @@ function TaskCanvasInner({ tasks, setTasks }: TaskCanvasProps) {
       id,
       title: 'New Task',
       status: 'todo',
-      priority: 'P2',
+      priority: 1,
       tags: [],
       subtasks: [],
       parent_task: null,

@@ -30,7 +30,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       auth, 
       (currentUser) => {
         setUser(currentUser);
-        api.setUserId(currentUser ? currentUser.uid : null);
+        api.setUserId(currentUser ? currentUser.uid : undefined);
         setLoading(false);
       },
       (error) => {

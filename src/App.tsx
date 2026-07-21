@@ -101,12 +101,36 @@ function GlobalSync({ children }: { children: React.ReactNode }) {
   const [tasks, setTasks, tasksLoaded] = useStored('tasks', SAMPLE_TASKS);
   const [events, setEvents, eventsLoaded] = useStored('events', SAMPLE_EVENTS);
   const [settings] = useStored('settings', {} as any);
+  const [initialSyncDone, setInitialSyncDone] = React.useState(syncEngine.initialSyncComplete);
+  const [syncMessage, setSyncMessage] = React.useState('');
+  const { notify } = useNotification();
   
   React.useEffect(() => {
      syncEngine.setSettings(settings);
+     syncEngine.start();
   }, [settings]);
 
-  if (!tasksLoaded || !eventsLoaded) {
+  React.useEffect(() => {
+    const unsubSync = syncEngine.subscribeInitialSync(setInitialSyncDone);
+    const unsubMsg = syncEngine.subscribeSyncMessage(setSyncMessage);
+    const unsubError = syncEngine.subscribeError((msg) => {
+      notify(`Sync error: ${msg}`, 'error');
+    });
+    const unsubInfo = syncEngine.subscribeInfo((msg) => {
+      notify(msg, 'info');
+    });
+    return () => {
+      unsubSync();
+      unsubMsg();
+      unsubError();
+      unsubInfo();
+    };
+  }, [notify]);
+
+  if (!tasksLoaded || !eventsLoaded || !initialSyncDone) {
+    if (window.location.search.includes('minitracker=true')) {
+       return null;
+    }
     return (
       <div style={{
         display: 'flex', 
@@ -126,6 +150,9 @@ function GlobalSync({ children }: { children: React.ReactNode }) {
           borderRadius: '50%',
           animation: 'spin 1s linear infinite'
         }} />
+        <div style={{ marginTop: '16px', color: 'var(--fg-dim)', fontSize: '0.9rem' }}>
+          {syncMessage || 'Syncing data...'}
+        </div>
         <style>{`
           @keyframes spin {
             to { transform: rotate(360deg); }

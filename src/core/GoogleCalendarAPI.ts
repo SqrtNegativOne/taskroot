@@ -6,7 +6,7 @@ export class GoogleCalendarAPI {
   }
 
   async fetchEvents(timeMin: string, timeMax: string, calendarId = 'primary') {
-    if (!this.token) return null;
+    if (!this.token) throw new Error('Unauthorized');
     const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=false&maxResults=2500`, {
       headers: { 'Authorization': `Bearer ${this.token}` }
     });

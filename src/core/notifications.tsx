@@ -78,6 +78,23 @@ function NotificationItem({ notification }: { notification: NotificationData }) 
 
   return (
     <div
+      onClick={async () => {
+        try {
+          await navigator.clipboard.writeText(notification.message);
+          // Briefly flash the background to indicate successful copy
+          const el = document.getElementById(`notif-${notification.id}`);
+          if (el) {
+            const oldBg = el.style.background;
+            el.style.background = 'rgba(255, 255, 255, 0.2)';
+            setTimeout(() => {
+              el.style.background = oldBg;
+            }, 150);
+          }
+        } catch (err) {
+          console.error('Failed to copy notification:', err);
+        }
+      }}
+      id={`notif-${notification.id}`}
       style={{
         background: colors.bg,
         color: '#ffffff',
@@ -90,12 +107,15 @@ function NotificationItem({ notification }: { notification: NotificationData }) 
         backdropFilter: 'blur(8px)',
         WebkitBackdropFilter: 'blur(8px)',
         pointerEvents: 'auto', // Allow interacting with the notification if needed
+        cursor: 'pointer',
+        transition: 'background 0.15s ease',
         animation: notification.exiting 
           ? 'notify-fade-out-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards' 
           : 'notify-slide-in-right 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards',
         maxWidth: '350px',
         wordBreak: 'break-word',
       }}
+      title="Click to copy"
     >
       {notification.message}
       <style>{`

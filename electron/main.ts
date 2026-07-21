@@ -140,6 +140,8 @@ function createMiniWindow() {
 }
 
 
+let localServer: import('http').Server | null = null;
+
 function createWindow() {
   win = new BrowserWindow({
     width: 1200,
@@ -157,7 +159,7 @@ function createWindow() {
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL);
   } else {
-    const server = createServer((req: any, res: any) => {
+    localServer = createServer((req: any, res: any) => {
       let pathname = new URL(req.url || '', `http://${req.headers.host}`).pathname;
       if (pathname === '/') pathname = '/index.html';
       let filePath = path.join(RENDERER_DIST, pathname);
@@ -197,13 +199,19 @@ function createWindow() {
       });
     });
 
-    server.listen(0, '127.0.0.1', () => {
-      const addr = server.address();
+    localServer.listen(0, '127.0.0.1', () => {
+      const addr = localServer!.address();
       serverPort = typeof addr === 'string' ? 0 : addr?.port || 0;
       win?.loadURL(`http://localhost:${serverPort}`);
     });
   }
 }
+
+app.on('will-quit', () => {
+  if (localServer) {
+    localServer.close();
+  }
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
@@ -242,7 +250,7 @@ function createTray() {
     {
       label: 'Exit',
       click: () => {
-        app.quit();
+        app.exit(0);
       }
     }
   ]);
@@ -261,7 +269,6 @@ function createTray() {
 
 app.whenReady().then(() => {
   createWindow();
-  createMiniWindow();
   createTray();
 
   const url = process.argv.find(arg => arg.startsWith('taskroot://'));

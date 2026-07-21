@@ -6,7 +6,7 @@ export class GoogleTasksAPI {
   }
 
   async fetchTasks(tasklistId = '@default') {
-    if (!this.token) return null;
+    if (!this.token) throw new Error('Unauthorized');
     const allTasks: any[] = [];
     let pageToken: string | null = null;
     do {

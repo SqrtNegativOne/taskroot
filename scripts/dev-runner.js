@@ -17,18 +17,20 @@ waitOn({ resources: ['http://localhost:5173'] }).then(() => {
   electron.on('close', () => {
     console.log('Electron closed. Cleaning up background processes...');
     if (process.platform === 'win32') {
-      spawn('taskkill', ['/pid', vite.pid, '/f', '/t']);
+      const task = spawn('taskkill', ['/pid', vite.pid, '/f', '/t']);
+      task.on('close', () => process.exit());
     } else {
       vite.kill();
+      process.exit();
     }
-    process.exit();
   });
 }).catch(err => {
   console.error('Error waiting for Vite:', err);
   if (process.platform === 'win32') {
-    spawn('taskkill', ['/pid', vite.pid, '/f', '/t']);
+    const task = spawn('taskkill', ['/pid', vite.pid, '/f', '/t']);
+    task.on('close', () => process.exit(1));
   } else {
     vite.kill();
+    process.exit(1);
   }
-  process.exit(1);
 });

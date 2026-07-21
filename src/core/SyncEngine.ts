@@ -26,19 +26,65 @@ export class SyncEngine {
   private currentStatus = 'sync';
   public nextSyncTime: number = 0;
 
+  public initialSyncComplete = false;
+  private initialSyncListeners = new Set<(c: boolean) => void>();
+  private errorListeners = new Set<(msg: string) => void>();
+
+  private syncMessageListeners = new Set<(msg: string) => void>();
+  private currentSyncMessage = '';
+
+  subscribeSyncMessage(listener: (msg: string) => void) {
+    this.syncMessageListeners.add(listener);
+    listener(this.currentSyncMessage);
+    return () => this.syncMessageListeners.delete(listener);
+  }
+
+  private setSyncMessage(msg: string) {
+    this.currentSyncMessage = msg;
+    this.syncMessageListeners.forEach(l => l(msg));
+  }
+
+  subscribeInitialSync(listener: (c: boolean) => void) {
+    this.initialSyncListeners.add(listener);
+    listener(this.initialSyncComplete);
+    return () => this.initialSyncListeners.delete(listener);
+  }
+
+  subscribeError(listener: (msg: string) => void) {
+    this.errorListeners.add(listener);
+    return () => this.errorListeners.delete(listener);
+  }
+
+  private notifyError(msg: string) {
+    this.errorListeners.forEach(l => l(msg));
+  }
+
+  private infoListeners = new Set<(msg: string) => void>();
+
+  subscribeInfo(listener: (msg: string) => void) {
+    this.infoListeners.add(listener);
+    return () => this.infoListeners.delete(listener);
+  }
+
+  private notifyInfo(msg: string) {
+    this.infoListeners.forEach(l => l(msg));
+  }
+
   subscribeStatus(listener: (status: string) => void) {
     this.statusListeners.add(listener);
     listener(this.currentStatus);
     return () => this.statusListeners.delete(listener);
   }
 
-  private updateStatus(problem: boolean = false) {
+  private updateStatus(problem: boolean = false, isSyncing: boolean = false) {
     // @ts-ignore
     const offline = import.meta.env && import.meta.env.VITE_OFFLINE_MODE === 'true';
     if (offline || (this.settings.enableCalendarSync === false && this.settings.enableTasksSync === false)) {
       this.setStatus('sync_disabled');
     } else if (problem) {
       this.setStatus('sync_problem');
+    } else if (isSyncing) {
+      this.setStatus('syncing');
     } else {
       this.setStatus('sync');
     }
@@ -63,7 +109,31 @@ export class SyncEngine {
 
   start() {
     this.updateStatus();
+    // @ts-ignore
+    const offline = import.meta.env && import.meta.env.VITE_OFFLINE_MODE === 'true';
+    if (offline || (this.settings.enableCalendarSync === false && this.settings.enableTasksSync === false)) {
+      this.initialSyncComplete = true;
+      this.initialSyncListeners.forEach(l => l(true));
+    }
+
     if (this.pollInterval) return;
+
+    const token = localStorage.getItem('google_access_token');
+    const refreshToken = localStorage.getItem('google_refresh_token');
+    if (token || refreshToken) {
+      googleCalendarAPI.setToken(token);
+      googleTasksAPI.setToken(token);
+      this.poll();
+    } else if (!this.initialSyncComplete) {
+      this.initialSyncComplete = true;
+      this.initialSyncListeners.forEach(l => l(true));
+      if (!offline && (this.settings.enableCalendarSync !== false || this.settings.enableTasksSync !== false)) {
+        setTimeout(() => {
+          this.notifyError('Google Sync is paused: No authorization token found. Please log out and log in again to authorize Google Calendar & Tasks.');
+        }, 1500);
+      }
+    }
+
     this.nextSyncTime = Date.now() + 5 * 60 * 1000;
     this.pollInterval = setInterval(() => this.poll(), 5 * 60 * 1000);
     // Initial setup for token polling
@@ -103,21 +173,84 @@ export class SyncEngine {
     }
   }
 
+  private isRefreshing = false;
+
+  private async refreshAccessToken(): Promise<boolean> {
+    const refreshToken = localStorage.getItem('google_refresh_token');
+    if (!refreshToken) return false;
+
+    try {
+      // @ts-ignore
+      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+      // @ts-ignore
+      const clientSecret = import.meta.env.VITE_GOOGLE_CLIENT_SECRET;
+      
+      const res = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          client_id: clientId,
+          client_secret: clientSecret,
+          refresh_token: refreshToken,
+          grant_type: 'refresh_token'
+        })
+      });
+      const data = await res.json();
+      if (data.access_token) {
+        localStorage.setItem('google_access_token', data.access_token);
+        googleCalendarAPI.setToken(data.access_token);
+        googleTasksAPI.setToken(data.access_token);
+        return true;
+      }
+    } catch (e) {
+      console.error('Failed to refresh token', e);
+    }
+    return false;
+  }
+
   async poll() {
     if (this.isPolling) return;
     this.isPolling = true;
+    this.updateStatus(false, true); // isSyncing = true
+    this.setSyncMessage('Starting sync...');
 
     try {
+      this.setSyncMessage('Syncing Google Tasks...');
       await this.pollTasks();
+      this.setSyncMessage('Syncing Google Calendar...');
       await this.pollEvents();
+      this.setSyncMessage('Pushing local changes...');
       await this.processPushQueue(); // Try to process queue if there's anything left
-      this.updateStatus(false);
-    } catch (e) {
+      this.updateStatus(false, false);
+      this.setSyncMessage('Sync complete');
+    } catch (e: any) {
+      if (e.message === 'Unauthorized' && !this.isRefreshing) {
+        this.setSyncMessage('Refreshing access token...');
+        this.notifyInfo('Google Session expired. Automatically refreshing access token...');
+        this.isRefreshing = true;
+        const refreshed = await this.refreshAccessToken();
+        this.isRefreshing = false;
+        
+        if (refreshed) {
+           this.notifyInfo('Token refreshed securely! Resuming background sync.');
+           this.isPolling = false;
+           return await this.poll(); // Recursively call once with new token
+        } else {
+           this.notifyError('Failed to refresh Google session. You may need to log out and log back in.');
+        }
+      }
+      
       console.error('SyncEngine poll error:', e);
-      this.updateStatus(true);
+      this.updateStatus(true, false);
+      this.notifyError(e.message || 'Error during synchronization');
+      this.setSyncMessage('Sync failed');
     } finally {
       this.isPolling = false;
       this.nextSyncTime = Date.now() + 5 * 60 * 1000;
+      if (!this.initialSyncComplete) {
+        this.initialSyncComplete = true;
+        this.initialSyncListeners.forEach(l => l(true));
+      }
     }
   }
 
@@ -401,4 +534,3 @@ export class SyncEngine {
 }
 
 export const syncEngine = new SyncEngine();
-syncEngine.start();

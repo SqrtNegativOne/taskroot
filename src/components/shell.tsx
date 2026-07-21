@@ -120,8 +120,13 @@ function TitleBar({ current, today }) {
       <div className="topbar-right">
       </div>
       <div className="window-controls">
+        <style>{`
+          @keyframes icon-spin {
+            to { transform: translateY(1px) rotate(360deg); }
+          }
+        `}</style>
         <button ref={syncBtnRef} className="win-btn" onClick={() => syncEngine.forceSync()} data-cuelume-hover="tick" data-cuelume-toggle style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Icon name={syncStatus} size={18} style={{ display: 'block', transform: 'translateY(1px)' }} />
+          <Icon name={syncStatus === 'syncing' ? 'sync' : syncStatus} size={18} style={{ display: 'block', transform: 'translateY(1px)', animation: syncStatus === 'syncing' ? 'icon-spin 1s linear infinite' : 'none' }} />
         </button>
         <button className="win-btn minimize" onClick={handleMinimize} title="Minimize" data-cuelume-hover="tick" data-cuelume-toggle>
           <svg width="10" height="10" viewBox="0 0 10 10"><path d="M 1,5 h 8" stroke="currentColor" strokeWidth="1"/></svg>

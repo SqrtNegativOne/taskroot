@@ -56,9 +56,8 @@ function DayTimeline({ events, tasks, filter, sort, filterMenu, today, timelineD
           if (f.column === 'type') {
              match = e.type === f.value;
           } else if (f.column === 'tag') {
-             const eventTags = e.tags || [];
              const taskTags = e.task ? e.task.tags : [];
-             const allTags = [...eventTags, ...taskTags].map(t => typeof t === 'string' ? t.toLowerCase() : '');
+             const allTags = taskTags.map(t => typeof t === 'string' ? t.toLowerCase() : '');
              match = allTags.includes(f.value.toLowerCase());
           } else if (f.column === 'taskStatus') {
              if (f.value === 'none') {

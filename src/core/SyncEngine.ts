@@ -1,0 +1,359 @@
+import { googleCalendarAPI } from './GoogleCalendarAPI';
+import { googleTasksAPI } from './GoogleTasksAPI';
+
+export class SyncEngine {
+  private lastTasksSync = 0;
+  private lastEventsSync = 0;
+  private pollInterval: any = null;
+
+  private prevTasksMap = new Map<string, any>();
+  private prevEventsMap = new Map<string, any>();
+
+  // We need to trigger React updates when we pull data.
+  // We'll store a reference to the update function for each key.
+  private updaters = new Map<string, (val: any) => void>();
+
+  // A queue for reactive pushes
+  private pushQueue: Array<{ type: 'task' | 'event', action: 'create' | 'update' | 'delete', item: any, id?: string, calendarId?: string }> = [];
+
+  private isPolling = false;
+  private isPushing = false;
+  
+  private categoryMap: any = {};
+  private settings: any = { enableCalendarSync: true, enableTasksSync: true };
+
+  registerUpdater(key: string, updater: (val: any) => void) {
+    this.updaters.set(key, updater);
+  }
+
+  setSettings(settings: any) {
+    this.settings = settings || {};
+    this.categoryMap = this.settings.categoryCalendars || {};
+  }
+
+  start() {
+    if (this.pollInterval) return;
+    this.pollInterval = setInterval(() => this.poll(), 5 * 60 * 1000);
+    // Initial setup for token polling
+    setInterval(() => {
+      const token = localStorage.getItem('google_access_token');
+      if (token && (googleCalendarAPI as any).token !== token) {
+        googleCalendarAPI.setToken(token);
+        googleTasksAPI.setToken(token);
+        this.poll(); // Initial poll when token arrives
+      }
+    }, 2000);
+  }
+
+  private getLocalData(key: string) {
+    try {
+      const saved = localStorage.getItem(`taskroot_${key}`);
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  private setLocalData(key: string, data: any) {
+    localStorage.setItem(`taskroot_${key}`, JSON.stringify(data));
+    const updater = this.updaters.get(key);
+    if (updater) {
+      updater(data);
+    }
+  }
+
+  async poll() {
+    if (this.isPolling) return;
+    this.isPolling = true;
+
+    try {
+      await this.pollTasks();
+      await this.pollEvents();
+      await this.processPushQueue(); // Try to process queue if there's anything left
+    } catch (e) {
+      console.error('SyncEngine poll error:', e);
+    } finally {
+      this.isPolling = false;
+    }
+  }
+
+  private async pollTasks() {
+    if (this.settings.enableTasksSync === false) return;
+
+    const tasks = this.getLocalData('tasks');
+    this.updatePrevTasksMap(tasks);
+
+    // We don't have sync tokens so we just pull everything and check updatedAt.
+    // In a real app, use updatedMin.
+    const remoteTasks = await googleTasksAPI.fetchTasks();
+    if (!remoteTasks) return; // No token or failed
+
+    let updated = false;
+    const tasksMap = new Map(tasks.map((t: any) => [t.id, t]));
+
+    for (const remote of remoteTasks) {
+      // Find matching local task
+      let localId = null;
+      const match = (remote.notes || '').match(/Taskroot Task ID: (t[0-9a-zA-Z-]+)/);
+      if (match) {
+        localId = match[1];
+      } else {
+        const existing = tasks.find((t: any) => t.googleTaskId === remote.id);
+        if (existing) localId = existing.id;
+      }
+
+      const existingLocalTask = localId ? tasksMap.get(localId) : null;
+      const standardizedRemote = googleTasksAPI.toLocalTask(remote, existingLocalTask);
+
+      if (existingLocalTask) {
+        const localUpdated = existingLocalTask.updatedAt || 0;
+        const remoteUpdated = standardizedRemote.updatedAt || 0;
+
+        if (remoteUpdated > localUpdated) {
+          tasksMap.set(existingLocalTask.id, standardizedRemote);
+          updated = true;
+        }
+      } else {
+        tasksMap.set(standardizedRemote.id, standardizedRemote);
+        updated = true;
+      }
+    }
+
+    if (updated) {
+      const newTasks = Array.from(tasksMap.values());
+      this.setLocalData('tasks', newTasks);
+      this.updatePrevTasksMap(newTasks);
+    }
+    this.lastTasksSync = Date.now();
+  }
+
+  private async pollEvents() {
+    if (this.settings.enableCalendarSync === false) return;
+
+    const events = this.getLocalData('events');
+    const tasks = this.getLocalData('tasks'); // Needed for resolving task references
+    this.updatePrevEventsMap(events);
+
+    const timeMin = new Date();
+    timeMin.setMonth(timeMin.getMonth() - 1);
+    const timeMax = new Date();
+    timeMax.setMonth(timeMax.getMonth() + 2);
+
+    const calendarIds = new Set(['primary']);
+    for (const cid of Object.values(this.categoryMap || {})) {
+      if (typeof cid === 'string' && cid) calendarIds.add(cid);
+    }
+
+    const allRemoteEvents: any[] = [];
+    for (const cid of Array.from(calendarIds)) {
+      const remoteEvents = await googleCalendarAPI.fetchEvents(timeMin.toISOString(), timeMax.toISOString(), cid);
+      if (remoteEvents) {
+        allRemoteEvents.push(...remoteEvents.map((e: any) => googleCalendarAPI.toLocalEvent(e, cid, this.categoryMap)));
+      }
+    }
+
+    let updated = false;
+    const eventsMap = new Map(events.map((e: any) => [e.id, e]));
+
+    for (const remote of allRemoteEvents) {
+      const existingLocalEvent = eventsMap.get(remote.id);
+
+      if (existingLocalEvent) {
+        const localUpdated = existingLocalEvent.updatedAt || 0;
+        const remoteUpdated = remote.updatedAt || 0;
+
+        if (remoteUpdated > localUpdated) {
+          eventsMap.set(existingLocalEvent.id, remote);
+          updated = true;
+        }
+      } else {
+        eventsMap.set(remote.id, remote);
+        updated = true;
+      }
+    }
+
+    if (updated) {
+      const newEvents = Array.from(eventsMap.values());
+      this.setLocalData('events', newEvents);
+      this.updatePrevEventsMap(newEvents);
+    }
+    this.lastEventsSync = Date.now();
+  }
+
+  // Called from store.tsx whenever a list changes locally
+  notifyDataChanged(key: string, newList: any[]) {
+    if (key === 'tasks') {
+      this.computeTasksDelta(newList);
+    } else if (key === 'events') {
+      this.computeEventsDelta(newList);
+    }
+    this.triggerPushQueue();
+  }
+
+  private computeTasksDelta(newTasks: any[]) {
+    const newTasksMap = new Map(newTasks.map(t => [t.id, t]));
+
+    // Find created or updated
+    for (const task of newTasks) {
+      const prev = this.prevTasksMap.get(task.id);
+      if (!prev) {
+        if (!task.googleTaskId && !task.isDraft) {
+          this.pushQueue.push({ type: 'task', action: 'create', item: task });
+        }
+      } else {
+        if (task.updatedAt && prev.updatedAt && task.updatedAt > prev.updatedAt) {
+          if (task.googleTaskId) {
+            this.pushQueue.push({ type: 'task', action: 'update', item: task, id: task.googleTaskId });
+          } else if (!task.isDraft) {
+             this.pushQueue.push({ type: 'task', action: 'create', item: task });
+          }
+        }
+      }
+    }
+
+    // Find deleted
+    for (const [id, prev] of this.prevTasksMap.entries()) {
+      if (!newTasksMap.has(id)) {
+        if (prev.googleTaskId) {
+          this.pushQueue.push({ type: 'task', action: 'delete', item: prev, id: prev.googleTaskId });
+        }
+      }
+    }
+
+    this.updatePrevTasksMap(newTasks);
+  }
+
+  private computeEventsDelta(newEvents: any[]) {
+    const newEventsMap = new Map(newEvents.map(e => [e.id, e]));
+
+    for (const event of newEvents) {
+      const prev = this.prevEventsMap.get(event.id);
+      if (!prev) {
+        if (!event.googleEventId) {
+          this.pushQueue.push({ type: 'event', action: 'create', item: event });
+        }
+      } else {
+        if (event.updatedAt && prev.updatedAt && event.updatedAt > prev.updatedAt) {
+          
+          let targetCalendarId = 'primary';
+          if (event.category && this.categoryMap[event.category]) {
+            targetCalendarId = this.categoryMap[event.category];
+          }
+
+          if (event.googleCalendarId && event.googleCalendarId !== targetCalendarId) {
+            if (event.googleEventId) {
+              this.pushQueue.push({ type: 'event', action: 'delete', item: prev, id: event.googleEventId, calendarId: event.googleCalendarId });
+            }
+            this.pushQueue.push({ type: 'event', action: 'create', item: event });
+          } else {
+             if (event.googleEventId) {
+               this.pushQueue.push({ type: 'event', action: 'update', item: event, id: event.googleEventId, calendarId: event.googleCalendarId || 'primary' });
+             } else {
+               this.pushQueue.push({ type: 'event', action: 'create', item: event });
+             }
+          }
+        }
+      }
+    }
+
+    for (const [id, prev] of this.prevEventsMap.entries()) {
+      if (!newEventsMap.has(id)) {
+        if (prev.googleEventId) {
+          this.pushQueue.push({ type: 'event', action: 'delete', item: prev, id: prev.googleEventId, calendarId: prev.googleCalendarId || 'primary' });
+        }
+      }
+    }
+
+    this.updatePrevEventsMap(newEvents);
+  }
+
+  private updatePrevTasksMap(tasks: any[]) {
+    this.prevTasksMap.clear();
+    for (const t of tasks) {
+      this.prevTasksMap.set(t.id, { ...t });
+    }
+  }
+
+  private updatePrevEventsMap(events: any[]) {
+    this.prevEventsMap.clear();
+    for (const e of events) {
+      this.prevEventsMap.set(e.id, { ...e });
+    }
+  }
+
+  private triggerPushQueue() {
+    if (this.isPushing) return;
+    this.processPushQueue();
+  }
+
+  private async processPushQueue() {
+    if (this.pushQueue.length === 0) return;
+    this.isPushing = true;
+
+    while (this.pushQueue.length > 0) {
+      const taskOrEvent = this.pushQueue[0]; // peek
+      try {
+        if (taskOrEvent.type === 'task') {
+          if (this.settings.enableTasksSync === false) {
+             this.pushQueue.shift();
+             continue;
+          }
+          if (taskOrEvent.action === 'create') {
+            const gid = await googleTasksAPI.createTask(taskOrEvent.item);
+            if (gid) {
+               // Update local item with gid
+               const tasks = this.getLocalData('tasks');
+               const idx = tasks.findIndex((t: any) => t.id === taskOrEvent.item.id);
+               if (idx !== -1) {
+                 tasks[idx] = { ...tasks[idx], googleTaskId: gid };
+                 this.setLocalData('tasks', tasks);
+                 this.updatePrevTasksMap(tasks);
+               }
+            }
+          } else if (taskOrEvent.action === 'update' && taskOrEvent.id) {
+            await googleTasksAPI.updateTask(taskOrEvent.id, taskOrEvent.item);
+          } else if (taskOrEvent.action === 'delete' && taskOrEvent.id) {
+            await googleTasksAPI.deleteTask(taskOrEvent.id);
+          }
+        } else if (taskOrEvent.type === 'event') {
+          if (this.settings.enableCalendarSync === false) {
+             this.pushQueue.shift();
+             continue;
+          }
+          const tasks = this.getLocalData('tasks');
+          let targetCalendarId = 'primary';
+          if (taskOrEvent.item.category && this.categoryMap[taskOrEvent.item.category]) {
+            targetCalendarId = this.categoryMap[taskOrEvent.item.category];
+          }
+
+          if (taskOrEvent.action === 'create') {
+            const res = await googleCalendarAPI.createEvent(taskOrEvent.item, tasks, targetCalendarId);
+            if (res) {
+               const events = this.getLocalData('events');
+               const idx = events.findIndex((e: any) => e.id === taskOrEvent.item.id);
+               if (idx !== -1) {
+                 events[idx] = { ...events[idx], googleEventId: res.id, googleCalendarId: res.calendarId };
+                 this.setLocalData('events', events);
+                 this.updatePrevEventsMap(events);
+               }
+            }
+          } else if (taskOrEvent.action === 'update' && taskOrEvent.id) {
+            await googleCalendarAPI.updateEvent(taskOrEvent.id, taskOrEvent.item, tasks, taskOrEvent.calendarId);
+          } else if (taskOrEvent.action === 'delete' && taskOrEvent.id) {
+            await googleCalendarAPI.deleteEvent(taskOrEvent.id, taskOrEvent.calendarId);
+          }
+        }
+        // Success, remove from queue
+        this.pushQueue.shift();
+      } catch (e) {
+        console.error('Push failed, keeping in queue', e);
+        break; // Network error or something, keep in queue and try later
+      }
+    }
+    
+    this.isPushing = false;
+  }
+}
+
+export const syncEngine = new SyncEngine();
+syncEngine.start();

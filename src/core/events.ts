@@ -5,7 +5,6 @@ export type BaseEvent = {
   end: number;
   endDate?: string;
   isAllDay?: boolean;
-  tags?: string[];
 };
 
 // Task plans: when you schedule a task for a certain time.

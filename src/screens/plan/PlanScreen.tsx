@@ -59,10 +59,9 @@ function PlanScreen() {
 
   const allEventTags = React.useMemo(() => {
     const s = new Set<string>();
-    events.forEach(e => (e.tags || []).forEach(tag => s.add(tag)));
     tasks.forEach(t => (t.tags || []).forEach(tag => s.add(tag)));
     return Array.from(s).sort();
-  }, [events, tasks]);
+  }, [tasks]);
 
   const visibleEvents = React.useMemo(() => {
     const start = new Date(anchor);
@@ -193,8 +192,7 @@ function PlanScreen() {
       start,
       end: Math.min(24 * 60, start + duration),
       type: 'plan',
-      isAllDay,
-      tags: []
+      isAllDay
     };
     setEvents(prev => [...prev, newEvent]);
   };
@@ -222,7 +220,6 @@ function PlanScreen() {
        end,
        type: isAllDay ? 'info' : 'busy',
        isAllDay,
-       tags: [],
        isDraft: true
     }]);
     setInspectorState({ type: 'event', id });

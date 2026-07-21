@@ -8,8 +8,7 @@ import { SettingsScreen } from './screens/settings/SettingsScreen';
 import { TitleBar } from './components/shell';
 import { useStored } from './core/store';
 import { SAMPLE_TASKS, SAMPLE_EVENTS } from './core/data';
-import { useGoogleCalendarSync } from './core/useGoogleCalendarSync';
-import { useGoogleTasksSync } from './core/useGoogleTasksSync';
+import { syncEngine } from './core/SyncEngine';
 import { NotificationProvider, useNotification } from './core/notifications';
 import { LoginScreen } from './screens/login/LoginScreen';
 import { WrapScreen } from './screens/wrap/WrapScreen';
@@ -101,8 +100,11 @@ function AppRouter() {
 function GlobalSync({ children }: { children: React.ReactNode }) {
   const [tasks, setTasks, tasksLoaded] = useStored('tasks', SAMPLE_TASKS);
   const [events, setEvents, eventsLoaded] = useStored('events', SAMPLE_EVENTS);
-  useGoogleCalendarSync(events, setEvents, tasks);
-  useGoogleTasksSync(tasks, setTasks);
+  const [settings] = useStored('settings', {} as any);
+  
+  React.useEffect(() => {
+     syncEngine.setSettings(settings);
+  }, [settings]);
 
   if (!tasksLoaded || !eventsLoaded) {
     return (

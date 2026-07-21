@@ -133,6 +133,36 @@ export const SETTINGS_SCHEMA: SettingSchema[] = [
     min: 1
   },
   {
+    id: 'enableFirebaseSync',
+    section: 'Sync & Integrations',
+    tab: 'sync',
+    label: 'Enable Firebase Sync',
+    description: 'Sync your data across devices using Firebase.',
+    keywords: ['firebase', 'sync', 'cloud', 'backup'],
+    type: 'checkbox',
+    defaultValue: true
+  },
+  {
+    id: 'enableCalendarSync',
+    section: 'Sync & Integrations',
+    tab: 'sync',
+    label: 'Enable Google Calendar Sync',
+    description: 'Sync events bidirectionally with Google Calendar.',
+    keywords: ['google', 'calendar', 'sync', 'events'],
+    type: 'checkbox',
+    defaultValue: true
+  },
+  {
+    id: 'enableTasksSync',
+    section: 'Sync & Integrations',
+    tab: 'sync',
+    label: 'Enable Google Tasks Sync',
+    description: 'Sync tasks bidirectionally with Google Tasks.',
+    keywords: ['google', 'tasks', 'sync', 'todos'],
+    type: 'checkbox',
+    defaultValue: true
+  },
+  {
     id: 'exportData',
     section: 'Data Management',
     tab: 'sync',

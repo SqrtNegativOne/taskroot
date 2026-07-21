@@ -1,0 +1,131 @@
+export class GoogleTasksAPI {
+  private token: string | null = null;
+
+  setToken(token: string | null) {
+    this.token = token;
+  }
+
+  async fetchTasks(tasklistId = '@default') {
+    if (!this.token) return null;
+    const allTasks: any[] = [];
+    let pageToken: string | null = null;
+    do {
+      const url = new URL(`https://tasks.googleapis.com/tasks/v1/lists/${tasklistId}/tasks`);
+      url.searchParams.append('showCompleted', 'true');
+      url.searchParams.append('showHidden', 'true');
+      url.searchParams.append('maxResults', '100');
+      if (pageToken) url.searchParams.append('pageToken', pageToken);
+
+      const res = await fetch(url.toString(), {
+        headers: { 'Authorization': `Bearer ${this.token}` }
+      });
+      if (!res.ok) {
+        if (res.status === 401) throw new Error('Unauthorized');
+        console.warn(`Failed to fetch google tasks`);
+        return null;
+      }
+      const data = await res.json();
+      if (data.items) allTasks.push(...data.items);
+      pageToken = data.nextPageToken;
+    } while (pageToken);
+    
+    return allTasks;
+  }
+
+  async createTask(localTask: any, tasklistId = '@default') {
+    if (!this.token) return null;
+    const body = this.toGoogleTask(localTask);
+    const res = await fetch(`https://tasks.googleapis.com/tasks/v1/lists/${tasklistId}/tasks`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${this.token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) throw new Error('Failed to create task');
+    const data = await res.json();
+    return data.id;
+  }
+
+  async updateTask(googleTaskId: string, localTask: any, tasklistId = '@default') {
+    if (!this.token) return;
+    const body = this.toGoogleTask(localTask);
+    const res = await fetch(`https://tasks.googleapis.com/tasks/v1/lists/${tasklistId}/tasks/${googleTaskId}`, {
+      method: 'PATCH',
+      headers: { 'Authorization': `Bearer ${this.token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) throw new Error('Failed to update task');
+  }
+
+  async deleteTask(googleTaskId: string, tasklistId = '@default') {
+    if (!this.token) return;
+    const res = await fetch(`https://tasks.googleapis.com/tasks/v1/lists/${tasklistId}/tasks/${googleTaskId}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${this.token}` }
+    });
+    if (!res.ok) throw new Error('Failed to delete task');
+  }
+
+  toLocalTask(googleTask: any, existingLocalTask: any = null) {
+    let localStatus = 'todo';
+    if (googleTask.status === 'completed') {
+      localStatus = 'done';
+    }
+
+    let id = googleTask.id;
+    const match = (googleTask.notes || '').match(/Taskroot Task ID: (t[0-9a-zA-Z-]+)/);
+    if (match) {
+      id = match[1];
+    }
+    
+    if (existingLocalTask) {
+      id = existingLocalTask.id;
+    }
+
+    const defaultTask = {
+      id,
+      googleTaskId: googleTask.id,
+      title: googleTask.title || '',
+      status: localStatus,
+      priority: 'P2',
+      tags: [],
+      subtasks: [],
+      parent_task: null,
+      dependency: null,
+      est: 0,
+      added: new Date().toISOString(),
+      isDraft: false,
+      notes: googleTask.notes || '',
+      due: googleTask.due ? googleTask.due.split('T')[0] : undefined,
+      updatedAt: googleTask.updated ? new Date(googleTask.updated).getTime() : Date.now()
+    };
+
+    if (existingLocalTask) {
+      return {
+        ...existingLocalTask,
+        googleTaskId: googleTask.id,
+        title: googleTask.title || '',
+        status: localStatus,
+        notes: googleTask.notes || '',
+        due: googleTask.due ? googleTask.due.split('T')[0] : existingLocalTask.due,
+        updatedAt: googleTask.updated ? new Date(googleTask.updated).getTime() : Date.now()
+      };
+    }
+    
+    return defaultTask;
+  }
+
+  toGoogleTask(localTask: any) {
+    let notes = localTask.notes || '';
+    if (!notes.includes(`Taskroot Task ID: ${localTask.id}`)) {
+      notes = `Taskroot Task ID: ${localTask.id}\n${notes}`;
+    }
+    return {
+      title: localTask.title,
+      notes: notes,
+      status: localTask.status === 'done' ? 'completed' : 'needsAction',
+      due: localTask.due ? new Date(localTask.due).toISOString() : null
+    };
+  }
+}
+
+export const googleTasksAPI = new GoogleTasksAPI();

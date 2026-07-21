@@ -1,3 +1,7 @@
-Flexibility on whether you can do a task if its associated planned event is going or not going on.
+Flexibility on whether you can do a task if its associated planned event is going or not going on is intentional.
 
 Vim keybindings are probably a bad idea. One needs to move things around in the plan screen.
+
+For 0 loading screens, having data in localStorage only seems like the only option. It's also not that bad of an option.
+I would need an array of approximately 10,000 tasks to hit the 1MB threshold at which point the JSON stringification and localStorage write operation will block the main thread long enough (~16ms) to drop a frame. For comparison, in 2026-07-21 you had 66 tasks in Notion and 102 in Super Productivity.
+So even loading unused (cold) tasks into a IndexedDB or a local file (since this is Electron) is overkill. And loading active tasks into RAM also feels un-needed

@@ -67,6 +67,8 @@ export function DayTimeline({ events, tasks, filter, sort, filterMenu, today, ti
              } else if (f.value === 'todo') {
                 match = e.task ? e.task.status !== 'done' : !e.isDone;
              }
+          } else if (f.column === 'category') {
+             match = (e.category || '') === f.value;
           }
           return f.operator === 'is not' ? !match : match;
        });

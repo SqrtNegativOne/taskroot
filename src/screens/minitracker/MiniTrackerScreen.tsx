@@ -14,6 +14,8 @@ export function MiniTrackerScreen() {
   const [tasks] = useStored('tasks', []);
   const [settings] = useStored<any>('settings', {});
   const [now, setNow] = useState(Date.now());
+  const [isHovered, setIsHovered] = useState(false);
+  const [isDimmed, setIsDimmed] = useState(false);
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
@@ -148,18 +150,38 @@ export function MiniTrackerScreen() {
         e.preventDefault();
         handleDoubleClick();
       }
+
+      if (e.key.toLowerCase() === 'h' && !e.ctrlKey && !e.altKey && !e.metaKey && !e.shiftKey) {
+        setIsDimmed(prev => !prev);
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [settings.keybindingRestoreApp]);
 
+  const baseOpacity = settings.trackerOpacity !== undefined ? settings.trackerOpacity / 100 : 0.8;
+  const hoverReduction = settings.trackerHoverReduction !== undefined ? settings.trackerHoverReduction / 100 : 0.2;
+  const dimmedOpacity = settings.trackerDimmedOpacity !== undefined ? settings.trackerDimmedOpacity / 100 : 0.2;
+
+  let currentOpacity = baseOpacity;
+  if (isDimmed) {
+    currentOpacity = dimmedOpacity;
+  } else if (isHovered) {
+    currentOpacity = Math.max(0, baseOpacity - hoverReduction);
+  }
+
   return (
     <div 
       onDoubleClick={handleDoubleClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       style={{
         width: '100vw',
         height: '100vh',
-        background: 'rgba(24, 24, 24, 0.5)',
+        background: 'rgb(24, 24, 24)',
+        opacity: currentOpacity,
+        border: (settings.trackerShowBorder ?? true) ? '1px solid rgba(255, 255, 255, 0.15)' : 'none',
+        transition: 'opacity 0.2s ease',
         color: 'var(--fg)',
         display: 'flex',
         alignItems: 'center',

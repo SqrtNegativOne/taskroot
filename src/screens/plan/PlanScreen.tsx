@@ -75,8 +75,9 @@ export function PlanScreen() {
     if (col === 'type') return ['info', 'plan', 'busy', 'log'];
     if (col === 'tag') return allEventTags;
     if (col === 'taskStatus') return ['todo', 'done', 'none'];
+    if (col === 'category') return Object.keys(settings?.categoryCalendars || {});
     return [];
-  }, [allEventTags]);
+  }, [allEventTags, settings]);
 
   // Drag state — { task, pointerX, pointerY, target }
   const [dragState, setDragState] = React.useState(null);
@@ -266,7 +267,8 @@ export function PlanScreen() {
                     columns={[
                       { id: 'type', label: 'Type' },
                       { id: 'tag', label: 'Tag' },
-                      { id: 'taskStatus', label: 'Task Status' }
+                      { id: 'taskStatus', label: 'Task Status' },
+                      { id: 'category', label: 'Category' }
                     ]}
                     getValuesForColumn={getEventFilterValues}
                     sortOptions={[
@@ -293,7 +295,8 @@ export function PlanScreen() {
                     columns={[
                       { id: 'type', label: 'Type' },
                       { id: 'tag', label: 'Tag' },
-                      { id: 'taskStatus', label: 'Task Status' }
+                      { id: 'taskStatus', label: 'Task Status' },
+                      { id: 'category', label: 'Category' }
                     ]}
                     getValuesForColumn={getEventFilterValues}
                     sortOptions={[
@@ -707,7 +710,11 @@ function InspectorPane({ inspectorState, onClose, tasks, setTasks, events, setEv
                  
                  <div className="inspector-field">
                    <label>Duration (min)</label>
-                   <input type="number" placeholder="Unset" value={currentItem.est === undefined ? '' : currentItem.est} onChange={e => updateTask(currentItem.id, { est: e.target.value ? parseInt(e.target.value) : undefined })} />
+                   <input type="number" placeholder="Unset" value={currentItem.est === undefined ? '' : currentItem.est} onChange={e => {
+                     let val = e.target.value ? parseInt(e.target.value) : undefined;
+                     if (val !== undefined && val > 60) val = 60;
+                     updateTask(currentItem.id, { est: val });
+                   }} />
                  </div>
                </>
              )}

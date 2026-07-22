@@ -3,6 +3,63 @@ import { api } from '../../core/api';
 import { useAuth } from '../../core/AuthContext';
 import { useStored } from '../../core/store';
 
+function CustomSelect({ options, value, onChange }: any) {
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const handleOutside = (e: any) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    if (open) document.addEventListener('pointerdown', handleOutside);
+    return () => document.removeEventListener('pointerdown', handleOutside);
+  }, [open]);
+
+  const selectedOpt = options.find((o: any) => o.value === value);
+
+  return (
+    <div ref={ref} style={{ position: 'relative', flex: 1, minWidth: '100px' }}>
+      <div 
+        onClick={() => setOpen(!open)}
+        style={{ 
+          background: 'var(--bg-input, var(--bg-surface))', color: 'var(--fg)', border: '1px solid var(--border)', 
+          borderRadius: '4px', padding: '4px 8px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between',
+          alignItems: 'center'
+        }}
+      >
+        <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {selectedOpt ? selectedOpt.label : 'Select...'}
+        </span>
+        <span style={{ fontSize: '10px', marginLeft: '8px', opacity: 0.7 }}>▼</span>
+      </div>
+      {open && (
+        <div style={{
+          position: 'absolute', top: '100%', left: 0, right: 0, marginTop: '4px',
+          background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: '4px',
+          maxHeight: '200px', overflowY: 'auto', zIndex: 100,
+          boxShadow: 'var(--shadow-btn-hover)'
+        }}>
+          {options.map((o: any) => (
+            <div 
+              key={o.value} 
+              onClick={() => { onChange(o.value); setOpen(false); }}
+              style={{ 
+                padding: '6px 8px', cursor: 'pointer', color: 'var(--fg)', 
+                background: value === o.value ? 'var(--bg-highlight)' : 'transparent',
+                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+              }}
+              onMouseEnter={e => (e.target as HTMLDivElement).style.background = 'var(--bg-highlight)'}
+              onMouseLeave={e => (e.target as HTMLDivElement).style.background = value === o.value ? 'var(--bg-highlight)' : 'transparent'}
+            >
+              {o.label}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function CalendarCategories({ settings, setSettings }: { settings: any, setSettings: any }) {
   const [calendars, setCalendars] = useState<{id: string, summary: string}[]>([]);
   const [newCat, setNewCat] = useState('');
@@ -32,16 +89,14 @@ export function CalendarCategories({ settings, setSettings }: { settings: any, s
       {Object.entries(cats).map(([cat, calId]) => (
         <div key={cat} style={{ display: 'flex', gap: '12px', alignItems: 'center', color: 'var(--fg)' }}>
           <span style={{ minWidth: '120px' }}>{cat}</span>
-          <select 
+          <CustomSelect 
             value={calId as string}
-            onChange={e => {
-              const newCats = { ...cats, [cat]: e.target.value };
+            options={calendars.map(c => ({ label: c.summary, value: c.id }))}
+            onChange={(val: string) => {
+              const newCats = { ...cats, [cat]: val };
               setSettings({ ...settings, categoryCalendars: newCats });
             }}
-            style={{ background: 'var(--bg-input)', color: 'var(--fg)', border: '1px solid var(--border)', borderRadius: '4px', padding: '4px 8px', flex: 1 }}
-          >
-            {calendars.map(c => <option key={c.id} value={c.id}>{c.summary}</option>)}
-          </select>
+          />
           <button className="sw-btn" style={{ padding: '4px 8px' }} onClick={() => {
             const newCats = { ...cats };
             delete newCats[cat];
@@ -56,13 +111,11 @@ export function CalendarCategories({ settings, setSettings }: { settings: any, s
             onChange={e => setNewCat(e.target.value)}
             style={{ background: 'var(--bg-input)', color: 'var(--fg)', border: '1px solid var(--border)', borderRadius: '4px', padding: '4px 8px', width: '120px' }}
          />
-         <select 
+         <CustomSelect 
             value={newCalId}
-            onChange={e => setNewCalId(e.target.value)}
-            style={{ background: 'var(--bg-input)', color: 'var(--fg)', border: '1px solid var(--border)', borderRadius: '4px', padding: '4px 8px', flex: 1 }}
-          >
-            {calendars.map(c => <option key={c.id} value={c.id}>{c.summary}</option>)}
-         </select>
+            options={calendars.map(c => ({ label: c.summary, value: c.id }))}
+            onChange={(val: string) => setNewCalId(val)}
+          />
          <button className="sw-btn" style={{ padding: '4px 8px' }} onClick={() => {
             if (newCat) {
               setSettings({ ...settings, categoryCalendars: { ...cats, [newCat]: newCalId } });

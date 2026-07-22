@@ -31,6 +31,8 @@ export function DateGrid({ view, setView, anchor, setAnchor, events, tasks, filt
                } else if (f.value === 'todo') {
                   match = e.task ? e.task.status !== 'done' : !e.isDone;
                }
+            } else if (f.column === 'category') {
+               match = (e.category || '') === f.value;
             }
             return f.operator === 'is not' ? !match : match;
          });

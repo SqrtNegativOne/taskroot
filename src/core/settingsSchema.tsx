@@ -79,9 +79,6 @@ export const SETTINGS_SCHEMA: SettingSchema[] = [
       { value: 15, label: '15m' },
       { value: 30, label: '30m' },
       { value: 45, label: '45m' },
-      { value: 60, label: '1h' },
-      { value: 90, label: '1.5h' },
-      { value: 120, label: '2h' }
     ]
   },
   {
@@ -244,6 +241,51 @@ export const SETTINGS_SCHEMA: SettingSchema[] = [
     keywords: ['keyboard', 'shortcut', 'restore', 'maximize', 'mini tracker', 'minitracker'],
     type: 'keybinding',
     defaultValue: 'Ctrl+Alt+R'
+  },
+  {
+    id: 'trackerShowBorder',
+    section: 'Appearance',
+    tab: 'tracker_window',
+    label: 'Show Window Border',
+    keywords: ['tracker', 'border', 'show', 'outline'],
+    type: 'checkbox',
+    defaultValue: true
+  },
+  {
+    id: 'trackerOpacity',
+    section: 'Appearance',
+    tab: 'tracker_window',
+    label: 'Base Opacity (%)',
+    description: 'The baseline opacity of the mini tracker window (0 to 100).',
+    keywords: ['tracker', 'opacity', 'transparent', 'window'],
+    type: 'number',
+    defaultValue: 80,
+    min: 0,
+    max: 100
+  },
+  {
+    id: 'trackerHoverReduction',
+    section: 'Appearance',
+    tab: 'tracker_window',
+    label: 'Hover Opacity Reduction (%)',
+    description: 'Amount by which opacity reduces when the mouse hovers over the window (0 to 100).',
+    keywords: ['tracker', 'opacity', 'hover', 'reduce'],
+    type: 'number',
+    defaultValue: 20,
+    min: 0,
+    max: 100
+  },
+  {
+    id: 'trackerDimmedOpacity',
+    section: 'Appearance',
+    tab: 'tracker_window',
+    label: 'Dimmed Opacity (%)',
+    description: 'The opacity of the window when dimmed by pressing H.',
+    keywords: ['tracker', 'opacity', 'dim', 'hide', 'h'],
+    type: 'number',
+    defaultValue: 20,
+    min: 0,
+    max: 100
   }
 ];
 
@@ -253,7 +295,8 @@ export const SETTINGS_TABS = [
   { id: 'wrap_screen', label: 'Wrap screen' },
   { id: 'recap_screen', label: 'Recap screen' },
   { id: 'sync', label: 'Sync and Backup' },
-  { id: 'keybindings', label: 'Keybindings' }
+  { id: 'keybindings', label: 'Keybindings' },
+  { id: 'tracker_window', label: 'Tracker window' }
 ];
 
 export const DEFAULT_SETTINGS = SETTINGS_SCHEMA.reduce((acc, schema) => {

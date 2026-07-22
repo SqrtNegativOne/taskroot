@@ -19,7 +19,6 @@ export class SyncEngine {
   private isPolling = false;
   private isPushing = false;
   
-  private categoryMap: any = {};
   private settings: any = { enableCalendarSync: true, enableTasksSync: true };
 
   private statusListeners = new Set<(status: string) => void>();
@@ -103,7 +102,6 @@ export class SyncEngine {
 
   setSettings(settings: any) {
     this.settings = settings || {};
-    this.categoryMap = this.settings.categoryCalendars || {};
     this.updateStatus();
   }
 
@@ -327,16 +325,14 @@ export class SyncEngine {
     const timeMax = new Date();
     timeMax.setMonth(timeMax.getMonth() + 2);
 
-    const calendarIds = new Set(['primary']);
-    for (const cid of Object.values(this.categoryMap || {})) {
-      if (typeof cid === 'string' && cid) calendarIds.add(cid);
-    }
+    const calendars = await googleCalendarAPI.fetchCalendars();
+    this.setLocalData('calendars', calendars.map((c: any) => ({ id: c.id, summary: c.summary })));
 
     const allRemoteEvents: any[] = [];
-    for (const cid of Array.from(calendarIds)) {
-      const remoteEvents = await googleCalendarAPI.fetchEvents(timeMin.toISOString(), timeMax.toISOString(), cid);
+    for (const cal of calendars) {
+      const remoteEvents = await googleCalendarAPI.fetchEvents(timeMin.toISOString(), timeMax.toISOString(), cal.id);
       if (remoteEvents) {
-        allRemoteEvents.push(...remoteEvents.map((e: any) => googleCalendarAPI.toLocalEvent(e, cid, this.categoryMap)));
+        allRemoteEvents.push(...remoteEvents.map((e: any) => googleCalendarAPI.toLocalEvent(e, cal.id, cal.summary)));
       }
     }
 
@@ -434,10 +430,7 @@ export class SyncEngine {
       } else {
         if (event.updatedAt && prev.updatedAt && event.updatedAt > prev.updatedAt) {
           
-          let targetCalendarId = 'primary';
-          if (event.category && this.categoryMap[event.category]) {
-            targetCalendarId = this.categoryMap[event.category];
-          }
+          let targetCalendarId = event.googleCalendarId || 'primary';
 
           if (event.googleCalendarId && event.googleCalendarId !== targetCalendarId) {
             if (event.googleEventId) {
@@ -520,10 +513,7 @@ export class SyncEngine {
              continue;
           }
           const tasks = this.getLocalData('tasks');
-          let targetCalendarId = 'primary';
-          if (taskOrEvent.item.category && this.categoryMap[taskOrEvent.item.category]) {
-            targetCalendarId = this.categoryMap[taskOrEvent.item.category];
-          }
+          let targetCalendarId = taskOrEvent.item.googleCalendarId || 'primary';
 
           if (taskOrEvent.action === 'create') {
             const res = await googleCalendarAPI.createEvent(taskOrEvent.item, tasks, targetCalendarId);

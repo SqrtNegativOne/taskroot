@@ -9,7 +9,7 @@ export const VALID_STORE_KEYS = [
   'settings', 'tasks', 'events', 'distractions', 'distractionStatuses', 
   'distractionColumns', 'stopwatch', 'time_logs', 'tips', 'notes', 
   'taskQuery', 'taskFilters', 'taskSort', 'restItems', 'test_key', 
-  'calFilters', 'calSort', 'timeFilters', 'timeSort'
+  'calFilters', 'calSort', 'timeFilters', 'timeSort', 'calendars'
 ] as const;
 
 export type StoreKey = typeof VALID_STORE_KEYS[number];

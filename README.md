@@ -6,6 +6,7 @@ Highly opinionated and highly powerful task management application for personal 
 - Uses bun. ...this isn't really a feature, sorry
 - GRAPH MODE.
 - Mediocre UI. Like, it's good enough I guess. It's pretty good.
+- Forcing functions through filters.
 - Neat sound effects that I stole from a twitter post about them
 
 ```

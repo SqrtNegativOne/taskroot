@@ -19,6 +19,20 @@ export class GoogleCalendarAPI {
     return data.items || [];
   }
 
+  async fetchCalendars() {
+    if (!this.token) return [{ id: 'primary', summary: 'Primary Calendar' }];
+    const res = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList', {
+      headers: { 'Authorization': `Bearer ${this.token}` }
+    });
+    if (!res.ok) {
+      if (res.status === 401) throw new Error('Unauthorized');
+      console.warn(`Failed to fetch calendars`);
+      return [{ id: 'primary', summary: 'Primary Calendar' }];
+    }
+    const data = await res.json();
+    return data.items || [{ id: 'primary', summary: 'Primary Calendar' }];
+  }
+
   async createEvent(localEvent: any, tasks: any[], calendarId = 'primary') {
     if (!this.token) return null;
     const body = this.toGoogleEvent(localEvent, tasks);
@@ -97,7 +111,7 @@ export class GoogleCalendarAPI {
     return r;
   }
 
-  toLocalEvent(googleEvent: any, calendarId = 'primary', categoryMap = {}) {
+  toLocalEvent(googleEvent: any, calendarId = 'primary', calendarSummary = '') {
     if (googleEvent.status === 'cancelled') {
       let id = googleEvent.id;
       if (googleEvent.extendedProperties?.private?.taskrootEventId) {
@@ -150,15 +164,7 @@ export class GoogleCalendarAPI {
       if (taskId) type = 'plan';
     }
 
-    let category = '';
-    if (calendarId !== 'primary') {
-      for (const [cat, cid] of Object.entries(categoryMap || {})) {
-        if (cid === calendarId) {
-          category = cat;
-          break;
-        }
-      }
-    }
+    let category = calendarSummary;
 
     const rrule = googleEvent.recurrence && googleEvent.recurrence.length > 0
       ? googleEvent.recurrence.find((r: string) => r.startsWith('RRULE:'))?.replace(/^RRULE:/i, '')

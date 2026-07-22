@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react';
-import { CalendarCategories, ExportDataButton, ImportTasksButton, LogoutButton, ClearAllDataButton } from '../screens/settings/SettingActions';
+import { ExportDataButton, ImportTasksButton, LogoutButton, ClearAllDataButton } from '../screens/settings/SettingActions';
 
 export interface AppSettings {
   defaultCalendarView: 'month' | 'week';
-  categoryCalendars: Record<string, string>;
+
   defaultTaskDuration: number;
   earliest_wake_time: number;
   last_sleep_time: number;
@@ -54,18 +54,7 @@ export const SETTINGS_SCHEMA: SettingSchema[] = [
       { value: 'week', label: 'Week' }
     ]
   },
-  {
-    id: 'categoryCalendars',
-    section: 'Calendar',
-    tab: 'general',
-    label: 'Calendar Categories',
-    description: 'Map specific event categories to different Google Calendars.',
-    keywords: ['google calendar', 'sync', 'categories', 'events'],
-    type: 'custom',
-    render: (props) => <CalendarCategories {...props} />,
-    showIf: (settings) => settings.enableCalendarSync === true,
-    defaultValue: {}
-  },
+
   {
     id: 'defaultTaskDuration',
     section: 'Tasks',

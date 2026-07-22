@@ -75,9 +75,13 @@ export function PlanScreen() {
     if (col === 'type') return ['info', 'plan', 'busy', 'log'];
     if (col === 'tag') return allEventTags;
     if (col === 'taskStatus') return ['todo', 'done', 'none'];
-    if (col === 'category') return Object.keys(settings?.categoryCalendars || {});
+    if (col === 'category') {
+      const s = new Set<string>();
+      events.forEach(e => { if (e.category) s.add(e.category); });
+      return Array.from(s).sort();
+    }
     return [];
-  }, [allEventTags, settings]);
+  }, [allEventTags, events]);
 
   // Drag state — { task, pointerX, pointerY, target }
   const [dragState, setDragState] = React.useState(null);
@@ -198,10 +202,10 @@ export function PlanScreen() {
     setEvents(prev => [...prev, newEvent]);
   };
 
-  const onAddTask = () => {
+  const onAddTask = (defaults: any = {}) => {
     const id = `t${Date.now()}`;
     setTasks(ts => [{
-       id, title: '', status: 'todo', priority: 1, tags: [], subtasks: [], parent_task: null, dependency: null, est: (settings.defaultTaskDuration === 0 || settings.defaultTaskDuration === undefined) ? undefined : settings.defaultTaskDuration, added: new Date().toISOString(), isDraft: true
+       id, title: '', status: 'todo', priority: 1, tags: [], subtasks: [], parent_task: null, dependency: null, est: (settings.defaultTaskDuration === 0 || settings.defaultTaskDuration === undefined) ? undefined : settings.defaultTaskDuration, added: new Date().toISOString(), isDraft: true, ...defaults
     }, ...ts]);
     setInspectorState({ type: 'task', id });
   };
@@ -582,6 +586,7 @@ function DescriptionInput({ value, onChange }) {
 function InspectorPane({ inspectorState, onClose, tasks, setTasks, events, setEvents, allTags, settings }) {
   const [activeState, setActiveState] = React.useState(null);
   const paneRef = React.useRef(null);
+  const [calendars] = useStored('calendars', [{ id: 'primary', summary: 'Primary Calendar' }]);
 
   React.useEffect(() => {
     if (inspectorState) setActiveState(inspectorState);
@@ -749,19 +754,21 @@ function InspectorPane({ inspectorState, onClose, tasks, setTasks, events, setEv
                  )}
 
                  <div className="inspector-field" style={{ marginTop: '8px' }}>
-                    <label>Calendar Category (optional)</label>
-                    <input 
-                      type="text" 
-                      placeholder="e.g. Work, Personal"
-                      value={currentItem.category || ''}
-                      onChange={e => updateEvent(currentItem.id, { category: e.target.value })}
-                      list="category-options"
-                    />
-                    <datalist id="category-options">
-                      {Object.keys(settings?.categoryCalendars || {}).map(cat => (
-                        <option key={cat} value={cat} />
+                    <label>Calendar</label>
+                    <select 
+                      value={currentItem.googleCalendarId || 'primary'}
+                      onChange={e => {
+                        const cal = calendars.find(c => c.id === e.target.value);
+                        updateEvent(currentItem.id, { 
+                          googleCalendarId: e.target.value,
+                          category: cal ? cal.summary : ''
+                        });
+                      }}
+                    >
+                      {calendars.map(c => (
+                        <option key={c.id} value={c.id}>{c.summary}</option>
                       ))}
-                    </datalist>
+                    </select>
                   </div>
                   
                   <div className="inspector-field" style={{ marginTop: '8px' }}>

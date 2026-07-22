@@ -41,6 +41,7 @@ export type HydratedEvent = BaseEvent & {
   type: 'plan' | 'info' | 'busy' | 'log';
   taskId?: string; // only if it's a plan
   title: string;
+  category?: string;
   priority?: string | null;
   isDone: boolean;
   task?: any; // The raw task object if needed by the UI

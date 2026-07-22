@@ -60,73 +60,7 @@ function CustomSelect({ options, value, onChange }: any) {
   );
 }
 
-export function CalendarCategories({ settings, setSettings }: { settings: any, setSettings: any }) {
-  const [calendars, setCalendars] = useState<{id: string, summary: string}[]>([]);
-  const [newCat, setNewCat] = useState('');
-  const [newCalId, setNewCalId] = useState('primary');
 
-  React.useEffect(() => {
-    const token = localStorage.getItem('google_access_token');
-    if (token) {
-      fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      }).then(r => r.json()).then(data => {
-        if (data.items) {
-          setCalendars([{ id: 'primary', summary: 'Primary Calendar' }, ...data.items.filter((c: any) => c.id !== 'primary')]);
-        }
-      }).catch(e => {
-         console.error('Failed to fetch calendars', e);
-      });
-    } else {
-      setCalendars([{ id: 'primary', summary: 'Primary Calendar' }]);
-    }
-  }, []);
-
-  const cats = settings.categoryCalendars || {};
-
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-      {Object.entries(cats).map(([cat, calId]) => (
-        <div key={cat} style={{ display: 'flex', gap: '12px', alignItems: 'center', color: 'var(--fg)' }}>
-          <span style={{ minWidth: '120px' }}>{cat}</span>
-          <CustomSelect 
-            value={calId as string}
-            options={calendars.map(c => ({ label: c.summary, value: c.id }))}
-            onChange={(val: string) => {
-              const newCats = { ...cats, [cat]: val };
-              setSettings({ ...settings, categoryCalendars: newCats });
-            }}
-          />
-          <button className="sw-btn" style={{ padding: '4px 8px' }} onClick={() => {
-            const newCats = { ...cats };
-            delete newCats[cat];
-            setSettings({ ...settings, categoryCalendars: newCats });
-          }}>Remove</button>
-        </div>
-      ))}
-      <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: '8px' }}>
-         <input 
-            placeholder="New category name..."
-            value={newCat}
-            onChange={e => setNewCat(e.target.value)}
-            style={{ background: 'var(--bg-input)', color: 'var(--fg)', border: '1px solid var(--border)', borderRadius: '4px', padding: '4px 8px', width: '120px' }}
-         />
-         <CustomSelect 
-            value={newCalId}
-            options={calendars.map(c => ({ label: c.summary, value: c.id }))}
-            onChange={(val: string) => setNewCalId(val)}
-          />
-         <button className="sw-btn" style={{ padding: '4px 8px' }} onClick={() => {
-            if (newCat) {
-              setSettings({ ...settings, categoryCalendars: { ...cats, [newCat]: newCalId } });
-              setNewCat('');
-              setNewCalId('primary');
-            }
-         }}>Add</button>
-      </div>
-    </div>
-  );
-}
 
 export function ExportDataButton() {
   return (

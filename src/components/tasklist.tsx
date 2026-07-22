@@ -5,6 +5,7 @@ import { TODAY, parseYMD, durationLabel, dueLabel } from '../core/data';
 import { Icon } from './icon';
 import { SearchBar } from './search-bar';
 import { FilterSortButtons } from '../screens/plan/shared-menus';
+import { computeFilterDefaults } from '../core/filters';
 
 // Task list — left column. Filter, sort, draggable items.
 
@@ -24,6 +25,8 @@ export function TaskListPane({ tasks = [], setTasks, filters = [], setFilters, s
     tasks.forEach(t => t.tags.forEach(tag => s.add(tag)));
     return Array.from(s).sort();
   }, [tasks]);
+
+
 
   const filtered = React.useMemo(() => {
     let xs = tasks;
@@ -58,6 +61,10 @@ export function TaskListPane({ tasks = [], setTasks, filters = [], setFilters, s
     return [...xs].sort(cmp);
   }, [tasks, filters, sort, query]);
 
+
+  const handleAddTask = () => {
+    onAddTask(computeFilterDefaults(filters));
+  };
 
   return (
     <aside className="task-pane">
@@ -101,7 +108,7 @@ export function TaskListPane({ tasks = [], setTasks, filters = [], setFilters, s
                justifyContent: 'center'
             }}
             title="Add Task"
-            onClick={onAddTask}
+            onClick={handleAddTask}
           >
             <Icon name="add_task" size={16} />
           </button>
@@ -113,7 +120,7 @@ export function TaskListPane({ tasks = [], setTasks, filters = [], setFilters, s
         onDoubleClick={(e) => {
           const target = e.target as Element;
           if (!target.closest('.task-row') && !target.closest('button')) {
-            onAddTask();
+            handleAddTask();
           }
         }}
       >

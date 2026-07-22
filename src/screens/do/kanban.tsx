@@ -11,7 +11,7 @@ const KANBAN_COLUMNS = [
   { id: 'done',    label: 'done',     dim: true },
 ];
 
-function Kanban() {
+export function Kanban() {
   const [tasks, setTasks] = useStored('tasks', SAMPLE_TASKS);
   const [drag, setDrag] = React.useState(null); // { taskId, x, y, overCol }
 
@@ -121,4 +121,4 @@ function KanbanCard({ task, onPointerDown, dragging }) {
   );
 }
 
-export { Kanban };
+

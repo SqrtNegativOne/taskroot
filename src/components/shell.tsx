@@ -5,7 +5,7 @@ import { MONTHS, DOW_SHORT, PAD2 } from '../core/data';
 import { syncEngine } from '../core/SyncEngine';
 
 // Shared top bar + clickable stage indicator. Used across Plan, Do, Rest.
-function TitleBar({ current, today }) {
+export function TitleBar({ current, today }) {
   // @ts-ignore - electronAPI is injected via preload
   const handleMinimize = () => window.electronAPI?.minimizeWindow?.();
   // @ts-ignore
@@ -143,7 +143,7 @@ function TitleBar({ current, today }) {
   );
 }
 
-function StageIndicator({ current }) {
+export function StageIndicator({ current }) {
   const stages = [
     { key: 'plan', label: 'plan', href: '/plan' },
     { key: 'do',   label: 'do',   href: '/do' },
@@ -175,4 +175,4 @@ function StageIndicator({ current }) {
   );
 }
 
-export { TitleBar, StageIndicator };
+

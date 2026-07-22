@@ -4,10 +4,10 @@ import { hydrateEvents } from '../core/events';
 
 // Day timeline: vertical, 24h scrollable, with drag-to-schedule + resize.
 
-const PX_PER_MIN = 56 / 60; // 56 px per hour
-const SNAP_MIN = 15;
+export const PX_PER_MIN = 56 / 60; // 56 px per hour
+export const SNAP_MIN = 15;
 
-function DayTimeline({ events, tasks, filter, sort, filterMenu, today, timelineDate, setTimelineDate, dragState, setDragState, onDropToTime, onResizeEvent, onMoveEvent, onEventClick, onAddEvent }) {
+export function DayTimeline({ events, tasks, filter, sort, filterMenu, today, timelineDate, setTimelineDate, dragState, setDragState, onDropToTime, onResizeEvent, onMoveEvent, onEventClick, onAddEvent }) {
   const containerRef = React.useRef(null);
   const scrollRef = React.useRef(null);
   
@@ -373,4 +373,4 @@ function layoutEvents(events) {
   });
 }
 
-export { DayTimeline, PX_PER_MIN, SNAP_MIN };
+

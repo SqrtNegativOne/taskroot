@@ -4,7 +4,7 @@ import { hydrateEvents } from '../../core/events';
 
 // Month / week calendar — top of right pane.
 
-function DateGrid({ view, setView, anchor, setAnchor, events, tasks, filter, sort, filterMenu, today, dragState, onDropToDate, onEventDragStart, onAddEvent }) {
+export function DateGrid({ view, setView, anchor, setAnchor, events, tasks, filter, sort, filterMenu, today, dragState, onDropToDate, onEventDragStart, onAddEvent }) {
   // anchor is a Date pointing into the month or week currently shown.
   const isWeek = view === 'week';
   const cells = React.useMemo(() => buildMonthOrWeekCells(anchor, isWeek), [anchor, isWeek]);
@@ -205,4 +205,4 @@ function weekRangeLabel(a, b) {
   return `${prefix}${MONTHS[a.getMonth()]} ${a.getDate()} – ${MONTHS[b.getMonth()]} ${b.getDate()}, ${b.getFullYear()}`;
 }
 
-export { DateGrid };
+

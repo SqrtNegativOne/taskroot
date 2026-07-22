@@ -3,55 +3,55 @@ import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } fr
 // Sample data + helpers for Taskroot.
 // Today is locked to 2026-05-20 (Wed) so the prototype feels populated.
 
-const TODAY = new Date();
+export const TODAY = new Date();
 
-const SAMPLE_TASKS = [];
+export const SAMPLE_TASKS = [];
 
 // Events already on the calendar. Time is minutes from midnight.
 // type: 'plan' (planned task block) | 'info' (informational) | 'busy' (busy block)
-const SAMPLE_EVENTS = [];
-const SAMPLE_DISTRACTIONS: any[] = [];
-const SAMPLE_NOTES: any[] = [];
+export const SAMPLE_EVENTS = [];
+export const SAMPLE_DISTRACTIONS: any[] = [];
+export const SAMPLE_NOTES: any[] = [];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-const PAD2 = (n) => String(n).padStart(2, '0');
-const ymd = (d) => `${d.getFullYear()}-${PAD2(d.getMonth() + 1)}-${PAD2(d.getDate())}`;
-const parseYMD = (s) => {
+export const PAD2 = (n) => String(n).padStart(2, '0');
+export const ymd = (d) => `${d.getFullYear()}-${PAD2(d.getMonth() + 1)}-${PAD2(d.getDate())}`;
+export const parseYMD = (s) => {
   const [y, m, d] = s.split('-').map(Number);
   return new Date(y, m - 1, d);
 };
-const sameDay = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
-const startOfMonth = (d) => new Date(d.getFullYear(), d.getMonth(), 1);
-const startOfWeek = (d) => {
+export const sameDay = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+export const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+export const startOfMonth = (d) => new Date(d.getFullYear(), d.getMonth(), 1);
+export const startOfWeek = (d) => {
   // Sunday-first
   const x = new Date(d);
   const day = x.getDay(); // 0 = Sun
   x.setDate(x.getDate() - day);
   return x;
 };
-const getWeekNumber = (d) => {
+export const getWeekNumber = (d) => {
   const date = new Date(d.getFullYear(), d.getMonth(), d.getDate());
   const startOfYear = new Date(date.getFullYear(), 0, 1);
   const firstWeekStart = startOfWeek(startOfYear);
   const diffDays = Math.round((date.getTime() - firstWeekStart.getTime()) / 86400000);
   return Math.floor(diffDays / 7) + 1;
 };
-const minutesToHHMM = (m) => `${PAD2(Math.floor(m / 60))}:${PAD2(m % 60)}`;
-const hhmmShort = (m) => {
+export const minutesToHHMM = (m) => `${PAD2(Math.floor(m / 60))}:${PAD2(m % 60)}`;
+export const hhmmShort = (m) => {
   const h = Math.floor(m / 60), mm = m % 60;
   const h12 = ((h + 11) % 12) + 1;
   const ap = h < 12 ? 'a' : 'p';
   return mm === 0 ? `${h12}${ap}` : `${h12}:${PAD2(mm)}${ap}`;
 };
-const durationLabel = (mins) => {
+export const durationLabel = (mins) => {
   if (!mins || mins === 0) return '';
   if (mins < 60) return `${mins}m`;
   const h = Math.floor(mins / 60), m = mins % 60;
   return m === 0 ? `${h}h` : `${h}h ${m}m`;
 };
-const dueLabel = (dueStr, today) => {
+export const dueLabel = (dueStr, today) => {
   if (!dueStr) return '';
   const d = parseYMD(dueStr);
   const diff = Math.round((d.getTime() - today.getTime()) / 86400000);
@@ -63,32 +63,32 @@ const dueLabel = (dueStr, today) => {
   return `${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
 };
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const MONTHS_LONG = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-const DOW_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const DOW_TINY = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+export const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+export const MONTHS_LONG = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+export const DOW_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+export const DOW_TINY = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 // ── More seed data for Do / Rest screens ────────────────────────────────────
 
-const DEFAULT_STATUSES = [
+export const DEFAULT_STATUSES = [
   { id: 'unresolved', label: 'Unresolved', color: 'var(--tag-red)' },
   { id: 'resolving',  label: 'Resolving',  color: 'var(--tag-yellow)' },
   { id: 'resolved',   label: 'Resolved',   color: 'var(--tag-green)' },
 ];
 
-const DEFAULT_DISTRACTION_COLUMNS = [
+export const DEFAULT_DISTRACTION_COLUMNS = [
   { id: 'name',    label: 'Name',    width: 360, type: 'text' },
   { id: 'status',  label: 'Status',  width: 160, type: 'status' },
   { id: 'created', label: 'Created', width: 160, type: 'datetime' },
 ];
 
-const SAMPLE_TIPS = [
+export const SAMPLE_TIPS = [
   'If a thought pops into your head, write it down immediately.',
   'When you feel stuck, the timer keeps running. Don\'t pause to think.',
   'Two minutes of fake-it-til-you-make-it usually breaks the wall.',
 ];
 
-const REST_CHECKLIST_DEFAULTS = [
+export const REST_CHECKLIST_DEFAULTS = [
   { id: 'r1', title: 'Get out of your chair.', type: 'check' },
   { id: 'r2', title: 'Drink water.', type: 'check' },
   { id: 'r3', title: 'Go to the washroom.', type: 'check' },
@@ -97,4 +97,4 @@ const REST_CHECKLIST_DEFAULTS = [
   { id: 'r6', title: 'Maybe write in your journal.', type: 'check' },
 ];
 
-export { TODAY, SAMPLE_TASKS, SAMPLE_EVENTS, DEFAULT_STATUSES, DEFAULT_DISTRACTION_COLUMNS, SAMPLE_TIPS, REST_CHECKLIST_DEFAULTS, ymd, parseYMD, sameDay, addDays, startOfMonth, startOfWeek, getWeekNumber, minutesToHHMM, hhmmShort, durationLabel, dueLabel, MONTHS, MONTHS_LONG, DOW_SHORT, DOW_TINY, PAD2, SAMPLE_DISTRACTIONS, SAMPLE_NOTES };
+

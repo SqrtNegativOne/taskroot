@@ -20,7 +20,7 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
   "showCurrentTime": true
 }/*EDITMODE-END*/;
 
-function PlanScreen() {
+export function PlanScreen() {
   const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
 
   // Data state (persisted)
@@ -830,4 +830,4 @@ function InspectorPane({ inspectorState, onClose, tasks, setTasks, events, setEv
 
 
 
-export { PlanScreen };
+

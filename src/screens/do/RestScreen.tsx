@@ -5,7 +5,7 @@ import { load, useStored, seedDefaults } from '../../core/store';
 
 // Rest screen — large checklist, editable, resets on each visit.
 
-function RestScreen() {
+export function RestScreen() {
   React.useEffect(() => { seedDefaults(); }, []);
 
   // Reset every visit: don't persist checks across reloads, but keep custom items.
@@ -138,4 +138,4 @@ function RestScreen() {
 
 
 
-export { RestScreen };
+

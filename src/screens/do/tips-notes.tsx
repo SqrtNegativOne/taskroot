@@ -4,7 +4,7 @@ import { useStored } from '../../core/store';
 
 // Tips list + Notes (Obsidian placeholder)
 
-function TipsList() {
+export function TipsList() {
   const [tips, setTips] = useStored('tips', SAMPLE_TIPS);
   const [adding, setAdding] = React.useState(false);
   const [draft, setDraft] = React.useState('');
@@ -49,7 +49,7 @@ function TipsList() {
   );
 }
 
-function NotesList() {
+export function NotesList() {
   const [notes, setNotes] = useStored('notes', SAMPLE_NOTES);
   const [toast, setToast] = React.useState(null);
   const [adding, setAdding] = React.useState(false);
@@ -118,4 +118,4 @@ function NotesList() {
   );
 }
 
-export { TipsList, NotesList };
+

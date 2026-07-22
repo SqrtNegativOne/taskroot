@@ -6,7 +6,7 @@ Taskroot is a web-based and desktop task management app focusing on planning, ex
 
 ## Tech Stack
 - **Package Manager**: Bun (`bun`). Used for package management and running scripts.
-- **Testing Framework**: Vitest (`vitest`). Do NOT use `bun test`, as it has known incompatibilities with testing React DOM components in this project. Use `npx vitest run` or `npm run test` instead.
+- **Testing Framework**: Vitest (`vitest`). `bun test` has incompatibilities with testing React DOM components in this project. Use `npx vitest run` or `npm run test` instead.
 - **Frontend Framework**: React 19 with React Router for SPA navigation.
 - **Build Tool**: Vite (with Hot Module Replacement for fast development).
 - **Desktop Wrapper**: Electron (configured via `electron/main.ts` and `preload.ts`).
@@ -43,3 +43,6 @@ The application code is organized modularly by feature:
 - **Time Logging**: Stopwatch sessions (Axleless, Flowtime, Guzey) are logged to the `time_logs` store, optionally associated with a task.
 - **MiniTracker**: When the main Electron window is minimized or closed, a frameless transparent window (`miniWin`) opens to show the timer in a compact form, using the `/?minitracker=true` route. **CRITICAL:** There should be NO buttons on the mini tracker window. Restoring the app or other actions should be done via keyboard shortcuts.
 - **Settings Schema**: When adding settings to `settingsSchema.ts`, if a setting is self-explanatory, do NOT include a `description` property. Do not have subheadings (`section`) unless the related settings you are clumping in them are very similar.
+
+## Style
+- Prefer inline exports over bottom exports.

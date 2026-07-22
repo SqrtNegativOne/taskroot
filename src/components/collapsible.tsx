@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } fr
 
 // Collapsible toggle primitive — TUI-style with chevron.
 
-function Collapsible({ title, badge, defaultOpen = false, children }) {
+export function Collapsible({ title, badge, defaultOpen = false, children }) {
   const [open, setOpen] = React.useState(defaultOpen);
   return (
     <section className={`collapsible ${open ? 'is-open' : ''}`}>
@@ -26,4 +26,4 @@ function Collapsible({ title, badge, defaultOpen = false, children }) {
   );
 }
 
-export { Collapsible };
+

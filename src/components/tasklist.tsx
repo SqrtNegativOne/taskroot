@@ -8,7 +8,7 @@ import { FilterSortButtons } from '../screens/plan/shared-menus';
 
 // Task list — left column. Filter, sort, draggable items.
 
-function TaskListPane({ tasks = [], setTasks, filters = [], setFilters, sort, setSort, query = '', setQuery, onDragStart, activeDragId, onAddTask, onDeleteTask, footer }: any) {
+export function TaskListPane({ tasks = [], setTasks, filters = [], setFilters, sort, setSort, query = '', setQuery, onDragStart, activeDragId, onAddTask, onDeleteTask, footer }: any) {
 
   const updateTask = (id, updates) => setTasks(ts => ts.map(t => t.id === id ? { ...t, ...updates } : t));
   const deleteTask = (id) => {
@@ -265,4 +265,4 @@ function TaskRow({ task, index, onDragStart, dragging, updateTask, deleteTask, f
   );
 }
 
-export { TaskListPane };
+

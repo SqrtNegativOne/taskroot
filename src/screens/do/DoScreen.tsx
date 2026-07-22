@@ -11,7 +11,7 @@ import { RestScreen } from './RestScreen';
 
 // Do screen — hero stopwatch + collapsible sections.
 
-function DoScreen() {
+export function DoScreen() {
   React.useEffect(() => { seedDefaults(); }, []);
   const [isBreak, setIsBreak] = useState(false);
   const [showRestOverride, setShowRestOverride] = useState(false);
@@ -103,4 +103,4 @@ function NotesBadge() {
 
 
 
-export { DoScreen };
+

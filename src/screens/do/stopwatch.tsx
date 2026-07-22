@@ -274,7 +274,7 @@ export const CLOCK_STRATEGIES: Record<string, ClockStrategy> = {
 };
 
 
-function Stopwatch({ onBreakStatusChange }) {
+export function Stopwatch({ onBreakStatusChange }) {
   const [state, setState] = useStored('stopwatch', { elapsed: 0, runningSince: null, isBreak: false, breakAllowedMs: 0, breakStartedAt: null, breakSoundPlayed: false });
   const [tasks, setTasks] = useStored('tasks', SAMPLE_TASKS);
   const [events] = useStored('events', SAMPLE_EVENTS || []);
@@ -673,4 +673,4 @@ function splitTime(ms) {
   };
 }
 
-export { Stopwatch };
+

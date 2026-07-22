@@ -73,7 +73,7 @@ export function useSetting<K extends keyof AppSettings>(settingKey: K): [AppSett
 }
 
 // React hook: manages local state, localStorage, and delegates remote sync to the ApiService
-function useStored<T>(key: StoreKey, initial: T): [T, (val: T | ((prev: T) => T)) => void, boolean] {
+export function useStored<T>(key: StoreKey, initial: T): [T, (val: T | ((prev: T) => T)) => void, boolean] {
   const [val, setVal] = useState<T>(() => {
     try {
       const saved = localStorage.getItem(`taskroot_${key}`);
@@ -229,9 +229,9 @@ function useStored<T>(key: StoreKey, initial: T): [T, (val: T | ((prev: T) => T)
 }
 
 // These are largely no-ops now since useStored handles everything
-function load(key: string, fallback: any) { return fallback; }
-function save(key: string, value: any) {}
-function ensure(key: string, initial: any) {}
-function seedDefaults() {}
+export function load(key: string, fallback: any) { return fallback; }
+export function save(key: string, value: any) {}
+export function ensure(key: string, initial: any) {}
+export function seedDefaults() {}
 
-export { load, save, useStored, ensure, seedDefaults, purgeOrphanedData };
+

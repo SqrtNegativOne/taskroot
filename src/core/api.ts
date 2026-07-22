@@ -41,7 +41,10 @@ class OfflineApi implements IApiService {
 }
 
 class OnlineApi implements IApiService {
-  constructor(private uid: string) {}
+  private uid: string;
+  constructor(uid: string) {
+    this.uid = uid;
+  }
 
   public async clearAllData(): Promise<void> {
     const keysToRemove: string[] = [];

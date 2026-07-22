@@ -27,18 +27,17 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const notify = useCallback((message: string, type: NotificationType = 'info') => {
     const id = Math.random().toString(36).substr(2, 9);
     setNotifications((prev) => [...prev, { id, message, type, exiting: false }]);
+  }, []);
 
-    // Trigger exit animation after 5 seconds
+  const dismiss = useCallback((id: string) => {
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, exiting: true } : n))
+    );
+    
+    // Remove from DOM after exit animation completes
     setTimeout(() => {
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, exiting: true } : n))
-      );
-      
-      // Remove from DOM after exit animation completes
-      setTimeout(() => {
-        setNotifications((prev) => prev.filter((n) => n.id !== id));
-      }, 600); // Wait for the fade-out-up animation (0.6s)
-    }, 5000);
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+    }, 600);
   }, []);
 
   return (
@@ -58,14 +57,14 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         }}
       >
         {notifications.map((n) => (
-          <NotificationItem key={n.id} notification={n} />
+          <NotificationItem key={n.id} notification={n} onDismiss={() => dismiss(n.id)} />
         ))}
       </div>
     </NotificationContext.Provider>
   );
 }
 
-function NotificationItem({ notification }: { notification: NotificationData }) {
+function NotificationItem({ notification, onDismiss }: { notification: NotificationData, onDismiss: () => void }) {
   const getColors = (type: NotificationType) => {
     switch (type) {
       case 'error': return { bg: 'rgba(220, 38, 38, 0.8)', border: 'rgba(248, 113, 113, 0.5)' };
@@ -114,10 +113,37 @@ function NotificationItem({ notification }: { notification: NotificationData }) 
           : 'notify-slide-in-right 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards',
         maxWidth: '350px',
         wordBreak: 'break-word',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '12px'
       }}
       title="Click to copy"
     >
-      {notification.message}
+      <span style={{ flex: 1 }}>{notification.message}</span>
+      <button 
+        onClick={(e) => {
+          e.stopPropagation();
+          onDismiss();
+        }}
+        style={{
+          background: 'transparent',
+          border: 'none',
+          color: 'currentColor',
+          cursor: 'pointer',
+          padding: '4px',
+          opacity: 0.7,
+          fontSize: '1.2rem',
+          lineHeight: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderRadius: '4px'
+        }}
+        title="Dismiss"
+      >
+        ×
+      </button>
       <style>{`
         @keyframes notify-slide-in-right {
           from { opacity: 0; transform: translateX(50px) scale(0.95); }

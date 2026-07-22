@@ -1,18 +1,104 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useSyncExternalStore, useCallback } from 'react';
 import { api } from './api';
 import { syncEngine } from './SyncEngine';
 import { SAMPLE_TASKS, SAMPLE_EVENTS, DEFAULT_STATUSES, DEFAULT_DISTRACTION_COLUMNS, SAMPLE_DISTRACTIONS, SAMPLE_TIPS, SAMPLE_NOTES } from './data';
+import { SETTINGS_SCHEMA, DEFAULT_SETTINGS } from './settingsSchema';
+import type { AppSettings } from './settingsSchema';
+
+export const VALID_STORE_KEYS = [
+  'settings', 'tasks', 'events', 'distractions', 'distractionStatuses', 
+  'distractionColumns', 'stopwatch', 'time_logs', 'tips', 'notes', 
+  'taskQuery', 'taskFilters', 'taskSort', 'restItems', 'test_key', 
+  'calFilters', 'calSort', 'timeFilters', 'timeSort'
+] as const;
+
+export type StoreKey = typeof VALID_STORE_KEYS[number];
+
+export function purgeOrphanedData(notify?: (msg: string, type: 'error') => void) {
+  const keysToRemove: string[] = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith('taskroot_')) {
+      const rawKey = key.replace('taskroot_', '');
+      if (!VALID_STORE_KEYS.includes(rawKey as any)) {
+        keysToRemove.push(key);
+      }
+    }
+  }
+  if (keysToRemove.length > 0) {
+    keysToRemove.forEach(k => localStorage.removeItem(k));
+    if (notify) {
+      notify(`Garbage collected ${keysToRemove.length} orphaned storage key(s): ${keysToRemove.map(k => k.replace('taskroot_', '')).join(', ')}`, 'error');
+    }
+  }
+}
+
+let globalSettings: AppSettings | null = null;
+const settingsListeners = new Set<() => void>();
+
+export function useSetting<K extends keyof AppSettings>(settingKey: K): [AppSettings[K], (val: AppSettings[K]) => void] {
+    if (!globalSettings) {
+        try {
+            const raw = localStorage.getItem('taskroot_settings');
+            globalSettings = raw ? { ...DEFAULT_SETTINGS, ...JSON.parse(raw) } : { ...DEFAULT_SETTINGS };
+        } catch (e) {
+            globalSettings = { ...DEFAULT_SETTINGS };
+        }
+    }
+    
+    const value = useSyncExternalStore(
+        (listener) => {
+            settingsListeners.add(listener);
+            return () => settingsListeners.delete(listener);
+        },
+        () => globalSettings![settingKey]
+    );
+
+    const [, setSettings] = useStored<AppSettings>('settings', DEFAULT_SETTINGS as AppSettings);
+
+    const setter = useCallback((newVal: AppSettings[K]) => {
+        globalSettings = { ...globalSettings!, [settingKey]: newVal };
+        settingsListeners.forEach(l => l());
+        setSettings(globalSettings);
+    }, [settingKey, setSettings]);
+
+    useEffect(() => {
+        syncEngine.registerUpdater('settings', (serverVal: any) => {
+            globalSettings = serverVal;
+            settingsListeners.forEach(l => l());
+        });
+    }, []);
+
+    return [value, setter];
+}
 
 // React hook: manages local state, localStorage, and delegates remote sync to the ApiService
-function useStored<T>(key: string, initial: T): [T, (val: T | ((prev: T) => T)) => void, boolean] {
+function useStored<T>(key: StoreKey, initial: T): [T, (val: T | ((prev: T) => T)) => void, boolean] {
   const [val, setVal] = useState<T>(() => {
     try {
       const saved = localStorage.getItem(`taskroot_${key}`);
-      if (saved) {
-        return JSON.parse(saved);
+      let parsed = saved ? JSON.parse(saved) : initial;
+      if (key === 'settings') {
+        const safeSettings: any = { ...DEFAULT_SETTINGS };
+        if (parsed && typeof parsed === 'object') {
+          for (const s of SETTINGS_SCHEMA) {
+            if (s.id in parsed) {
+              let val = parsed[s.id];
+              if (s.type === 'number') {
+                 val = Number(val);
+                 if (s.min !== undefined && val < s.min) val = s.min;
+                 if (s.max !== undefined && val > s.max) val = s.max;
+              }
+              if (s.type === 'checkbox') val = Boolean(val);
+              safeSettings[s.id] = val;
+            }
+          }
+        }
+        return safeSettings as unknown as T;
       }
-      return initial;
+      return parsed;
     } catch (e) {
+      if (key === 'settings') return { ...DEFAULT_SETTINGS } as unknown as T;
       return initial;
     }
   });
@@ -148,4 +234,4 @@ function save(key: string, value: any) {}
 function ensure(key: string, initial: any) {}
 function seedDefaults() {}
 
-export { load, save, useStored, ensure, seedDefaults };
+export { load, save, useStored, ensure, seedDefaults, purgeOrphanedData };

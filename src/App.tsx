@@ -6,7 +6,7 @@ import { PlanScreen } from './screens/plan/PlanScreen';
 import { DoScreen } from './screens/do/DoScreen';
 import { SettingsScreen } from './screens/settings/SettingsScreen';
 import { TitleBar } from './components/shell';
-import { useStored } from './core/store';
+import { useStored, purgeOrphanedData } from './core/store';
 import { SAMPLE_TASKS, SAMPLE_EVENTS } from './core/data';
 import { syncEngine } from './core/SyncEngine';
 import { NotificationProvider, useNotification } from './core/notifications';
@@ -106,9 +106,10 @@ function GlobalSync({ children }: { children: React.ReactNode }) {
   const { notify } = useNotification();
   
   React.useEffect(() => {
+     purgeOrphanedData(notify as any);
      syncEngine.setSettings(settings);
      syncEngine.start();
-  }, [settings]);
+  }, [settings]); // notify is from context, safe to omit or include
 
   React.useEffect(() => {
     const unsubSync = syncEngine.subscribeInitialSync(setInitialSyncDone);

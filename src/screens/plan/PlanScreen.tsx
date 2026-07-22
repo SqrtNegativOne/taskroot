@@ -52,9 +52,9 @@ function PlanScreen() {
   const [timelineDate, setTimelineDate] = React.useState(new Date(TODAY));
 
   // Event filters
-  const [calFilter, setCalFilter] = useStored('calFilters2', []);
+  const [calFilter, setCalFilter] = useStored('calFilters', []);
   const [calSort, setCalSort] = useStored('calSort', 'time');
-  const [timeFilter, setTimeFilter] = useStored('timeFilters2', []);
+  const [timeFilter, setTimeFilter] = useStored('timeFilters', []);
   const [timeSort, setTimeSort] = useStored('timeSort', 'time');
 
   const allEventTags = React.useMemo(() => {

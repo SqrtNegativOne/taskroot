@@ -1,5 +1,25 @@
-export type SettingType = 'select' | 'time' | 'number' | 'checkbox' | 'action' | 'textarea' | 'keybinding';
+import type { ReactNode } from 'react';
+import { CalendarCategories, ExportDataButton, ImportTasksButton, LogoutButton, ClearAllDataButton } from '../screens/settings/SettingActions';
 
+export interface AppSettings {
+  defaultCalendarView: 'month' | 'week';
+  categoryCalendars: Record<string, string>;
+  defaultTaskDuration: number;
+  earliest_wake_time: number;
+  last_sleep_time: number;
+  recapDay: string;
+  clockStyle: 'counter' | 'flowtime' | 'guzey';
+  allowStopwatchWithoutTask: boolean;
+  flowtimeBreakDivisor: number;
+  enableFirebaseSync: boolean;
+  enableCalendarSync: boolean;
+  enableTasksSync: boolean;
+  keybindingOpenSettings: string;
+  keybindingRestoreApp: string;
+  [key: string]: any; // Allow custom actions/etc if needed, though they shouldn't store values.
+}
+
+export type SettingType = 'select' | 'time' | 'number' | 'checkbox' | 'action' | 'textarea' | 'keybinding' | 'custom';
 export interface SettingSchema {
   id: string;
   section: string;
@@ -16,6 +36,8 @@ export interface SettingSchema {
   placeholder?: string;
   beta?: boolean;
   danger?: boolean;
+  render?: (props: { settings: any, setSettings: any }) => ReactNode;
+  showIf?: (settings: any) => boolean;
 }
 
 export const SETTINGS_SCHEMA: SettingSchema[] = [
@@ -39,8 +61,9 @@ export const SETTINGS_SCHEMA: SettingSchema[] = [
     label: 'Calendar Categories',
     description: 'Map specific event categories to different Google Calendars.',
     keywords: ['google calendar', 'sync', 'categories', 'events'],
-    type: 'action',
-    action: 'calendarCategories',
+    type: 'custom',
+    render: (props) => <CalendarCategories {...props} />,
+    showIf: (settings) => settings.enableCalendarSync === true,
     defaultValue: {}
   },
   {
@@ -169,18 +192,18 @@ export const SETTINGS_SCHEMA: SettingSchema[] = [
     label: 'Sign out',
     description: 'Sign out of your Google / Firebase account.',
     keywords: ['logout', 'signout', 'google', 'firebase', 'account'],
-    type: 'action',
-    action: 'logout'
+    type: 'custom',
+    render: () => <LogoutButton />
   },
   {
     id: 'exportData',
     section: 'Data Management',
     tab: 'sync',
     label: 'Export Data as JSON',
-    description: 'It stands for Json Object Notation.',
+    description: 'It stands for Jason\'s Object Notation.',
     keywords: ['export', 'backup', 'json', 'data'],
-    type: 'action',
-    action: 'exportData',
+    type: 'custom',
+    render: () => <ExportDataButton />
   },
   {
     id: 'importTasks',
@@ -189,8 +212,8 @@ export const SETTINGS_SCHEMA: SettingSchema[] = [
     label: 'Bulk Import Tasks',
     description: 'Paste in tasks separated by newlines. They will be added as new tasks to the top of your list.',
     keywords: ['import', 'bulk', 'tasks', 'add', 'text'],
-    type: 'action',
-    action: 'importTasks'
+    type: 'custom',
+    render: (props) => <ImportTasksButton {...props} />
   },
 
   {
@@ -200,8 +223,8 @@ export const SETTINGS_SCHEMA: SettingSchema[] = [
     label: 'Clear All Data',
     description: 'Permanently delete all your tasks, settings, logs, and other data from both this device and the cloud. This cannot be undone.',
     keywords: ['delete', 'clear', 'wipe', 'reset', 'factory', 'all'],
-    type: 'action',
-    action: 'clearAllData',
+    type: 'custom',
+    render: () => <ClearAllDataButton />,
     danger: true
   },
   {
@@ -218,7 +241,7 @@ export const SETTINGS_SCHEMA: SettingSchema[] = [
     section: 'Keybindings',
     tab: 'keybindings',
     label: 'Restore App',
-    keywords: ['keyboard', 'shortcut', 'restore', 'maximize', 'mini tracker'],
+    keywords: ['keyboard', 'shortcut', 'restore', 'maximize', 'mini tracker', 'minitracker'],
     type: 'keybinding',
     defaultValue: 'Ctrl+Alt+R'
   }
@@ -238,4 +261,4 @@ export const DEFAULT_SETTINGS = SETTINGS_SCHEMA.reduce((acc, schema) => {
     acc[schema.id] = schema.defaultValue;
   }
   return acc;
-}, {} as any);
+}, {} as AppSettings);

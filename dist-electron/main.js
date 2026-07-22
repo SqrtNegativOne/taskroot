@@ -132,6 +132,7 @@ function createMiniWindow() {
         }
     });
 }
+let localServer = null;
 function createWindow() {
     win = new BrowserWindow({
         width: 1200,
@@ -149,7 +150,7 @@ function createWindow() {
         win.loadURL(VITE_DEV_SERVER_URL);
     }
     else {
-        const server = createServer((req, res) => {
+        localServer = createServer((req, res) => {
             let pathname = new URL(req.url || '', `http://${req.headers.host}`).pathname;
             if (pathname === '/')
                 pathname = '/index.html';
@@ -185,13 +186,18 @@ function createWindow() {
                 }
             });
         });
-        server.listen(0, '127.0.0.1', () => {
-            const addr = server.address();
+        localServer.listen(0, '127.0.0.1', () => {
+            const addr = localServer.address();
             serverPort = typeof addr === 'string' ? 0 : addr?.port || 0;
             win?.loadURL(`http://localhost:${serverPort}`);
         });
     }
 }
+app.on('will-quit', () => {
+    if (localServer) {
+        localServer.close();
+    }
+});
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
         app.quit();
@@ -228,7 +234,7 @@ function createTray() {
         {
             label: 'Exit',
             click: () => {
-                app.quit();
+                app.exit(0);
             }
         }
     ]);
@@ -246,7 +252,6 @@ function createTray() {
 }
 app.whenReady().then(() => {
     createWindow();
-    createMiniWindow();
     createTray();
     const url = process.argv.find(arg => arg.startsWith('taskroot://'));
     if (url) {

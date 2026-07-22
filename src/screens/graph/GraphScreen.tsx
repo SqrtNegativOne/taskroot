@@ -22,7 +22,7 @@ export function GraphScreen() {
       xs = xs.filter(t => {
         let match = false;
         if (f.column === 'status') match = t.status === f.value;
-        else if (f.column === 'priority') match = t.priority === f.value;
+        else if (f.column === 'priority') match = t.priority === Number(f.value);
         else if (f.column === 'tag') match = (t.tags || []).includes(f.value);
         return f.operator === 'is not' ? !match : match;
       });

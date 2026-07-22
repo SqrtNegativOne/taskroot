@@ -266,7 +266,7 @@ export class SyncEngine {
     if (!remoteTasks) return; // No token or failed
 
     let updated = false;
-    const tasksMap = new Map(tasks.map((t: any) => [t.id, t]));
+    const tasksMap = new Map<string, any>(tasks.map((t: any) => [t.id, t]));
 
     for (const remote of remoteTasks) {
       // Find matching local task
@@ -280,7 +280,7 @@ export class SyncEngine {
       }
 
       const existingLocalTask = localId ? tasksMap.get(localId) : null;
-      const standardizedRemote = googleTasksAPI.toLocalTask(remote, existingLocalTask);
+      const standardizedRemote: any = googleTasksAPI.toLocalTask(remote, existingLocalTask);
 
       if (standardizedRemote._deleted) {
         if (existingLocalTask) {
@@ -341,9 +341,9 @@ export class SyncEngine {
     }
 
     let updated = false;
-    const eventsMap = new Map(events.map((e: any) => [e.id, e]));
+    const eventsMap = new Map<string, any>(events.map((e: any) => [e.id, e]));
 
-    for (const remote of allRemoteEvents) {
+    for (const remote of allRemoteEvents as any[]) {
       const existingLocalEvent = eventsMap.get(remote.id);
 
       if (remote._deleted) {

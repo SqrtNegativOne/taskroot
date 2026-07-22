@@ -20,9 +20,10 @@ function TitleBar({ current, today }) {
   const syncBtnRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    return syncEngine.subscribeStatus((status) => {
+    const unsubscribe = syncEngine.subscribeStatus((status) => {
       setSyncStatus(status);
     });
+    return () => { unsubscribe(); };
   }, []);
 
   useEffect(() => {

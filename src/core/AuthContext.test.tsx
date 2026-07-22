@@ -19,7 +19,6 @@ const fakeAuthState = {
 vi.mock('firebase/auth', () => {
   return {
     onAuthStateChanged: (auth: any, cb: Function) => fakeAuthState.onAuthStateChanged(auth, cb),
-    onAuthStateChanged: (auth: any, cb: Function) => fakeAuthState.onAuthStateChanged(auth, cb),
     signInWithPopup: async () => {
       const user = { uid: 'test-user-123' };
       fakeAuthState.currentUser = user;
@@ -90,7 +89,7 @@ describe('AuthContext', () => {
   it('initially shows loading state', async () => {
     // Prevent immediate resolution for this test
     const originalOnAuth = fakeAuthState.onAuthStateChanged;
-    fakeAuthState.onAuthStateChanged = () => () => {};
+    fakeAuthState.onAuthStateChanged = () => () => true;
     
     render(
       <AuthProvider>

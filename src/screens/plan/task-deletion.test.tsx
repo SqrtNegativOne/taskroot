@@ -1,8 +1,9 @@
+import '../../../vitest-setup.ts';
 import React from 'react';
 import '@testing-library/jest-dom';
 import { MemoryRouter } from 'react-router-dom';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { expect, test, vi, beforeEach } from 'vitest';
+import { expect, test, vi, beforeEach, beforeAll } from 'vitest';
 import { PlanScreen } from './PlanScreen';
 
 vi.mock('../../core/api', () => ({
@@ -15,22 +16,24 @@ vi.mock('../../core/api', () => ({
     }
 }));
 
-// Mock matchMedia
-window.matchMedia = window.matchMedia || (function() {
-    return {
-        matches: false,
-        addListener: function() {},
-        removeListener: function() {}
-    } as any;
-});
+beforeAll(() => {
+    // Mock matchMedia
+    window.matchMedia = window.matchMedia || (function() {
+        return {
+            matches: false,
+            addListener: function() {},
+            removeListener: function() {}
+        } as any;
+    });
 
-// Mock ResizeObserver
-class ResizeObserver {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-}
-window.ResizeObserver = ResizeObserver;
+    // Mock ResizeObserver
+    class ResizeObserver {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+    }
+    window.ResizeObserver = ResizeObserver;
+});
 
 beforeEach(() => {
     localStorage.clear();

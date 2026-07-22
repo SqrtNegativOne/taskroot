@@ -5,28 +5,29 @@ import { AuthProvider, useAuth } from './AuthContext';
 import { api } from './api';
 import { onAuthStateChanged } from 'firebase/auth';
 
-const authState = {
+const fakeAuthState = {
   currentUser: null as any,
   listeners: new Set<Function>(),
   onAuthStateChanged: (auth: any, cb: Function) => {
-    authState.listeners.add(cb);
+    fakeAuthState.listeners.add(cb);
     // Call immediately with current state
-    cb(authState.currentUser);
-    return () => authState.listeners.delete(cb);
+    cb(fakeAuthState.currentUser);
+    return () => fakeAuthState.listeners.delete(cb);
   }
 };
 
 vi.mock('firebase/auth', () => {
   return {
-    onAuthStateChanged: (auth: any, cb: Function) => authState.onAuthStateChanged(auth, cb),
+    onAuthStateChanged: (auth: any, cb: Function) => fakeAuthState.onAuthStateChanged(auth, cb),
+    onAuthStateChanged: (auth: any, cb: Function) => fakeAuthState.onAuthStateChanged(auth, cb),
     signInWithPopup: async () => {
       const user = { uid: 'test-user-123' };
-      authState.currentUser = user;
-      authState.listeners.forEach(cb => cb(user));
+      fakeAuthState.currentUser = user;
+      fakeAuthState.listeners.forEach(cb => cb(user));
     },
     signOut: async () => {
-      authState.currentUser = null;
-      authState.listeners.forEach(cb => cb(null));
+      fakeAuthState.currentUser = null;
+      fakeAuthState.listeners.forEach(cb => cb(null));
     },
     GoogleAuthProvider: class {}
   };
@@ -73,12 +74,12 @@ const TestComponent = () => {
 
 describe('AuthContext', () => {
   beforeEach(async () => {
-    authState.currentUser = null;
-    authState.listeners.clear();
-    authState.onAuthStateChanged = (auth: any, cb: Function) => {
-      authState.listeners.add(cb);
-      cb(authState.currentUser);
-      return () => authState.listeners.delete(cb);
+    fakeAuthState.currentUser = null;
+    fakeAuthState.listeners.clear();
+    fakeAuthState.onAuthStateChanged = (auth: any, cb: Function) => {
+      fakeAuthState.listeners.add(cb);
+      cb(fakeAuthState.currentUser);
+      return () => fakeAuthState.listeners.delete(cb);
     };
     (api as any).__fakeApi.userId = null;
   });
@@ -88,8 +89,8 @@ describe('AuthContext', () => {
 
   it('initially shows loading state', async () => {
     // Prevent immediate resolution for this test
-    const originalOnAuth = authState.onAuthStateChanged;
-    authState.onAuthStateChanged = () => () => {};
+    const originalOnAuth = fakeAuthState.onAuthStateChanged;
+    fakeAuthState.onAuthStateChanged = () => () => {};
     
     render(
       <AuthProvider>
@@ -100,7 +101,7 @@ describe('AuthContext', () => {
     expect(screen.getByText('Loading...')).toBeInTheDocument();
     
     // Restore
-    authState.onAuthStateChanged = originalOnAuth;
+    fakeAuthState.onAuthStateChanged = originalOnAuth;
   });
 
   it('updates state and calls api.setUserId when user logs in', async () => {
@@ -121,7 +122,7 @@ describe('AuthContext', () => {
 
   it('updates state and calls api.setUserId when user logs out', async () => {
     // Start logged in
-    authState.currentUser = { uid: 'test-user-123' };
+    fakeAuthState.currentUser = { uid: 'test-user-123' };
     
     render(
       <AuthProvider>
@@ -139,7 +140,7 @@ describe('AuthContext', () => {
   });
 
   it('calls signOut when logout is triggered', async () => {
-    authState.currentUser = { uid: 'test-user-123' };
+    fakeAuthState.currentUser = { uid: 'test-user-123' };
     
     render(
       <AuthProvider>
@@ -151,7 +152,7 @@ describe('AuthContext', () => {
       screen.getByText('Logout').click();
     });
 
-    expect(authState.currentUser).toBeNull();
+    expect(fakeAuthState.currentUser).toBeNull();
     expect((api as any).__fakeApi.userId).toBeUndefined();
   });
 });

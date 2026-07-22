@@ -282,6 +282,17 @@ export class SyncEngine {
       const existingLocalTask = localId ? tasksMap.get(localId) : null;
       const standardizedRemote = googleTasksAPI.toLocalTask(remote, existingLocalTask);
 
+      if (standardizedRemote._deleted) {
+        if (existingLocalTask) {
+          const localUpdated = existingLocalTask.updatedAt || 0;
+          if (standardizedRemote.updatedAt > localUpdated) {
+            tasksMap.delete(existingLocalTask.id);
+            updated = true;
+          }
+        }
+        continue;
+      }
+
       if (existingLocalTask) {
         const localUpdated = existingLocalTask.updatedAt || 0;
         const remoteUpdated = standardizedRemote.updatedAt || 0;
@@ -334,6 +345,17 @@ export class SyncEngine {
 
     for (const remote of allRemoteEvents) {
       const existingLocalEvent = eventsMap.get(remote.id);
+
+      if (remote._deleted) {
+        if (existingLocalEvent) {
+          const localUpdated = existingLocalEvent.updatedAt || 0;
+          if (remote.updatedAt > localUpdated) {
+            eventsMap.delete(existingLocalEvent.id);
+            updated = true;
+          }
+        }
+        continue;
+      }
 
       if (existingLocalEvent) {
         const localUpdated = existingLocalEvent.updatedAt || 0;

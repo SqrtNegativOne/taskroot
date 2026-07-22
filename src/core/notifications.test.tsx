@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, act } from '@testing-library/react';
+import { render, screen, act, fireEvent } from '@testing-library/react';
 import { NotificationProvider, useNotification } from './notifications';
 
 // A test component to trigger notifications
@@ -38,9 +38,13 @@ describe('Notification System', () => {
   it('renders a notification when notify is called', () => {
     render(
       <NotificationProvider>
-        <AutoTriggerComponent message="Test notification message" />
+        <TestComponent message="Test notification message" />
       </NotificationProvider>
     );
+
+    act(() => {
+      fireEvent.click(screen.getByText('Trigger Notification'));
+    });
 
     const notification = screen.getByText('Test notification message');
     expect(notification).toBeInTheDocument();
@@ -49,9 +53,13 @@ describe('Notification System', () => {
   it('removes the notification after timeout', () => {
     render(
       <NotificationProvider>
-        <AutoTriggerComponent message="Disappearing message" />
+        <TestComponent message="Disappearing message" />
       </NotificationProvider>
     );
+
+    act(() => {
+      fireEvent.click(screen.getByText('Trigger Notification'));
+    });
 
     expect(screen.getByText('Disappearing message')).toBeInTheDocument();
 
@@ -74,10 +82,18 @@ describe('Notification System', () => {
   it('renders multiple notifications', () => {
     render(
       <NotificationProvider>
-        <AutoTriggerComponent message="Message 1" />
-        <AutoTriggerComponent message="Message 2" />
+        <div>
+          <TestComponent message="Message 1" />
+          <TestComponent message="Message 2" />
+        </div>
       </NotificationProvider>
     );
+
+    act(() => {
+      const buttons = screen.getAllByText('Trigger Notification');
+      fireEvent.click(buttons[0]);
+      fireEvent.click(buttons[1]);
+    });
 
     expect(screen.getByText('Message 1')).toBeInTheDocument();
     expect(screen.getByText('Message 2')).toBeInTheDocument();

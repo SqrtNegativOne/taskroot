@@ -13,7 +13,7 @@
     "electron:start": "electron .",
     "start:offline": "node scripts/dev-runner.js --offline",
     "start:online": "node scripts/dev-runner.js",
-    "test": "bun test"
+    "test": "bun test --env=happy-dom"
   },
   "dependencies": {
     "@fontsource/atkinson-hyperlegible-next": "^5.3.0",
@@ -42,8 +42,10 @@
     "electron": "^30.0.0",
     "electron-builder": "^25.1.8",
     "happy-dom": "^20.11.0",
+    "jsdom": "^29.1.1",
     "oxlint": "^1.71.0",
     "typescript": "~6.0.2",
+    "vitest": "^4.1.10",
     "wait-on": "^9.0.10"
   }
 }

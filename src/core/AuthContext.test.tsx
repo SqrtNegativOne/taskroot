@@ -5,19 +5,20 @@ import { AuthProvider, useAuth } from './AuthContext';
 import { api } from './api';
 import { onAuthStateChanged } from 'firebase/auth';
 
+const authState = {
+  currentUser: null as any,
+  listeners: new Set<Function>(),
+  onAuthStateChanged: (auth: any, cb: Function) => {
+    authState.listeners.add(cb);
+    // Call immediately with current state
+    cb(authState.currentUser);
+    return () => authState.listeners.delete(cb);
+  }
+};
+
 vi.mock('firebase/auth', () => {
-  const authState = {
-    currentUser: null as any,
-    listeners: new Set<Function>()
-  };
   return {
-    __fakeAuth: authState,
-    onAuthStateChanged: (auth: any, cb: Function) => {
-      authState.listeners.add(cb);
-      // Call immediately with current state
-      cb(authState.currentUser);
-      return () => authState.listeners.delete(cb);
-    },
+    onAuthStateChanged: (auth: any, cb: Function) => authState.onAuthStateChanged(auth, cb),
     signInWithPopup: async () => {
       const user = { uid: 'test-user-123' };
       authState.currentUser = user;
@@ -71,22 +72,24 @@ const TestComponent = () => {
 };
 
 describe('AuthContext', () => {
-  let firebaseAuthModule: any;
-
   beforeEach(async () => {
-    firebaseAuthModule = await import('firebase/auth');
-    firebaseAuthModule.__fakeAuth.currentUser = null;
-    firebaseAuthModule.__fakeAuth.listeners.clear();
+    authState.currentUser = null;
+    authState.listeners.clear();
+    authState.onAuthStateChanged = (auth: any, cb: Function) => {
+      authState.listeners.add(cb);
+      cb(authState.currentUser);
+      return () => authState.listeners.delete(cb);
+    };
     (api as any).__fakeApi.userId = null;
   });
 
   afterEach(() => {
   });
 
-  it('initially shows loading state', () => {
+  it('initially shows loading state', async () => {
     // Prevent immediate resolution for this test
-    const originalOnAuth = firebaseAuthModule.onAuthStateChanged;
-    firebaseAuthModule.onAuthStateChanged = () => () => {};
+    const originalOnAuth = authState.onAuthStateChanged;
+    authState.onAuthStateChanged = () => () => {};
     
     render(
       <AuthProvider>
@@ -97,7 +100,7 @@ describe('AuthContext', () => {
     expect(screen.getByText('Loading...')).toBeInTheDocument();
     
     // Restore
-    firebaseAuthModule.onAuthStateChanged = originalOnAuth;
+    authState.onAuthStateChanged = originalOnAuth;
   });
 
   it('updates state and calls api.setUserId when user logs in', async () => {
@@ -108,7 +111,8 @@ describe('AuthContext', () => {
     );
 
     await act(async () => {
-      await firebaseAuthModule.signInWithPopup();
+      const firebaseAuthModule = await import('firebase/auth');
+      await firebaseAuthModule.signInWithPopup({} as any, {} as any);
     });
 
     expect(screen.getByTestId('user-status')).toHaveTextContent('Logged in as test-user-123');
@@ -117,7 +121,7 @@ describe('AuthContext', () => {
 
   it('updates state and calls api.setUserId when user logs out', async () => {
     // Start logged in
-    firebaseAuthModule.__fakeAuth.currentUser = { uid: 'test-user-123' };
+    authState.currentUser = { uid: 'test-user-123' };
     
     render(
       <AuthProvider>
@@ -126,15 +130,16 @@ describe('AuthContext', () => {
     );
 
     await act(async () => {
-      await firebaseAuthModule.signOut();
+      const firebaseAuthModule = await import('firebase/auth');
+      await firebaseAuthModule.signOut({} as any);
     });
 
     expect(screen.getByTestId('user-status')).toHaveTextContent('Not logged in');
-    expect((api as any).__fakeApi.userId).toBeNull();
+    expect((api as any).__fakeApi.userId).toBeUndefined();
   });
 
   it('calls signOut when logout is triggered', async () => {
-    firebaseAuthModule.__fakeAuth.currentUser = { uid: 'test-user-123' };
+    authState.currentUser = { uid: 'test-user-123' };
     
     render(
       <AuthProvider>
@@ -146,7 +151,7 @@ describe('AuthContext', () => {
       screen.getByText('Logout').click();
     });
 
-    expect(firebaseAuthModule.__fakeAuth.currentUser).toBeNull();
-    expect((api as any).__fakeApi.userId).toBeNull();
+    expect(authState.currentUser).toBeNull();
+    expect((api as any).__fakeApi.userId).toBeUndefined();
   });
 });

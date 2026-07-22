@@ -66,6 +66,11 @@ export class GoogleTasksAPI {
   }
 
   toLocalTask(googleTask: any, existingLocalTask: any = null) {
+    if (googleTask.deleted) {
+      let id = googleTask.id;
+      if (existingLocalTask) id = existingLocalTask.id;
+      return { id, _deleted: true, updatedAt: new Date(googleTask.updated || 0).getTime() };
+    }
     let localStatus = 'todo';
     if (googleTask.status === 'completed') {
       localStatus = 'done';

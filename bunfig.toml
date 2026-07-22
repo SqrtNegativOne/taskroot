@@ -1,2 +1,2 @@
 [test]
-preload = ["./vitest-setup.ts"]
+env = "happy-dom"

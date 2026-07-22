@@ -98,11 +98,19 @@ export class GoogleCalendarAPI {
   }
 
   toLocalEvent(googleEvent: any, calendarId = 'primary', categoryMap = {}) {
+    if (googleEvent.status === 'cancelled') {
+      let id = googleEvent.id;
+      if (googleEvent.extendedProperties?.private?.taskrootEventId) {
+        id = googleEvent.extendedProperties.private.taskrootEventId;
+      }
+      return { id, _deleted: true, updatedAt: new Date(googleEvent.updated || 0).getTime() };
+    }
+
     let date, start, end;
 
-    if (googleEvent.start.dateTime) {
+    if (googleEvent.start?.dateTime) {
       const startDt = new Date(googleEvent.start.dateTime);
-      const endDt = new Date(googleEvent.end.dateTime);
+      const endDt = new Date(googleEvent.end?.dateTime || googleEvent.start.dateTime);
       const y = startDt.getFullYear();
       const m = (startDt.getMonth() + 1).toString().padStart(2, '0');
       const d = startDt.getDate().toString().padStart(2, '0');
@@ -114,7 +122,7 @@ export class GoogleCalendarAPI {
       } else {
         end = endDt.getHours() * 60 + endDt.getMinutes();
       }
-    } else if (googleEvent.start.date) {
+    } else if (googleEvent.start?.date) {
       date = googleEvent.start.date;
       start = 0;
       end = 24 * 60;

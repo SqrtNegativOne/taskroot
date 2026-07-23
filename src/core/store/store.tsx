@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useSyncExternalStore, useCallback } from 'react';
 import { api } from './api';
-import { syncEngine } from './SyncEngine';
+import { syncEngine } from '../sync/SyncEngine';
 import { SAMPLE_TASKS, SAMPLE_EVENTS, DEFAULT_STATUSES, DEFAULT_DISTRACTION_COLUMNS, SAMPLE_DISTRACTIONS, SAMPLE_TIPS, SAMPLE_NOTES } from './data';
 import { SETTINGS_SCHEMA, DEFAULT_SETTINGS } from './settingsSchema';
 import type { AppSettings } from './settingsSchema';

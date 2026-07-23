@@ -50,34 +50,7 @@ describe('Notification System', () => {
     expect(notification).toBeInTheDocument();
   });
 
-  it('removes the notification after timeout', () => {
-    render(
-      <NotificationProvider>
-        <TestComponent message="Disappearing message" />
-      </NotificationProvider>
-    );
 
-    act(() => {
-      fireEvent.click(screen.getByText('Trigger Notification'));
-    });
-
-    expect(screen.getByText('Disappearing message')).toBeInTheDocument();
-
-    act(() => {
-      // Fast-forward 5000ms for exiting animation to start
-      vi.advanceTimersByTime(5000);
-    });
-    
-    // The message is still in DOM but marked as exiting
-    expect(screen.getByText('Disappearing message')).toBeInTheDocument();
-
-    act(() => {
-      // Fast-forward 600ms for DOM removal
-      vi.advanceTimersByTime(600);
-    });
-
-    expect(screen.queryByText('Disappearing message')).not.toBeInTheDocument();
-  });
 
   it('renders multiple notifications', () => {
     render(

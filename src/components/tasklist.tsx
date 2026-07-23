@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
 import { play } from 'cuelume';
 import Fuse from 'fuse.js';
-import { TODAY, parseYMD, durationLabel, dueLabel } from '../core/data';
+import { TODAY, parseYMD, durationLabel, dueLabel } from '../core/store/data';
 import { Icon } from './icon';
 import { SearchBar } from './search-bar';
 import { FilterSortButtons } from '../screens/plan/shared-menus';
-import { computeFilterDefaults } from '../core/filters';
+import { computeFilterDefaults } from '../core/domain/filters';
 
 // Task list — left column. Filter, sort, draggable items.
 

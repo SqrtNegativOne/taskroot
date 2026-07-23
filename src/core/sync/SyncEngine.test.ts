@@ -9,6 +9,7 @@ vi.mock('./GoogleCalendarAPI', () => {
     googleCalendarAPI: {
       fakeEvents, // Expose for testing
       setToken: () => {},
+      fetchCalendars: async () => [{ id: 'primary', summary: 'Primary' }],
       fetchEvents: async () => Array.from(fakeEvents.values()),
       createEvent: async (e: any) => { 
         const id = 'e' + Date.now(); 

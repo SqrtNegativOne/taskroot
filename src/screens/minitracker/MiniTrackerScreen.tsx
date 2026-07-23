@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import '@fontsource/atkinson-hyperlegible-next';
-import { useStored } from '../../core/store';
-import { PAD2 } from '../../core/data';
+import { useStored } from '../../core/store/store';
+import { PAD2 } from '../../core/store/data';
 
 function splitTime(ms: number) {
   const totalSec = Math.floor(ms / 1000);

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { ExportDataButton, ImportTasksButton, LogoutButton, ClearAllDataButton } from '../screens/settings/SettingActions';
+import { ExportDataButton, ImportTasksButton, LogoutButton, ClearAllDataButton } from '../../screens/settings/SettingActions';
 
 export interface AppSettings {
   defaultCalendarView: 'month' | 'week';

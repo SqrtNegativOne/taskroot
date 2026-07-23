@@ -3,10 +3,10 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, act, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { SettingsScreen } from './SettingsScreen';
-import { SETTINGS_SCHEMA, SETTINGS_TABS } from '../../core/settingsSchema';
+import { SETTINGS_SCHEMA, SETTINGS_TABS } from '../../core/store/settingsSchema';
 
 // Mock dependencies
-vi.mock('../../core/api', () => ({
+vi.mock('../../core/store/api', () => ({
   api: {
     clearAllData: vi.fn(),
     subscribeToStore: vi.fn().mockImplementation((key, init, onData, onReady) => {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { SAMPLE_TASKS, SAMPLE_EVENTS, PAD2, ymd } from '../../core/data';
-import { useStored } from '../../core/store';
+import { SAMPLE_TASKS, SAMPLE_EVENTS, PAD2, ymd } from '../../core/store/data';
+import { useStored } from '../../core/store/store';
 import { Icon } from '../../components/icon';
 
 // Helper to log sessions

@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Icon } from './icon';
-import { MONTHS, DOW_SHORT, PAD2 } from '../core/data';
-import { syncEngine } from '../core/SyncEngine';
+import { MONTHS, DOW_SHORT, PAD2 } from '../core/store/data';
+import { syncEngine } from '../core/sync/SyncEngine';
 
 // Shared top bar + clickable stage indicator. Used across Plan, Do, Rest.
 export function TitleBar({ current, today }) {

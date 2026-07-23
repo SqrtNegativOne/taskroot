@@ -24,11 +24,6 @@ export function useNotification() {
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
   const [notifications, setNotifications] = useState<NotificationData[]>([]);
 
-  const notify = useCallback((message: string, type: NotificationType = 'info') => {
-    const id = Math.random().toString(36).substr(2, 9);
-    setNotifications((prev) => [...prev, { id, message, type, exiting: false }]);
-  }, []);
-
   const dismiss = useCallback((id: string) => {
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, exiting: true } : n))
@@ -38,6 +33,11 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     setTimeout(() => {
       setNotifications((prev) => prev.filter((n) => n.id !== id));
     }, 600);
+  }, []);
+
+  const notify = useCallback((message: string, type: NotificationType = 'info') => {
+    const id = Math.random().toString(36).substr(2, 9);
+    setNotifications((prev) => [...prev, { id, message, type, exiting: false }]);
   }, []);
 
   return (

@@ -6,7 +6,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { expect, test, vi, beforeEach, beforeAll } from 'vitest';
 import { PlanScreen } from './PlanScreen';
 
-vi.mock('../../core/api', () => ({
+vi.mock('../../core/store/api', () => ({
     api: {
         subscribeToStore: (key, fallback, onUpdate, onReady) => {
             onReady();

@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { TitleBar } from '../../components/shell';
-import { TODAY, SAMPLE_TASKS } from '../../core/data';
-import { useStored } from '../../core/store';
+import { TODAY, SAMPLE_TASKS } from '../../core/store/data';
+import { useStored } from '../../core/store/store';
 import { TaskListPane } from '../../components/tasklist';
 import { SplitPane } from '../../components/split-pane';
 import { TaskCanvas } from './TaskCanvas';

@@ -1,5 +1,5 @@
 import { doc, onSnapshot, setDoc, deleteDoc } from 'firebase/firestore';
-import { db } from './firebase';
+import { db } from '../auth/firebase';
 
 export async function fetchWithTimeout(resource: RequestInfo | URL, options: RequestInit & { timeout?: number } = {}) {
   const { timeout = 15000, ...rest } = options;

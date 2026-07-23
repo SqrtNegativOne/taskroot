@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
-import { TODAY, REST_CHECKLIST_DEFAULTS, MONTHS, DOW_SHORT } from '../../core/data';
+import { TODAY, REST_CHECKLIST_DEFAULTS, MONTHS, DOW_SHORT } from '../../core/store/data';
 import { TitleBar } from '../../components/shell';
-import { load, useStored, seedDefaults } from '../../core/store';
+import { load, useStored, seedDefaults } from '../../core/store/store';
 
 // Rest screen — large checklist, editable, resets on each visit.
 

@@ -1,6 +1,6 @@
 import { googleCalendarAPI } from './GoogleCalendarAPI';
 import { googleTasksAPI } from './GoogleTasksAPI';
-import { fetchWithTimeout } from './api';
+import { fetchWithTimeout } from '../store/api';
 
 export class SyncEngine {
   private lastTasksSync = 0;

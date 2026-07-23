@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
-import { ymd, sameDay, addDays, startOfMonth, startOfWeek, getWeekNumber, hhmmShort, MONTHS, MONTHS_LONG, DOW_SHORT, PAD2 } from '../../core/data';
-import { hydrateEvents } from '../../core/events';
+import { ymd, sameDay, addDays, startOfMonth, startOfWeek, getWeekNumber, hhmmShort, MONTHS, MONTHS_LONG, DOW_SHORT, PAD2 } from '../../core/store/data';
+import { hydrateEvents } from '../../core/domain/events';
 
 // Month / week calendar — top of right pane.
 

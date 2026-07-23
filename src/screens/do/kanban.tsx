@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
-import { SAMPLE_TASKS, durationLabel } from '../../core/data';
-import { useStored } from '../../core/store';
+import { SAMPLE_TASKS, durationLabel } from '../../core/store/data';
+import { useStored } from '../../core/store/store';
 
 // Kanban board — pulls tasks from the shared store, drag between columns to change status.
 

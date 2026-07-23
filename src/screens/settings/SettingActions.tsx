@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { api } from '../../core/api';
-import { useAuth } from '../../core/AuthContext';
-import { useStored } from '../../core/store';
+import { api } from '../../core/store/api';
+import { useAuth } from '../../core/auth/AuthContext';
+import { useStored } from '../../core/store/store';
 
 function CustomSelect({ options, value, onChange }: any) {
   const [open, setOpen] = React.useState(false);

@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, act } from '@testing-library/react';
 import { AuthProvider, useAuth } from './AuthContext';
-import { api } from './api';
+import { api } from '../store/api';
 import { onAuthStateChanged } from 'firebase/auth';
 
 const fakeAuthState = {
@@ -37,7 +37,7 @@ vi.mock('./firebase', () => ({
   googleProvider: {}
 }));
 
-vi.mock('./api', () => {
+vi.mock('../store/api', () => {
   const apiState = {
     userId: null as string | null
   };
@@ -51,7 +51,7 @@ vi.mock('./api', () => {
   };
 });
 
-vi.mock('./notifications', () => ({
+vi.mock('../utils/notifications', () => ({
   useNotification: () => ({
     notify: () => {}
   })

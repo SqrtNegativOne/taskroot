@@ -1,4 +1,4 @@
-import { fetchWithTimeout } from './api';
+import { fetchWithTimeout } from '../store/api';
 
 export class GoogleTasksAPI {
   private token: string | null = null;

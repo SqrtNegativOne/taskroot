@@ -1,15 +1,15 @@
 import React from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './core/AuthContext';
+import { AuthProvider, useAuth } from './core/auth/AuthContext';
 
 import { PlanScreen } from './screens/plan/PlanScreen';
 import { DoScreen } from './screens/do/DoScreen';
 import { SettingsScreen } from './screens/settings/SettingsScreen';
 import { TitleBar } from './components/shell';
-import { useStored, purgeOrphanedData } from './core/store';
-import { SAMPLE_TASKS, SAMPLE_EVENTS } from './core/data';
-import { syncEngine } from './core/SyncEngine';
-import { NotificationProvider, useNotification } from './core/notifications';
+import { useStored, purgeOrphanedData } from './core/store/store';
+import { SAMPLE_TASKS, SAMPLE_EVENTS } from './core/store/data';
+import { syncEngine } from './core/sync/SyncEngine';
+import { NotificationProvider, useNotification } from './core/utils/notifications';
 import { LoginScreen } from './screens/login/LoginScreen';
 import { WrapScreen } from './screens/wrap/WrapScreen';
 import { GraphScreen } from './screens/graph/GraphScreen';

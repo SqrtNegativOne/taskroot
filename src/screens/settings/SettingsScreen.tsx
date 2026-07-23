@@ -2,10 +2,10 @@ import React, { useState, useMemo } from 'react';
 import Fuse from 'fuse.js';
 import { TitleBar } from '../../components/shell';
 import { SearchBar } from '../../components/search-bar';
-import { TODAY } from '../../core/data';
-import { useStored } from '../../core/store';
+import { TODAY } from '../../core/store/data';
+import { useStored } from '../../core/store/store';
 import './settings.css';
-import { SETTINGS_SCHEMA, SETTINGS_TABS, DEFAULT_SETTINGS } from '../../core/settingsSchema';
+import { SETTINGS_SCHEMA, SETTINGS_TABS, DEFAULT_SETTINGS } from '../../core/store/settingsSchema';
 
 function minToTime(m: number) {
   if (typeof m !== 'number' || isNaN(m)) return '';

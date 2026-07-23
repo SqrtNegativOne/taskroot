@@ -1,7 +1,7 @@
 # Task√oot
 
 Highly opinionated and highly powerful task management application for personal use only.
-- Optimistic React UI ↔️ store.tsx ↔️ SyncEngine ↔️ API Wrappers ↔️ Google Tasks+Calendar API / Firebase
+- Optimistic React UI ↔ store.tsx ↔ SyncEngine ↔ API Wrappers ↔ Google Tasks+Calendar API / Firebase
 - All offline data in localStorage ⇒ 0 loading screens.
 - Uses bun. ...this isn't really a feature, sorry
 - GRAPH MODE.

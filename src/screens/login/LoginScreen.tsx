@@ -1,7 +1,7 @@
 import React from 'react';
-import { useAuth } from '../../core/AuthContext';
+import { useAuth } from '../../core/auth/AuthContext';
 import { TitleBar } from '../../components/shell';
-import { TODAY } from '../../core/data';
+import { TODAY } from '../../core/store/data';
 
 export function LoginScreen() {
   const { loginWithGoogle } = useAuth();

@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
 import { Collapsible } from '../../components/collapsible';
-import { TODAY, SAMPLE_TASKS, SAMPLE_DISTRACTIONS, SAMPLE_TIPS, SAMPLE_NOTES } from '../../core/data';
+import { TODAY, SAMPLE_TASKS, SAMPLE_DISTRACTIONS, SAMPLE_TIPS, SAMPLE_NOTES } from '../../core/store/data';
 import { DistractionLog } from './distraction-log';
 import { Kanban } from './kanban';
 import { TitleBar } from '../../components/shell';
 import { Stopwatch } from './stopwatch';
-import { useStored, seedDefaults } from '../../core/store';
+import { useStored, seedDefaults } from '../../core/store/store';
 import { TipsList, NotesList } from './tips-notes';
 import { RestScreen } from './RestScreen';
 

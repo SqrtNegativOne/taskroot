@@ -27,13 +27,12 @@ The application code is organized modularly by feature:
 - `src/screens/minitracker/`: Components for the mini tracker window (`MiniTrackerScreen.tsx`).
 - `src/screens/graph/`, `src/screens/recap/`, `src/screens/stats/`, `src/screens/wrap/`: Other specialized screens.
 - `src/components/`: Shared UI components used across multiple screens (e.g., `shell.tsx`, `collapsible.tsx`, `day-timeline.tsx`, `tasklist.tsx`).
-- `src/core/`: Core business logic, context providers, and data layer.
-  - `store.tsx`: Custom `useStored` hook that syncs state between React, LocalStorage, and Firebase Firestore.
-  - `AuthContext.tsx`: Firebase Google authentication.
-  - `SyncEngine.ts`, `GoogleCalendarAPI.ts`, `GoogleTasksAPI.ts`: Background syncing and API integrations.
-  - `notifications.tsx`: Global toast notification system (`NotificationProvider` and `useNotification`).
-  - `logger.ts`: Universal logger that prints to the browser console and forwards to `taskroot.log` via Electron IPC.
-  - `data.tsx`, `settingsSchema.tsx`, `events.ts`, `filters.ts`, `rrule-utils.ts`: Core data structures and utilities.
+- `src/core/`: Core business logic, context providers, and data layer, categorized by responsibility:
+  - `sync/`: External sync & third-party APIs (`SyncEngine.ts`, `GoogleCalendarAPI.ts`, `GoogleTasksAPI.ts`).
+  - `store/`: State management & persistence (`store.tsx`, `api.ts`, `data.tsx`, `settingsSchema.tsx`).
+  - `domain/`: Business logic & transformations (`events.ts`, `filters.ts`, `rrule-utils.ts`).
+  - `auth/`: Authentication & Firebase init (`AuthContext.tsx`, `firebase.ts`).
+  - `utils/`: App-wide utilities (`logger.ts`, `notifications.tsx`).
 - `src/App.tsx`: The root application component. Orchestrates routing, authentication bypass for dev, and global sync contexts.
 
 *Note: Test files are co-located with their respective modules (e.g., `*.test.tsx`, `*.test.ts`).*

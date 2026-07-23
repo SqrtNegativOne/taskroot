@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
-import { TODAY, SAMPLE_TASKS, SAMPLE_EVENTS, ymd, durationLabel } from '../../core/data';
+import { TODAY, SAMPLE_TASKS, SAMPLE_EVENTS, ymd, durationLabel } from '../../core/store/data';
 import { DayTimeline, PX_PER_MIN, SNAP_MIN } from '../../components/day-timeline';
 import { DateGrid } from './date-grid';
 import { TitleBar } from '../../components/shell';
-import { load, useStored, seedDefaults } from '../../core/store';
+import { load, useStored, seedDefaults } from '../../core/store/store';
 import { TaskListPane } from '../../components/tasklist';
 
 import { useTweaks, TweaksPanel, TweakSection, TweakSlider, TweakToggle, TweakRadio, TweakColor } from './tweaks-panel';
 import { SplitPane } from '../../components/split-pane';
 import { FilterSortButtons } from './shared-menus';
-import { expandEventsForView } from '../../core/rrule-utils';
+import { expandEventsForView } from '../../core/domain/rrule-utils';
 
 const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
   "accent": "var(--tag-yellow)",

@@ -17,8 +17,8 @@ const AuthContext = createContext<AuthContextType>({
   logout: async () => {},
 });
 
-import { api, fetchWithTimeout } from './api';
-import { useNotification } from './notifications';
+import { api, fetchWithTimeout } from '../store/api';
+import { useNotification } from '../utils/notifications';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);

@@ -4,8 +4,8 @@ import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import { expect, test } from "vitest";
 import { DateGrid } from "./date-grid";
-import { AppEvent } from "../../core/domain/events";
-import { AppTask } from "../../core/domain/models";
+import type { AppEvent } from "../../core/domain/events";
+import type { AppTask } from "../../core/domain/models";
 import { ymd } from "../../core/store/data";
 
 test("filters events by category correctly", () => {

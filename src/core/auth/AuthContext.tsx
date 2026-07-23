@@ -25,6 +25,12 @@ const AuthContext = createContext<AuthContextType>({
 import { api, fetchWithTimeout } from "../store/api";
 import { useNotification } from "../utils/notifications";
 
+import {
+    loadGoogleIdentityScript,
+    requestGoogleAuthCode,
+    exchangeAuthCodeForTokens,
+} from "./googleAuthUtils";
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     children,
 }) => {
@@ -56,80 +62,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             await signInWithPopup(auth, googleProvider);
 
             // 2. Load Google Identity Services to get the offline auth code for Calendar sync
-            const script = document.createElement("script");
-            script.src = "https://accounts.google.com/gsi/client";
-            script.async = true;
-            script.defer = true;
+            await loadGoogleIdentityScript();
+            const code = await requestGoogleAuthCode();
+            const tokens = await exchangeAuthCodeForTokens(code);
 
-            script.onload = () => {
-                const client = window.google.accounts.oauth2.initCodeClient({
-                    client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-                    scope: "https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/tasks",
-                    ux_mode: "popup",
-                    callback: async (response: any) => {
-                        if (response.code) {
-                            try {
-                                const params = new URLSearchParams({
-                                    client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-                                    client_secret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET,
-                                    code: response.code,
-                                    grant_type: "authorization_code",
-                                    redirect_uri: "postmessage",
-                                });
-
-                                const res = await fetchWithTimeout(
-                                    "https://oauth2.googleapis.com/token",
-                                    {
-                                        method: "POST",
-                                        headers: {
-                                            "Content-Type": "application/x-www-form-urlencoded",
-                                        },
-                                        body: params.toString(),
-                                    },
-                                );
-                                const data = await res.json();
-                                if (data.access_token) {
-                                    localStorage.setItem(
-                                        "google_access_token",
-                                        data.access_token,
-                                    );
-                                    if (data.refresh_token) {
-                                        localStorage.setItem(
-                                            "google_refresh_token",
-                                            data.refresh_token,
-                                        );
-                                    }
-                                    window.location.reload(); // Reload to start sync
-                                } else {
-                                    throw new Error(
-                                        data.error_description || data.error ||
-                                            "Failed to exchange token",
-                                    );
-                                }
-                            } catch (err) {
-                                console.error(
-                                    "Failed to exchange auth code:",
-                                    err,
-                                );
-                                notify(
-                                    `Failed to exchange auth code for calendar sync: ${err instanceof Error ? err.message : String(err)}`,
-                                    "error",
-                                );
-                            }
-                        }
-                    },
-                });
-                client.requestCode();
-            };
-            document.body.appendChild(script);
+            if (tokens.accessToken) {
+                localStorage.setItem("google_access_token", tokens.accessToken);
+                if (tokens.refreshToken) {
+                    localStorage.setItem("google_refresh_token", tokens.refreshToken);
+                }
+                window.location.reload(); // Reload to start sync
+            }
         } catch (error: unknown) {
             console.error("Error signing in with Google:", error);
-            const message =
-                error instanceof Error ? error.message : String(error);
-            notify(
-                `Sign in failed: ${message}\nMake sure you have added your REAL Firebase config keys to a .env file!`,
-                "error",
-            );
+            const message = error instanceof Error ? error.message : String(error);
+            notify(`Sign in failed: ${message}\nMake sure you have added your REAL Firebase config keys to a .env file!`, "error");
         }
     };
 

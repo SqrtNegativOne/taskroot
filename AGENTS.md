@@ -26,10 +26,10 @@ Taskroot is a web-based and desktop task management app focusing on planning, ex
 - `src/screens/graph/`, `src/screens/recap/`, `src/screens/stats/`, `src/screens/wrap/`: Other specialized screens.
 - `src/components/`: Shared UI components used across multiple screens (e.g., `shell.tsx`, `collapsible.tsx`, `day-timeline.tsx`, `tasklist.tsx`).
 - `src/core/`: Core business logic, context providers, and data layer, categorized by responsibility:
-  - `sync/`: External sync & third-party APIs (`SyncEngine.ts`, `GoogleCalendarAPI.ts`, `GoogleTasksAPI.ts`).
+  - `sync/`: External sync & third-party APIs (`SyncEngine.ts`, `GoogleCalendarAPI.ts`, `GoogleTasksAPI.ts`, and the `engine/` subdirectory containing `SyncQueue.ts`, `TaskSynchronizer.ts`, `EventSynchronizer.ts`, and `types.ts` for modular sync processing).
   - `store/`: State management & persistence (`store.tsx`, `api.ts`, `data.tsx`, `settingsSchema.tsx`).
   - `domain/`: Business logic & transformations (`events.ts`, `filters.ts`, `rrule-utils.ts`).
-  - `auth/`: Authentication & Firebase init (`AuthContext.tsx`, `firebase.ts`).
+  - `auth/`: Authentication & Firebase init (`AuthContext.tsx`, `firebase.ts`, `googleAuthUtils.ts`).
   - `utils/`: App-wide utilities (`logger.ts`, `notifications.tsx`).
 - `src/App.tsx`: The root application component. Orchestrates routing, authentication bypass for dev, and global sync contexts.
 

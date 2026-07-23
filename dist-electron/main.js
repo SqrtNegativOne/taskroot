@@ -1,14 +1,16 @@
-import { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage } from 'electron';
-import { fileURLToPath } from 'node:url';
-import path from 'node:path';
-import fs from 'node:fs';
-import { createServer } from 'node:http';
+import { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage } from "electron";
+import { fileURLToPath } from "node:url";
+import path from "node:path";
+import fs from "node:fs";
+import { createServer } from "node:http";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-process.env.APP_ROOT = path.join(__dirname, '..');
-export const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL'];
-export const MAIN_DIST = path.join(process.env.APP_ROOT, 'dist-electron');
-export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist');
-process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST;
+process.env.APP_ROOT = path.join(__dirname, "..");
+export const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
+export const MAIN_DIST = path.join(process.env.APP_ROOT, "dist-electron");
+export const RENDERER_DIST = path.join(process.env.APP_ROOT, "dist");
+process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL
+    ? path.join(process.env.APP_ROOT, "public")
+    : RENDERER_DIST;
 let win;
 let miniWin = null;
 let tray = null;
@@ -20,51 +22,53 @@ if (!gotTheLock) {
 }
 if (process.defaultApp) {
     if (process.argv.length >= 2) {
-        app.setAsDefaultProtocolClient('taskroot', process.execPath, [path.resolve(process.argv[1])]);
+        app.setAsDefaultProtocolClient("taskroot", process.execPath, [
+            path.resolve(process.argv[1]),
+        ]);
     }
 }
 else {
-    app.setAsDefaultProtocolClient('taskroot');
+    app.setAsDefaultProtocolClient("taskroot");
 }
 function handleDeepLink(url) {
-    if (!url.startsWith('taskroot://'))
+    if (!url.startsWith("taskroot://"))
         return;
-    const route = url.replace('taskroot://', '').replace(/\/$/, '');
+    const route = url.replace("taskroot://", "").replace(/\/$/, "");
     if (win && !win.isDestroyed() && route) {
-        win.webContents.send('deep-link', route);
+        win.webContents.send("deep-link", route);
     }
 }
-app.on('second-instance', (event, commandLine) => {
+app.on("second-instance", (event, commandLine) => {
     if (win && !win.isDestroyed()) {
         if (win.isMinimized())
             win.restore();
         win.show();
         win.focus();
     }
-    const url = commandLine.find(arg => arg.startsWith('taskroot://'));
+    const url = commandLine.find((arg) => arg.startsWith("taskroot://"));
     if (url) {
         handleDeepLink(url);
     }
 });
 // macOS deep link handling
-app.on('open-url', (event, url) => {
+app.on("open-url", (event, url) => {
     event.preventDefault();
     handleDeepLink(url);
 });
 // Handle file logging from renderer
-ipcMain.on('log-to-file', (event, level, message) => {
-    const logPath = path.join(process.env.APP_ROOT, 'taskroot.log');
+ipcMain.on("log-to-file", (event, level, message) => {
+    const logPath = path.join(process.env.APP_ROOT, "taskroot.log");
     const timestamp = new Date().toISOString();
     const logLine = `[${timestamp}] [${level.toUpperCase()}] ${message}\n`;
     try {
         fs.appendFileSync(logPath, logLine);
     }
     catch (err) {
-        console.error('Failed to write to log file:', err);
+        console.error("Failed to write to log file:", err);
     }
 });
 // Window controls
-ipcMain.on('window-minimize', (event) => {
+ipcMain.on("window-minimize", (event) => {
     const window = BrowserWindow.fromWebContents(event.sender);
     if (window === win) {
         win?.minimize();
@@ -74,7 +78,7 @@ ipcMain.on('window-minimize', (event) => {
         window?.minimize();
     }
 });
-ipcMain.on('window-maximize', (event) => {
+ipcMain.on("window-maximize", (event) => {
     const window = BrowserWindow.fromWebContents(event.sender);
     if (window?.isMaximized()) {
         window?.unmaximize();
@@ -83,7 +87,7 @@ ipcMain.on('window-maximize', (event) => {
         window?.maximize();
     }
 });
-ipcMain.on('window-close', (event) => {
+ipcMain.on("window-close", (event) => {
     const window = BrowserWindow.fromWebContents(event.sender);
     if (window === win) {
         win?.hide();
@@ -93,7 +97,7 @@ ipcMain.on('window-close', (event) => {
         window?.close();
     }
 });
-ipcMain.on('window-restore-main', () => {
+ipcMain.on("window-restore-main", () => {
     if (win && !win.isDestroyed()) {
         if (win.isMinimized())
             win.restore();
@@ -111,20 +115,22 @@ function createMiniWindow() {
         alwaysOnTop: true,
         skipTaskbar: true,
         webPreferences: {
-            preload: path.join(__dirname, 'preload.cjs'),
+            preload: path.join(__dirname, "preload.cjs"),
             nodeIntegration: false,
             contextIsolation: true,
-        }
+        },
     });
-    const url = VITE_DEV_SERVER_URL ? `${VITE_DEV_SERVER_URL}?minitracker=true` : `http://localhost:${serverPort}?minitracker=true`;
+    const url = VITE_DEV_SERVER_URL
+        ? `${VITE_DEV_SERVER_URL}?minitracker=true`
+        : `http://localhost:${serverPort}?minitracker=true`;
     miniWin.loadURL(url);
-    miniWin.on('closed', () => {
+    miniWin.on("closed", () => {
         miniWin = null;
         if (!win || win.isDestroyed() || !win.isVisible()) {
             app.quit();
         }
     });
-    miniWin.on('maximize', () => {
+    miniWin.on("maximize", () => {
         if (win && !win.isDestroyed()) {
             if (win.isMinimized())
                 win.restore();
@@ -138,73 +144,79 @@ function createWindow() {
         width: 1200,
         height: 800,
         frame: false,
-        icon: path.join(process.env.VITE_PUBLIC, 'icon.png'),
+        show: false,
+        backgroundColor: "#2c2d2d",
+        icon: path.join(process.env.VITE_PUBLIC, "icon.png"),
         webPreferences: {
-            preload: path.join(__dirname, 'preload.cjs'),
+            preload: path.join(__dirname, "preload.cjs"),
             nodeIntegration: false,
             contextIsolation: true,
         },
-        autoHideMenuBar: true
+        autoHideMenuBar: true,
+    });
+    win.once("ready-to-show", () => {
+        win?.show();
     });
     if (VITE_DEV_SERVER_URL) {
         win.loadURL(VITE_DEV_SERVER_URL);
     }
     else {
         localServer = createServer((req, res) => {
-            let pathname = new URL(req.url || '', `http://${req.headers.host}`).pathname;
-            if (pathname === '/')
-                pathname = '/index.html';
+            let pathname = new URL(req.url || "", `http://${req.headers.host}`)
+                .pathname;
+            if (pathname === "/")
+                pathname = "/index.html";
             let filePath = path.join(RENDERER_DIST, pathname);
             if (!filePath.startsWith(RENDERER_DIST)) {
                 res.writeHead(403);
-                res.end('Forbidden');
+                res.end("Forbidden");
                 return;
             }
             if (!fs.existsSync(filePath)) {
-                filePath = path.join(RENDERER_DIST, 'index.html');
+                filePath = path.join(RENDERER_DIST, "index.html");
             }
             const ext = path.extname(filePath);
             const mimeTypes = {
-                '.html': 'text/html',
-                '.js': 'text/javascript',
-                '.css': 'text/css',
-                '.json': 'application/json',
-                '.png': 'image/png',
-                '.jpg': 'image/jpg',
-                '.svg': 'image/svg+xml',
-                '.ico': 'image/x-icon'
+                ".html": "text/html",
+                ".js": "text/javascript",
+                ".css": "text/css",
+                ".json": "application/json",
+                ".png": "image/png",
+                ".jpg": "image/jpg",
+                ".svg": "image/svg+xml",
+                ".ico": "image/x-icon",
             };
-            const contentType = mimeTypes[ext] || 'application/octet-stream';
+            const contentType = mimeTypes[ext] || "application/octet-stream";
             fs.readFile(filePath, (err, content) => {
                 if (err) {
                     res.writeHead(500);
-                    res.end('Internal Server Error');
+                    res.end("Internal Server Error");
                 }
                 else {
-                    res.writeHead(200, { 'Content-Type': contentType });
-                    res.end(content, 'utf-8');
+                    res.writeHead(200, { "Content-Type": contentType });
+                    res.end(content, "utf-8");
                 }
             });
         });
-        localServer.listen(0, '127.0.0.1', () => {
+        localServer.listen(0, "127.0.0.1", () => {
             const addr = localServer.address();
-            serverPort = typeof addr === 'string' ? 0 : addr?.port || 0;
+            serverPort = typeof addr === "string" ? 0 : addr?.port || 0;
             win?.loadURL(`http://localhost:${serverPort}`);
         });
     }
 }
-app.on('will-quit', () => {
+app.on("will-quit", () => {
     if (localServer) {
         localServer.close();
     }
 });
-app.on('window-all-closed', () => {
-    if (process.platform !== 'darwin') {
+app.on("window-all-closed", () => {
+    if (process.platform !== "darwin") {
         app.quit();
         win = null;
     }
 });
-app.on('activate', () => {
+app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
         createWindow();
     }
@@ -212,13 +224,13 @@ app.on('activate', () => {
 function createTray() {
     if (tray)
         return;
-    const iconPath = path.join(process.env.VITE_PUBLIC, 'icon.png');
+    const iconPath = path.join(process.env.VITE_PUBLIC, "icon.png");
     const icon = nativeImage.createFromPath(iconPath);
     tray = new Tray(icon);
-    tray.setToolTip('Taskroot');
+    tray.setToolTip("Taskroot");
     const contextMenu = Menu.buildFromTemplate([
         {
-            label: 'Open Taskroot',
+            label: "Open Taskroot",
             click: () => {
                 if (win && !win.isDestroyed()) {
                     if (win.isMinimized())
@@ -228,18 +240,18 @@ function createTray() {
                 else {
                     createWindow();
                 }
-            }
+            },
         },
-        { type: 'separator' },
+        { type: "separator" },
         {
-            label: 'Exit',
+            label: "Exit",
             click: () => {
                 app.exit(0);
-            }
-        }
+            },
+        },
     ]);
     tray.setContextMenu(contextMenu);
-    tray.on('click', () => {
+    tray.on("click", () => {
         if (win && !win.isDestroyed()) {
             if (win.isMinimized())
                 win.restore();
@@ -253,10 +265,10 @@ function createTray() {
 app.whenReady().then(() => {
     createWindow();
     createTray();
-    const url = process.argv.find(arg => arg.startsWith('taskroot://'));
+    const url = process.argv.find((arg) => arg.startsWith("taskroot://"));
     if (url) {
         if (win && !win.isDestroyed()) {
-            win.webContents.once('did-finish-load', () => {
+            win.webContents.once("did-finish-load", () => {
                 handleDeepLink(url);
             });
         }

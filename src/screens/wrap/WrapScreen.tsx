@@ -318,13 +318,11 @@ export function WrapScreen() {
                                         "var(--bg-surface)")
                                 }
                                 onClick={() => {
-                                    // @ts-ignore
                                     if (
-                                        window.electronAPI &&
-                                        window.electronAPI.shutdownPC
+                                        (window as any).electronAPI &&
+                                        (window as any).electronAPI.shutdownPC
                                     ) {
-                                        // @ts-ignore
-                                        window.electronAPI.shutdownPC();
+                                        (window as any).electronAPI.shutdownPC();
                                     } else {
                                         alert("PC would shutdown now!");
                                     }

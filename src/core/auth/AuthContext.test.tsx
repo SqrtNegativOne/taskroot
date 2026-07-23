@@ -38,6 +38,12 @@ vi.mock("./firebase", () => ({
     googleProvider: {},
 }));
 
+vi.mock("./googleAuthUtils", () => ({
+    loadGoogleIdentityScript: vi.fn().mockResolvedValue(undefined),
+    requestGoogleAuthCode: vi.fn().mockResolvedValue("test-code"),
+    exchangeAuthCodeForTokens: vi.fn().mockResolvedValue({ accessToken: "test-token" }),
+}));
+
 vi.mock("../store/api", () => {
     const apiState = {
         userId: null as string | null,

@@ -1,166 +1,178 @@
-import { doc, onSnapshot, setDoc, deleteDoc } from 'firebase/firestore';
-import { db } from '../auth/firebase';
+import { doc, onSnapshot, setDoc, deleteDoc } from "firebase/firestore";
+import { db } from "../auth/firebase";
 
-export async function fetchWithTimeout(resource: RequestInfo | URL, options: RequestInit & { timeout?: number } = {}) {
-  const { timeout = 15000, ...rest } = options;
-  const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), timeout);
-  try {
-    const response = await fetch(resource, {
-      ...rest,
-      signal: controller.signal
-    });
-    clearTimeout(id);
-    return response;
-  } catch (error: unknown) {
-    clearTimeout(id);
-    if (error instanceof Error && error.name === 'AbortError') {
-      throw new Error('Request timed out');
+export async function fetchWithTimeout(
+    resource: RequestInfo | URL,
+    options: RequestInit & { timeout?: number } = {},
+) {
+    const { timeout = 15000, ...rest } = options;
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
+    try {
+        const response = await fetch(resource, {
+            ...rest,
+            signal: controller.signal,
+        });
+        clearTimeout(id);
+        return response;
+    } catch (error: unknown) {
+        clearTimeout(id);
+        if (error instanceof Error && error.name === "AbortError") {
+            throw new Error("Request timed out");
+        }
+        throw error;
     }
-    throw error;
-  }
 }
 
 export interface IApiService {
-  clearAllData(): Promise<void>;
-  saveStoreData<T>(key: string, data: T): Promise<void>;
-  subscribeToStore<T>(
-    key: string, 
-    fallbackData: T,
-    onData: (serverVal: T) => void,
-    onReady: () => void
-  ): () => void;
+    clearAllData(): Promise<void>;
+    saveStoreData<T>(key: string, data: T): Promise<void>;
+    subscribeToStore<T>(
+        key: string,
+        fallbackData: T,
+        onData: (serverVal: T) => void,
+        onReady: () => void,
+    ): () => void;
 }
 
 class OfflineApi implements IApiService {
-  public async clearAllData(): Promise<void> {
-    const keysToRemove: string[] = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith('taskroot_')) {
-        keysToRemove.push(key);
-      }
+    public async clearAllData(): Promise<void> {
+        const keysToRemove: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith("taskroot_")) {
+                keysToRemove.push(key);
+            }
+        }
+        keysToRemove.forEach((k) => localStorage.removeItem(k));
     }
-    keysToRemove.forEach(k => localStorage.removeItem(k));
-  }
 
-  public async saveStoreData<T>(key: string, data: T): Promise<void> {
-    // Silent no-op for offline dev mode
-  }
+    public async saveStoreData<T>(key: string, data: T): Promise<void> {
+        // Silent no-op for offline dev mode
+    }
 
-  public subscribeToStore<T>(
-    key: string, 
-    fallbackData: T,
-    onData: (serverVal: T) => void,
-    onReady: () => void
-  ): () => void {
-    // In offline/dev mode, there is no remote cloud, so we are instantly "ready".
-    onReady();
-    return () => {}; // No-op unsubscribe
-  }
+    public subscribeToStore<T>(
+        key: string,
+        fallbackData: T,
+        onData: (serverVal: T) => void,
+        onReady: () => void,
+    ): () => void {
+        // In offline/dev mode, there is no remote cloud, so we are instantly "ready".
+        onReady();
+        return () => {}; // No-op unsubscribe
+    }
 }
 
 class OnlineApi implements IApiService {
-  private uid: string;
-  constructor(uid: string) {
-    this.uid = uid;
-  }
-
-  public async clearAllData(): Promise<void> {
-    const keysToRemove: string[] = [];
-    const cloudKeysToDelete: string[] = [];
-    
-    // Identify all local keys
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith('taskroot_')) {
-        keysToRemove.push(key);
-        cloudKeysToDelete.push(key.replace('taskroot_', ''));
-      }
+    private uid: string;
+    constructor(uid: string) {
+        this.uid = uid;
     }
-    
-    // Wipe local storage
-    keysToRemove.forEach(k => localStorage.removeItem(k));
-    
-    // Wipe remote cloud data
-    try {
-      await Promise.all(
-        cloudKeysToDelete.map(storeKey => 
-          deleteDoc(doc(db, 'users', this.uid, 'store', storeKey))
-        )
-      );
-    } catch (e) {
-      console.warn('Failed to clear cloud data:', e);
-    }
-  }
 
-  public async saveStoreData<T>(key: string, data: T): Promise<void> {
-    const docRef = doc(db, 'users', this.uid, 'store', key);
-    try {
-      // Firestore does not allow undefined values, so we must strip them
-      const cleanData = JSON.parse(JSON.stringify(data));
-      await setDoc(docRef, { value: cleanData }, { merge: true });
-    } catch (e) {
-      console.warn('Firestore write failed', e);
-    }
-  }
+    public async clearAllData(): Promise<void> {
+        const keysToRemove: string[] = [];
+        const cloudKeysToDelete: string[] = [];
 
-  public subscribeToStore<T>(
-    key: string, 
-    fallbackData: T,
-    onData: (serverVal: T) => void,
-    onReady: () => void
-  ): () => void {
-    const docRef = doc(db, 'users', this.uid, 'store', key);
-    return onSnapshot(docRef, (docSnap) => {
-      if (docSnap.exists()) {
-        onData(docSnap.data().value);
-      } else {
-        // If it doesn't exist in Firestore, seed it with fallbackData
-        this.saveStoreData(key, fallbackData);
-      }
-      onReady();
-    }, (err) => {
-      console.warn(`Firestore sync failed for ${key}:`, err);
-      onReady(); // Still ready if failed, so we don't block UI forever
-    });
-  }
+        // Identify all local keys
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith("taskroot_")) {
+                keysToRemove.push(key);
+                cloudKeysToDelete.push(key.replace("taskroot_", ""));
+            }
+        }
+
+        // Wipe local storage
+        keysToRemove.forEach((k) => localStorage.removeItem(k));
+
+        // Wipe remote cloud data
+        try {
+            await Promise.all(
+                cloudKeysToDelete.map((storeKey) =>
+                    deleteDoc(doc(db, "users", this.uid, "store", storeKey)),
+                ),
+            );
+        } catch (e) {
+            console.warn("Failed to clear cloud data:", e);
+        }
+    }
+
+    public async saveStoreData<T>(key: string, data: T): Promise<void> {
+        const docRef = doc(db, "users", this.uid, "store", key);
+        try {
+            // Firestore does not allow undefined values, so we must strip them
+            const cleanData = JSON.parse(JSON.stringify(data));
+            await setDoc(docRef, { value: cleanData }, { merge: true });
+        } catch (e) {
+            console.warn("Firestore write failed", e);
+        }
+    }
+
+    public subscribeToStore<T>(
+        key: string,
+        fallbackData: T,
+        onData: (serverVal: T) => void,
+        onReady: () => void,
+    ): () => void {
+        const docRef = doc(db, "users", this.uid, "store", key);
+        return onSnapshot(
+            docRef,
+            (docSnap) => {
+                if (docSnap.exists()) {
+                    onData(docSnap.data().value);
+                } else {
+                    // If it doesn't exist in Firestore, seed it with fallbackData
+                    this.saveStoreData(key, fallbackData);
+                }
+                onReady();
+            },
+            (err) => {
+                console.warn(`Firestore sync failed for ${key}:`, err);
+                onReady(); // Still ready if failed, so we don't block UI forever
+            },
+        );
+    }
 }
 
 class ApiFacade implements IApiService {
-  private strategy: IApiService = new OfflineApi();
-  private currentUid: string | undefined = undefined;
+    private strategy: IApiService = new OfflineApi();
+    private currentUid: string | undefined = undefined;
 
-  // Called when auth state changes
-  public setUserId(uid?: string) {
-    this.currentUid = uid;
-    if (uid) {
-      this.strategy = new OnlineApi(uid);
-    } else {
-      this.strategy = new OfflineApi();
+    // Called when auth state changes
+    public setUserId(uid?: string) {
+        this.currentUid = uid;
+        if (uid) {
+            this.strategy = new OnlineApi(uid);
+        } else {
+            this.strategy = new OfflineApi();
+        }
     }
-  }
 
-  public getUserId(): string | undefined {
-    return this.currentUid;
-  }
+    public getUserId(): string | undefined {
+        return this.currentUid;
+    }
 
-  public async clearAllData(): Promise<void> {
-    return this.strategy.clearAllData();
-  }
+    public async clearAllData(): Promise<void> {
+        return this.strategy.clearAllData();
+    }
 
-  public async saveStoreData<T>(key: string, data: T): Promise<void> {
-    return this.strategy.saveStoreData(key, data);
-  }
+    public async saveStoreData<T>(key: string, data: T): Promise<void> {
+        return this.strategy.saveStoreData(key, data);
+    }
 
-  public subscribeToStore<T>(
-    key: string, 
-    fallbackData: T,
-    onData: (serverVal: T) => void,
-    onReady: () => void
-  ): () => void {
-    return this.strategy.subscribeToStore(key, fallbackData, onData, onReady);
-  }
+    public subscribeToStore<T>(
+        key: string,
+        fallbackData: T,
+        onData: (serverVal: T) => void,
+        onReady: () => void,
+    ): () => void {
+        return this.strategy.subscribeToStore(
+            key,
+            fallbackData,
+            onData,
+            onReady,
+        );
+    }
 }
 
 export const api = new ApiFacade();

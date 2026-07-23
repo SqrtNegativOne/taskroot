@@ -2,12 +2,13 @@
 
 Highly opinionated and highly powerful task management application for personal use only.
 - Optimistic React UI ↔ store.tsx ↔ SyncEngine ↔ API Wrappers ↔ Google Tasks+Calendar API / Firebase
-- All offline data in localStorage ⇒ 0 loading screens.
+- All offline data in localStorage, so 0 loading screens.
 - Uses bun. ...this isn't really a feature, sorry
 - GRAPH MODE.
 - Mediocre UI. Like, it's good enough I guess. It's pretty good.
 - Forcing functions through filters.
 - Neat sound effects that I stole from a twitter post about them
+- Sequential API calling instead of parallel because I just can't be bothered man
 
 ```
   Disclaimer: Taskroot does not harvest, store, or care about your gender, languages, or public info. 

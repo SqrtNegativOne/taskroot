@@ -203,6 +203,7 @@ export function TitleBar({ current, today }) {
                                 syncStatus === "syncing"
                                     ? "icon-spin 1s linear infinite"
                                     : "none",
+                            color: syncStatus === "sync_problem" ? "#ff4444" : undefined,
                         }}
                     />
                 </button>

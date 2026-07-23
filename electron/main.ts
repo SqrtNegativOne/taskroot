@@ -152,6 +152,8 @@ function createWindow() {
         width: 1200,
         height: 800,
         frame: false,
+        show: false,
+        backgroundColor: "#2c2d2d",
         icon: path.join(process.env.VITE_PUBLIC as string, "icon.png"),
         webPreferences: {
             preload: path.join(__dirname, "preload.cjs"),
@@ -159,6 +161,10 @@ function createWindow() {
             contextIsolation: true,
         },
         autoHideMenuBar: true,
+    });
+
+    win.once("ready-to-show", () => {
+        win?.show();
     });
 
     if (VITE_DEV_SERVER_URL) {

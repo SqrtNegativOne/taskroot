@@ -91,6 +91,14 @@ function NotificationItem({
     notification: NotificationData;
     onDismiss: () => void;
 }) {
+    useEffect(() => {
+        if (notification.type !== "error") {
+            const timer = setTimeout(() => {
+                onDismiss();
+            }, 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [notification.type, onDismiss]);
     const getColors = (type: NotificationType) => {
         switch (type) {
             case "error":

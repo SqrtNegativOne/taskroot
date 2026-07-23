@@ -97,7 +97,9 @@ class OnlineApi implements IApiService {
   public async saveStoreData(key: string, data: any): Promise<void> {
     const docRef = doc(db, 'users', this.uid, 'store', key);
     try {
-      await setDoc(docRef, { value: data }, { merge: true });
+      // Firestore does not allow undefined values, so we must strip them
+      const cleanData = JSON.parse(JSON.stringify(data));
+      await setDoc(docRef, { value: cleanData }, { merge: true });
     } catch (e) {
       console.warn('Firestore write failed', e);
     }

@@ -205,7 +205,7 @@ export function PlanScreen() {
   const onAddTask = (defaults: any = {}) => {
     const id = `t${Date.now()}`;
     setTasks(ts => [{
-       id, title: '', status: 'todo', priority: 1, tags: [], subtasks: [], parent_task: null, dependency: null, est: (settings.defaultTaskDuration === 0 || settings.defaultTaskDuration === undefined) ? undefined : settings.defaultTaskDuration, added: new Date().toISOString(), isDraft: true, ...defaults
+       id, title: '', status: 'todo', priority: 1, tags: [], subtasks: [], parent_task: null, dependency: null, est: (settings.defaultTaskDuration === 0 || settings.defaultTaskDuration === undefined) ? 0 : settings.defaultTaskDuration, added: new Date().toISOString(), isDraft: true, ...defaults
     }, ...ts]);
     setInspectorState({ type: 'task', id });
   };
@@ -719,9 +719,9 @@ function InspectorPane({ inspectorState, onClose, tasks, setTasks, events, setEv
                  
                  <div className="inspector-field">
                    <label>Duration (min)</label>
-                   <input type="number" placeholder="Unset" value={currentItem.est === undefined ? '' : currentItem.est} onChange={e => {
-                     let val = e.target.value ? parseInt(e.target.value) : undefined;
-                     if (val !== undefined && val > 60) val = 60;
+                   <input type="number" placeholder="Unset" value={!currentItem.est ? '' : currentItem.est} onChange={e => {
+                     let val = e.target.value ? parseInt(e.target.value) : 0;
+                     if (val > 60) val = 60;
                      updateTask(currentItem.id, { est: val });
                    }} />
                  </div>

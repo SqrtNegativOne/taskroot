@@ -107,7 +107,7 @@ export function useStored<T>(key: StoreKey, initial: T): [T, (val: T | ((prev: T
 
   useEffect(() => {
     // Register the setter with SyncEngine so it can push updates from the cloud to React
-    syncEngine.registerUpdater(key, (serverVal: T) => {
+    return syncEngine.registerUpdater(key, (serverVal: T) => {
       setVal(serverVal);
     });
   }, [key]);
@@ -115,7 +115,7 @@ export function useStored<T>(key: StoreKey, initial: T): [T, (val: T | ((prev: T
   useEffect(() => {
     // Notify SyncEngine that this store is ready to receive data, 
     // SyncEngine will fetch initial data if needed.
-    syncEngine.registerUpdater(key, (serverVal: T) => {
+    const unregister = syncEngine.registerUpdater(key, (serverVal: T) => {
       setVal(serverVal);
       localStorage.setItem(`taskroot_${key}`, JSON.stringify(serverVal));
     });
@@ -146,7 +146,10 @@ export function useStored<T>(key: StoreKey, initial: T): [T, (val: T | ((prev: T
       }
     );
     
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+      unregister();
+    };
   }, [key]);
 
   const setValWrapper = (newValOrUpdater: T | ((prev: T) => T)) => {

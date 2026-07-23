@@ -126,12 +126,15 @@ export class GoogleTasksAPI {
     if (!notes.includes(`Taskroot Task ID: ${localTask.id}`)) {
       notes = `Taskroot Task ID: ${localTask.id}\n${notes}`;
     }
-    return {
+    const result: any = {
       title: localTask.title,
       notes: notes,
-      status: localTask.status === 'done' ? 'completed' : 'needsAction',
-      due: localTask.due ? new Date(localTask.due).toISOString() : null
+      status: localTask.status === 'done' ? 'completed' : 'needsAction'
     };
+    if (localTask.due) {
+      result.due = new Date(localTask.due).toISOString();
+    }
+    return result;
   }
 }
 

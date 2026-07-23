@@ -12,7 +12,7 @@ export class SyncEngine {
 
   // We need to trigger React updates when we pull data.
   // We'll store a reference to the update function for each key.
-  private updaters = new Map<string, (val: any) => void>();
+  private updaters = new Map<string, Set<(val: any) => void>>();
 
   // A queue for reactive pushes
   private pushQueue: Array<{ type: 'task' | 'event', action: 'create' | 'update' | 'delete', item: any, id?: string, calendarId?: string }> = [];
@@ -98,7 +98,14 @@ export class SyncEngine {
   }
 
   registerUpdater(key: string, updater: (val: any) => void) {
-    this.updaters.set(key, updater);
+    if (!this.updaters.has(key)) {
+      this.updaters.set(key, new Set());
+    }
+    this.updaters.get(key)!.add(updater);
+    return () => {
+      const set = this.updaters.get(key);
+      if (set) set.delete(updater);
+    };
   }
 
   setSettings(settings: any) {
@@ -174,9 +181,9 @@ export class SyncEngine {
 
   private setLocalData(key: string, data: any) {
     localStorage.setItem(`taskroot_${key}`, JSON.stringify(data));
-    const updater = this.updaters.get(key);
-    if (updater) {
-      updater(data);
+    const set = this.updaters.get(key);
+    if (set) {
+      set.forEach(updater => updater(data));
     }
   }
 
@@ -541,9 +548,10 @@ export class SyncEngine {
         }
         // Success, remove from queue
         this.pushQueue.shift();
-      } catch (e) {
+      } catch (e: any) {
         console.error('Push failed, keeping in queue', e);
         this.updateStatus(true);
+        this.notifyError(e.message || 'Error syncing item to Google.');
         break; // Network error or something, keep in queue and try later
       }
     }

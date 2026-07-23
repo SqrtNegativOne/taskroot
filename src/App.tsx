@@ -39,7 +39,10 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
     }
 
     if (loading) return <div>Loading...</div>;
-    if (!user) {
+    
+    const hasGoogleToken = !!localStorage.getItem("google_access_token");
+
+    if (!user || (!hasGoogleToken && !window.location.search.includes("minitracker=true"))) {
         return <LoginScreen />;
     }
     return <>{children}</>;

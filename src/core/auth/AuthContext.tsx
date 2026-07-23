@@ -69,22 +69,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                     callback: async (response: any) => {
                         if (response.code) {
                             try {
+                                const params = new URLSearchParams({
+                                    client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+                                    client_secret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET,
+                                    code: response.code,
+                                    grant_type: "authorization_code",
+                                    redirect_uri: "postmessage",
+                                });
+
                                 const res = await fetchWithTimeout(
                                     "https://oauth2.googleapis.com/token",
                                     {
                                         method: "POST",
                                         headers: {
-                                            "Content-Type": "application/json",
+                                            "Content-Type": "application/x-www-form-urlencoded",
                                         },
-                                        body: JSON.stringify({
-                                            client_id: import.meta.env
-                                                .VITE_GOOGLE_CLIENT_ID,
-                                            client_secret: import.meta.env
-                                                .VITE_GOOGLE_CLIENT_SECRET,
-                                            code: response.code,
-                                            grant_type: "authorization_code",
-                                            redirect_uri: "postmessage",
-                                        }),
+                                        body: params.toString(),
                                     },
                                 );
                                 const data = await res.json();
@@ -102,7 +102,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                                     window.location.reload(); // Reload to start sync
                                 } else {
                                     throw new Error(
-                                        data.error_description ||
+                                        data.error_description || data.error ||
                                             "Failed to exchange token",
                                     );
                                 }
@@ -112,7 +112,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                                     err,
                                 );
                                 notify(
-                                    "Failed to exchange auth code for calendar sync",
+                                    `Failed to exchange auth code for calendar sync: ${err instanceof Error ? err.message : String(err)}`,
                                     "error",
                                 );
                             }

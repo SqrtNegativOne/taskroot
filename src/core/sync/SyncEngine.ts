@@ -242,17 +242,19 @@ export class SyncEngine {
             // @ts-ignore
             const clientSecret = import.meta.env.VITE_GOOGLE_CLIENT_SECRET;
 
+            const params = new URLSearchParams({
+                client_id: clientId,
+                client_secret: clientSecret,
+                refresh_token: refreshToken,
+                grant_type: "refresh_token",
+            });
+
             const res = await fetchWithTimeout(
                 "https://oauth2.googleapis.com/token",
                 {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        client_id: clientId,
-                        client_secret: clientSecret,
-                        refresh_token: refreshToken,
-                        grant_type: "refresh_token",
-                    }),
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: params.toString(),
                 },
             );
             const data = await res.json();

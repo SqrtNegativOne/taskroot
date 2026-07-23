@@ -1,7 +1,7 @@
 # Task√oot
 
 Highly opinionated and highly powerful task management application for personal use only.
-- Optimistic React UI ↔ store.tsx ↔ SyncEngine ↔ API Wrappers ↔ Google Tasks+Calendar API / Firebase
+- Optimistic React UI ↔ store.tsx ↔ SyncEngine ↔ API Wrappers ↔ Google Tasks+Calendar API
 - All offline data in localStorage, so 0 loading screens.
 - Uses bun. ...this isn't really a feature, sorry
 - GRAPH MODE.
@@ -13,7 +13,7 @@ Highly opinionated and highly powerful task management application for personal 
 ```
   Disclaimer: Taskroot does not harvest, store, or care about your gender, languages, or public info. 
   It only uses the secure token provided by Google to authorize you to read and write your own tasks 
-  to the Firestore database.
+  to your Google account.
   Regardless, if you feel this is false advertising, as the log in page for the application promises 
   to do those things, when in real life it doesn't, you are free to email or whatsapp me your private
   information.

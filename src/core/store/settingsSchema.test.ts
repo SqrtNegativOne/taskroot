@@ -18,7 +18,6 @@ describe("settingsSchema.tsx", () => {
         // Check a few known defaults
         expect(DEFAULT_SETTINGS.defaultCalendarView).toBe("month");
         expect(DEFAULT_SETTINGS.clockStyle).toBe("counter");
-        expect(DEFAULT_SETTINGS.enableFirebaseSync).toBe(true);
     });
 
     it("all tabs used in schema must be defined in SETTINGS_TABS", () => {

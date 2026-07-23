@@ -16,7 +16,6 @@ export interface AppSettings {
     clockStyle: "counter" | "flowtime" | "guzey";
     allowStopwatchWithoutTask: boolean;
     flowtimeBreakDivisor: number;
-    enableFirebaseSync: boolean;
     enableCalendarSync: boolean;
     enableTasksSync: boolean;
     syncInterval: number;
@@ -156,16 +155,7 @@ export const SETTINGS_SCHEMA: SettingSchema[] = [
         defaultValue: 5,
         min: 1,
     },
-    {
-        id: "enableFirebaseSync",
-        section: "Sync & Integrations",
-        tab: "sync",
-        label: "Enable Firebase Sync",
-        description: "Sync your data across devices using Firebase.",
-        keywords: ["firebase", "sync", "cloud", "backup"],
-        type: "checkbox",
-        defaultValue: true,
-    },
+
     {
         id: "enableCalendarSync",
         section: "Sync & Integrations",
@@ -201,8 +191,8 @@ export const SETTINGS_SCHEMA: SettingSchema[] = [
         section: "Sync & Integrations",
         tab: "sync",
         label: "Sign out",
-        description: "Sign out of your Google / Firebase account.",
-        keywords: ["logout", "signout", "google", "firebase", "account"],
+        description: "Sign out of your Google account.",
+        keywords: ["logout", "signout", "google", "account"],
         type: "custom",
         render: () => <LogoutButton />,
     },

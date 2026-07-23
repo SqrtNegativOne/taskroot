@@ -2,61 +2,12 @@ import React from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, act } from "@testing-library/react";
 import { AuthProvider, useAuth } from "./AuthContext";
-import { api } from "../store/api";
-import { onAuthStateChanged } from "firebase/auth";
-
-const fakeAuthState = {
-    currentUser: null as any,
-    listeners: new Set<Function>(),
-    onAuthStateChanged: (auth: any, cb: Function) => {
-        fakeAuthState.listeners.add(cb);
-        // Call immediately with current state
-        cb(fakeAuthState.currentUser);
-        return () => fakeAuthState.listeners.delete(cb);
-    },
-};
-
-vi.mock("firebase/auth", () => {
-    return {
-        onAuthStateChanged: (auth: any, cb: Function) =>
-            fakeAuthState.onAuthStateChanged(auth, cb),
-        signInWithPopup: async () => {
-            const user = { uid: "test-user-123" };
-            fakeAuthState.currentUser = user;
-            fakeAuthState.listeners.forEach((cb) => cb(user));
-        },
-        signOut: async () => {
-            fakeAuthState.currentUser = null;
-            fakeAuthState.listeners.forEach((cb) => cb(null));
-        },
-        GoogleAuthProvider: class {},
-    };
-});
-
-vi.mock("./firebase", () => ({
-    auth: {},
-    googleProvider: {},
-}));
 
 vi.mock("./googleAuthUtils", () => ({
     loadGoogleIdentityScript: vi.fn().mockResolvedValue(undefined),
     requestGoogleAuthCode: vi.fn().mockResolvedValue("test-code"),
-    exchangeAuthCodeForTokens: vi.fn().mockResolvedValue({ accessToken: "test-token" }),
+    exchangeAuthCodeForTokens: vi.fn().mockResolvedValue({ accessToken: "test-token", refreshToken: "test-refresh" }),
 }));
-
-vi.mock("../store/api", () => {
-    const apiState = {
-        userId: null as string | null,
-    };
-    return {
-        api: {
-            __fakeApi: apiState,
-            setUserId: (id: string | null) => {
-                apiState.userId = id;
-            },
-        },
-    };
-});
 
 vi.mock("../utils/notifications", () => ({
     useNotification: () => ({
@@ -81,37 +32,41 @@ const TestComponent = () => {
 };
 
 describe("AuthContext", () => {
-    beforeEach(async () => {
-        fakeAuthState.currentUser = null;
-        fakeAuthState.listeners.clear();
-        fakeAuthState.onAuthStateChanged = (auth: any, cb: Function) => {
-            fakeAuthState.listeners.add(cb);
-            cb(fakeAuthState.currentUser);
-            return () => fakeAuthState.listeners.delete(cb);
-        };
-        (api as any).__fakeApi.userId = null;
+    beforeEach(() => {
+        localStorage.clear();
+        // Mock window.location.reload
+        Object.defineProperty(window, 'location', {
+            configurable: true,
+            value: { reload: vi.fn() }
+        });
     });
 
-    afterEach(() => {});
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
 
-    it("initially shows loading state", async () => {
-        // Prevent immediate resolution for this test
-        const originalOnAuth = fakeAuthState.onAuthStateChanged;
-        fakeAuthState.onAuthStateChanged = () => () => true;
-
+    it("initially shows not logged in when no tokens exist", () => {
         render(
             <AuthProvider>
                 <TestComponent />
             </AuthProvider>,
         );
 
-        expect(screen.getByText("Loading...")).toBeInTheDocument();
-
-        // Restore
-        fakeAuthState.onAuthStateChanged = originalOnAuth;
+        expect(screen.getByTestId("user-status")).toHaveTextContent("Not logged in");
     });
 
-    it("updates state and calls api.setUserId when user logs in", async () => {
+    it("shows logged in when token exists", () => {
+        localStorage.setItem("google_access_token", "fake-token");
+        render(
+            <AuthProvider>
+                <TestComponent />
+            </AuthProvider>,
+        );
+
+        expect(screen.getByTestId("user-status")).toHaveTextContent("Logged in as local-user");
+    });
+
+    it("logs in and reloads", async () => {
         render(
             <AuthProvider>
                 <TestComponent />
@@ -119,40 +74,15 @@ describe("AuthContext", () => {
         );
 
         await act(async () => {
-            const firebaseAuthModule = await import("firebase/auth");
-            await firebaseAuthModule.signInWithPopup({} as any, {} as any);
+            screen.getByText("Login").click();
         });
 
-        expect(screen.getByTestId("user-status")).toHaveTextContent(
-            "Logged in as test-user-123",
-        );
-        expect((api as any).__fakeApi.userId).toBe("test-user-123");
+        expect(localStorage.getItem("google_access_token")).toBe("test-token");
+        expect(window.location.reload).toHaveBeenCalled();
     });
 
-    it("updates state and calls api.setUserId when user logs out", async () => {
-        // Start logged in
-        fakeAuthState.currentUser = { uid: "test-user-123" };
-
-        render(
-            <AuthProvider>
-                <TestComponent />
-            </AuthProvider>,
-        );
-
-        await act(async () => {
-            const firebaseAuthModule = await import("firebase/auth");
-            await firebaseAuthModule.signOut({} as any);
-        });
-
-        expect(screen.getByTestId("user-status")).toHaveTextContent(
-            "Not logged in",
-        );
-        expect((api as any).__fakeApi.userId).toBeUndefined();
-    });
-
-    it("calls signOut when logout is triggered", async () => {
-        fakeAuthState.currentUser = { uid: "test-user-123" };
-
+    it("logs out and reloads", async () => {
+        localStorage.setItem("google_access_token", "fake-token");
         render(
             <AuthProvider>
                 <TestComponent />
@@ -163,7 +93,7 @@ describe("AuthContext", () => {
             screen.getByText("Logout").click();
         });
 
-        expect(fakeAuthState.currentUser).toBeNull();
-        expect((api as any).__fakeApi.userId).toBeUndefined();
+        expect(localStorage.getItem("google_access_token")).toBeNull();
+        expect(window.location.reload).toHaveBeenCalled();
     });
 });

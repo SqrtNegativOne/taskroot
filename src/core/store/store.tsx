@@ -4,7 +4,7 @@ import React, {
     useSyncExternalStore,
     useCallback,
 } from "react";
-import { api } from "./api";
+
 import { syncEngine } from "../sync/SyncEngine";
 import {
     SAMPLE_TASKS,
@@ -171,34 +171,7 @@ export function useStored<T>(
         // Optimistically set loaded
         setIsLoaded(true);
 
-        try {
-            const settingsStr = localStorage.getItem("taskroot_settings");
-            if (settingsStr) {
-                const parsed = JSON.parse(settingsStr);
-                if (parsed.enableFirebaseSync === false) {
-                    return () => {};
-                }
-            }
-        } catch (e) {}
-
-        const unsubscribe = api.subscribeToStore(
-            key,
-            val, // fallback/seed data if cloud document doesn't exist yet
-            (serverVal: T) => {
-                setVal(serverVal);
-                localStorage.setItem(
-                    `taskroot_${key}`,
-                    JSON.stringify(serverVal),
-                );
-            },
-            () => {
-                // Called when subscription is ready or failed, or instantly if offline
-                setIsLoaded(true);
-            },
-        );
-
         return () => {
-            unsubscribe();
             unregister();
         };
     }, [key]);
@@ -236,19 +209,7 @@ export function useStored<T>(
                 }
                 localStorage.setItem(`taskroot_${key}`, JSON.stringify(result));
 
-                let enableFirebase = true;
-                try {
-                    const settingsStr =
-                        localStorage.getItem("taskroot_settings");
-                    if (settingsStr)
-                        enableFirebase =
-                            JSON.parse(settingsStr).enableFirebaseSync !==
-                            false;
-                } catch (e) {}
 
-                if (enableFirebase) {
-                    api.saveStoreData(key, result);
-                }
 
                 // Notify SyncEngine of the delta and let it handle remote sync
                 if (Array.isArray(result)) {
@@ -273,17 +234,7 @@ export function useStored<T>(
             setVal(result); // Optimistic update
             localStorage.setItem(`taskroot_${key}`, JSON.stringify(result));
 
-            let enableFirebase = true;
-            try {
-                const settingsStr = localStorage.getItem("taskroot_settings");
-                if (settingsStr)
-                    enableFirebase =
-                        JSON.parse(settingsStr).enableFirebaseSync !== false;
-            } catch (e) {}
 
-            if (enableFirebase) {
-                api.saveStoreData(key, result);
-            }
 
             // Notify SyncEngine of the delta and let it handle remote sync
             if (Array.isArray(result)) {

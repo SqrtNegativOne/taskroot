@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { api, fetchWithTimeout } from "./api";
+import { fetchWithTimeout } from "./api";
 
 describe("api.ts", () => {
     describe("fetchWithTimeout", () => {
@@ -38,23 +38,6 @@ describe("api.ts", () => {
 
             await expectPromise;
             expect(global.fetch).toHaveBeenCalledOnce();
-        });
-    });
-
-    describe("ApiFacade", () => {
-        it("should default to OfflineApi (no uid)", () => {
-            expect(api.getUserId()).toBeUndefined();
-        });
-
-        it("should switch to OnlineApi when setUserId is called with a uid", () => {
-            api.setUserId("user123");
-            expect(api.getUserId()).toBe("user123");
-        });
-
-        it("should switch back to OfflineApi when setUserId is called without uid", () => {
-            api.setUserId("user123");
-            api.setUserId(undefined);
-            expect(api.getUserId()).toBeUndefined();
         });
     });
 });

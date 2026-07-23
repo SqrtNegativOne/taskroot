@@ -1,12 +1,11 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import {
-    type User,
-    signInWithPopup,
-    signOut,
-    onAuthStateChanged,
-} from "firebase/auth";
-import { auth, googleProvider } from "./firebase";
-import { GoogleAuthProvider } from "firebase/auth";
+
+interface User {
+    uid: string;
+    email: string | null;
+    displayName: string | null;
+    photoURL: string | null;
+}
 
 interface AuthContextType {
     user: User | null;
@@ -22,7 +21,6 @@ const AuthContext = createContext<AuthContextType>({
     logout: async () => {},
 });
 
-import { api, fetchWithTimeout } from "../store/api";
 import { useNotification } from "../utils/notifications";
 
 import {
@@ -39,29 +37,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const { notify } = useNotification();
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(
-            auth,
-            (currentUser) => {
-                setUser(currentUser);
-                api.setUserId(currentUser ? currentUser.uid : undefined);
-                setLoading(false);
-            },
-            (error) => {
-                console.error("Auth State Error:", error);
-                notify(`Authentication error: ${error.message}`, "error");
-                setLoading(false);
-            },
-        );
-
-        return unsubscribe;
-    }, [notify]);
+        // Just mock the user being logged in if they have tokens
+        const token = localStorage.getItem("google_access_token");
+        if (token) {
+            setUser({ uid: "local-user", email: "user@example.com", displayName: "Local User", photoURL: null });
+        } else {
+            setUser(null);
+        }
+        setLoading(false);
+    }, []);
 
     const loginWithGoogle = async () => {
         try {
-            // 1. Sign into Firebase for database access
-            await signInWithPopup(auth, googleProvider);
-
-            // 2. Load Google Identity Services to get the offline auth code for Calendar sync
             await loadGoogleIdentityScript();
             const code = await requestGoogleAuthCode();
             const tokens = await exchangeAuthCodeForTokens(code);
@@ -76,14 +63,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         } catch (error: unknown) {
             console.error("Error signing in with Google:", error);
             const message = error instanceof Error ? error.message : String(error);
-            notify(`Sign in failed: ${message}\nMake sure you have added your REAL Firebase config keys to a .env file!`, "error");
+            notify(`Sign in failed: ${message}`, "error");
         }
     };
 
     const logout = async () => {
         try {
-            await signOut(auth);
             localStorage.removeItem("google_access_token");
+            localStorage.removeItem("google_refresh_token");
+            setUser(null);
+            window.location.reload();
         } catch (error: unknown) {
             console.error("Error signing out:", error);
             const message =

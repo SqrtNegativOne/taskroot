@@ -438,19 +438,21 @@ export class SyncEngine {
         continue;
       }
 
-      if (event.updatedAt && prev.updatedAt && event.updatedAt > prev.updatedAt) {
-        let targetCalendarId = event.googleCalendarId || 'primary';
+      if (!(event.updatedAt && prev.updatedAt && event.updatedAt > prev.updatedAt)) {
+        continue;
+      }
 
-        if (event.googleCalendarId && event.googleCalendarId !== targetCalendarId) {
-          if (event.googleEventId) {
-            this.pushQueue.push({ type: 'event', action: 'delete', item: prev, id: event.googleEventId, calendarId: event.googleCalendarId });
-          }
-          this.pushQueue.push({ type: 'event', action: 'create', item: event });
-        } else if (event.googleEventId) {
-          this.pushQueue.push({ type: 'event', action: 'update', item: event, id: event.googleEventId, calendarId: event.googleCalendarId || 'primary' });
-        } else {
-          this.pushQueue.push({ type: 'event', action: 'create', item: event });
+      let targetCalendarId = event.googleCalendarId || 'primary';
+
+      if (event.googleCalendarId && event.googleCalendarId !== targetCalendarId) {
+        if (event.googleEventId) {
+          this.pushQueue.push({ type: 'event', action: 'delete', item: prev, id: event.googleEventId, calendarId: event.googleCalendarId });
         }
+        this.pushQueue.push({ type: 'event', action: 'create', item: event });
+      } else if (event.googleEventId) {
+        this.pushQueue.push({ type: 'event', action: 'update', item: event, id: event.googleEventId, calendarId: event.googleCalendarId || 'primary' });
+      } else {
+        this.pushQueue.push({ type: 'event', action: 'create', item: event });
       }
     }
 

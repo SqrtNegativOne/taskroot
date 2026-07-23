@@ -611,24 +611,28 @@ function InspectorPane({ inspectorState, onClose, tasks, setTasks, events, setEv
   }, [currentItem?.id]);
 
   const handleClose = React.useCallback(() => {
-    if (inspectorState && currentItem && currentItem.isDraft) {
-      if (isCurrentTask) {
-        setTasks(ts => {
-          const t = ts.find(x => x.id === currentItem.id);
-          if (t && t.isDraft) {
-            setEvents(es => es.filter(e => e.taskId !== currentItem.id));
-            return ts.filter(x => x.id !== currentItem.id);
-          }
-          return ts;
-        });
-      } else {
-        setEvents(es => {
-          const e = es.find(x => x.id === currentItem.id);
-          if (e && e.isDraft) return es.filter(x => x.id !== currentItem.id);
-          return es;
-        });
-      }
+    if (!(inspectorState && currentItem && currentItem.isDraft)) {
+      onClose();
+      return;
     }
+    
+    if (isCurrentTask) {
+      setTasks(ts => {
+        const t = ts.find(x => x.id === currentItem.id);
+        if (t && t.isDraft) {
+          setEvents(es => es.filter(e => e.taskId !== currentItem.id));
+          return ts.filter(x => x.id !== currentItem.id);
+        }
+        return ts;
+      });
+    } else {
+      setEvents(es => {
+        const e = es.find(x => x.id === currentItem.id);
+        if (e && e.isDraft) return es.filter(x => x.id !== currentItem.id);
+        return es;
+      });
+    }
+    
     onClose();
   }, [inspectorState, currentItem, isCurrentTask, setTasks, setEvents, onClose]);
 

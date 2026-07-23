@@ -113,12 +113,10 @@ export function MiniTrackerScreen() {
 
       if (!running) {
         content = <div style={{ color: 'var(--fg-dim)' }}>TRACKING PAUSED</div>;
+      } else if (breakState === "BREAK") {
+        content = <div style={{ color: 'var(--tag-green)' }}>{PAD2(remM)}:{PAD2(finalS)} left for break</div>;
       } else {
-        if (breakState === "BREAK") {
-          content = <div style={{ color: 'var(--tag-green)' }}>{PAD2(remM)}:{PAD2(finalS)} left for break</div>;
-        } else {
-          content = <div>{PAD2(remM)}:{PAD2(finalS)} left working for {taskName}</div>;
-        }
+        content = <div>{PAD2(remM)}:{PAD2(finalS)} left working for {taskName}</div>;
       }
     }
   }

@@ -208,11 +208,12 @@ function TaskRow({ task, index, onDragStart, dragging, updateTask, deleteTask, f
                  setIsChecking(false);
                  setIsExiting(false);
                }, 400);
-             } else {
-               updateTask(task.id, { status: newStatus });
-               if (newStatus === 'todo') {
-                 setIsChecking(false);
-               }
+               return;
+             }
+             
+             updateTask(task.id, { status: newStatus });
+             if (newStatus === 'todo') {
+               setIsChecking(false);
              }
            }}
            title="Toggle Done"

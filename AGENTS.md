@@ -44,6 +44,9 @@ Taskroot is a web-based and desktop task management app focusing on planning, ex
 - **MiniTracker**: When the main Electron window is minimized or closed, a frameless transparent window (`miniWin`) opens to show the timer in a compact form, using the `/?minitracker=true` route. **CRITICAL:** There should be NO buttons on the mini tracker window. Restoring the app or other actions should be done via keyboard shortcuts.
 - **Settings Schema**: When adding settings to `settingsSchema.ts`, if a setting is self-explanatory, do NOT include a `description` property. Do not have subheadings (`section`) unless the related settings you are clumping in them are very similar.
 
-## Style
+## Style (Important)
 - Prefer inline exports over bottom exports.
-- Do not use `any` ever.
+- Do not use `any` type ever.
+- Refactor files if they exceed 250 LOC.
+- Refactor classes if they exceed 10 methods.
+- Refactor any bit of code if it exceeds 4 levels of indentation.

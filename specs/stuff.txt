@@ -7,6 +7,3 @@ I would need an array of approximately 10,000 tasks to hit the 1MB threshold at 
 So even loading unused (cold) tasks into a IndexedDB or a local file (since this is Electron) is overkill. And loading active tasks into RAM also feels un-needed
 
 Automated local backups are confusing.
-
-React UI reads from and writes to useStored hooks in store.tsx.
-store.tsx updates localStorage and calls api.ts to sync with Firestore.

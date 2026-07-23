@@ -1,4 +1,5 @@
 import { fetchWithTimeout } from "../store/api";
+import { tokenBouncer } from "../auth/TokenBouncer";
 
 export class GoogleCalendarAPI {
     private token: string | null = null;
@@ -11,20 +12,37 @@ export class GoogleCalendarAPI {
         return this.token;
     }
 
+    private async fetchWithAuth(url: string, options: any = {}) {
+        if (!this.token) throw new Error("Unauthorized");
+        const getOptions = () => ({
+            ...options,
+            headers: {
+                ...options.headers,
+                Authorization: `Bearer ${this.token}`,
+            }
+        });
+
+        let res = await fetchWithTimeout(url, getOptions());
+        if (res.status === 401) {
+            const refreshed = await tokenBouncer.refreshAccessToken();
+            if (refreshed) {
+                res = await fetchWithTimeout(url, getOptions());
+            } else {
+                throw new Error("Unauthorized");
+            }
+        }
+        return res;
+    }
+
     async fetchEvents(
         timeMin: string,
         timeMax: string,
         calendarId = "primary",
     ) {
-        if (!this.token) throw new Error("Unauthorized");
-        const res = await fetchWithTimeout(
-            `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=false&maxResults=2500`,
-            {
-                headers: { Authorization: `Bearer ${this.token}` },
-            },
+        const res = await this.fetchWithAuth(
+            `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=false&maxResults=2500`
         );
         if (!res.ok) {
-            if (res.status === 401) throw new Error("Unauthorized");
             console.warn(`Failed to fetch events for calendar ${calendarId}`);
             return null;
         }
@@ -35,14 +53,10 @@ export class GoogleCalendarAPI {
     async fetchCalendars() {
         if (!this.token)
             return [{ id: "primary", summary: "Primary Calendar" }];
-        const res = await fetchWithTimeout(
-            "https://www.googleapis.com/calendar/v3/users/me/calendarList",
-            {
-                headers: { Authorization: `Bearer ${this.token}` },
-            },
+        const res = await this.fetchWithAuth(
+            "https://www.googleapis.com/calendar/v3/users/me/calendarList"
         );
         if (!res.ok) {
-            if (res.status === 401) throw new Error("Unauthorized");
             console.warn(`Failed to fetch calendars`);
             return [{ id: "primary", summary: "Primary Calendar" }];
         }
@@ -51,14 +65,12 @@ export class GoogleCalendarAPI {
     }
 
     async createEvent(localEvent: any, tasks: any[], calendarId = "primary") {
-        if (!this.token) return null;
         const body = this.toGoogleEvent(localEvent, tasks);
-        const res = await fetchWithTimeout(
+        const res = await this.fetchWithAuth(
             `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`,
             {
                 method: "POST",
                 headers: {
-                    Authorization: `Bearer ${this.token}`,
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify(body),
@@ -78,14 +90,12 @@ export class GoogleCalendarAPI {
         tasks: any[],
         calendarId = "primary",
     ) {
-        if (!this.token) return;
         const body = this.toGoogleEvent(localEvent, tasks);
-        const res = await fetchWithTimeout(
+        const res = await this.fetchWithAuth(
             `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${googleEventId}`,
             {
                 method: "PATCH",
                 headers: {
-                    Authorization: `Bearer ${this.token}`,
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify(body),
@@ -98,12 +108,10 @@ export class GoogleCalendarAPI {
     }
 
     async deleteEvent(googleEventId: string, calendarId = "primary") {
-        if (!this.token) return;
-        const res = await fetchWithTimeout(
+        const res = await this.fetchWithAuth(
             `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${googleEventId}`,
             {
                 method: "DELETE",
-                headers: { Authorization: `Bearer ${this.token}` },
             },
         );
         if (!res.ok) {

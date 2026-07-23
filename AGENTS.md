@@ -26,10 +26,10 @@ Taskroot is a web-based and desktop task management app focusing on planning, ex
 - `src/screens/graph/`, `src/screens/recap/`, `src/screens/stats/`, `src/screens/wrap/`: Other specialized screens.
 - `src/components/`: Shared UI components used across multiple screens (e.g., `shell.tsx`, `collapsible.tsx`, `day-timeline.tsx`, `tasklist.tsx`).
 - `src/core/`: Core business logic, context providers, and data layer, categorized by responsibility:
-  - `sync/`: External sync & third-party APIs (`SyncEngine.ts`, `GoogleCalendarAPI.ts`, `GoogleTasksAPI.ts`, and the `engine/` subdirectory containing `SyncQueue.ts`, `TaskSynchronizer.ts`, `EventSynchronizer.ts`, and `types.ts` for modular sync processing).
-  - `store/`: State management & persistence (`store.tsx`, `api.ts`, `data.tsx`, `settingsSchema.tsx`).
+  - `sync/`: External sync & third-party APIs (`index.ts`, `SyncState.ts`, `GoogleCalendarAPI.ts`, `GoogleTasksAPI.ts`, and the `engine/` subdirectory containing `SyncQueue.ts`, `TaskSynchronizer.ts`, `EventSynchronizer.ts`, `Pusher.ts`, `Poller.ts`, and `types.ts` for modular sync processing).
+  - `store/`: State management & persistence (`store.tsx`, `storeRegistry.ts`, `api.ts`, `data.tsx`, `settingsSchema.tsx`).
   - `domain/`: Business logic & transformations (`events.ts`, `filters.ts`, `rrule-utils.ts`).
-  - `auth/`: Authentication (`AuthContext.tsx`, `googleAuthUtils.ts`).
+  - `auth/`: Authentication (`AuthContext.tsx`, `googleAuthUtils.ts`, `TokenBouncer.ts`).
   - `utils/`: App-wide utilities (`logger.ts`, `notifications.tsx`).
 - `src/App.tsx`: The root application component. Orchestrates routing, authentication bypass for dev, and global sync contexts.
 
@@ -37,7 +37,7 @@ Taskroot is a web-based and desktop task management app focusing on planning, ex
 
 ## Key Concepts
 - **UI Controls**: Prefer using custom components like `SegmentedControl` (e.g. as used in the Settings screen) over native `<select>` dropdowns for settings, as they provide better styling consistency and avoid OS-specific dark/light mode issues (like white text on white background).
-- **State Management**: The `useStored(key, defaultData)` hook acts as the primary state manager. It syncs optimistically to `localStorage` and persists via SyncEngine.
+- **State Management**: The `useStored(key, defaultData)` hook acts as the primary state manager. It syncs optimistically to `localStorage` and persists via the modular Sync engine (Pusher/Poller) via `storeRegistry`.
 - **Offline/Online Mode**: Running `npm run start:offline` sets `VITE_OFFLINE_MODE=true` to automatically bypass the Google login screen for rapid UI testing and offline usage. Running `npm run start:online` requires normal authentication.
 - **Drag and Drop**: Managed natively via pointer events (`pointerdown`, `pointermove`, `pointerup`) instead of the HTML5 Drag & Drop API for finer control and custom ghost elements.
 - **Time Logging**: Stopwatch sessions (Axleless, Flowtime, Guzey) are logged to the `time_logs` store, optionally associated with a task.

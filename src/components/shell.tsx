@@ -9,7 +9,7 @@ import React, {
 import { Link, useNavigate } from "react-router-dom";
 import { Icon } from "./icon";
 import { MONTHS, DOW_SHORT, PAD2 } from "../core/store/data";
-import { syncEngine } from "../core/sync/SyncEngine";
+import { syncState, poller } from "../core/sync";
 
 // Shared top bar + clickable stage indicator. Used across Plan, Do, Rest.
 export function TitleBar({ current, today }) {
@@ -27,12 +27,10 @@ export function TitleBar({ current, today }) {
     const syncBtnRef = useRef<HTMLButtonElement>(null);
 
     useEffect(() => {
-        const unsubscribe = syncEngine.subscribeStatus((status) => {
-            setSyncStatus(status);
+        const unsubscribe = syncState.subscribe(() => {
+            setSyncStatus(syncState.getUiStatus());
         });
-        return () => {
-            unsubscribe();
-        };
+        return unsubscribe;
     }, []);
 
     useEffect(() => {
@@ -43,7 +41,7 @@ export function TitleBar({ current, today }) {
 
         const updateTitle = () => {
             if (!syncBtnRef.current) return;
-            const remaining = Math.max(0, syncEngine.nextSyncTime - Date.now());
+            const remaining = Math.max(0, syncState.nextSyncTime - Date.now());
             const m = Math.floor(remaining / 60000);
             const s = Math.floor((remaining % 60000) / 1000);
             syncBtnRef.current.title = `Next sync in ${m}m ${s}s (Click to force sync)`;
@@ -184,7 +182,7 @@ export function TitleBar({ current, today }) {
                 <button
                     ref={syncBtnRef}
                     className="win-btn"
-                    onClick={() => syncEngine.forceSync()}
+                    onClick={() => poller.forceSync()}
                     data-cuelume-hover="tick"
                     data-cuelume-toggle
                     style={{

@@ -9,7 +9,7 @@ import { SettingsScreen } from "./screens/settings/SettingsScreen";
 import { TitleBar } from "./components/shell";
 import { useStored, purgeOrphanedData } from "./core/store/store";
 import { SAMPLE_TASKS, SAMPLE_EVENTS } from "./core/store/data";
-import { syncEngine } from "./core/sync/SyncEngine";
+import { syncState, poller } from "./core/sync";
 import {
     NotificationProvider,
     useNotification,
@@ -122,32 +122,31 @@ function GlobalSync({ children }: { children: React.ReactNode }) {
     );
     const [settings] = useStored("settings", DEFAULT_SETTINGS);
     const [initialSyncDone, setInitialSyncDone] = React.useState(
-        syncEngine.initialSyncComplete,
+        syncState.initialSyncComplete,
     );
-    const [syncMessage, setSyncMessage] = React.useState("");
+    const [syncMessage, setSyncMessage] = React.useState(syncState.getUiMessage());
     const { notify } = useNotification();
 
     React.useEffect(() => {
         purgeOrphanedData(notify);
-        syncEngine.setSettings(settings);
-        syncEngine.start();
-    }, [settings]); // notify is from context, safe to omit or include
+        poller.start();
+    }, [settings]);
 
     React.useEffect(() => {
-        const unsubSync = syncEngine.subscribeInitialSync(setInitialSyncDone);
-        const unsubMsg = syncEngine.subscribeSyncMessage(setSyncMessage);
-        const unsubError = syncEngine.subscribeError((msg) => {
-            notify(`Sync error: ${msg}`, "error");
+        const unsub = syncState.subscribe(() => {
+            setInitialSyncDone(syncState.initialSyncComplete);
+            setSyncMessage(syncState.getUiMessage());
+            
+            if (syncState.error) {
+                notify(`Sync error: ${syncState.error}`, "error");
+                syncState.error = null;
+            }
+            if (syncState.info) {
+                notify(syncState.info, "info");
+                syncState.info = null;
+            }
         });
-        const unsubInfo = syncEngine.subscribeInfo((msg) => {
-            notify(msg, "info");
-        });
-        return () => {
-            unsubSync();
-            unsubMsg();
-            unsubError();
-            unsubInfo();
-        };
+        return unsub;
     }, [notify]);
 
     if (!tasksLoaded || !eventsLoaded || !initialSyncDone) {

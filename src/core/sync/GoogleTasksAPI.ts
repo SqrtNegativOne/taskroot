@@ -1,4 +1,5 @@
 import { fetchWithTimeout } from "../store/api";
+import { tokenBouncer } from "../auth/TokenBouncer";
 
 export class GoogleTasksAPI {
     private token: string | null = null;
@@ -7,8 +8,29 @@ export class GoogleTasksAPI {
         this.token = token;
     }
 
-    async fetchTasks(tasklistId = "@default") {
+    private async fetchWithAuth(url: string, options: any = {}) {
         if (!this.token) throw new Error("Unauthorized");
+        const getOptions = () => ({
+            ...options,
+            headers: {
+                ...options.headers,
+                Authorization: `Bearer ${this.token}`,
+            }
+        });
+
+        let res = await fetchWithTimeout(url, getOptions());
+        if (res.status === 401) {
+            const refreshed = await tokenBouncer.refreshAccessToken();
+            if (refreshed) {
+                res = await fetchWithTimeout(url, getOptions());
+            } else {
+                throw new Error("Unauthorized");
+            }
+        }
+        return res;
+    }
+
+    async fetchTasks(tasklistId = "@default") {
         const allTasks: any[] = [];
         let pageToken: string | null = null;
         do {
@@ -20,11 +42,8 @@ export class GoogleTasksAPI {
             url.searchParams.append("maxResults", "100");
             if (pageToken) url.searchParams.append("pageToken", pageToken);
 
-            const res = await fetchWithTimeout(url.toString(), {
-                headers: { Authorization: `Bearer ${this.token}` },
-            });
+            const res = await this.fetchWithAuth(url.toString());
             if (!res.ok) {
-                if (res.status === 401) throw new Error("Unauthorized");
                 console.warn(`Failed to fetch google tasks`);
                 return null;
             }
@@ -37,14 +56,12 @@ export class GoogleTasksAPI {
     }
 
     async createTask(localTask: any, tasklistId = "@default") {
-        if (!this.token) return null;
         const body = this.toGoogleTask(localTask);
-        const res = await fetchWithTimeout(
+        const res = await this.fetchWithAuth(
             `https://tasks.googleapis.com/tasks/v1/lists/${tasklistId}/tasks`,
             {
                 method: "POST",
                 headers: {
-                    Authorization: `Bearer ${this.token}`,
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify(body),
@@ -63,14 +80,12 @@ export class GoogleTasksAPI {
         localTask: any,
         tasklistId = "@default",
     ) {
-        if (!this.token) return;
         const body = this.toGoogleTask(localTask);
-        const res = await fetchWithTimeout(
+        const res = await this.fetchWithAuth(
             `https://tasks.googleapis.com/tasks/v1/lists/${tasklistId}/tasks/${googleTaskId}`,
             {
                 method: "PATCH",
                 headers: {
-                    Authorization: `Bearer ${this.token}`,
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify(body),
@@ -83,12 +98,10 @@ export class GoogleTasksAPI {
     }
 
     async deleteTask(googleTaskId: string, tasklistId = "@default") {
-        if (!this.token) return;
-        const res = await fetchWithTimeout(
+        const res = await this.fetchWithAuth(
             `https://tasks.googleapis.com/tasks/v1/lists/${tasklistId}/tasks/${googleTaskId}`,
             {
                 method: "DELETE",
-                headers: { Authorization: `Bearer ${this.token}` },
             },
         );
         if (!res.ok) {

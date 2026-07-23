@@ -5,7 +5,8 @@ import React, {
     useCallback,
 } from "react";
 
-import { syncEngine } from "../sync/SyncEngine";
+import { storeRegistry } from "./storeRegistry";
+import { taskSync, eventSync, pusher } from "../sync";
 import {
     SAMPLE_TASKS,
     SAMPLE_EVENTS,
@@ -107,7 +108,7 @@ export function useSetting<K extends keyof AppSettings>(
     );
 
     useEffect(() => {
-        syncEngine.registerUpdater("settings", (serverVal: any) => {
+        storeRegistry.registerUpdater("settings", (serverVal: any) => {
             globalSettings = serverVal;
             settingsListeners.forEach((l) => l());
         });
@@ -154,16 +155,15 @@ export function useStored<T>(
     const [isLoaded, setIsLoaded] = useState(false);
 
     useEffect(() => {
-        // Register the setter with SyncEngine so it can push updates from the cloud to React
-        return syncEngine.registerUpdater(key, (serverVal: T) => {
+        // Register the setter with Sync modules so they can push updates from the cloud to React
+        return storeRegistry.registerUpdater(key, (serverVal: T) => {
             setVal(serverVal);
         });
     }, [key]);
 
     useEffect(() => {
-        // Notify SyncEngine that this store is ready to receive data,
-        // SyncEngine will fetch initial data if needed.
-        const unregister = syncEngine.registerUpdater(key, (serverVal: T) => {
+        // Notify Sync modules that this store is ready to receive data
+        const unregister = storeRegistry.registerUpdater(key, (serverVal: T) => {
             setVal(serverVal);
             localStorage.setItem(`taskroot_${key}`, JSON.stringify(serverVal));
         });
@@ -211,9 +211,11 @@ export function useStored<T>(
 
 
 
-                // Notify SyncEngine of the delta and let it handle remote sync
+                // Notify Sync modules of the delta and let it handle remote sync
                 if (Array.isArray(result)) {
-                    syncEngine.notifyDataChanged(key, result);
+                    if (key === "tasks") taskSync.computeTasksDelta(result);
+                    else if (key === "events") eventSync.computeEventsDelta(result);
+                    pusher.trigger();
                 }
 
                 return result;
@@ -236,9 +238,11 @@ export function useStored<T>(
 
 
 
-            // Notify SyncEngine of the delta and let it handle remote sync
+            // Notify Sync modules of the delta and let it handle remote sync
             if (Array.isArray(result)) {
-                syncEngine.notifyDataChanged(key, result);
+                if (key === "tasks") taskSync.computeTasksDelta(result);
+                else if (key === "events") eventSync.computeEventsDelta(result);
+                pusher.trigger();
             }
         }
     };

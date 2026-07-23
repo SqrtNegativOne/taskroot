@@ -1,13 +1,14 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useStored } from "./store";
-import { syncEngine } from "../sync/SyncEngine";
+import { storeRegistry } from "./storeRegistry";
+import { taskSync, eventSync, pusher } from "../sync";
 
-vi.mock("../sync/SyncEngine", () => {
+vi.mock("./storeRegistry", () => {
     const updaters = new Map<string, Set<Function>>();
 
     return {
-        syncEngine: {
+        storeRegistry: {
             __fakeUpdaters: updaters,
             registerUpdater: (key: string, onData: Function) => {
                 if (!updaters.has(key)) {
@@ -18,7 +19,6 @@ vi.mock("../sync/SyncEngine", () => {
                     updaters.get(key)?.delete(onData);
                 };
             },
-            notifyDataChanged: vi.fn(),
             triggerRemoteUpdate: (key: string, data: any) => {
                 updaters.get(key)?.forEach((cb) => cb(data));
             },
@@ -26,11 +26,19 @@ vi.mock("../sync/SyncEngine", () => {
     };
 });
 
+vi.mock("../sync", () => {
+    return {
+        taskSync: { computeTasksDelta: vi.fn() },
+        eventSync: { computeEventsDelta: vi.fn() },
+        pusher: { trigger: vi.fn() }
+    };
+});
+
 describe("useStored Hook", () => {
     beforeEach(() => {
         // Clear localStorage before each test
         localStorage.clear();
-        (syncEngine as any).__fakeUpdaters.clear();
+        (storeRegistry as any).__fakeUpdaters.clear();
         vi.clearAllMocks();
     });
 
@@ -94,7 +102,7 @@ describe("useStored Hook", () => {
         );
 
         act(() => {
-            (syncEngine as any).triggerRemoteUpdate("test_key", { count: 42 }); // Simulate data coming from cloud
+            (storeRegistry as any).triggerRemoteUpdate("test_key", { count: 42 }); // Simulate data coming from cloud
         });
 
         expect(result.current[0]).toEqual({ count: 42 });

@@ -42,7 +42,10 @@ export class GoogleTasksAPI {
       headers: { 'Authorization': `Bearer ${this.token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     });
-    if (!res.ok) throw new Error('Failed to create task');
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`Failed to create task: ${res.status} ${errText}`);
+    }
     const data = await res.json();
     return data.id;
   }
@@ -55,7 +58,10 @@ export class GoogleTasksAPI {
       headers: { 'Authorization': `Bearer ${this.token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     });
-    if (!res.ok) throw new Error('Failed to update task');
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`Failed to update task: ${res.status} ${errText}`);
+    }
   }
 
   async deleteTask(googleTaskId: string, tasklistId = '@default') {
@@ -64,7 +70,10 @@ export class GoogleTasksAPI {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${this.token}` }
     });
-    if (!res.ok) throw new Error('Failed to delete task');
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`Failed to delete task: ${res.status} ${errText}`);
+    }
   }
 
   toLocalTask(googleTask: any, existingLocalTask: any = null) {

@@ -1,7 +1,8 @@
 import { RRule } from 'rrule';
+import type { AppEvent } from './events';
 
-export function expandEventsForView(baseEvents: any[], viewStartDate: Date, viewEndDate: Date) {
-  const flattenedInstances: any[] = [];
+export function expandEventsForView(baseEvents: AppEvent[], viewStartDate: Date, viewEndDate: Date) {
+  const flattenedInstances: AppEvent[] = [];
 
   baseEvents.forEach(event => {
     if (!event.rrule) {
@@ -56,11 +57,11 @@ export function expandEventsForView(baseEvents: any[], viewStartDate: Date, view
             endDate: newEndDate,
             isInstance: true,
             baseEventId: event.id
-          });
+          } as AppEvent);
         }
       });
     } catch (e) {
-      console.error("Failed to parse RRULE for event", event.title, e);
+      console.error("Failed to parse RRULE for event", (event as any).title || event.id, e);
       // Fallback: just show the base event if rule is invalid
       flattenedInstances.push(event);
     }

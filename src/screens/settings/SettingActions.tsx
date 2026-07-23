@@ -3,7 +3,13 @@ import { api } from '../../core/store/api';
 import { useAuth } from '../../core/auth/AuthContext';
 import { useStored } from '../../core/store/store';
 
-function CustomSelect({ options, value, onChange }: any) {
+export interface CustomSelectProps<T> {
+  options: { label: string; value: T }[];
+  value: T;
+  onChange: (val: T) => void;
+}
+
+function CustomSelect<T>({ options, value, onChange }: CustomSelectProps<T>) {
   const [open, setOpen] = React.useState(false);
   const ref = React.useRef<HTMLDivElement>(null);
 

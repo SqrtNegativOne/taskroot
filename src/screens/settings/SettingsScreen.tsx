@@ -20,7 +20,13 @@ function timeToMin(t: string) {
   return parseInt(hh, 10) * 60 + parseInt(mm, 10);
 }
 
-export function SegmentedControl({ options, value, onChange }: any) {
+export interface SegmentedControlProps<T> {
+  options: { label: string; value: T }[];
+  value: T;
+  onChange: (val: T) => void;
+}
+
+export function SegmentedControl<T>({ options, value, onChange }: SegmentedControlProps<T>) {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const [thumbStyle, setThumbStyle] = React.useState({ left: 0, top: 0, width: 0, height: 0, opacity: 0, init: false });
 

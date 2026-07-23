@@ -1,6 +1,7 @@
 import React from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './core/auth/AuthContext';
+import { DEFAULT_SETTINGS } from './core/store/settingsSchema';
 
 import { PlanScreen } from './screens/plan/PlanScreen';
 import { DoScreen } from './screens/do/DoScreen';
@@ -45,7 +46,7 @@ function AppRouter() {
   const [settings] = useStored('settings', { keybindingOpenSettings: 'Ctrl+,' });
 
   React.useEffect(() => {
-    const api = (window as any).electronAPI;
+    const api = window.electronAPI;
     if (api?.onDeepLink) {
       api.onDeepLink((route: string) => {
         navigate(`/${route}`);
@@ -100,13 +101,13 @@ function AppRouter() {
 function GlobalSync({ children }: { children: React.ReactNode }) {
   const [tasks, setTasks, tasksLoaded] = useStored('tasks', SAMPLE_TASKS);
   const [events, setEvents, eventsLoaded] = useStored('events', SAMPLE_EVENTS);
-  const [settings] = useStored('settings', {} as any);
+  const [settings] = useStored('settings', DEFAULT_SETTINGS);
   const [initialSyncDone, setInitialSyncDone] = React.useState(syncEngine.initialSyncComplete);
   const [syncMessage, setSyncMessage] = React.useState('');
   const { notify } = useNotification();
   
   React.useEffect(() => {
-     purgeOrphanedData(notify as any);
+     purgeOrphanedData(notify);
      syncEngine.setSettings(settings);
      syncEngine.start();
   }, [settings]); // notify is from context, safe to omit or include

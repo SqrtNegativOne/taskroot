@@ -145,7 +145,7 @@ export class SyncEngine {
     // Initial setup for token polling
     setInterval(() => {
       const token = localStorage.getItem('google_access_token');
-      if (token && (googleCalendarAPI as any).token !== token) {
+      if (token && googleCalendarAPI.getToken() !== token) {
         googleCalendarAPI.setToken(token);
         googleTasksAPI.setToken(token);
         this.poll(); // Initial poll when token arrives
@@ -355,7 +355,7 @@ export class SyncEngine {
     let updated = false;
     const eventsMap = new Map<string, any>(events.map((e: any) => [e.id, e]));
 
-    for (const remote of allRemoteEvents as any[]) {
+    for (const remote of allRemoteEvents) {
       const existingLocalEvent = eventsMap.get(remote.id);
 
       if (remote._deleted) {

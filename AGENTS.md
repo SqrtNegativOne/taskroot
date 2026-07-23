@@ -5,7 +5,7 @@
 Taskroot is a web-based and desktop task management app focusing on planning, executing, and resting. It is built as a Single Page Application (SPA) that can run in a browser or as a native desktop app via Electron.
 
 ## Tech Stack
-- **Package Manager**: Bun (`bun`). Used for package management and running scripts.
+- **Package Manager**: Bun (`bun`). Used for package management and running scripts. Do not use `npm run build`; use `bun run build` instead. But also do not use `bun run test`; use `npm run test` instead.
 - **Testing Framework**: Vitest (`vitest`). `bun test` has incompatibilities with testing React DOM components in this project. Use `npx vitest run` or `npm run test` instead.
 - **Frontend Framework**: React 19 with React Router for SPA navigation.
 - **Build Tool**: Vite (with Hot Module Replacement for fast development).
@@ -17,8 +17,6 @@ Taskroot is a web-based and desktop task management app focusing on planning, ex
 - **Google Tasks Sync**: Native two-way sync with Google Tasks API.
 
 ## Project Structure (`src/`)
-
-The application code is organized modularly by feature:
 
 - `src/screens/plan/`: Components for the Plan screen (`PlanScreen.tsx`, `date-grid.tsx`, `tweaks-panel.tsx`, `shared-menus.tsx`).
 - `src/screens/do/`: Components for the Do screen (`DoScreen.tsx`, `RestScreen.tsx`, `kanban.tsx`, `stopwatch.tsx`, `distraction-log.tsx`, `tips-notes.tsx`).
@@ -48,3 +46,4 @@ The application code is organized modularly by feature:
 
 ## Style
 - Prefer inline exports over bottom exports.
+- Do not use `any` ever.

@@ -9,7 +9,23 @@ import { computeFilterDefaults } from '../core/domain/filters';
 
 // Task list — left column. Filter, sort, draggable items.
 
-export function TaskListPane({ tasks = [], setTasks, filters = [], setFilters, sort, setSort, query = '', setQuery, onDragStart, activeDragId, onAddTask, onDeleteTask, footer }: any) {
+export interface TaskListPaneProps {
+  tasks: any[];
+  setTasks: (updater: (prev: any[]) => any[]) => void;
+  filters: any[];
+  setFilters: (filters: any[]) => void;
+  sort: string;
+  setSort: (sort: string) => void;
+  query: string;
+  setQuery: (q: string) => void;
+  onDragStart?: (e: any, task: any) => void;
+  activeDragId?: string | null;
+  onAddTask: (defaults?: any) => void;
+  onDeleteTask?: (id: string) => void;
+  footer?: React.ReactNode;
+}
+
+export function TaskListPane({ tasks = [], setTasks, filters = [], setFilters, sort, setSort, query = '', setQuery, onDragStart, activeDragId, onAddTask, onDeleteTask, footer }: TaskListPaneProps) {
 
   const updateTask = (id, updates) => setTasks(ts => ts.map(t => t.id === id ? { ...t, ...updates } : t));
   const deleteTask = (id) => {

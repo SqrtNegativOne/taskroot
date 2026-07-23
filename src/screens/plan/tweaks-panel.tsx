@@ -203,7 +203,7 @@ export function TweaksPanel({ title = 'Tweaks', noDeckControls = false, children
   // copies still wait for the host's __omelette_rail_enabled postMessage —
   // same listener handles those.)
   const [railEnabled, setRailEnabled] = React.useState(
-    () => hasDeckStage && !!(document.querySelector('deck-stage') as any)?._railEnabled,
+    () => hasDeckStage && !!(document.querySelector('deck-stage') as HTMLElement & { _railEnabled?: boolean })?._railEnabled,
   );
   React.useEffect(() => {
     if (!hasDeckStage || railEnabled) return undefined;

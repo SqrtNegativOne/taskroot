@@ -14,14 +14,14 @@ export const VALID_STORE_KEYS = [
 
 export type StoreKey = typeof VALID_STORE_KEYS[number];
 
-export function purgeOrphanedData(notify?: (msg: string, type: 'error') => void) {
+export function purgeOrphanedData(notify?: (msg: string, type: 'error' | 'success' | 'info') => void) {
   const keysToRemove: string[] = [];
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     if (!key || !key.startsWith('taskroot_')) continue;
 
     const rawKey = key.replace('taskroot_', '');
-    if (!VALID_STORE_KEYS.includes(rawKey as any)) {
+    if (!VALID_STORE_KEYS.includes(rawKey as StoreKey)) {
       keysToRemove.push(key);
     }
   }
@@ -92,7 +92,7 @@ export function useStored<T>(key: StoreKey, initial: T): [T, (val: T | ((prev: T
             } else if (s.type === 'checkbox') {
                val = Boolean(val);
             }
-            result[s.id as keyof AppSettings] = val as any;
+            Object.assign(result, { [s.id]: val });
           }
         }
         return result as unknown as T;

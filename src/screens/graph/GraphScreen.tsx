@@ -5,7 +5,7 @@ import { useStored } from '../../core/store/store';
 import { TaskListPane } from '../../components/tasklist';
 import { SplitPane } from '../../components/split-pane';
 import { TaskCanvas } from './TaskCanvas';
-import type { Task } from './TaskCanvas';
+import type { AppTask as Task } from '../../core/domain/models';
 
 export function GraphScreen() {
   const [tasks, setTasks] = useStored<Task[]>('tasks', SAMPLE_TASKS as Task[]);

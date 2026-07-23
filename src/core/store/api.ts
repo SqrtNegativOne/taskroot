@@ -12,9 +12,9 @@ export async function fetchWithTimeout(resource: RequestInfo | URL, options: Req
     });
     clearTimeout(id);
     return response;
-  } catch (error: any) {
+  } catch (error: unknown) {
     clearTimeout(id);
-    if (error.name === 'AbortError') {
+    if (error instanceof Error && error.name === 'AbortError') {
       throw new Error('Request timed out');
     }
     throw error;
@@ -23,11 +23,11 @@ export async function fetchWithTimeout(resource: RequestInfo | URL, options: Req
 
 export interface IApiService {
   clearAllData(): Promise<void>;
-  saveStoreData(key: string, data: any): Promise<void>;
-  subscribeToStore(
+  saveStoreData<T>(key: string, data: T): Promise<void>;
+  subscribeToStore<T>(
     key: string, 
-    fallbackData: any,
-    onData: (serverVal: any) => void,
+    fallbackData: T,
+    onData: (serverVal: T) => void,
     onReady: () => void
   ): () => void;
 }
@@ -44,14 +44,14 @@ class OfflineApi implements IApiService {
     keysToRemove.forEach(k => localStorage.removeItem(k));
   }
 
-  public async saveStoreData(key: string, data: any): Promise<void> {
+  public async saveStoreData<T>(key: string, data: T): Promise<void> {
     // Silent no-op for offline dev mode
   }
 
-  public subscribeToStore(
+  public subscribeToStore<T>(
     key: string, 
-    fallbackData: any,
-    onData: (serverVal: any) => void,
+    fallbackData: T,
+    onData: (serverVal: T) => void,
     onReady: () => void
   ): () => void {
     // In offline/dev mode, there is no remote cloud, so we are instantly "ready".
@@ -94,7 +94,7 @@ class OnlineApi implements IApiService {
     }
   }
 
-  public async saveStoreData(key: string, data: any): Promise<void> {
+  public async saveStoreData<T>(key: string, data: T): Promise<void> {
     const docRef = doc(db, 'users', this.uid, 'store', key);
     try {
       // Firestore does not allow undefined values, so we must strip them
@@ -105,10 +105,10 @@ class OnlineApi implements IApiService {
     }
   }
 
-  public subscribeToStore(
+  public subscribeToStore<T>(
     key: string, 
-    fallbackData: any,
-    onData: (serverVal: any) => void,
+    fallbackData: T,
+    onData: (serverVal: T) => void,
     onReady: () => void
   ): () => void {
     const docRef = doc(db, 'users', this.uid, 'store', key);
@@ -149,14 +149,14 @@ class ApiFacade implements IApiService {
     return this.strategy.clearAllData();
   }
 
-  public async saveStoreData(key: string, data: any): Promise<void> {
+  public async saveStoreData<T>(key: string, data: T): Promise<void> {
     return this.strategy.saveStoreData(key, data);
   }
 
-  public subscribeToStore(
+  public subscribeToStore<T>(
     key: string, 
-    fallbackData: any,
-    onData: (serverVal: any) => void,
+    fallbackData: T,
+    onData: (serverVal: T) => void,
     onReady: () => void
   ): () => void {
     return this.strategy.subscribeToStore(key, fallbackData, onData, onReady);

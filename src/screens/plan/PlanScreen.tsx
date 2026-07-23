@@ -433,7 +433,16 @@ function resolveDropTarget(el, x, y, task, event) {
   return null;
 }
 
-function TitleInput({ value, onChange, disabled, onEnter, style = {}, className = '', autoFocus = false }: any) {
+interface TitleInputProps {
+  value: string;
+  onChange: (val: string) => void;
+  disabled?: boolean;
+  onEnter?: () => void;
+  style?: React.CSSProperties;
+  className?: string;
+  autoFocus?: boolean;
+}
+function TitleInput({ value, onChange, disabled, onEnter, style = {}, className = '', autoFocus = false }: TitleInputProps) {
   const [localValue, setLocalValue] = React.useState(value);
   const inputRef = React.useRef<HTMLInputElement>(null);
 

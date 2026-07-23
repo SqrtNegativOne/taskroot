@@ -1,10 +1,19 @@
+import type { AppTask } from './models';
+
 export type BaseEvent = {
   id: string;
+  title?: string;
   date: string; // YYYY-MM-DD
   start: number; // minutes from midnight
   end: number;
   endDate?: string;
   isAllDay?: boolean;
+  rrule?: string;
+  recurringEventId?: string;
+  originalStartDate?: string;
+  cancelled?: boolean;
+  isInstance?: boolean;
+  baseEventId?: string;
 };
 
 // Task plans: when you schedule a task for a certain time.
@@ -42,15 +51,15 @@ export type HydratedEvent = BaseEvent & {
   taskId?: string; // only if it's a plan
   title: string;
   category?: string;
-  priority?: string | null;
+  priority?: string | number | null;
   isDone: boolean;
-  task?: any; // The raw task object if needed by the UI
+  task?: AppTask; // The raw task object if needed by the UI
 };
 
 /**
  * Hydrates events with data from their respective tasks to ensure consistency.
  */
-export function hydrateEvents(events: AppEvent[], tasks: any[]): HydratedEvent[] {
+export function hydrateEvents(events: AppEvent[], tasks: AppTask[]): HydratedEvent[] {
   return events.map((ev) => {
     if (ev.type === 'plan') {
       const task = tasks.find(t => t.id === ev.taskId);

@@ -1,7 +1,13 @@
 import React from 'react';
 import { Icon } from './icon';
 
-export function SearchBar({ value, onChange, placeholder = "" }: any) {
+interface SearchBarProps {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+}
+
+export function SearchBar({ value, onChange, placeholder = "" }: SearchBarProps) {
   return (
     <div className="task-pane-search" style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
       <Icon name="search" size={14} style={{ color: 'var(--fg-dimmer)' }} />

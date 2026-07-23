@@ -1,6 +1,8 @@
-export function computeFilterDefaults(filters: any[] = []) {
-  const req: Record<string, Set<any>> = {};
-  const excl: Record<string, Set<any>> = {};
+import type { AppFilter } from './models';
+
+export function computeFilterDefaults(filters: AppFilter[] = []) {
+  const req: Record<string, Set<string | number>> = {};
+  const excl: Record<string, Set<string | number>> = {};
 
   for (const f of filters) {
     if (!f.column || !f.value) continue;
@@ -13,8 +15,8 @@ export function computeFilterDefaults(filters: any[] = []) {
     }
   }
 
-  const defaults: any = {};
-  const FALLBACKS: Record<string, any[]> = {
+  const defaults: Record<string, unknown> = {};
+  const FALLBACKS: Record<string, (string | number)[]> = {
     status: ['todo', 'next-up', 'doing', 'done'],
     priority: [1, 2, 3, 4, 0]
   };

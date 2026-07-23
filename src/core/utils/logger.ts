@@ -1,11 +1,3 @@
-// Global type declaration for the electronAPI we exposed in preload.ts
-declare global {
-  interface Window {
-    electronAPI?: {
-      logToFile: (level: string, message: string) => void;
-    };
-  }
-}
 
 /**
  * A universal logger that logs to the browser console and, 

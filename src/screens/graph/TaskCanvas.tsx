@@ -15,24 +15,7 @@ import {
 } from '@xyflow/react';
 import type { Connection, Edge, Node, NodeChange } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-
-export type Task = {
-  id: string;
-  title: string;
-  status: 'todo' | 'next-up' | 'doing' | 'done';
-  priority: number;
-  tags: string[];
-  subtasks: any[];
-  parent_task?: string | null;
-  dependencies?: string[];
-  est?: number;
-  added: string;
-  isDraft?: boolean;
-  
-  canvasX?: number;
-  canvasY?: number;
-  onCanvas?: boolean;
-};
+import type { AppTask as Task } from '../../core/domain/models';
 
 type TaskCanvasProps = {
   tasks: Task[];
@@ -40,7 +23,11 @@ type TaskCanvasProps = {
 };
 
 // Custom Node Component
-const TaskNodeComponent = ({ data, id }: any) => {
+interface TaskNodeProps {
+  data: { task: Task; [key: string]: any };
+  id: string;
+}
+const TaskNodeComponent = ({ data, id }: TaskNodeProps) => {
   const task = data.task as Task;
   
   return (

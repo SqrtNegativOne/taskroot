@@ -55,7 +55,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       script.defer = true;
       
       script.onload = () => {
-        const client = (window as any).google.accounts.oauth2.initCodeClient({
+        const client = window.google.accounts.oauth2.initCodeClient({
            client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
            scope: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/tasks',
            ux_mode: 'popup',
@@ -94,9 +94,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
       document.body.appendChild(script);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error signing in with Google:", error);
-      notify(`Sign in failed: ${error.message}\nMake sure you have added your REAL Firebase config keys to a .env file!`, 'error');
+      const message = error instanceof Error ? error.message : String(error);
+      notify(`Sign in failed: ${message}\nMake sure you have added your REAL Firebase config keys to a .env file!`, 'error');
     }
   };
 
@@ -104,9 +105,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await signOut(auth);
       localStorage.removeItem('google_access_token');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error signing out:", error);
-      notify(`Logout failed: ${error.message}`, 'error');
+      const message = error instanceof Error ? error.message : String(error);
+      notify(`Logout failed: ${message}`, 'error');
     }
   };
 

@@ -19,7 +19,7 @@ export function DateGrid({ view, setView, anchor, setAnchor, events, tasks, filt
             if (f.column === 'type') {
                match = e.type === f.value;
             } else if (f.column === 'tag') {
-               const eventTags = 'tags' in e ? (e as any).tags : [];
+               const eventTags = 'tags' in e ? (e as unknown as { tags: string[] }).tags : [];
                const taskTags = e.task ? e.task.tags : [];
                const allTags = [...eventTags, ...taskTags].map(t => typeof t === 'string' ? t.toLowerCase() : '');
                match = allTags.includes(f.value.toLowerCase());

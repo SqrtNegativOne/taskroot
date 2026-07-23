@@ -7,6 +7,10 @@ export class GoogleCalendarAPI {
     this.token = token;
   }
 
+  getToken(): string | null {
+    return this.token;
+  }
+
   async fetchEvents(timeMin: string, timeMax: string, calendarId = 'primary') {
     if (!this.token) throw new Error('Unauthorized');
     const res = await fetchWithTimeout(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=false&maxResults=2500`, {

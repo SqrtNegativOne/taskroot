@@ -122,8 +122,8 @@ export function MiniTrackerScreen() {
   }
 
   const handleDoubleClick = () => {
-    if ((window as any).electronAPI?.restoreMainWindow) {
-      (window as any).electronAPI.restoreMainWindow();
+    if (window.electronAPI?.restoreMainWindow) {
+      window.electronAPI.restoreMainWindow();
     }
   };
 
@@ -192,7 +192,7 @@ export function MiniTrackerScreen() {
         padding: '16px',
         boxSizing: 'border-box',
         textAlign: 'center'
-      } as any}
+      } as React.CSSProperties}
       title="Double-click to restore main window"
     >
       {content}

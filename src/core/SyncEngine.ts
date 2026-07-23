@@ -1,5 +1,6 @@
 import { googleCalendarAPI } from './GoogleCalendarAPI';
 import { googleTasksAPI } from './GoogleTasksAPI';
+import { fetchWithTimeout } from './api';
 
 export class SyncEngine {
   private lastTasksSync = 0;
@@ -132,8 +133,8 @@ export class SyncEngine {
       }
     }
 
-    this.nextSyncTime = Date.now() + 5 * 60 * 1000;
-    this.pollInterval = setInterval(() => this.poll(), 5 * 60 * 1000);
+    this.nextSyncTime = Date.now() + (this.settings.syncInterval || 5) * 60 * 1000;
+    this.pollInterval = setInterval(() => this.poll(), (this.settings.syncInterval || 5) * 60 * 1000);
     // Initial setup for token polling
     setInterval(() => {
       const token = localStorage.getItem('google_access_token');
@@ -143,6 +144,14 @@ export class SyncEngine {
         this.poll(); // Initial poll when token arrives
       }
     }, 2000);
+
+    window.addEventListener('online', () => {
+      this.notifyInfo('Network reconnected. Forcing sync.');
+      // If we are currently polling and it's hung, this forceSync will start a new poll after clearing the old interval.
+      // However, we should also reset isPolling if it was stuck.
+      this.isPolling = false; 
+      this.forceSync();
+    });
   }
 
   forceSync() {
@@ -150,8 +159,8 @@ export class SyncEngine {
       clearInterval(this.pollInterval);
     }
     this.poll();
-    this.nextSyncTime = Date.now() + 5 * 60 * 1000;
-    this.pollInterval = setInterval(() => this.poll(), 5 * 60 * 1000);
+    this.nextSyncTime = Date.now() + (this.settings.syncInterval || 5) * 60 * 1000;
+    this.pollInterval = setInterval(() => this.poll(), (this.settings.syncInterval || 5) * 60 * 1000);
   }
 
   private getLocalData(key: string) {
@@ -183,7 +192,7 @@ export class SyncEngine {
       // @ts-ignore
       const clientSecret = import.meta.env.VITE_GOOGLE_CLIENT_SECRET;
       
-      const res = await fetch('https://oauth2.googleapis.com/token', {
+      const res = await fetchWithTimeout('https://oauth2.googleapis.com/token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -244,7 +253,7 @@ export class SyncEngine {
       this.setSyncMessage('Sync failed');
     } finally {
       this.isPolling = false;
-      this.nextSyncTime = Date.now() + 5 * 60 * 1000;
+      this.nextSyncTime = Date.now() + (this.settings.syncInterval || 5) * 60 * 1000;
       if (!this.initialSyncComplete) {
         this.initialSyncComplete = true;
         this.initialSyncListeners.forEach(l => l(true));
@@ -395,23 +404,22 @@ export class SyncEngine {
         if (!task.googleTaskId && !task.isDraft) {
           this.pushQueue.push({ type: 'task', action: 'create', item: task });
         }
-      } else {
-        if (task.updatedAt && prev.updatedAt && task.updatedAt > prev.updatedAt) {
-          if (task.googleTaskId) {
-            this.pushQueue.push({ type: 'task', action: 'update', item: task, id: task.googleTaskId });
-          } else if (!task.isDraft) {
-             this.pushQueue.push({ type: 'task', action: 'create', item: task });
-          }
+        continue;
+      }
+
+      if (task.updatedAt && prev.updatedAt && task.updatedAt > prev.updatedAt) {
+        if (task.googleTaskId) {
+          this.pushQueue.push({ type: 'task', action: 'update', item: task, id: task.googleTaskId });
+        } else if (!task.isDraft) {
+          this.pushQueue.push({ type: 'task', action: 'create', item: task });
         }
       }
     }
 
     // Find deleted
     for (const [id, prev] of this.prevTasksMap.entries()) {
-      if (!newTasksMap.has(id)) {
-        if (prev.googleTaskId) {
-          this.pushQueue.push({ type: 'task', action: 'delete', item: prev, id: prev.googleTaskId });
-        }
+      if (!newTasksMap.has(id) && prev.googleTaskId) {
+        this.pushQueue.push({ type: 'task', action: 'delete', item: prev, id: prev.googleTaskId });
       }
     }
 
@@ -427,32 +435,28 @@ export class SyncEngine {
         if (!event.googleEventId) {
           this.pushQueue.push({ type: 'event', action: 'create', item: event });
         }
-      } else {
-        if (event.updatedAt && prev.updatedAt && event.updatedAt > prev.updatedAt) {
-          
-          let targetCalendarId = event.googleCalendarId || 'primary';
+        continue;
+      }
 
-          if (event.googleCalendarId && event.googleCalendarId !== targetCalendarId) {
-            if (event.googleEventId) {
-              this.pushQueue.push({ type: 'event', action: 'delete', item: prev, id: event.googleEventId, calendarId: event.googleCalendarId });
-            }
-            this.pushQueue.push({ type: 'event', action: 'create', item: event });
-          } else {
-             if (event.googleEventId) {
-               this.pushQueue.push({ type: 'event', action: 'update', item: event, id: event.googleEventId, calendarId: event.googleCalendarId || 'primary' });
-             } else {
-               this.pushQueue.push({ type: 'event', action: 'create', item: event });
-             }
+      if (event.updatedAt && prev.updatedAt && event.updatedAt > prev.updatedAt) {
+        let targetCalendarId = event.googleCalendarId || 'primary';
+
+        if (event.googleCalendarId && event.googleCalendarId !== targetCalendarId) {
+          if (event.googleEventId) {
+            this.pushQueue.push({ type: 'event', action: 'delete', item: prev, id: event.googleEventId, calendarId: event.googleCalendarId });
           }
+          this.pushQueue.push({ type: 'event', action: 'create', item: event });
+        } else if (event.googleEventId) {
+          this.pushQueue.push({ type: 'event', action: 'update', item: event, id: event.googleEventId, calendarId: event.googleCalendarId || 'primary' });
+        } else {
+          this.pushQueue.push({ type: 'event', action: 'create', item: event });
         }
       }
     }
 
     for (const [id, prev] of this.prevEventsMap.entries()) {
-      if (!newEventsMap.has(id)) {
-        if (prev.googleEventId) {
-          this.pushQueue.push({ type: 'event', action: 'delete', item: prev, id: prev.googleEventId, calendarId: prev.googleCalendarId || 'primary' });
-        }
+      if (!newEventsMap.has(id) && prev.googleEventId) {
+        this.pushQueue.push({ type: 'event', action: 'delete', item: prev, id: prev.googleEventId, calendarId: prev.googleCalendarId || 'primary' });
       }
     }
 
@@ -485,11 +489,16 @@ export class SyncEngine {
     while (this.pushQueue.length > 0) {
       const taskOrEvent = this.pushQueue[0]; // peek
       try {
+        if (taskOrEvent.type === 'task' && this.settings.enableTasksSync === false) {
+          this.pushQueue.shift();
+          continue;
+        }
+        if (taskOrEvent.type === 'event' && this.settings.enableCalendarSync === false) {
+          this.pushQueue.shift();
+          continue;
+        }
+
         if (taskOrEvent.type === 'task') {
-          if (this.settings.enableTasksSync === false) {
-             this.pushQueue.shift();
-             continue;
-          }
           if (taskOrEvent.action === 'create') {
             const gid = await googleTasksAPI.createTask(taskOrEvent.item);
             if (gid) {
@@ -508,10 +517,6 @@ export class SyncEngine {
             await googleTasksAPI.deleteTask(taskOrEvent.id);
           }
         } else if (taskOrEvent.type === 'event') {
-          if (this.settings.enableCalendarSync === false) {
-             this.pushQueue.shift();
-             continue;
-          }
           const tasks = this.getLocalData('tasks');
           let targetCalendarId = taskOrEvent.item.googleCalendarId || 'primary';
 

@@ -115,20 +115,20 @@ export function DayTimeline({ events, tasks, filter, sort, filterMenu, today, ti
     const up = (ev) => {
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
-      if (active) {
-        const currentY = ev.clientY - rect.top;
-        const moveMin = Math.round((currentY / PX_PER_MIN) / SNAP_MIN) * SNAP_MIN;
-        const s = Math.min(startMin, moveMin);
-        const eMin = Math.max(startMin, moveMin);
-        const finalEnd = eMin === s ? s + SNAP_MIN : eMin;
-        setCreatePreview(null);
-        if (onAddEvent) {
-           onAddEvent(timelineDate, s, finalEnd);
-        }
-      } else {
+      if (!active) {
         if (onAddEvent) {
           onAddEvent(timelineDate, startMin, startMin + 60);
         }
+        return;
+      }
+      const currentY = ev.clientY - rect.top;
+      const moveMin = Math.round((currentY / PX_PER_MIN) / SNAP_MIN) * SNAP_MIN;
+      const s = Math.min(startMin, moveMin);
+      const eMin = Math.max(startMin, moveMin);
+      const finalEnd = eMin === s ? s + SNAP_MIN : eMin;
+      setCreatePreview(null);
+      if (onAddEvent) {
+         onAddEvent(timelineDate, s, finalEnd);
       }
     };
     
@@ -288,13 +288,13 @@ function EventBlock({ event, task, lane, lanes, onResize, onMove, dragState, set
     const up = () => {
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
-      if (moved) {
-        setDragOffset(null);
-        if (finalDm !== 0) {
-           onMove(event.id, startStart + finalDm, startStart + finalDm + (startEnd - startStart));
-        }
-      } else {
+      if (!moved) {
         onEventClick && onEventClick(event);
+        return;
+      }
+      setDragOffset(null);
+      if (finalDm !== 0) {
+         onMove(event.id, startStart + finalDm, startStart + finalDm + (startEnd - startStart));
       }
     };
     window.addEventListener('pointermove', move);

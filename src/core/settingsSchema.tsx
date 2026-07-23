@@ -14,6 +14,7 @@ export interface AppSettings {
   enableFirebaseSync: boolean;
   enableCalendarSync: boolean;
   enableTasksSync: boolean;
+  syncInterval: number;
   keybindingOpenSettings: string;
   keybindingRestoreApp: string;
   [key: string]: any; // Allow custom actions/etc if needed, though they shouldn't store values.
@@ -170,6 +171,16 @@ export const SETTINGS_SCHEMA: SettingSchema[] = [
     keywords: ['google', 'tasks', 'sync', 'todos'],
     type: 'checkbox',
     defaultValue: true
+  },
+  {
+    id: 'syncInterval',
+    section: 'Sync & Integrations',
+    tab: 'sync',
+    label: 'Sync Interval (minutes)',
+    keywords: ['sync', 'interval', 'poll', 'time'],
+    type: 'number',
+    defaultValue: 5,
+    min: 1
   },
   {
     id: 'logout',

@@ -17,7 +17,7 @@ const AuthContext = createContext<AuthContextType>({
   logout: async () => {},
 });
 
-import { api } from './api';
+import { api, fetchWithTimeout } from './api';
 import { useNotification } from './notifications';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -62,7 +62,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
            callback: async (response: any) => {
                if (response.code) {
                    try {
-                       const res = await fetch('https://oauth2.googleapis.com/token', {
+                       const res = await fetchWithTimeout('https://oauth2.googleapis.com/token', {
                          method: 'POST',
                          headers: { 'Content-Type': 'application/json' },
                          body: JSON.stringify({

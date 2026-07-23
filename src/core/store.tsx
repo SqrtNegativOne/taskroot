@@ -18,17 +18,17 @@ export function purgeOrphanedData(notify?: (msg: string, type: 'error') => void)
   const keysToRemove: string[] = [];
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
-    if (key && key.startsWith('taskroot_')) {
-      const rawKey = key.replace('taskroot_', '');
-      if (!VALID_STORE_KEYS.includes(rawKey as any)) {
-        keysToRemove.push(key);
-      }
+    if (!key || !key.startsWith('taskroot_')) continue;
+
+    const rawKey = key.replace('taskroot_', '');
+    if (!VALID_STORE_KEYS.includes(rawKey as any)) {
+      keysToRemove.push(key);
     }
   }
   if (keysToRemove.length > 0) {
     keysToRemove.forEach(k => localStorage.removeItem(k));
     if (notify) {
-      notify(`Garbage collected ${keysToRemove.length} orphaned storage key(s): ${keysToRemove.map(k => k.replace('taskroot_', '')).join(', ')}`, 'error');
+      notify(`Removed ${keysToRemove.length} orphaned store item(s).`, 'error');
     }
   }
 }
@@ -79,22 +79,23 @@ export function useStored<T>(key: StoreKey, initial: T): [T, (val: T | ((prev: T
       const saved = localStorage.getItem(`taskroot_${key}`);
       let parsed = saved ? JSON.parse(saved) : initial;
       if (key === 'settings') {
-        const safeSettings: any = { ...DEFAULT_SETTINGS };
+        const result: any = { ...DEFAULT_SETTINGS };
         if (parsed && typeof parsed === 'object') {
           for (const s of SETTINGS_SCHEMA) {
-            if (s.id in parsed) {
-              let val = parsed[s.id];
-              if (s.type === 'number') {
-                 val = Number(val);
-                 if (s.min !== undefined && val < s.min) val = s.min;
-                 if (s.max !== undefined && val > s.max) val = s.max;
-              }
-              if (s.type === 'checkbox') val = Boolean(val);
-              safeSettings[s.id] = val;
+            if (!(s.id in parsed)) continue;
+
+            let val = parsed[s.id];
+            if (s.type === 'number') {
+               val = Number(val);
+               if (s.min !== undefined && val < s.min) val = s.min;
+               if (s.max !== undefined && val > s.max) val = s.max;
+            } else if (s.type === 'checkbox') {
+               val = Boolean(val);
             }
+            result[s.id as keyof AppSettings] = val as any;
           }
         }
-        return safeSettings as unknown as T;
+        return result as unknown as T;
       }
       return parsed;
     } catch (e) {

@@ -1,6 +1,26 @@
 import { doc, onSnapshot, setDoc, deleteDoc } from 'firebase/firestore';
 import { db } from './firebase';
 
+export async function fetchWithTimeout(resource: RequestInfo | URL, options: RequestInit & { timeout?: number } = {}) {
+  const { timeout = 15000, ...rest } = options;
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  try {
+    const response = await fetch(resource, {
+      ...rest,
+      signal: controller.signal
+    });
+    clearTimeout(id);
+    return response;
+  } catch (error: any) {
+    clearTimeout(id);
+    if (error.name === 'AbortError') {
+      throw new Error('Request timed out');
+    }
+    throw error;
+  }
+}
+
 export interface IApiService {
   clearAllData(): Promise<void>;
   saveStoreData(key: string, data: any): Promise<void>;

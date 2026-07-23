@@ -1,3 +1,5 @@
+import { fetchWithTimeout } from './api';
+
 export class GoogleCalendarAPI {
   private token: string | null = null;
 
@@ -7,7 +9,7 @@ export class GoogleCalendarAPI {
 
   async fetchEvents(timeMin: string, timeMax: string, calendarId = 'primary') {
     if (!this.token) throw new Error('Unauthorized');
-    const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=false&maxResults=2500`, {
+    const res = await fetchWithTimeout(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=false&maxResults=2500`, {
       headers: { 'Authorization': `Bearer ${this.token}` }
     });
     if (!res.ok) {
@@ -21,7 +23,7 @@ export class GoogleCalendarAPI {
 
   async fetchCalendars() {
     if (!this.token) return [{ id: 'primary', summary: 'Primary Calendar' }];
-    const res = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList', {
+    const res = await fetchWithTimeout('https://www.googleapis.com/calendar/v3/users/me/calendarList', {
       headers: { 'Authorization': `Bearer ${this.token}` }
     });
     if (!res.ok) {
@@ -36,7 +38,7 @@ export class GoogleCalendarAPI {
   async createEvent(localEvent: any, tasks: any[], calendarId = 'primary') {
     if (!this.token) return null;
     const body = this.toGoogleEvent(localEvent, tasks);
-    const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`, {
+    const res = await fetchWithTimeout(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`, {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${this.token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
@@ -49,7 +51,7 @@ export class GoogleCalendarAPI {
   async updateEvent(googleEventId: string, localEvent: any, tasks: any[], calendarId = 'primary') {
     if (!this.token) return;
     const body = this.toGoogleEvent(localEvent, tasks);
-    const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${googleEventId}`, {
+    const res = await fetchWithTimeout(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${googleEventId}`, {
       method: 'PATCH',
       headers: { 'Authorization': `Bearer ${this.token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
@@ -59,7 +61,7 @@ export class GoogleCalendarAPI {
 
   async deleteEvent(googleEventId: string, calendarId = 'primary') {
     if (!this.token) return;
-    const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${googleEventId}`, {
+    const res = await fetchWithTimeout(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${googleEventId}`, {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${this.token}` }
     });

@@ -9,31 +9,34 @@ Taskroot is a web-based and desktop task management app focusing on planning, ex
 - **Testing Framework**: Vitest (`vitest`). `bun test` has incompatibilities with testing React DOM components in this project. Use `npx vitest run` or `npm run test` instead.
 - **Frontend Framework**: React 19 with React Router for SPA navigation.
 - **Build Tool**: Vite (with Hot Module Replacement for fast development).
-- **Desktop Wrapper**: Electron (configured via `electron/main.ts` and `preload.ts`).
+- **Desktop Wrapper**: Electron (configured via `electron/main.ts` and `preload.cts`).
 - **Language**: TypeScript (`.tsx` and `.ts` files).
 - **Styling**: Vanilla CSS (`src/index.css`) with extensive use of CSS variables for theming.
 - **Backend / Storage**: Firebase Firestore for cloud sync, backed by `localStorage` for offline and fast local prototyping. 
 - **Google Calendar Sync**: Native two-way sync with Google Calendar API.
+- **Google Tasks Sync**: Native two-way sync with Google Tasks API.
 
 ## Project Structure (`src/`)
 
 The application code is organized modularly by feature:
 
-- `src/screens/plan/`: Components for the Plan screen (`PlanScreen.tsx`, `day-timeline.tsx`, `date-grid.tsx`, `tasklist.tsx`, `tweaks-panel.tsx`).
-- `src/screens/do/`: Components for the Do screen (`DoScreen.tsx`, `kanban.tsx`, `stopwatch.tsx`, `distraction-log.tsx`, `tips-notes.tsx`).
-- `src/screens/rest/`: Components for the Rest screen (`RestScreen.tsx`).
+- `src/screens/plan/`: Components for the Plan screen (`PlanScreen.tsx`, `date-grid.tsx`, `tweaks-panel.tsx`, `shared-menus.tsx`).
+- `src/screens/do/`: Components for the Do screen (`DoScreen.tsx`, `RestScreen.tsx`, `kanban.tsx`, `stopwatch.tsx`, `distraction-log.tsx`, `tips-notes.tsx`).
 - `src/screens/login/`: Components for the login page (`LoginScreen.tsx`).
 - `src/screens/settings/`: Components for the settings screen (`SettingsScreen.tsx`, `settings.css`).
 - `src/screens/minitracker/`: Components for the mini tracker window (`MiniTrackerScreen.tsx`).
-- `src/components/`: Shared UI components used across multiple screens (e.g., `shell.tsx` for the top navigation, `collapsible.tsx`).
+- `src/screens/graph/`, `src/screens/recap/`, `src/screens/stats/`, `src/screens/wrap/`: Other specialized screens.
+- `src/components/`: Shared UI components used across multiple screens (e.g., `shell.tsx`, `collapsible.tsx`, `day-timeline.tsx`, `tasklist.tsx`).
 - `src/core/`: Core business logic, context providers, and data layer.
   - `store.tsx`: Custom `useStored` hook that syncs state between React, LocalStorage, and Firebase Firestore.
   - `AuthContext.tsx`: Firebase Google authentication.
-  - `useGoogleCalendarSync.tsx`: Background syncing with Google Calendar.
+  - `SyncEngine.ts`, `GoogleCalendarAPI.ts`, `GoogleTasksAPI.ts`: Background syncing and API integrations.
   - `notifications.tsx`: Global toast notification system (`NotificationProvider` and `useNotification`).
   - `logger.ts`: Universal logger that prints to the browser console and forwards to `taskroot.log` via Electron IPC.
-  - `data.tsx`: Dummy data and helper utilities.
+  - `data.tsx`, `settingsSchema.tsx`, `events.ts`, `filters.ts`, `rrule-utils.ts`: Core data structures and utilities.
 - `src/App.tsx`: The root application component. Orchestrates routing, authentication bypass for dev, and global sync contexts.
+
+*Note: Test files are co-located with their respective modules (e.g., `*.test.tsx`, `*.test.ts`).*
 
 ## Key Concepts
 - **UI Controls**: Prefer using custom components like `SegmentedControl` (e.g. as used in the Settings screen) over native `<select>` dropdowns for settings, as they provide better styling consistency and avoid OS-specific dark/light mode issues (like white text on white background).

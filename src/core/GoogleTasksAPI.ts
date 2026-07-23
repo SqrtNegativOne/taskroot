@@ -1,3 +1,5 @@
+import { fetchWithTimeout } from './api';
+
 export class GoogleTasksAPI {
   private token: string | null = null;
 
@@ -16,7 +18,7 @@ export class GoogleTasksAPI {
       url.searchParams.append('maxResults', '100');
       if (pageToken) url.searchParams.append('pageToken', pageToken);
 
-      const res = await fetch(url.toString(), {
+      const res = await fetchWithTimeout(url.toString(), {
         headers: { 'Authorization': `Bearer ${this.token}` }
       });
       if (!res.ok) {
@@ -35,7 +37,7 @@ export class GoogleTasksAPI {
   async createTask(localTask: any, tasklistId = '@default') {
     if (!this.token) return null;
     const body = this.toGoogleTask(localTask);
-    const res = await fetch(`https://tasks.googleapis.com/tasks/v1/lists/${tasklistId}/tasks`, {
+    const res = await fetchWithTimeout(`https://tasks.googleapis.com/tasks/v1/lists/${tasklistId}/tasks`, {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${this.token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
@@ -48,7 +50,7 @@ export class GoogleTasksAPI {
   async updateTask(googleTaskId: string, localTask: any, tasklistId = '@default') {
     if (!this.token) return;
     const body = this.toGoogleTask(localTask);
-    const res = await fetch(`https://tasks.googleapis.com/tasks/v1/lists/${tasklistId}/tasks/${googleTaskId}`, {
+    const res = await fetchWithTimeout(`https://tasks.googleapis.com/tasks/v1/lists/${tasklistId}/tasks/${googleTaskId}`, {
       method: 'PATCH',
       headers: { 'Authorization': `Bearer ${this.token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
@@ -58,7 +60,7 @@ export class GoogleTasksAPI {
 
   async deleteTask(googleTaskId: string, tasklistId = '@default') {
     if (!this.token) return;
-    const res = await fetch(`https://tasks.googleapis.com/tasks/v1/lists/${tasklistId}/tasks/${googleTaskId}`, {
+    const res = await fetchWithTimeout(`https://tasks.googleapis.com/tasks/v1/lists/${tasklistId}/tasks/${googleTaskId}`, {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${this.token}` }
     });

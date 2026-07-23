@@ -20,6 +20,7 @@ import {
     PAD2,
 } from "../../core/store/data";
 import { hydrateEvents } from "../../core/domain/events";
+import { Icon } from "../../components/icon";
 
 // Month / week calendar — top of right pane.
 
@@ -40,10 +41,13 @@ export function DateGrid({
     onAddEvent,
 }) {
     // anchor is a Date pointing into the month or week currently shown.
-    const isWeek = view === "week";
+    const isWeek = view === "week" || view === "1 week";
+    const is3Weeks = view === "3 weeks";
+    const isStrip = isWeek || is3Weeks;
+
     const cells = React.useMemo(
-        () => buildMonthOrWeekCells(anchor, isWeek),
-        [anchor, isWeek],
+        () => buildMonthOrWeekCells(anchor, view),
+        [anchor, view],
     );
     const hydratedEvents = React.useMemo(() => {
         let evs = hydrateEvents(events, tasks);
@@ -111,16 +115,39 @@ export function DateGrid({
         return evs;
     }, [events, tasks, filter, sort]);
 
-    const titleLabel = isWeek
+    const titleLabel = isStrip
         ? weekRangeLabel(cells[0].date, cells[cells.length - 1].date)
         : `${MONTHS_LONG[anchor.getMonth()]} ${anchor.getFullYear()}`;
 
     const shift = (n) => {
         const d = new Date(anchor);
         if (isWeek) d.setDate(d.getDate() + 7 * n);
+        else if (is3Weeks) d.setDate(d.getDate() + 21 * n);
         else d.setMonth(d.getMonth() + n);
         setAnchor(d);
     };
+
+    const [showViewMenu, setShowViewMenu] = useState(false);
+    const [closingViewMenu, setClosingViewMenu] = useState(false);
+    const viewMenuRef = useRef(null);
+
+    const closeViewMenu = () => {
+        setClosingViewMenu(true);
+        setTimeout(() => {
+            setShowViewMenu(false);
+            setClosingViewMenu(false);
+        }, 150);
+    };
+
+    useEffect(() => {
+        function handleClickOutside(e) {
+            if (viewMenuRef.current && !viewMenuRef.current.contains(e.target)) {
+                if (showViewMenu && !closingViewMenu) closeViewMenu();
+            }
+        }
+        document.addEventListener("pointerdown", handleClickOutside);
+        return () => document.removeEventListener("pointerdown", handleClickOutside);
+    }, [showViewMenu, closingViewMenu]);
 
     return (
         <section className="date-grid-pane">
@@ -152,24 +179,76 @@ export function DateGrid({
                         </button>
                     </div>
                     {filterMenu}
-                    <div className="seg">
+                    <div style={{ position: "relative" }} ref={viewMenuRef}>
                         <button
-                            className={`seg-btn ${!isWeek ? "is-active" : ""}`}
-                            onClick={() => setView("month")}
+                            onClick={() => {
+                                if (showViewMenu) closeViewMenu();
+                                else setShowViewMenu(true);
+                            }}
+                            title="View options"
+                            style={{
+                                background: showViewMenu
+                                    ? "var(--bg-surface)"
+                                    : "transparent",
+                                border: "1px solid var(--border)",
+                                color: "var(--fg)",
+                                borderRadius: "4px",
+                                padding: "4px 6px",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "4px",
+                                cursor: "pointer",
+                            }}
                         >
-                            month
+                            <Icon name="dashboard" size={16} />
                         </button>
-                        <button
-                            className={`seg-btn ${isWeek ? "is-active" : ""}`}
-                            onClick={() => setView("week")}
-                        >
-                            week
-                        </button>
+                        
+                        {showViewMenu && (
+                            <div
+                                className={`floating-menu ${closingViewMenu ? "is-closing" : ""}`}
+                                style={{
+                                    position: "absolute",
+                                    top: "calc(100% + 8px)",
+                                    right: 0,
+                                    zIndex: 1000,
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    background: "var(--bg-surface)",
+                                    borderRadius: "6px",
+                                    border: "1px solid var(--border)",
+                                    boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+                                    minWidth: "120px",
+                                    overflow: "hidden"
+                                }}
+                            >
+                                {["month", "1 week", "3 weeks"].map((mode) => (
+                                    <button
+                                        key={mode}
+                                        onClick={() => {
+                                            setView(mode);
+                                            closeViewMenu();
+                                        }}
+                                        style={{
+                                            padding: "8px 12px",
+                                            textAlign: "left",
+                                            background: view === mode || (view === "week" && mode === "1 week") ? "var(--accent-soft)" : "transparent",
+                                            color: view === mode || (view === "week" && mode === "1 week") ? "var(--accent)" : "var(--fg)",
+                                            border: "none",
+                                            cursor: "pointer",
+                                            fontSize: "0.9em",
+                                            textTransform: "capitalize"
+                                        }}
+                                    >
+                                        {mode}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
             </header>
 
-            <div className={`cal-grid ${isWeek ? "is-strip" : "is-grid"}`}>
+            <div className={`cal-grid ${isStrip ? "is-strip" : "is-grid"}`}>
                 <div className="cal-dow">
                     {DOW_SHORT.map((d) => (
                         <div key={d} className="cal-dow-cell">
@@ -177,7 +256,7 @@ export function DateGrid({
                         </div>
                     ))}
                 </div>
-                <div className={`cal-cells ${isWeek ? "is-strip" : "is-grid"}`}>
+                <div className={`cal-cells ${isStrip ? (is3Weeks ? "is-strip-3" : "is-strip-1") : "is-grid"}`}>
                     {cells.map((c, i) => (
                         <DayCell
                             key={i}
@@ -191,7 +270,7 @@ export function DateGrid({
                                 );
                             })}
                             tasks={tasks}
-                            isWeek={isWeek}
+                            isWeek={isStrip}
                             dragState={dragState}
                             onDropToDate={onDropToDate}
                             onEventDragStart={onEventDragStart}
@@ -297,10 +376,17 @@ function DayCell({
     );
 }
 
-function buildMonthOrWeekCells(anchor, isWeek) {
-    if (isWeek) {
+function buildMonthOrWeekCells(anchor, view) {
+    if (view === "1 week" || view === "week") {
         const start = startOfWeek(anchor);
         return Array.from({ length: 7 }, (_, i) => ({
+            date: addDays(start, i),
+            outOfMonth: false,
+        }));
+    }
+    if (view === "3 weeks") {
+        const start = startOfWeek(anchor);
+        return Array.from({ length: 21 }, (_, i) => ({
             date: addDays(start, i),
             outOfMonth: false,
         }));

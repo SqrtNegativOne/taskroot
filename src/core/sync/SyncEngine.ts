@@ -2,6 +2,17 @@ import { googleCalendarAPI } from "./GoogleCalendarAPI";
 import { googleTasksAPI } from "./GoogleTasksAPI";
 import { fetchWithTimeout } from "../store/api";
 
+export enum SyncType {
+    Task = "task",
+    Event = "event"
+}
+
+export enum SyncAction {
+    Create = "create",
+    Update = "update",
+    Delete = "delete"
+}
+
 export class SyncEngine {
     private lastTasksSync = 0;
     private lastEventsSync = 0;
@@ -16,8 +27,8 @@ export class SyncEngine {
 
     // A queue for reactive pushes
     private pushQueue: Array<{
-        type: "task" | "event";
-        action: "create" | "update" | "delete";
+        type: SyncType;
+        action: SyncAction;
         item: any;
         id?: string;
         calendarId?: string;
@@ -164,10 +175,11 @@ export class SyncEngine {
 
         this.nextSyncTime =
             Date.now() + (this.settings.syncInterval || 5) * 60 * 1000;
-        this.pollInterval = setInterval(
-            () => this.poll(),
-            (this.settings.syncInterval || 5) * 60 * 1000,
-        );
+        this.pollInterval = setInterval(() => {
+            if (Date.now() >= this.nextSyncTime) {
+                this.poll();
+            }
+        }, 1000);
         // Initial setup for token polling
         setInterval(() => {
             const token = localStorage.getItem("google_access_token");
@@ -194,10 +206,11 @@ export class SyncEngine {
         this.poll();
         this.nextSyncTime =
             Date.now() + (this.settings.syncInterval || 5) * 60 * 1000;
-        this.pollInterval = setInterval(
-            () => this.poll(),
-            (this.settings.syncInterval || 5) * 60 * 1000,
-        );
+        this.pollInterval = setInterval(() => {
+            if (Date.now() >= this.nextSyncTime) {
+                this.poll();
+            }
+        }, 1000);
     }
 
     private getLocalData(key: string) {
@@ -343,6 +356,8 @@ export class SyncEngine {
                 existingLocalTask,
             );
 
+            // (We no longer ignore pending deletions here; they are applied in the Optimistic Overlay step below)
+
             if (standardizedRemote._deleted) {
                 if (existingLocalTask) {
                     const localUpdated = existingLocalTask.updatedAt || 0;
@@ -365,6 +380,28 @@ export class SyncEngine {
             } else {
                 tasksMap.set(standardizedRemote.id, standardizedRemote);
                 updated = true;
+            }
+        }
+
+        // --- Optimistic Overlay (Replicache pattern) ---
+        // Re-apply any pending local mutations over the fetched state to prevent the 
+        // server from temporarily reverting unsynced local changes.
+        for (const q of this.pushQueue) {
+            if (q.type === SyncType.Task) {
+                if (q.action === SyncAction.Delete) {
+                    if (q.item && q.item.id) tasksMap.delete(q.item.id);
+                    if (q.id) {
+                        for (const [key, task] of tasksMap.entries()) {
+                            if (task.googleTaskId === q.id) {
+                                tasksMap.delete(key);
+                            }
+                        }
+                    }
+                    updated = true;
+                } else if ((q.action === SyncAction.Update || q.action === SyncAction.Create) && q.item && q.item.id) {
+                    tasksMap.set(q.item.id, q.item);
+                    updated = true;
+                }
             }
         }
 
@@ -418,6 +455,8 @@ export class SyncEngine {
         for (const remote of allRemoteEvents) {
             const existingLocalEvent = eventsMap.get(remote.id);
 
+            // (We no longer ignore pending deletions here; they are applied in the Optimistic Overlay step below)
+
             if (remote._deleted) {
                 if (existingLocalEvent) {
                     const localUpdated = existingLocalEvent.updatedAt || 0;
@@ -440,6 +479,28 @@ export class SyncEngine {
             } else {
                 eventsMap.set(remote.id, remote);
                 updated = true;
+            }
+        }
+
+        // --- Optimistic Overlay (Replicache pattern) ---
+        // Re-apply any pending local mutations over the fetched state to prevent the 
+        // server from temporarily reverting unsynced local changes.
+        for (const q of this.pushQueue) {
+            if (q.type === SyncType.Event) {
+                if (q.action === SyncAction.Delete) {
+                    if (q.item && q.item.id) eventsMap.delete(q.item.id);
+                    if (q.id) {
+                        for (const [key, event] of eventsMap.entries()) {
+                            if (event.googleEventId === q.id) {
+                                eventsMap.delete(key);
+                            }
+                        }
+                    }
+                    updated = true;
+                } else if ((q.action === SyncAction.Update || q.action === SyncAction.Create) && q.item && q.item.id) {
+                    eventsMap.set(q.item.id, q.item);
+                    updated = true;
+                }
             }
         }
 
@@ -470,8 +531,8 @@ export class SyncEngine {
             if (!prev) {
                 if (!task.googleTaskId && !task.isDraft) {
                     this.pushQueue.push({
-                        type: "task",
-                        action: "create",
+                        type: SyncType.Task,
+                        action: SyncAction.Create,
                         item: task,
                     });
                 }
@@ -485,15 +546,15 @@ export class SyncEngine {
             ) {
                 if (task.googleTaskId) {
                     this.pushQueue.push({
-                        type: "task",
-                        action: "update",
+                        type: SyncType.Task,
+                        action: SyncAction.Update,
                         item: task,
                         id: task.googleTaskId,
                     });
                 } else if (!task.isDraft) {
                     this.pushQueue.push({
-                        type: "task",
-                        action: "create",
+                        type: SyncType.Task,
+                        action: SyncAction.Create,
                         item: task,
                     });
                 }
@@ -504,8 +565,8 @@ export class SyncEngine {
         for (const [id, prev] of this.prevTasksMap.entries()) {
             if (!newTasksMap.has(id) && prev.googleTaskId) {
                 this.pushQueue.push({
-                    type: "task",
-                    action: "delete",
+                    type: SyncType.Task,
+                    action: SyncAction.Delete,
                     item: prev,
                     id: prev.googleTaskId,
                 });
@@ -523,8 +584,8 @@ export class SyncEngine {
             if (!prev) {
                 if (!event.googleEventId) {
                     this.pushQueue.push({
-                        type: "event",
-                        action: "create",
+                        type: SyncType.Event,
+                        action: SyncAction.Create,
                         item: event,
                     });
                 }
@@ -539,38 +600,43 @@ export class SyncEngine {
                 continue;
             }
 
-            let targetCalendarId = event.googleCalendarId || "primary";
+            const calendars = this.getLocalData("calendars");
+            let targetCalendarId = prev.googleCalendarId || "primary";
+            if (event.category) {
+                const cal = calendars.find((c: any) => c.summary === event.category);
+                if (cal) targetCalendarId = cal.id;
+            }
 
             if (
-                event.googleCalendarId &&
-                event.googleCalendarId !== targetCalendarId
+                prev.googleCalendarId &&
+                prev.googleCalendarId !== targetCalendarId
             ) {
-                if (event.googleEventId) {
+                if (prev.googleEventId) {
                     this.pushQueue.push({
-                        type: "event",
-                        action: "delete",
+                        type: SyncType.Event,
+                        action: SyncAction.Delete,
                         item: prev,
-                        id: event.googleEventId,
-                        calendarId: event.googleCalendarId,
+                        id: prev.googleEventId,
+                        calendarId: prev.googleCalendarId,
                     });
                 }
                 this.pushQueue.push({
-                    type: "event",
-                    action: "create",
+                    type: SyncType.Event,
+                    action: SyncAction.Create,
                     item: event,
                 });
             } else if (event.googleEventId) {
                 this.pushQueue.push({
-                    type: "event",
-                    action: "update",
+                    type: SyncType.Event,
+                    action: SyncAction.Update,
                     item: event,
                     id: event.googleEventId,
-                    calendarId: event.googleCalendarId || "primary",
+                    calendarId: targetCalendarId,
                 });
             } else {
                 this.pushQueue.push({
-                    type: "event",
-                    action: "create",
+                    type: SyncType.Event,
+                    action: SyncAction.Create,
                     item: event,
                 });
             }
@@ -579,8 +645,8 @@ export class SyncEngine {
         for (const [id, prev] of this.prevEventsMap.entries()) {
             if (!newEventsMap.has(id) && prev.googleEventId) {
                 this.pushQueue.push({
-                    type: "event",
-                    action: "delete",
+                    type: SyncType.Event,
+                    action: SyncAction.Delete,
                     item: prev,
                     id: prev.googleEventId,
                     calendarId: prev.googleCalendarId || "primary",
@@ -618,22 +684,22 @@ export class SyncEngine {
             const taskOrEvent = this.pushQueue[0]; // peek
             try {
                 if (
-                    taskOrEvent.type === "task" &&
+                    taskOrEvent.type === SyncType.Task &&
                     this.settings.enableTasksSync === false
                 ) {
                     this.pushQueue.shift();
                     continue;
                 }
                 if (
-                    taskOrEvent.type === "event" &&
+                    taskOrEvent.type === SyncType.Event &&
                     this.settings.enableCalendarSync === false
                 ) {
                     this.pushQueue.shift();
                     continue;
                 }
 
-                if (taskOrEvent.type === "task") {
-                    if (taskOrEvent.action === "create") {
+                if (taskOrEvent.type === SyncType.Task) {
+                    if (taskOrEvent.action === SyncAction.Create) {
                         const gid = await googleTasksAPI.createTask(
                             taskOrEvent.item,
                         );
@@ -653,7 +719,7 @@ export class SyncEngine {
                             }
                         }
                     } else if (
-                        taskOrEvent.action === "update" &&
+                        taskOrEvent.action === SyncAction.Update &&
                         taskOrEvent.id
                     ) {
                         await googleTasksAPI.updateTask(
@@ -661,17 +727,17 @@ export class SyncEngine {
                             taskOrEvent.item,
                         );
                     } else if (
-                        taskOrEvent.action === "delete" &&
+                        taskOrEvent.action === SyncAction.Delete &&
                         taskOrEvent.id
                     ) {
                         await googleTasksAPI.deleteTask(taskOrEvent.id);
                     }
-                } else if (taskOrEvent.type === "event") {
+                } else if (taskOrEvent.type === SyncType.Event) {
                     const tasks = this.getLocalData("tasks");
                     let targetCalendarId =
                         taskOrEvent.item.googleCalendarId || "primary";
 
-                    if (taskOrEvent.action === "create") {
+                    if (taskOrEvent.action === SyncAction.Create) {
                         const res = await googleCalendarAPI.createEvent(
                             taskOrEvent.item,
                             tasks,
@@ -693,7 +759,7 @@ export class SyncEngine {
                             }
                         }
                     } else if (
-                        taskOrEvent.action === "update" &&
+                        taskOrEvent.action === SyncAction.Update &&
                         taskOrEvent.id
                     ) {
                         await googleCalendarAPI.updateEvent(
@@ -703,7 +769,7 @@ export class SyncEngine {
                             taskOrEvent.calendarId,
                         );
                     } else if (
-                        taskOrEvent.action === "delete" &&
+                        taskOrEvent.action === SyncAction.Delete &&
                         taskOrEvent.id
                     ) {
                         await googleCalendarAPI.deleteEvent(

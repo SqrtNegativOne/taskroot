@@ -64,7 +64,10 @@ export class GoogleCalendarAPI {
                 body: JSON.stringify(body),
             },
         );
-        if (!res.ok) throw new Error("Failed to create event");
+        if (!res.ok) {
+            const text = await res.text();
+            throw new Error(`Failed to create event: ${res.status} ${text}`);
+        }
         const data = await res.json();
         return { id: data.id, calendarId };
     }
@@ -88,7 +91,10 @@ export class GoogleCalendarAPI {
                 body: JSON.stringify(body),
             },
         );
-        if (!res.ok) throw new Error("Failed to update event");
+        if (!res.ok) {
+            const text = await res.text();
+            throw new Error(`Failed to update event: ${res.status} ${text}`);
+        }
     }
 
     async deleteEvent(googleEventId: string, calendarId = "primary") {
@@ -100,7 +106,10 @@ export class GoogleCalendarAPI {
                 headers: { Authorization: `Bearer ${this.token}` },
             },
         );
-        if (!res.ok) throw new Error("Failed to delete event");
+        if (!res.ok) {
+            const text = await res.text();
+            throw new Error(`Failed to delete event: ${res.status} ${text}`);
+        }
     }
 
     toGoogleEvent(localEvent: any, tasks: any[]) {

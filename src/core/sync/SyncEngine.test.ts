@@ -149,4 +149,50 @@ describe("SyncEngine", () => {
         expect(createdRemoteTask).toBeDefined();
         expect(createdRemoteTask.title).toBe("New Task");
     });
+
+    it("does not resurrect a locally deleted task if sync happens before push", async () => {
+        const initialTasks = [
+            { id: "t1", title: "Task 1", updatedAt: 1000, googleTaskId: "g1" },
+        ];
+        engine.notifyDataChanged("tasks", initialTasks);
+        localStorage.setItem("taskroot_tasks", JSON.stringify(initialTasks));
+
+        (googleTasksAPI as any).fakeTasks.set("g1", {
+            id: "g1",
+            title: "Task 1",
+            updated: new Date(1000).toISOString(),
+            notes: "Taskroot Task ID: t1",
+        });
+
+        const originalDelete = (googleTasksAPI as any).deleteTask;
+        let resolveDelete: any;
+        const deletePromise = new Promise(r => resolveDelete = r);
+        (googleTasksAPI as any).deleteTask = async (id: string) => {
+            await deletePromise;
+            (googleTasksAPI as any).fakeTasks.delete(id);
+        };
+
+        // Simulate user deleting task locally
+        engine.notifyDataChanged("tasks", []);
+        localStorage.setItem("taskroot_tasks", JSON.stringify([]));
+
+        const originalFetch = (googleTasksAPI as any).fetchTasks;
+        (googleTasksAPI as any).fetchTasks = async () => {
+            const res = await originalFetch();
+            resolveDelete();
+            return res;
+        };
+
+        await engine.poll();
+
+        const saved = JSON.parse(
+            localStorage.getItem("taskroot_tasks") || "[]",
+        );
+        
+        expect(saved.length).toBe(0);
+
+        // Restore
+        (googleTasksAPI as any).deleteTask = originalDelete;
+        (googleTasksAPI as any).fetchTasks = originalFetch;
+    });
 });

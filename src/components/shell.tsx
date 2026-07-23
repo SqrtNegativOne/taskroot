@@ -11,8 +11,7 @@ import { Icon } from "./icon";
 import { MONTHS, DOW_SHORT, PAD2 } from "../core/store/data";
 import { syncState, poller } from "../core/sync";
 
-// Shared top bar + clickable stage indicator. Used across Plan, Do, Rest.
-export function TitleBar({ current, today }) {
+export function WindowControls({ children }: { children?: React.ReactNode }) {
     // @ts-ignore - electronAPI is injected via preload
     const handleMinimize = () => window.electronAPI?.minimizeWindow?.();
     // @ts-ignore
@@ -20,6 +19,73 @@ export function TitleBar({ current, today }) {
     // @ts-ignore
     const handleClose = () => window.electronAPI?.closeWindow?.();
 
+    return (
+        <div className="window-controls">
+            {children}
+            <button
+                className="win-btn minimize"
+                onClick={handleMinimize}
+                title="Minimize"
+                data-cuelume-hover="tick"
+                data-cuelume-toggle
+            >
+                <svg width="10" height="10" viewBox="0 0 10 10">
+                    <path
+                        d="M 1,5 h 8"
+                        stroke="currentColor"
+                        strokeWidth="1"
+                    />
+                </svg>
+            </button>
+            <button
+                className="win-btn maximize"
+                onClick={handleMaximize}
+                title="Maximize"
+                data-cuelume-hover="tick"
+                data-cuelume-toggle
+            >
+                <svg width="10" height="10" viewBox="0 0 10 10">
+                    <rect
+                        x="1.5"
+                        y="1.5"
+                        width="7"
+                        height="7"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1"
+                    />
+                </svg>
+            </button>
+            <button
+                className="win-btn close"
+                onClick={handleClose}
+                title="Close"
+                data-cuelume-hover="tick"
+                data-cuelume-toggle
+            >
+                <svg width="10" height="10" viewBox="0 0 10 10">
+                    <path
+                        d="M 1.5,1.5 l 7,7 M 8.5,1.5 l -7,7"
+                        stroke="currentColor"
+                        strokeWidth="1"
+                    />
+                </svg>
+            </button>
+        </div>
+    );
+}
+
+export function LoginTitleBar() {
+    return (
+        <header className="topbar">
+            <div className="drag-region" />
+            <WindowControls />
+        </header>
+    );
+}
+
+// Shared top bar + clickable stage indicator. Used across Plan, Do, Rest.
+export function TitleBar({ current, today }) {
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const navigate = useNavigate();
@@ -173,7 +239,7 @@ export function TitleBar({ current, today }) {
                 </div>
             </div>
             <div className="topbar-right"></div>
-            <div className="window-controls">
+            <WindowControls>
                 <style>{`
           @keyframes icon-spin {
             to { transform: translateY(1px) rotate(360deg); }
@@ -205,56 +271,7 @@ export function TitleBar({ current, today }) {
                         }}
                     />
                 </button>
-                <button
-                    className="win-btn minimize"
-                    onClick={handleMinimize}
-                    title="Minimize"
-                    data-cuelume-hover="tick"
-                    data-cuelume-toggle
-                >
-                    <svg width="10" height="10" viewBox="0 0 10 10">
-                        <path
-                            d="M 1,5 h 8"
-                            stroke="currentColor"
-                            strokeWidth="1"
-                        />
-                    </svg>
-                </button>
-                <button
-                    className="win-btn maximize"
-                    onClick={handleMaximize}
-                    title="Maximize"
-                    data-cuelume-hover="tick"
-                    data-cuelume-toggle
-                >
-                    <svg width="10" height="10" viewBox="0 0 10 10">
-                        <rect
-                            x="1.5"
-                            y="1.5"
-                            width="7"
-                            height="7"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1"
-                        />
-                    </svg>
-                </button>
-                <button
-                    className="win-btn close"
-                    onClick={handleClose}
-                    title="Close"
-                    data-cuelume-hover="tick"
-                    data-cuelume-toggle
-                >
-                    <svg width="10" height="10" viewBox="0 0 10 10">
-                        <path
-                            d="M 1.5,1.5 l 7,7 M 8.5,1.5 l -7,7"
-                            stroke="currentColor"
-                            strokeWidth="1"
-                        />
-                    </svg>
-                </button>
-            </div>
+            </WindowControls>
         </header>
     );
 }

@@ -1,6 +1,6 @@
 import React from "react";
 import { useAuth } from "../../core/auth/AuthContext";
-import { TitleBar } from "../../components/shell";
+import { LoginTitleBar } from "../../components/shell";
 import { TODAY } from "../../core/store/data";
 
 export function LoginScreen() {
@@ -8,7 +8,7 @@ export function LoginScreen() {
 
     return (
         <div className="app">
-            <TitleBar current="login" today={TODAY} />
+            <LoginTitleBar />
             <div
                 style={{
                     display: "flex",

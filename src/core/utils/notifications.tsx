@@ -158,10 +158,11 @@ function NotificationItem({
                 cursor: "pointer",
                 transition: "background 0.15s ease",
                 animation: notification.exiting
-                    ? "notify-fade-out-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards"
+                    ? "notify-fade-out-left 0.5s ease forwards"
                     : "notify-slide-in-right 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards",
                 maxWidth: "350px",
                 wordBreak: "break-word",
+                overflow: "hidden",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
@@ -182,7 +183,7 @@ function NotificationItem({
                     cursor: "pointer",
                     padding: "4px",
                     opacity: 0.7,
-                    fontSize: "1.2rem",
+                    fontSize: "1.6rem",
                     lineHeight: 1,
                     display: "flex",
                     alignItems: "center",
@@ -198,9 +199,10 @@ function NotificationItem({
           from { opacity: 0; transform: translateX(50px) scale(0.95); }
           to { opacity: 1; transform: translateX(0) scale(1); }
         }
-        @keyframes notify-fade-out-up {
-          from { opacity: 1; transform: translateY(0); }
-          to { opacity: 0; transform: translateY(-30px); }
+        @keyframes notify-fade-out-left {
+          0% { opacity: 1; transform: translateX(0); max-height: 500px; padding-top: 12px; padding-bottom: 12px; margin-top: 0; border-width: 1px; }
+          40% { opacity: 0; transform: translateX(-30px); max-height: 500px; padding-top: 12px; padding-bottom: 12px; margin-top: 0; border-width: 1px; }
+          100% { opacity: 0; transform: translateX(-30px); max-height: 0; padding-top: 0; padding-bottom: 0; margin-top: -12px; border-width: 0; }
         }
       `}</style>
         </div>

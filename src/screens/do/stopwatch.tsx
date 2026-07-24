@@ -504,7 +504,7 @@ export const CLOCK_STRATEGIES: Record<string, ClockStrategy> = {
 
 export function Stopwatch({ onBreakStatusChange }) {
     const [state, setState] = useStopwatch();
-    const [tasks, setTasks] = useTasksStore([]);
+    const [tasks, setTasks] = useTasks();
     const [events] = useEventsStore([]);
     const [settings] = useStored<Partial<import('../../core/store/settingsSchema').AppSettings>>("settings", {});
     const [timeLogs, setTimeLogs] = useTimeLogs();

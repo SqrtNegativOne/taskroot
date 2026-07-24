@@ -150,16 +150,17 @@ export function TagsInput({ tags, allTags, onChange }: { tags: string[], allTags
     );
 }
 
-export function Toggle({ checked, onChange, label }: { checked: boolean, onChange: (val: boolean) => void, label: string }) {
+export function Toggle({ checked, onChange, label, disabled }: { checked: boolean, onChange: (val: boolean) => void, label: string, disabled?: boolean }) {
     return (
         <div
             style={{
                 display: "flex",
                 alignItems: "center",
                 gap: "8px",
-                cursor: "pointer",
+                cursor: disabled ? "not-allowed" : "pointer",
+                opacity: disabled ? 0.5 : 1,
             }}
-            onClick={() => onChange(!checked)}
+            onClick={() => !disabled && onChange(!checked)}
         >
             <div className={`toggle-switch ${checked ? "is-on" : ""}`}>
                 <div className="toggle-switch-thumb" />
@@ -272,6 +273,13 @@ export function InspectorPane({
             setShowEndDate(false);
         }
     }, [currentItem?.id, currentItem]);
+
+    const isReadOnlyCalendar = React.useMemo(() => {
+        if (isCurrentTask || !currentItem) return false;
+        const calId = (currentItem as AppEvent).googleCalendarId || "primary";
+        const cal = calendars.find((c: any) => c.id === calId) as any;
+        return cal && (cal.accessRole === "reader" || cal.accessRole === "freeBusyReader");
+    }, [isCurrentTask, currentItem, calendars]);
 
     const handleClose = React.useCallback(() => {
         if (!(inspectorState && currentItem && currentItem.isDraft)) {
@@ -390,10 +398,11 @@ export function InspectorPane({
                                 handleClose();
                             }}
                             title="Delete"
+                            disabled={isReadOnlyCalendar}
                         >
                             <span
                                 className="material-symbols-outlined"
-                                style={{ fontSize: "20px" }}
+                                style={{ fontSize: "20px", opacity: isReadOnlyCalendar ? 0.3 : 1 }}
                             >
                                 delete
                             </span>
@@ -416,7 +425,7 @@ export function InspectorPane({
                                             title: newTitle,
                                         });
                                 }}
-                                disabled={Boolean(!isCurrentTask && (currentItem as AppEvent).taskId)}
+                                disabled={Boolean(!isCurrentTask && (currentItem as AppEvent).taskId) || isReadOnlyCalendar}
                                 onEnter={handleClose}
                                 style={{
                                     fontSize: "24px",
@@ -441,6 +450,7 @@ export function InspectorPane({
                             <DescriptionInput
                                 value={((currentItem as AppEvent).description as string) || ""}
                                 onChange={(desc) => {
+                                    if (isReadOnlyCalendar) return;
                                     if (isCurrentTask)
                                         updateTask(currentItem.id, {
                                             description: desc,
@@ -452,6 +462,12 @@ export function InspectorPane({
                                 }}
                             />
                         </div>
+
+                        {isReadOnlyCalendar && (
+                            <div className="inspector-field" style={{color: "var(--tag-red)", fontSize: "0.85em", marginTop: "8px"}}>
+                                This event belongs to a read-only calendar and cannot be modified.
+                            </div>
+                        )}
 
                         {isCurrentTask && (
                             <>
@@ -530,6 +546,7 @@ export function InspectorPane({
                                 >
                                     <select
                                         value={(currentItem as AppEvent).type}
+                                        disabled={isReadOnlyCalendar}
                                         onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
                                             const type = e.target.value;
                                             if (type === "plan") {
@@ -558,6 +575,7 @@ export function InspectorPane({
                                     <div className="inspector-field">
                                         <select
                                             value={(currentItem as AppEvent).taskId || ""}
+                                            disabled={isReadOnlyCalendar}
                                             onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
                                                 const taskId = e.target.value;
                                                 updateEvent(currentItem.id, {
@@ -587,6 +605,7 @@ export function InspectorPane({
                                             (currentItem as AppEvent).googleCalendarId ||
                                             "primary"
                                         }
+                                        disabled={isReadOnlyCalendar}
                                         onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
                                             const cal = calendars.find(
                                                 (c: { id: string, summary?: string }) => c.id === e.target.value,
@@ -600,9 +619,13 @@ export function InspectorPane({
                                             });
                                         }}
                                     >
-                                        {calendars.map((c) => (
-                                            <option key={c.id} value={c.id}>
-                                                {c.summary}
+                                        {calendars.map((c: any) => (
+                                            <option 
+                                                key={c.id} 
+                                                value={c.id}
+                                                disabled={c.accessRole === "reader" || c.accessRole === "freeBusyReader"}
+                                            >
+                                                {c.summary}{c.accessRole === "reader" || c.accessRole === "freeBusyReader" ? " (Read-Only)" : ""}
                                             </option>
                                         ))}
                                     </select>
@@ -623,6 +646,7 @@ export function InspectorPane({
                                     >
                                         <select
                                             value={(currentItem as AppEvent).rrule || ""}
+                                            disabled={isReadOnlyCalendar}
                                             onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                                                 updateEvent(currentItem.id, {
                                                     rrule:
@@ -649,6 +673,7 @@ export function InspectorPane({
                                             type="text"
                                             placeholder="Custom RRULE (e.g. FREQ=WEEKLY;BYDAY=TU,TH)"
                                             value={(currentItem as AppEvent).rrule || ""}
+                                            disabled={isReadOnlyCalendar}
                                             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                                                 updateEvent(currentItem.id, {
                                                     rrule:
@@ -671,7 +696,9 @@ export function InspectorPane({
                                     <Toggle
                                         label="End date"
                                         checked={!!showEndDate}
+                                        disabled={isReadOnlyCalendar}
                                         onChange={(checked: boolean) => {
+                                            if (isReadOnlyCalendar) return;
                                             setShowEndDate(checked);
                                             if (!checked)
                                                 updateEvent(currentItem.id, {
@@ -682,7 +709,9 @@ export function InspectorPane({
                                     <Toggle
                                         label="Include time"
                                         checked={!(currentItem as AppEvent).isAllDay}
+                                        disabled={isReadOnlyCalendar}
                                         onChange={(checked: boolean) => {
+                                            if (isReadOnlyCalendar) return;
                                             const updates: Partial<AppEvent> = {
                                                 isAllDay: !checked,
                                             };
@@ -718,6 +747,7 @@ export function InspectorPane({
                                             type="date"
                                             className="inspector-date-input"
                                             value={String((currentItem as AppEvent).date)}
+                                            disabled={isReadOnlyCalendar}
                                             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                                                 updateEvent(currentItem.id, {
                                                     date: e.target.value,
@@ -729,6 +759,7 @@ export function InspectorPane({
                                                 type="time"
                                                 className="inspector-date-input"
                                                 value={minToTime(Number((currentItem as AppEvent).start))}
+                                                disabled={isReadOnlyCalendar}
                                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                                                     updateEvent(
                                                         currentItem.id,
@@ -772,6 +803,7 @@ export function InspectorPane({
                                                 className="inspector-date-input"
                                                 value={String((currentItem as AppEvent).endDate || (currentItem as AppEvent).date)}
                                                 min={String((currentItem as AppEvent).date)}
+                                                disabled={isReadOnlyCalendar}
                                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                                                     updateEvent(
                                                         currentItem.id,
@@ -789,6 +821,7 @@ export function InspectorPane({
                                                     value={minToTime(
                                                         (currentItem as AppEvent).end,
                                                     )}
+                                                    disabled={isReadOnlyCalendar}
                                                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                                                         updateEvent(
                                                             currentItem.id,

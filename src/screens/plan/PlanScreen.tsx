@@ -29,7 +29,7 @@ interface PlanDragState {
 }
 import { DateGrid } from "./date-grid";
 import { TitleBar } from "../../components/shell";
-import { useTasks, useEvents, useSettings, useTaskQuery, useTaskFilters, useTaskSort, useCalFilters, useCalSort, useTimeFilters, useTimeSort } from "../../core/store/hooks";
+import { useTasks, useEvents, useSettings, useTaskQuery, useTaskFilters, useTaskSort, useCalFilters, useCalSort, useTimeFilters, useTimeSort, useCalendars } from "../../core/store/hooks";
 
 import { TaskListPane } from "../../components/tasklist";
 
@@ -62,6 +62,7 @@ export function PlanScreen() {
     // Data state (persisted)
     const [tasks, setTasks] = useTasks();
     const [events, setEvents] = useEvents();
+    const [calendars] = useCalendars();
 
     // Clean up empty items
     React.useEffect(() => {
@@ -208,6 +209,14 @@ export function PlanScreen() {
 
     const onEventDragStart = (e: React.PointerEvent<Element> | React.MouseEvent<Element, MouseEvent>, _eventToMoveAny: unknown, task?: AppTask | null) => {
         const eventToMove = _eventToMoveAny as AppEvent;
+        const calId = eventToMove.googleCalendarId || "primary";
+        const cal = calendars.find((c: any) => c.id === calId) as any;
+        if (cal && (cal.accessRole === "reader" || cal.accessRole === "freeBusyReader")) {
+            // Do not allow dragging read-only events, but allow selecting them
+            setInspectorState({ type: "event", id: eventToMove.id });
+            return;
+        }
+
         e.preventDefault();
         e.stopPropagation();
         const start = { x: e.clientX, y: e.clientY };
@@ -348,11 +357,23 @@ export function PlanScreen() {
     };
 
     const onResizeEvent = (id: string, start: number, end: number) => {
+        const ev = events.find((e: AppEvent) => e.id === id);
+        if (ev) {
+            const calId = ev.googleCalendarId || "primary";
+            const cal = calendars.find((c: any) => c.id === calId) as any;
+            if (cal && (cal.accessRole === "reader" || cal.accessRole === "freeBusyReader")) return;
+        }
         setEvents((prev) =>
             prev.map((e: AppEvent) => (e.id === id ? { ...e, start, end } : e)),
         );
     };
     const onMoveEvent = (id: string, start: number, end: number) => {
+        const ev = events.find((e: AppEvent) => e.id === id);
+        if (ev) {
+            const calId = ev.googleCalendarId || "primary";
+            const cal = calendars.find((c: any) => c.id === calId) as any;
+            if (cal && (cal.accessRole === "reader" || cal.accessRole === "freeBusyReader")) return;
+        }
         setEvents((prev) =>
             prev.map((e: AppEvent) => (e.id === id ? { ...e, start, end } : e)),
         );

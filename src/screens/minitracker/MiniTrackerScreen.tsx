@@ -12,7 +12,7 @@ function splitTime(ms: number) {
 
 export function MiniTrackerScreen() {
     const [state, setState] = useStopwatch();
-    const [tasks] = useTasksStore([]);
+    const [tasks] = useTasks();
     const [settings] = useStored<Partial<import('../../core/store/settingsSchema').AppSettings>>("settings", {});
     const [now, setNow] = useState(Date.now());
     const [isHovered, setIsHovered] = useState(false);

@@ -21,9 +21,18 @@ export class EventSynchronizer {
         timeMax.setMonth(timeMax.getMonth() + 2);
 
         const calendars = await googleCalendarAPI.fetchCalendars();
+        const prevCalendars = this.context.getLocalData<import('../../store/repositories').CalendarData[]>("calendars");
         this.context.setLocalData(
             "calendars",
-            calendars.map((c) => ({ id: c.id, summary: c.summary })),
+            calendars.map((c) => {
+                const prev = prevCalendars.find(pc => pc.id === c.id);
+                return { 
+                    id: c.id, 
+                    summary: c.summary, 
+                    accessRole: c.accessRole, 
+                    active: prev ? prev.active : true 
+                };
+            }),
         );
 
         const allRemoteEvents: (import('../../domain/models').AppEvent & { _deleted?: boolean })[] = [];

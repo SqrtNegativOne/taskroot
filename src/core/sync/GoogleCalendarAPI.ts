@@ -52,18 +52,18 @@ export class GoogleCalendarAPI {
         return data.items || [];
     }
 
-    async fetchCalendars(): Promise<{id: string, summary: string}[]> {
+    async fetchCalendars(): Promise<{id: string, summary: string, accessRole?: string}[]> {
         if (!this.token)
-            return [{ id: "primary", summary: "Primary Calendar" }];
+            return [{ id: "primary", summary: "Primary Calendar", accessRole: "owner" }];
         const res = await this.fetchWithAuth(
             "https://www.googleapis.com/calendar/v3/users/me/calendarList"
         );
         if (!res.ok) {
             console.warn(`Failed to fetch calendars`);
-            return [{ id: "primary", summary: "Primary Calendar" }];
+            return [{ id: "primary", summary: "Primary Calendar", accessRole: "owner" }];
         }
         const data = await res.json();
-        return data.items || [{ id: "primary", summary: "Primary Calendar" }];
+        return data.items || [{ id: "primary", summary: "Primary Calendar", accessRole: "owner" }];
     }
 
     async createEvent(localEvent: AppEvent, tasks: AppTask[], calendarId = "primary") {

@@ -11,7 +11,7 @@ export interface DistractionColumn { id: string; label: string; width: number; t
 export interface StopwatchState { elapsed: number; runningSince: number | null; isBreak: boolean; breakAllowedMs: number; breakStartedAt: number | null; breakSoundPlayed: boolean; }
 export interface TimeLog { id?: string; taskId?: string | null; duration: number; date: string; }
 export interface RestItem { id: string; title: string; type: string; checked?: boolean; }
-export interface CalendarData { id: string; summary: string; active: boolean; }
+export interface CalendarData { id: string; summary: string; active: boolean; accessRole?: string; }
 export interface TestKeyData { count: number; }
 
 export class Repository<T> {

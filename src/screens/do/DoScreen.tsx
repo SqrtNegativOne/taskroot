@@ -19,20 +19,17 @@ export function DoScreen() {
     const [isBreak, setIsBreak] = useState(false);
     const [showRestOverride, setShowRestOverride] = useState(false);
 
-    useEffect(() => {
-        if (isBreak) {
-            setShowRestOverride(true);
-        } else {
-            setShowRestOverride(false);
-        }
-    }, [isBreak]);
+    const handleBreakStatusChange = (status: boolean) => {
+        setIsBreak(status);
+        setShowRestOverride(status);
+    };
 
     return (
         <div className="app app-do">
             <TitleBar current="do" />
 
             <main className="do-main">
-                <Stopwatch onBreakStatusChange={setIsBreak} />
+                <Stopwatch onBreakStatusChange={handleBreakStatusChange} />
 
                 {showRestOverride ? (
                     <div className="do-rest-container">

@@ -40,21 +40,7 @@ export function InspectorPane({
               events.find((e: AppEvent) => e.id === currentState.id.split("_")[0])
         : null;
 
-    const [showEndDate, setShowEndDate] = React.useState(false);
-    React.useEffect(() => {
-        if (
-            currentItem &&
-            "type" in currentItem &&
-            currentItem.type !== "task" &&
-            (currentItem as AppEvent).endDate &&
-            (currentItem as AppEvent).date &&
-            (currentItem as AppEvent).endDate !== (currentItem as AppEvent).date
-        ) {
-            setShowEndDate(true);
-        } else {
-            setShowEndDate(false);
-        }
-    }, [currentItem?.id, currentItem]);
+
 
     const isReadOnlyCalendar = React.useMemo(() => {
         if (isCurrentTask || !currentItem) return false;
@@ -263,8 +249,6 @@ export function InspectorPane({
                                 calendars={calendars}
                                 updateEvent={updateEvent}
                                 isReadOnlyCalendar={isReadOnlyCalendar}
-                                showEndDate={showEndDate}
-                                setShowEndDate={setShowEndDate}
                             />
                         )}
                     </div>

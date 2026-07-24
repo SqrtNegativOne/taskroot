@@ -86,15 +86,11 @@ export function TitleBar({ current }: { current: string }) {
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const navigate = useNavigate();
-    const [syncStatus, setSyncStatus] = useState("sync");
+    const syncStatus = React.useSyncExternalStore(
+        (listener) => syncState.subscribe(listener),
+        () => syncState.getUiStatus()
+    );
     const syncBtnRef = useRef<HTMLButtonElement>(null);
-
-    useEffect(() => {
-        const unsubscribe = syncState.subscribe(() => {
-            setSyncStatus(syncState.getUiStatus());
-        });
-        return unsubscribe;
-    }, []);
 
     useEffect(() => {
         if (syncStatus === "sync_disabled") {

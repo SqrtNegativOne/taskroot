@@ -295,14 +295,6 @@ function DayCell({
         dragState.target.date === ymd(cell.date);
     const canAccept = !!dragState;
 
-    React.useEffect(() => {
-        if (!dragState) return;
-        const el = ref.current;
-        if (!el) return;
-        el.dataset.dropDate = ymd(cell.date);
-        el.dataset.dropKind = "grid-day";
-    }, [dragState, cell.date]);
-
     return (
         <div
             ref={ref}

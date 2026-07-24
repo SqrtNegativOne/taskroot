@@ -116,10 +116,14 @@ function GlobalSync({ children }: { children: React.ReactNode }) {
     const [, , tasksLoaded] = useTasks();
     const [, , eventsLoaded] = useEvents();
     const [settings] = useSettings();
-    const [initialSyncDone, setInitialSyncDone] = React.useState(
-        syncState.initialSyncComplete,
+    const initialSyncDone = React.useSyncExternalStore(
+        (listener) => syncState.subscribe(listener),
+        () => syncState.initialSyncComplete
     );
-    const [syncMessage, setSyncMessage] = React.useState(syncState.getUiMessage());
+    const syncMessage = React.useSyncExternalStore(
+        (listener) => syncState.subscribe(listener),
+        () => syncState.getUiMessage()
+    );
     const { notify } = useNotification();
 
     React.useEffect(() => {
@@ -128,10 +132,7 @@ function GlobalSync({ children }: { children: React.ReactNode }) {
     }, [settings, notify]);
 
     React.useEffect(() => {
-        const unsub = syncState.subscribe(() => {
-            setInitialSyncDone(syncState.initialSyncComplete);
-            setSyncMessage(syncState.getUiMessage());
-            
+        const checkNotifications = () => {
             if (syncState.error) {
                 notify(`Sync error: ${syncState.error}`, "error");
                 syncState.error = null;
@@ -140,7 +141,10 @@ function GlobalSync({ children }: { children: React.ReactNode }) {
                 notify(syncState.info, "info");
                 syncState.info = null;
             }
-        });
+        };
+        // Check once on mount in case there are pending notifications
+        checkNotifications();
+        const unsub = syncState.subscribe(checkNotifications);
         return unsub;
     }, [notify]);
 

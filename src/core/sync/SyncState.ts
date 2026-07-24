@@ -12,7 +12,6 @@ class SyncStateStore {
 
     subscribe(listener: Listener) {
         this.listeners.add(listener);
-        listener();
         return () => {
             this.listeners.delete(listener);
         };

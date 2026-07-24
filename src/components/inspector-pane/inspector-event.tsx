@@ -8,8 +8,6 @@ interface EventInspectorProps {
     calendars: { id: string, summary?: string, accessRole?: string }[];
     updateEvent: (id: string, updates: Partial<AppEvent>) => void;
     isReadOnlyCalendar: boolean;
-    showEndDate: boolean;
-    setShowEndDate: (val: boolean) => void;
 }
 
 export function EventInspector({
@@ -18,9 +16,11 @@ export function EventInspector({
     calendars,
     updateEvent,
     isReadOnlyCalendar,
-    showEndDate,
-    setShowEndDate,
 }: EventInspectorProps) {
+    const [showEndDate, setShowEndDate] = React.useState(() => {
+        return Boolean(event.endDate && event.date && event.endDate !== event.date);
+    });
+
     return (
         <>
             <div

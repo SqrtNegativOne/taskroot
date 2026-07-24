@@ -32,20 +32,12 @@ import {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     children,
 }) => {
-    const [user, setUser] = useState<User | null>(null);
-    const [loading, setLoading] = useState(true);
-    const { notify } = useNotification();
-
-    useEffect(() => {
-        // Just mock the user being logged in if they have tokens
+    const [user, setUser] = useState<User | null>(() => {
         const token = localStorage.getItem("google_access_token");
-        if (token) {
-            setUser({ uid: "local-user", email: "user@example.com", displayName: "Local User", photoURL: null });
-        } else {
-            setUser(null);
-        }
-        setLoading(false);
-    }, []);
+        return token ? { uid: "local-user", email: "user@example.com", displayName: "Local User", photoURL: null } : null;
+    });
+    const [loading, setLoading] = useState(false);
+    const { notify } = useNotification();
 
     const loginWithGoogle = async () => {
         try {

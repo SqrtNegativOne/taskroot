@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { expect, test, describe, vi } from "vitest";
-import { logWorkSession, CLOCK_STRATEGIES } from "./stopwatch";
+import { CLOCK_STRATEGIES } from "./clock-strategies";
+import { logWorkSession } from "./clock-strategies/utils";
 import type { AppTask } from "../../core/domain/models";
 import type { TimeLog } from "../../core/store/repositories";
 import type { Dispatch, SetStateAction } from "react";

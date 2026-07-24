@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import type { AppEvent, AppTask } from "../domain/models";
 import { GoogleCalendarAPI } from "./GoogleCalendarAPI";
 import * as api from "../store/api";
 
@@ -56,7 +57,7 @@ describe("GoogleCalendarAPI", () => {
                 date: "2024-05-10",
                 start: 600,
                 end: 660,
-            }; // 10:00 to 11:00
+            } as AppEvent; // 10:00 to 11:00
             const googleEvent = googleCalendarAPI.toGoogleEvent(localEvent, []);
 
             expect(
@@ -73,7 +74,7 @@ describe("GoogleCalendarAPI", () => {
                 date: "2024-05-10",
                 start: 0,
                 end: 1440,
-            }; // 00:00 to 24:00
+            } as AppEvent; // 00:00 to 24:00
             const googleEvent = googleCalendarAPI.toGoogleEvent(localEvent, []);
 
             expect(googleEvent.start.dateTime).toContain("2024-05-10T00:00:00");

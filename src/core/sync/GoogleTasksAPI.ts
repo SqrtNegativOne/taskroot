@@ -1,5 +1,7 @@
 import { fetchWithTimeout } from "../store/api";
 import { tokenBouncer } from "../auth/TokenBouncer";
+import type { AppTask } from "../domain/models";
+/// <reference types="gapi.client.tasks" />
 
 export class GoogleTasksAPI {
     private token: string | null = null;
@@ -8,7 +10,7 @@ export class GoogleTasksAPI {
         this.token = token;
     }
 
-    private async fetchWithAuth(url: string, options: any = {}) {
+    private async fetchWithAuth(url: string, options: RequestInit = {}) {
         if (!this.token) throw new Error("Unauthorized");
         const getOptions = () => ({
             ...options,
@@ -31,7 +33,7 @@ export class GoogleTasksAPI {
     }
 
     async fetchTasks(tasklistId = "@default") {
-        const allTasks: any[] = [];
+        const allTasks: gapi.client.tasks.Task[] = [];
         let pageToken: string | null = null;
         do {
             const url = new URL(
@@ -55,7 +57,7 @@ export class GoogleTasksAPI {
         return allTasks;
     }
 
-    async createTask(localTask: any, tasklistId = "@default") {
+    async createTask(localTask: AppTask, tasklistId = "@default") {
         const body = this.toGoogleTask(localTask);
         const res = await this.fetchWithAuth(
             `https://tasks.googleapis.com/tasks/v1/lists/${tasklistId}/tasks`,
@@ -77,7 +79,7 @@ export class GoogleTasksAPI {
 
     async updateTask(
         googleTaskId: string,
-        localTask: any,
+        localTask: AppTask,
         tasklistId = "@default",
     ) {
         const body = this.toGoogleTask(localTask);
@@ -110,7 +112,7 @@ export class GoogleTasksAPI {
         }
     }
 
-    toLocalTask(googleTask: any, existingLocalTask: any = null) {
+    toLocalTask(googleTask: gapi.client.tasks.Task, existingLocalTask: AppTask | null = null): AppTask | { id: string; _deleted: boolean; updatedAt: number; } {
         if (googleTask.deleted) {
             let id = googleTask.id;
             if (existingLocalTask) id = existingLocalTask.id;
@@ -176,12 +178,12 @@ export class GoogleTasksAPI {
         return defaultTask;
     }
 
-    toGoogleTask(localTask: any) {
+    toGoogleTask(localTask: AppTask): gapi.client.tasks.Task {
         let notes = localTask.notes || "";
         if (!notes.includes(`Taskroot Task ID: ${localTask.id}`)) {
             notes = `Taskroot Task ID: ${localTask.id}\n${notes}`;
         }
-        const result: any = {
+        const result: gapi.client.tasks.Task = {
             title: localTask.title,
             notes: notes,
             status: localTask.status === "done" ? "completed" : "needsAction",

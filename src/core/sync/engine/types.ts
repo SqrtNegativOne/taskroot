@@ -1,3 +1,5 @@
+import type { AppTask, AppEvent } from "../../domain/models";
+
 export const SyncType = {
     Task: "task",
     Event: "event"
@@ -14,19 +16,19 @@ export type SyncAction = (typeof SyncAction)[keyof typeof SyncAction];
 export interface SyncQueueItem {
     type: SyncType;
     action: SyncAction;
-    item: any;
+    item: AppTask | AppEvent | { id: string; [key: string]: unknown };
     id?: string;
     calendarId?: string;
 }
 
 export interface ISyncEngineContext {
-    getLocalData: (key: string) => any;
-    setLocalData: (key: string, data: any) => void;
-    prevTasksMap: Map<string, any>;
-    prevEventsMap: Map<string, any>;
-    updatePrevTasksMap: (tasks: any[]) => void;
-    updatePrevEventsMap: (events: any[]) => void;
-    getSettings: () => any;
+    getLocalData: <T = unknown>(key: string) => T;
+    setLocalData: <T = unknown>(key: string, data: T) => void;
+    prevTasksMap: Map<string, AppTask>;
+    prevEventsMap: Map<string, AppEvent>;
+    updatePrevTasksMap: (tasks: AppTask[]) => void;
+    updatePrevEventsMap: (events: AppEvent[]) => void;
+    getSettings: () => Record<string, unknown>;
     pushQueue: import('./SyncQueue').SyncQueue;
     notifyError: (msg: string) => void;
     updateStatus: (problem?: boolean, isSyncing?: boolean) => void;

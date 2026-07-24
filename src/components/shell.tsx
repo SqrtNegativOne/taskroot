@@ -12,11 +12,8 @@ import { MONTHS, DOW_SHORT, PAD2 } from "../core/store/data";
 import { syncState, poller } from "../core/sync";
 
 export function WindowControls({ children }: { children?: React.ReactNode }) {
-    // @ts-ignore - electronAPI is injected via preload
     const handleMinimize = () => window.electronAPI?.minimizeWindow?.();
-    // @ts-ignore
     const handleMaximize = () => window.electronAPI?.maximizeWindow?.();
-    // @ts-ignore
     const handleClose = () => window.electronAPI?.closeWindow?.();
 
     return (

@@ -24,9 +24,7 @@ class TokenBouncer {
         if (!refreshToken) return false;
 
         try {
-            // @ts-ignore
             const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-            // @ts-ignore
             const clientSecret = import.meta.env.VITE_GOOGLE_CLIENT_SECRET;
 
             const params = new URLSearchParams({

@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import type { AppTask } from "../domain/models";
 import { GoogleTasksAPI } from "./GoogleTasksAPI";
 import * as api from "../store/api";
 
@@ -94,8 +95,8 @@ describe("GoogleTasksAPI", () => {
 
             const localTask = googleTasksAPI.toLocalTask(googleTask);
             expect(localTask.id).toBe("t456");
-            expect(localTask.googleTaskId).toBe("g123");
-            expect(localTask.status).toBe("done");
+            expect((localTask as AppTask).googleTaskId).toBe("g123");
+            expect((localTask as AppTask).status).toBe("done");
         });
 
         it("handles deleted tasks", () => {
@@ -106,7 +107,7 @@ describe("GoogleTasksAPI", () => {
             };
             const localTask = googleTasksAPI.toLocalTask(googleTask, {
                 id: "t456",
-            });
+            } as AppTask);
 
             expect(localTask._deleted).toBe(true);
             expect(localTask.id).toBe("t456");

@@ -12,14 +12,14 @@ export class TaskSynchronizer {
         const settings = this.context.getSettings();
         if (settings.enableTasksSync === false) return;
 
-        const tasks = this.context.getLocalData("tasks");
+        const tasks = this.context.getLocalData<import('../../domain/models').AppTask[]>("tasks");
         this.context.updatePrevTasksMap(tasks);
 
         const remoteTasks = await googleTasksAPI.fetchTasks();
         if (!remoteTasks) return;
 
         let updated = false;
-        const tasksMap = new Map<string, any>(tasks.map((t: any) => [t.id, t]));
+        const tasksMap = new Map<string, import('../../domain/models').AppTask>(tasks.map((t) => [t.id, t]));
 
         for (const remote of remoteTasks) {
             let localId = null;
@@ -30,7 +30,7 @@ export class TaskSynchronizer {
                 localId = match[1];
             } else {
                 const existing = tasks.find(
-                    (t: any) => t.googleTaskId === remote.id,
+                    (t) => t.googleTaskId === remote.id,
                 );
                 if (existing) localId = existing.id;
             }
@@ -80,7 +80,7 @@ export class TaskSynchronizer {
                     }
                     updated = true;
                 } else if ((q.action === SyncAction.Update || q.action === SyncAction.Create) && q.item && q.item.id) {
-                    tasksMap.set(q.item.id, q.item);
+                    tasksMap.set(q.item.id, q.item as import('../../domain/models').AppTask);
                     updated = true;
                 }
             }
@@ -93,7 +93,7 @@ export class TaskSynchronizer {
         }
     }
 
-    computeTasksDelta(newTasks: any[]) {
+    computeTasksDelta(newTasks: import('../../domain/models').AppTask[]) {
         const newTasksMap = new Map(newTasks.map((t) => [t.id, t]));
 
         for (const task of newTasks) {
@@ -148,12 +148,12 @@ export class TaskSynchronizer {
     async processPushItem(taskOrEvent: SyncQueueItem) {
         if (taskOrEvent.action === SyncAction.Create) {
             const gid = await googleTasksAPI.createTask(
-                taskOrEvent.item,
+                taskOrEvent.item as import('../../domain/models').AppTask,
             );
             if (gid) {
-                const tasks = this.context.getLocalData("tasks");
+                const tasks = this.context.getLocalData<import('../../domain/models').AppTask[]>("tasks");
                 const idx = tasks.findIndex(
-                    (t: any) => t.id === taskOrEvent.item.id,
+                    (t) => t.id === taskOrEvent.item.id,
                 );
                 if (idx !== -1) {
                     tasks[idx] = {
@@ -170,7 +170,7 @@ export class TaskSynchronizer {
         ) {
             await googleTasksAPI.updateTask(
                 taskOrEvent.id,
-                taskOrEvent.item,
+                taskOrEvent.item as import('../../domain/models').AppTask,
             );
         } else if (
             taskOrEvent.action === SyncAction.Delete &&

@@ -1,5 +1,7 @@
 import { fetchWithTimeout } from "../store/api";
 import { tokenBouncer } from "../auth/TokenBouncer";
+import type { AppTask, AppEvent } from "../domain/models";
+/// <reference types="gapi.client.calendar" />
 
 export class GoogleCalendarAPI {
     private token: string | null = null;
@@ -12,7 +14,7 @@ export class GoogleCalendarAPI {
         return this.token;
     }
 
-    private async fetchWithAuth(url: string, options: any = {}) {
+    private async fetchWithAuth(url: string, options: RequestInit = {}) {
         if (!this.token) throw new Error("Unauthorized");
         const getOptions = () => ({
             ...options,
@@ -64,7 +66,7 @@ export class GoogleCalendarAPI {
         return data.items || [{ id: "primary", summary: "Primary Calendar" }];
     }
 
-    async createEvent(localEvent: any, tasks: any[], calendarId = "primary") {
+    async createEvent(localEvent: AppEvent, tasks: AppTask[], calendarId = "primary") {
         const body = this.toGoogleEvent(localEvent, tasks);
         const res = await this.fetchWithAuth(
             `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`,
@@ -86,8 +88,8 @@ export class GoogleCalendarAPI {
 
     async updateEvent(
         googleEventId: string,
-        localEvent: any,
-        tasks: any[],
+        localEvent: AppEvent,
+        tasks: AppTask[],
         calendarId = "primary",
     ) {
         const body = this.toGoogleEvent(localEvent, tasks);
@@ -120,9 +122,9 @@ export class GoogleCalendarAPI {
         }
     }
 
-    toGoogleEvent(localEvent: any, tasks: any[]) {
+    toGoogleEvent(localEvent: AppEvent, tasks: AppTask[]): gapi.client.calendar.Event {
         const task = localEvent.taskId
-            ? tasks.find((t: any) => t.id === localEvent.taskId)
+            ? tasks.find((t) => t.id === localEvent.taskId)
             : null;
         const title = task ? task.title : localEvent.title;
 
@@ -147,7 +149,7 @@ export class GoogleCalendarAPI {
         const endStr = `${endYMD}T${endH.toString().padStart(2, "0")}:${endM.toString().padStart(2, "0")}:00`;
         const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-        const r: any = {
+        const r: gapi.client.calendar.Event = {
             summary: title || "Taskroot Event",
             start: { dateTime: startStr, timeZone },
             end: { dateTime: endStr, timeZone },
@@ -168,7 +170,7 @@ export class GoogleCalendarAPI {
     }
 
     toLocalEvent(
-        googleEvent: any,
+        googleEvent: gapi.client.calendar.Event,
         calendarId = "primary",
         calendarSummary = "",
     ) {

@@ -13,6 +13,11 @@ export interface AppTask {
     canvasX?: number;
     canvasY?: number;
     onCanvas?: boolean;
+    googleTaskId?: string;
+    notes?: string;
+    due?: string;
+    _deleted?: boolean;
+    updatedAt?: number;
     [key: string]: unknown;
 }
 
@@ -21,4 +26,22 @@ export interface AppFilter {
     column: string;
     operator: string;
     value: string | number;
+}
+
+export interface AppEvent {
+    id: string;
+    googleEventId?: string;
+    googleCalendarId?: string;
+    taskId?: string | null;
+    title: string;
+    date: string;
+    start: number;
+    end: number;
+    type: string;
+    category?: string;
+    rrule?: string;
+    description?: string;
+    updatedAt?: number;
+    _deleted?: boolean;
+    [key: string]: unknown;
 }

@@ -25,7 +25,6 @@ export class Poller {
     }
 
     start() {
-        // @ts-ignore
         const offline = import.meta.env && import.meta.env.VITE_OFFLINE_MODE === "true";
         const settings = this.getSettings();
         if (offline || (settings.enableCalendarSync === false && settings.enableTasksSync === false)) {

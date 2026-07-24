@@ -127,7 +127,7 @@ function GlobalSync({ children }: { children: React.ReactNode }) {
     React.useEffect(() => {
         purgeOrphanedData(notify);
         poller.start();
-    }, [settings]);
+    }, [settings, notify]);
 
     React.useEffect(() => {
         const unsub = syncState.subscribe(() => {

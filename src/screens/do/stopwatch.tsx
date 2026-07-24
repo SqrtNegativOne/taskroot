@@ -1,8 +1,7 @@
 // @ts-nocheck
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { PAD2, ymd } from "../../core/store/data";
-import { useTasks, useEvents, useStopwatch, useTimeLogs, useSettings, useTaskFilters, useTaskSort } from "../../core/store/hooks";
-import { Icon } from "../../components/icon";
+import { useTasks, useStopwatch } from "../../core/store/hooks";
 
 // Helper to log sessions
 export function logWorkSession(
@@ -95,11 +94,13 @@ function GuzeyClockDisplay({ toggleSelector, onBreakStatus, isPaused }) {
     }, [isBreakNow, onBreakStatus]);
 
     return (
-        <div
+        <button
+            type="button"
+            aria-label="Toggle task selector"
             className={`stopwatch-display ${isPaused ? "" : "is-running"}`}
             onClick={toggleSelector}
             title="Click to open task selector"
-            style={{ color: isPaused ? "var(--fg-dim)" : color }}
+            style={{ color: isPaused ? "var(--fg-dim)" : color, background: "none", border: "none", padding: 0, font: "inherit", cursor: "pointer" }}
         >
             <span
                 className="sw-digits sw-m"
@@ -132,17 +133,20 @@ function GuzeyClockDisplay({ toggleSelector, onBreakStatus, isPaused }) {
                     LEFT
                 </span>
             </span>
-        </div>
+        </button>
     );
 }
 
 function CounterClockDisplay({ running, isPristine, currentMs, toggle }) {
     const { m } = splitTime(currentMs);
     return (
-        <div
+        <button
+            type="button"
+            aria-label="Toggle stopwatch"
             className={`stopwatch-display ${running ? "is-running" : ""} ${isPristine ? "is-pristine" : ""}`}
             onClick={toggle}
             title="Click to start/stop"
+            style={{ background: "none", border: "none", padding: 0, font: "inherit", color: "inherit", cursor: "pointer" }}
         >
             <span
                 className="sw-digits sw-m"
@@ -167,7 +171,7 @@ function CounterClockDisplay({ running, isPristine, currentMs, toggle }) {
                     m
                 )}
             </span>
-        </div>
+        </button>
     );
 }
 
@@ -229,10 +233,13 @@ function FlowtimeClockDisplay({
     }
 
     return (
-        <div
+        <button
+            type="button"
+            aria-label="Toggle clock"
             className={`stopwatch-display ${running ? "is-running" : ""} ${isPristine ? "is-pristine" : ""}`}
             onClick={toggle}
             title="Click to start/stop"
+            style={{ background: "none", border: "none", font: "inherit", color: "inherit", padding: 0, cursor: "pointer" }}
         >
             <span
                 className="sw-digits sw-m"
@@ -244,7 +251,7 @@ function FlowtimeClockDisplay({
             >
                 {displayNode}
             </span>
-        </div>
+        </button>
     );
 }
 
@@ -306,11 +313,9 @@ class CounterClockStrategy extends ClockStrategy {
         isPristine,
         setSelectorOpen,
         setState,
-        timeLogs,
         setTimeLogs,
         activeTask,
         allowNoTask,
-        settings,
     }: StopwatchContext) {
         if (isPristine && !activeTask && !allowNoTask) {
             setSelectorOpen(true);
@@ -384,11 +389,9 @@ class FlowtimeClockStrategy extends ClockStrategy {
         isPristine,
         setSelectorOpen,
         setState,
-        timeLogs,
         setTimeLogs,
         activeTask,
         allowNoTask,
-        settings,
     }: StopwatchContext) {
         if (isPristine && !activeTask && !allowNoTask) {
             setSelectorOpen(true);
@@ -459,7 +462,7 @@ class GuzeyClockStrategy extends ClockStrategy {
         return false;
     }
 
-    onToggle({ state, setState, setTimeLogs, activeTask }: StopwatchContext) {
+    onToggle({ setState, setTimeLogs, activeTask }: StopwatchContext) {
         setState((s): StopwatchState => {
             if (s.runningSince) {
                 logWorkSession(
@@ -562,7 +565,7 @@ export function Stopwatch({ onBreakStatusChange }) {
         return () => {
             if (raf) cancelAnimationFrame(raf);
         };
-    }, [strategy, state.runningSince, state.isBreak]);
+    }, [strategy, state]);
 
     useEffect(() => {
         if (state.isBreak && state.breakStartedAt && !state.breakSoundPlayed) {
@@ -579,6 +582,7 @@ export function Stopwatch({ onBreakStatusChange }) {
         state.breakStartedAt,
         state.breakAllowedMs,
         state.breakSoundPlayed,
+        setState,
     ]);
 
     const running = state.runningSince != null;
@@ -685,9 +689,14 @@ export function Stopwatch({ onBreakStatusChange }) {
         }
     };
 
+    const actionsRef = React.useRef({ toggle, reset, startBreak });
+    React.useEffect(() => {
+        actionsRef.current = { toggle, reset, startBreak };
+    });
+
     // Keyboard shortcut: space to toggle, r to reset, enter to switch
     useEffect(() => {
-        const onKey = (e: React.SyntheticEvent | PointerEvent | Event | unknown) => {
+        const onKey = (e: any) => {
             if (
                 e.target.matches(
                     "input:not(.task-search-input), textarea, [contenteditable]",
@@ -706,10 +715,10 @@ export function Stopwatch({ onBreakStatusChange }) {
 
             if (e.code === "Space" && !selectorOpen) {
                 e.preventDefault();
-                toggle();
+                actionsRef.current.toggle();
             } else if (e.code === "KeyR" && (e.metaKey || e.ctrlKey)) {
                 e.preventDefault();
-                reset();
+                actionsRef.current.reset();
             } else if (e.code === "Enter" && (e.metaKey || e.ctrlKey)) {
                 e.preventDefault();
                 setSelectorOpen((prev) => !prev);
@@ -723,7 +732,7 @@ export function Stopwatch({ onBreakStatusChange }) {
 
         // For LShift+RShift
         const pressed = new Set();
-        const handleDown = (e: React.SyntheticEvent | PointerEvent | Event | unknown) => {
+        const handleDown = (e: any) => {
             if (
                 e.target.matches(
                     "input:not(.task-search-input), textarea, [contenteditable]",
@@ -733,10 +742,10 @@ export function Stopwatch({ onBreakStatusChange }) {
             pressed.add(e.code);
             if (pressed.has("ShiftLeft") && pressed.has("ShiftRight")) {
                 e.preventDefault();
-                startBreak();
+                actionsRef.current.startBreak();
             }
         };
-        const handleUp = (e: React.SyntheticEvent | PointerEvent | Event | unknown) => {
+        const handleUp = (e: any) => {
             pressed.delete(e.code);
         };
 
@@ -834,7 +843,9 @@ export function Stopwatch({ onBreakStatusChange }) {
                         activeTask && (running || isGuzey || isFlowBreak);
                     if (shouldShowTask) {
                         return (
-                            <div
+                            <button
+                                type="button"
+                                aria-label="Open task selector"
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     setSelectorOpen(true);
@@ -869,7 +880,7 @@ export function Stopwatch({ onBreakStatusChange }) {
                                 <span style={{ fontWeight: 400 }}>
                                     {activeTask.title}
                                 </span>
-                            </div>
+                            </button>
                         );
                     } else if (
                         allowNoTask &&
@@ -911,7 +922,7 @@ export function Stopwatch({ onBreakStatusChange }) {
                                     inset: 0,
                                     zIndex: 90,
                                 }}
-                                onClick={(e) => {
+                                onPointerDown={(e) => {
                                     e.stopPropagation();
                                     setSelectorOpen(false);
                                 }}
@@ -995,7 +1006,7 @@ export function Stopwatch({ onBreakStatusChange }) {
                                 >
                                     <input
                                         ref={searchInputRef}
-                                        autoFocus
+                                        
                                         className="modern-task-input"
                                         style={{
                                             background: "transparent",
@@ -1121,41 +1132,12 @@ export function Stopwatch({ onBreakStatusChange }) {
                                                 Start working
                                             </button>
                                         ) : (
-                                            <>
-                                                {sortedTasks.length === 0 ? (
-                                                    <div
-                                                        style={{
-                                                            color: "var(--fg-dim)",
-                                                            fontSize: "16px",
-                                                            marginTop: "16px",
-                                                        }}
-                                                    >
-                                                        No tasks match your
-                                                        search.
-                                                    </div>
-                                                ) : (
-                                                    sortedTasks.map((t: import("../../core/domain/models").AppTask) => (
-                                                        <div
-                                                            key={t.id}
-                                                            className="modern-task-item"
-                                                            onClick={() => {
-                                                                setStagedTaskId(
-                                                                    t.id,
-                                                                );
-                                                                setSearchQuery(
-                                                                    t.title,
-                                                                );
-                                                                if (
-                                                                    searchInputRef.current
-                                                                )
-                                                                    searchInputRef.current.focus();
-                                                            }}
-                                                        >
-                                                            {t.title}
-                                                        </div>
-                                                    ))
-                                                )}
-                                            </>
+                                            <TaskSearchResults
+                                                sortedTasks={sortedTasks}
+                                                setStagedTaskId={setStagedTaskId}
+                                                setSearchQuery={setSearchQuery}
+                                                searchInputRef={searchInputRef}
+                                            />
                                         )}
                                     </div>
                                 </div>
@@ -1174,4 +1156,50 @@ function splitTime(ms: number) {
     return {
         m: PAD2(totalMin),
     };
+}
+
+function TaskSearchResults({
+    sortedTasks,
+    setStagedTaskId,
+    setSearchQuery,
+    searchInputRef,
+}: {
+    sortedTasks: import("../../core/domain/models").AppTask[];
+    setStagedTaskId: (id: string | null) => void;
+    setSearchQuery: (query: string) => void;
+    searchInputRef: React.RefObject<HTMLInputElement | null>;
+}) {
+    if (sortedTasks.length === 0) {
+        return (
+            <div
+                style={{
+                    color: "var(--fg-dim)",
+                    fontSize: "16px",
+                    marginTop: "16px",
+                }}
+            >
+                No tasks match your search.
+            </div>
+        );
+    }
+    return (
+        <>
+            {sortedTasks.map((t) => (
+                <button
+                    type="button"
+                    style={{ border: "none", background: "none", font: "inherit", color: "inherit", padding: 0, textAlign: "left", width: "100%", cursor: "pointer" }}
+                    key={t.id}
+                    className="modern-task-item"
+                    onClick={() => {
+                        setStagedTaskId(t.id);
+                        setSearchQuery(t.title);
+                        if (searchInputRef.current)
+                            searchInputRef.current.focus();
+                    }}
+                >
+                    {t.title}
+                </button>
+            ))}
+        </>
+    );
 }

@@ -4,7 +4,7 @@ import { GoogleTasksAPI } from "./GoogleTasksAPI";
 import * as api from "../store/api";
 
 vi.mock("../store/api", () => ({
-    fetchWithTimeout: vi.fn(),
+    fetchWithTimeout: vi.fn<(...args: never[]) => unknown>(),
 }));
 
 describe("GoogleTasksAPI", () => {
@@ -95,10 +95,7 @@ describe("GoogleTasksAPI", () => {
 
             const localTask = googleTasksAPI.toLocalTask(googleTask);
             expect(localTask.id).toBe("t456");
-            if ("googleTaskId" in localTask) {
-                expect(localTask.googleTaskId).toBe("g123");
-                expect(localTask.status).toBe("done");
-            }
+            expect(localTask).toMatchObject({ googleTaskId: "g123", status: "done" });
         });
 
         it("handles deleted tasks", () => {

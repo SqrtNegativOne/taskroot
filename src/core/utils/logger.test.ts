@@ -8,10 +8,10 @@ describe("Logger", () => {
     let mockLogToFile: ReturnType<typeof vi.fn>;
 
     beforeEach(() => {
-        console.log = vi.fn();
-        console.warn = vi.fn();
-        console.error = vi.fn();
-        mockLogToFile = vi.fn();
+        console.log = vi.fn<(...args: never[]) => unknown>();
+        console.warn = vi.fn<(...args: never[]) => unknown>();
+        console.error = vi.fn<(...args: never[]) => unknown>();
+        mockLogToFile = vi.fn<(...args: never[]) => unknown>();
 
         // Mock window.electronAPI
         vi.stubGlobal("window", {

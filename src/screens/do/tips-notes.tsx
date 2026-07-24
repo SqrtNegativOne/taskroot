@@ -49,7 +49,7 @@ export function TipsList() {
                 <span className="tips-bullet">+</span>
                 {adding ? (
                     <input
-                        autoFocus
+                        ref={(r) => { if (r && adding) r.focus(); }}
                         className="tips-input"
                         placeholder="add a tip…"
                         value={draft}
@@ -148,7 +148,7 @@ export function NotesList() {
                         >
                             <span className="notes-icon">+</span>
                             <input
-                                autoFocus
+                                ref={(r) => { if (r && adding) r.focus(); }}
                                 className="tips-input"
                                 placeholder="note title…"
                                 value={draft}

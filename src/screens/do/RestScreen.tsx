@@ -100,7 +100,7 @@ export function RestScreen() {
                             </button>
                             {editing === item.id ? (
                                 <input
-                                    autoFocus
+                                    ref={(r) => { if (r && editing === item.id) r.focus(); }}
                                     className="rest-item-input"
                                     defaultValue={item.title}
                                     onBlur={(e) =>
@@ -115,12 +115,14 @@ export function RestScreen() {
                                     }}
                                 />
                             ) : (
-                                <span
+                                <button
+                                    type="button"
                                     className="rest-item-title"
                                     onClick={() => setEditing(item.id)}
+                                    style={{ background: "none", border: "none", font: "inherit", color: "inherit", padding: 0, textAlign: "left", cursor: "text" }}
                                 >
                                     {item.title}
-                                </span>
+                                </button>
                             )}
                             <button
                                 className="rest-item-x"
@@ -140,7 +142,7 @@ export function RestScreen() {
                         </span>
                         {adding ? (
                             <input
-                                autoFocus
+                                ref={(r) => { if (r && adding) r.focus(); }}
                                 className="rest-item-input"
                                 placeholder="new rest item…"
                                 value={draft}
@@ -175,10 +177,10 @@ export function RestScreen() {
                             — not by procrastinating!
                         </span>
                     </header>
-                    <a
-                        href="#"
+                    <button
+                        type="button"
                         className="rest-reward-link"
-                        onClick={(e) => e.preventDefault()}
+                        style={{ background: "none", border: "none", font: "inherit", color: "inherit", padding: 0, textAlign: "left", cursor: "pointer", display: "inline-flex" }}
                     >
                         <span className="rest-reward-link-bracket">[</span>
                         <span className="rest-reward-link-text">
@@ -186,7 +188,7 @@ export function RestScreen() {
                         </span>
                         <span className="rest-reward-link-bracket">]</span>
                         <span className="rest-reward-link-arrow">↗</span>
-                    </a>
+                    </button>
                 </section>
 
                 {allChecked && (

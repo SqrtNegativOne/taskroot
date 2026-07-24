@@ -22,19 +22,12 @@ describe("settingsSchema.tsx", () => {
 
     it("all tabs used in schema must be defined in SETTINGS_TABS", () => {
         const definedTabs = new Set(SETTINGS_TABS.map((t) => t.id));
-
-        for (const setting of SETTINGS_SCHEMA) {
-            if (setting.tab) {
-                expect(definedTabs.has(setting.tab)).toBe(true);
-            }
-        }
+        const usedTabs = SETTINGS_SCHEMA.map(s => s.tab).filter(Boolean);
+        expect(usedTabs.every(tab => definedTabs.has(tab))).toBe(true);
     });
 
     it("should ensure bounded settings have valid min/max", () => {
-        for (const setting of SETTINGS_SCHEMA) {
-            if (setting.min !== undefined && setting.max !== undefined) {
-                expect(setting.max).toBeGreaterThanOrEqual(setting.min);
-            }
-        }
+        const boundedSettings = SETTINGS_SCHEMA.filter(s => s.min !== undefined && s.max !== undefined);
+        expect(boundedSettings.every(s => s.max! >= s.min!)).toBe(true);
     });
 });

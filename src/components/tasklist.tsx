@@ -259,8 +259,10 @@ function TaskRow({
             className={`task-row ${dragging ? "is-dragging" : ""} ${task.status === "done" ? "is-done" : ""} ${isExiting ? "is-exiting" : ""}`}
             onPointerDown={handlePointerDown}
         >
-            <div
+            <button
+                type="button"
                 className={`task-circle pri-bg-${task.priority}`}
+                style={{ border: "none", padding: 0, font: "inherit", color: "inherit" }}
                 onClick={(e) => {
                     e.stopPropagation();
                     const newStatus = task.status === "done" ? "todo" : "done";
@@ -304,7 +306,7 @@ function TaskRow({
                         <polyline points="4 12 9 17 20 6"></polyline>
                     </svg>
                 )}
-            </div>
+            </button>
             <div className="task-row-content">
                 <div className="task-row-line1">
                     <span className="task-row-title">{task.title}</span>

@@ -41,7 +41,7 @@ export class Repository<T> {
             const parsed = saved ? JSON.parse(saved) : this.initial;
             if (this.parser) return this.parser(parsed);
             return parsed;
-        } catch (e) {
+        } catch {
             if (this.parser) return this.parser(this.initial);
             return this.initial;
         }

@@ -4,9 +4,9 @@ import { render, screen, act } from "@testing-library/react";
 import { AuthProvider, useAuth } from "./AuthContext";
 
 vi.mock("./googleAuthUtils", () => ({
-    loadGoogleIdentityScript: vi.fn().mockResolvedValue(undefined),
-    requestGoogleAuthCode: vi.fn().mockResolvedValue("test-code"),
-    exchangeAuthCodeForTokens: vi.fn().mockResolvedValue({ accessToken: "test-token", refreshToken: "test-refresh" }),
+    loadGoogleIdentityScript: vi.fn<(...args: never[]) => unknown>().mockResolvedValue(undefined),
+    requestGoogleAuthCode: vi.fn<(...args: never[]) => unknown>().mockResolvedValue("test-code"),
+    exchangeAuthCodeForTokens: vi.fn<(...args: never[]) => unknown>().mockResolvedValue({ accessToken: "test-token", refreshToken: "test-refresh" }),
 }));
 
 vi.mock("../utils/notifications", () => ({
@@ -37,7 +37,7 @@ describe("AuthContext", () => {
         // Mock window.location.reload
         Object.defineProperty(window, 'location', {
             configurable: true,
-            value: { reload: vi.fn() }
+            value: { reload: vi.fn<(...args: never[]) => unknown>() }
         });
     });
 

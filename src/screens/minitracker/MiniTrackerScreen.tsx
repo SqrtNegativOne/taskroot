@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState, useEffect } from "react";
 import "@fontsource/atkinson-hyperlegible-next";
-import { useTasks, useEvents, useStopwatch, useTimeLogs, useSettings, useTaskFilters, useTaskSort } from "../../core/store/hooks";
+import { useTasks, useStopwatch, useStored } from "../../core/store/hooks";
 import { PAD2 } from "../../core/store/data";
 
 function splitTime(ms: number) {
@@ -58,6 +58,7 @@ export function MiniTrackerScreen() {
         state.breakStartedAt,
         state.breakAllowedMs,
         state.breakSoundPlayed,
+        setState,
     ]);
 
     const activeTask = tasks?.find((t: import('../../core/domain/models').AppTask) => t.status === "doing");

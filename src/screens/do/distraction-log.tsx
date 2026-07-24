@@ -200,10 +200,11 @@ function DLogRow({
                     editingCell?.colId === col.id;
                 const val = typeof row[col.id] === "string" ? (row[col.id] as string) : undefined;
                 return (
-                    <div
+                    <button
+                        type="button"
                         key={col.id}
                         className={`dlog-cell dlog-cell-${col.type} ${isEditing ? "is-editing" : ""}`}
-                        style={{ width: col.width }}
+                        style={{ width: col.width, border: "none", background: "none", font: "inherit", color: "inherit", padding: 0, textAlign: "left", cursor: "text" }}
                         onClick={() => {
                             if (col.type === "text")
                                 setEditingCell({
@@ -217,7 +218,7 @@ function DLogRow({
                         {col.type === "text" &&
                             (isEditing ? (
                                 <input
-                                    autoFocus
+                                    ref={(r) => { if (r && isEditing) r.focus(); }}
                                     className="dlog-cell-input"
                                     defaultValue={val || ""}
                                     onBlur={(e) => {
@@ -263,7 +264,7 @@ function DLogRow({
                                 {formatDateTime(val)}
                             </span>
                         )}
-                    </div>
+                    </button>
                 );
             })}
             <div className="dlog-cell dlog-cell-actions">
@@ -334,7 +335,7 @@ function StatusCell({
                 <div
                     className="dlog-status-pop"
                     ref={popRef}
-                    onClick={(e) => e.stopPropagation()}
+                    onPointerDown={(e) => e.stopPropagation()} // eslint-disable-line jsx-a11y/no-static-element-interactions
                 >
                     {statuses.map((s: DistractionStatus) => (
                         <button
@@ -358,7 +359,7 @@ function StatusCell({
                     {addingStatus ? (
                         <div className="dlog-status-new">
                             <input
-                                autoFocus
+                                ref={(r) => { if (r && addingStatus) r.focus(); }}
                                 className="dlog-status-new-input"
                                 placeholder="status name…"
                                 value={newLabel}

@@ -24,6 +24,7 @@ waitOn({ resources: ['http://localhost:5173'] }).then(() => {
       process.exit();
     }
   });
+  return undefined;
 }).catch(err => {
   console.error('Error waiting for Vite:', err);
   if (process.platform === 'win32') {

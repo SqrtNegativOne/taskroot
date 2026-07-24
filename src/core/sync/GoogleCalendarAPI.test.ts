@@ -4,7 +4,7 @@ import { GoogleCalendarAPI } from "./GoogleCalendarAPI";
 import * as api from "../store/api";
 
 vi.mock("../store/api", () => ({
-    fetchWithTimeout: vi.fn(),
+    fetchWithTimeout: vi.fn<(...args: never[]) => unknown>(),
 }));
 
 describe("GoogleCalendarAPI", () => {

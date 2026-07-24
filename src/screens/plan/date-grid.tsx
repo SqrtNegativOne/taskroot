@@ -3,9 +3,6 @@ import React, {
     useState,
     useEffect,
     useRef,
-    useMemo,
-    useCallback,
-    Fragment,
 } from "react";
 import {
     ymd,
@@ -285,10 +282,10 @@ function DayCell({
     cell,
     today,
     events,
-    tasks,
+    _tasks,
     isWeek,
     dragState,
-    onDropToDate,
+    _onDropToDate,
     onEventDragStart,
     onAddEvent,
 }) {

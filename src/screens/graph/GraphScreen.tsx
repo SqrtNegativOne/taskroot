@@ -1,8 +1,8 @@
 // @ts-nocheck
-import React, { useMemo } from "react";
+import React from "react";
 import { TitleBar } from "../../components/shell";
 import { TODAY } from "../../core/store/data";
-import { useTasks, useEvents, useStopwatch, useTimeLogs, useSettings, useTaskFilters, useTaskSort } from "../../core/store/hooks";
+import { useStored } from "../../core/store/hooks";
 import { TaskListPane } from "../../components/tasklist";
 import { SplitPane } from "../../components/split-pane";
 import { TaskCanvas } from "./TaskCanvas";

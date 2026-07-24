@@ -20,6 +20,7 @@ function WindowControls({ children }: { children?: React.ReactNode }) {
                 className="win-btn minimize"
                 onClick={handleMinimize}
                 title="Minimize"
+                aria-label="Minimize"
                 data-cuelume-hover="tick"
                 data-cuelume-toggle
             >
@@ -35,6 +36,7 @@ function WindowControls({ children }: { children?: React.ReactNode }) {
                 className="win-btn maximize"
                 onClick={handleMaximize}
                 title="Maximize"
+                aria-label="Maximize"
                 data-cuelume-hover="tick"
                 data-cuelume-toggle
             >
@@ -54,6 +56,7 @@ function WindowControls({ children }: { children?: React.ReactNode }) {
                 className="win-btn close"
                 onClick={handleClose}
                 title="Close"
+                aria-label="Close"
                 data-cuelume-hover="tick"
                 data-cuelume-toggle
             >

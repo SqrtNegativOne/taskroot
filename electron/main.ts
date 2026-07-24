@@ -291,4 +291,5 @@ app.whenReady().then(() => {
             });
         }
     }
-});
+    return undefined;
+}).catch(console.error);

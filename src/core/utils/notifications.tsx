@@ -121,28 +121,38 @@ function NotificationItem({
 
     const colors = getColors(notification.type);
 
+    const handleClick = async () => {
+        try {
+            await navigator.clipboard.writeText(notification.message);
+            // Briefly flash the background to indicate successful copy
+            const el = document.getElementById(
+                `notif-${notification.id}`,
+            );
+            if (el) {
+                const oldBg = el.style.background;
+                el.style.background = "rgba(255, 255, 255, 0.2)";
+                setTimeout(() => {
+                    el.style.background = oldBg;
+                }, 150);
+            }
+        } catch (err) {
+            console.error("Failed to copy notification:", err);
+        }
+    };
+
     return (
-        <div
-            onClick={async () => {
-                try {
-                    await navigator.clipboard.writeText(notification.message);
-                    // Briefly flash the background to indicate successful copy
-                    const el = document.getElementById(
-                        `notif-${notification.id}`,
-                    );
-                    if (el) {
-                        const oldBg = el.style.background;
-                        el.style.background = "rgba(255, 255, 255, 0.2)";
-                        setTimeout(() => {
-                            el.style.background = oldBg;
-                        }, 150);
-                    }
-                } catch (err) {
-                    console.error("Failed to copy notification:", err);
+        <button
+            onClick={handleClick}
+            onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleClick();
                 }
             }}
             id={`notif-${notification.id}`}
             style={{
+                fontFamily: "inherit",
+                textAlign: "left",
                 background: colors.bg,
                 color: "#ffffff",
                 padding: "12px 20px",
@@ -205,6 +215,6 @@ function NotificationItem({
           100% { opacity: 0; transform: translateX(-30px); max-height: 0; padding-top: 0; padding-bottom: 0; margin-top: -12px; border-width: 0; }
         }
       `}</style>
-        </div>
+        </button>
     );
 }

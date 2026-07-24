@@ -13,12 +13,12 @@ function createMockContext(overrides: Partial<MockStopwatchContext>): MockStopwa
         currentMs: 0,
         running: false,
         isPristine: true,
-        toggle: vi.fn(),
+        toggle: vi.fn<(...args: never[]) => unknown>(),
         state: { runningSince: null, elapsed: 0, isBreak: false, breakAllowedMs: 0, breakStartedAt: null, breakSoundPlayed: false },
-        setState: vi.fn(),
+        setState: vi.fn<(...args: never[]) => unknown>(),
         timeLogs: [],
-        setTimeLogs: vi.fn(),
-        setSelectorOpen: vi.fn(),
+        setTimeLogs: vi.fn<(...args: never[]) => unknown>(),
+        setSelectorOpen: vi.fn<(...args: never[]) => unknown>(),
         selectorOpen: false,
         activeTask: null,
         allowNoTask: false,
@@ -30,13 +30,13 @@ function createMockContext(overrides: Partial<MockStopwatchContext>): MockStopwa
 
 describe("logWorkSession", () => {
     test("ignores sessions less than 1 minute", () => {
-        const setTimeLogs = vi.fn();
+        const setTimeLogs = vi.fn<(...args: never[]) => unknown>();
         logWorkSession(setTimeLogs as unknown as Dispatch<SetStateAction<TimeLog[]>>, 1000, 2000, "task1", "counter");
         expect(setTimeLogs).not.toHaveBeenCalled();
     });
 
     test("logs sessions 1 minute or longer", () => {
-        const setTimeLogs = vi.fn((updater: unknown) => updater([]));
+        const setTimeLogs = vi.fn<(...args: never[]) => unknown>((updater: unknown) => updater([]));
         logWorkSession(setTimeLogs as unknown as Dispatch<SetStateAction<TimeLog[]>>, 1000, 62000, "task1", "counter");
         expect(setTimeLogs).toHaveBeenCalled();
         const result = setTimeLogs.mock.results[0].value;
@@ -59,10 +59,10 @@ describe("CounterClockStrategy", () => {
     });
 
     test("onToggle toggles state", () => {
-        const setState = vi.fn((updater: unknown) =>
+        const setState = vi.fn<(...args: never[]) => unknown>((updater: unknown) =>
             updater({ elapsed: 0, runningSince: null }),
         );
-        const setSelectorOpen = vi.fn();
+        const setSelectorOpen = vi.fn<(...args: never[]) => unknown>();
 
         // Start
         strategy.onToggle(createMockContext({
@@ -77,10 +77,10 @@ describe("CounterClockStrategy", () => {
         expect(stateResult.runningSince).toBeTypeOf("number");
 
         // Stop
-        const setState2 = vi.fn((updater: unknown) =>
+        const setState2 = vi.fn<(...args: never[]) => unknown>((updater: unknown) =>
             updater({ elapsed: 1000, runningSince: 1000 }),
         );
-        const setTimeLogs = vi.fn();
+        const setTimeLogs = vi.fn<(...args: never[]) => unknown>();
         strategy.onToggle(createMockContext({
             isPristine: false,
             setSelectorOpen,
@@ -98,7 +98,7 @@ describe("FlowtimeClockStrategy", () => {
     const strategy = CLOCK_STRATEGIES.flowtime;
 
     test("onToggle prevents pause during break", () => {
-        const setState = vi.fn((updater: unknown) =>
+        const setState = vi.fn<(...args: never[]) => unknown>((updater: unknown) =>
             updater({ elapsed: 100, runningSince: null, isBreak: true }),
         );
         strategy.onToggle(createMockContext({

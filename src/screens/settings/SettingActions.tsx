@@ -18,7 +18,7 @@ export function ExportDataButton() {
                             data[key.replace("taskroot_", "")] = JSON.parse(
                                 localStorage.getItem(key) || "null",
                             );
-                        } catch (e) {
+                        } catch {
                             data[key.replace("taskroot_", "")] =
                                 localStorage.getItem(key);
                         }

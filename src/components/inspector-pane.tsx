@@ -1,5 +1,24 @@
 import React from "react";
-import type { AppTask, AppEvent } from "../core/domain/models";
+import type { AppEvent, AppTask } from "../core/domain/models";
+
+const TaskStatusSelect = ({ value, onChange }: { value: string, onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void }) => (
+    <select value={value} onChange={onChange}>
+        <option value="todo">todo</option>
+        <option value="next-up">next up</option>
+        <option value="doing">doing</option>
+        <option value="done">done</option>
+    </select>
+);
+
+const RepeatSelect = ({ value, disabled, onChange }: { value: string, disabled: boolean, onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void }) => (
+    <select value={value} disabled={disabled} onChange={onChange}>
+        <option value="">None</option>
+        <option value="FREQ=DAILY">Daily</option>
+        <option value="FREQ=WEEKLY">Weekly</option>
+        <option value="FREQ=MONTHLY">Monthly</option>
+        <option value="FREQ=YEARLY">Yearly</option>
+    </select>
+);
 import { useCalendars } from "../core/store/hooks";
 
 interface TitleInputProps {
@@ -132,16 +151,18 @@ export function TagsInput({ tags, allTags, onChange }: { tags: string[], allTags
                 {showSuggestions && inputValue && suggestions.length > 0 && (
                     <div className="tags-suggestions">
                         {suggestions.map((s) => (
-                            <div
+                            <button
+                                type="button"
                                 key={s}
                                 onMouseDown={(e) => {
                                     e.preventDefault();
                                     addTag(s);
                                 }}
                                 className="tag-suggestion"
+                                style={{ background: 'none', border: 'none', color: 'inherit', font: 'inherit', cursor: 'pointer', textAlign: 'left', width: '100%' }}
                             >
                                 {s}
-                            </div>
+                            </button>
                         ))}
                     </div>
                 )}
@@ -152,13 +173,19 @@ export function TagsInput({ tags, allTags, onChange }: { tags: string[], allTags
 
 export function Toggle({ checked, onChange, label, disabled }: { checked: boolean, onChange: (val: boolean) => void, label: string, disabled?: boolean }) {
     return (
-        <div
+        <button
+            type="button"
             style={{
                 display: "flex",
                 alignItems: "center",
                 gap: "8px",
                 cursor: disabled ? "not-allowed" : "pointer",
                 opacity: disabled ? 0.5 : 1,
+                background: "none",
+                border: "none",
+                color: "inherit",
+                padding: 0,
+                font: "inherit",
             }}
             onClick={() => !disabled && onChange(!checked)}
         >
@@ -166,7 +193,7 @@ export function Toggle({ checked, onChange, label, disabled }: { checked: boolea
                 <div className="toggle-switch-thumb" />
             </div>
             <span style={{ fontSize: "0.9em" }}>{label}</span>
-        </div>
+        </button>
     );
 }
 
@@ -180,7 +207,14 @@ export function DescriptionInput({ value, onChange }: { value: string | undefine
 
     if (!editing) {
         return (
-            <div
+            <button
+                type="button"
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setEditing(true);
+                    }
+                }}
                 onClick={() => setEditing(true)}
                 style={{
                     minHeight: "24px",
@@ -188,16 +222,21 @@ export function DescriptionInput({ value, onChange }: { value: string | undefine
                     padding: "0",
                     color: value ? "var(--fg)" : "var(--fg-dim)",
                     borderRadius: "4px",
+                    background: "none",
+                    border: "none",
+                    font: "inherit",
+                    textAlign: "left",
+                    width: "100%",
                 }}
             >
                 {value || "Add description..."}
-            </div>
+            </button>
         );
     }
 
     return (
         <textarea
-            autoFocus
+            ref={(el) => { if (el && editing) el.focus(); }}
             value={localValue || ""}
             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setLocalValue(e.target.value)}
             onBlur={() => {
@@ -437,7 +476,7 @@ export function InspectorPane({
                                     width: "100%",
                                     color: "var(--fg)",
                                 }}
-                                autoFocus={Boolean((currentItem as AppTask).isDraft)}
+                                autoFocus={Boolean((currentItem as AppTask).isDraft)} // eslint-disable-line jsx-a11y/no-autofocus
                             />
                         </div>
                         <div
@@ -473,26 +512,20 @@ export function InspectorPane({
                             <>
                                 <div className="inspector-row">
                                     <div className="inspector-field">
-                                        <label>Status</label>
-                                        <select
+                                        <label htmlFor={`status-${currentItem.id}`}>Status</label>
+                                        <TaskStatusSelect
                                             value={(currentItem as AppTask).status}
-                                            onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                                            onChange={(e) =>
                                                 updateTask(currentItem.id, {
-                                                    status: e.target.value,
+                                                    status: e.target.value as AppTask["status"],
                                                 })
                                             }
-                                        >
-                                            <option value="todo">todo</option>
-                                            <option value="next-up">
-                                                next up
-                                            </option>
-                                            <option value="doing">doing</option>
-                                            <option value="done">done</option>
-                                        </select>
+                                        />
                                     </div>
                                     <div className="inspector-field">
-                                        <label>Priority</label>
+                                        <label htmlFor={`priority-${currentItem.id}`}>Priority</label>
                                         <input
+                                            id={`priority-${currentItem.id}`}
                                             type="number"
                                             min="0"
                                             max="4"
@@ -515,8 +548,9 @@ export function InspectorPane({
                                 </div>
 
                                 <div className="inspector-field">
-                                    <label>Duration (min)</label>
+                                    <label htmlFor={`duration-${currentItem.id}`}>Duration (min)</label>
                                     <input
+                                        id={`duration-${currentItem.id}`}
                                         type="number"
                                         placeholder="Unset"
                                         value={
@@ -599,8 +633,9 @@ export function InspectorPane({
                                     className="inspector-field"
                                     style={{ marginTop: "8px" }}
                                 >
-                                    <label>Calendar</label>
+                                    <label htmlFor={`calendar-${currentItem.id}`}>Calendar</label>
                                     <select
+                                        id={`calendar-${currentItem.id}`}
                                         value={
                                             (currentItem as AppEvent).googleCalendarId ||
                                             "primary"
@@ -635,7 +670,7 @@ export function InspectorPane({
                                     className="inspector-field"
                                     style={{ marginTop: "8px" }}
                                 >
-                                    <label>Repeat (RRULE)</label>
+                                    <label htmlFor={`rrule-${currentItem.id}`}>Repeat (RRULE)</label>
                                     <div
                                         style={{
                                             display: "flex",
@@ -644,31 +679,15 @@ export function InspectorPane({
                                             width: "100%",
                                         }}
                                     >
-                                        <select
+                                        <RepeatSelect
                                             value={(currentItem as AppEvent).rrule || ""}
                                             disabled={isReadOnlyCalendar}
-                                            onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                                            onChange={(e) =>
                                                 updateEvent(currentItem.id, {
-                                                    rrule:
-                                                        e.target.value ||
-                                                        undefined,
+                                                    rrule: e.target.value || undefined,
                                                 })
                                             }
-                                        >
-                                            <option value="">None</option>
-                                            <option value="FREQ=DAILY">
-                                                Daily
-                                            </option>
-                                            <option value="FREQ=WEEKLY">
-                                                Weekly
-                                            </option>
-                                            <option value="FREQ=MONTHLY">
-                                                Monthly
-                                            </option>
-                                            <option value="FREQ=YEARLY">
-                                                Yearly
-                                            </option>
-                                        </select>
+                                        />
                                         <input
                                             type="text"
                                             placeholder="Custom RRULE (e.g. FREQ=WEEKLY;BYDAY=TU,TH)"

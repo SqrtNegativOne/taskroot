@@ -140,7 +140,7 @@ function SegmentedControl<T>({
 }
 
 const SelectSetting = ({ setting, val, settings, setSettings }: any) => (
-    <label style={{ display: "flex", gap: "12px", alignItems: "center", color: "var(--fg)" }}>
+    <div style={{ display: "flex", gap: "12px", alignItems: "center", color: "var(--fg)" }}>
         <SegmentedControl
             value={val}
             onChange={(v: unknown) =>
@@ -151,11 +151,11 @@ const SelectSetting = ({ setting, val, settings, setSettings }: any) => (
             }
             options={setting.options}
         />
-    </label>
+    </div>
 );
 
 const TimeSetting = ({ setting, val, settings, setSettings }: any) => (
-    <label style={{ display: "flex", gap: "12px", alignItems: "center", color: "var(--fg)" }}>
+    <div style={{ display: "flex", gap: "12px", alignItems: "center", color: "var(--fg)" }}>
         <input
             type="time"
             value={typeof val === "number" ? minToTime(val) : "00:00"}
@@ -167,11 +167,11 @@ const TimeSetting = ({ setting, val, settings, setSettings }: any) => (
                 borderRadius: "4px", padding: "4px 8px"
             }}
         />
-    </label>
+    </div>
 );
 
 const NumberSetting = ({ setting, val, settings, setSettings }: any) => (
-    <label style={{ display: "flex", gap: "12px", alignItems: "center", color: "var(--fg)" }}>
+    <div style={{ display: "flex", gap: "12px", alignItems: "center", color: "var(--fg)" }}>
         <input
             type="number"
             min={setting.min}
@@ -185,25 +185,25 @@ const NumberSetting = ({ setting, val, settings, setSettings }: any) => (
                 borderRadius: "4px", padding: "4px 8px", width: "80px"
             }}
         />
-    </label>
+    </div>
 );
 
 const CheckboxSetting = ({ setting, val, settings, setSettings }: any) => (
-    <div
-        style={{ display: "flex", gap: "12px", alignItems: "center", color: "var(--fg)", cursor: "pointer" }}
+    <button type="button" aria-label="Toggle setting"
+        style={{ display: "flex", gap: "12px", alignItems: "center", color: "var(--fg)", cursor: "pointer", background: "none", border: "none", padding: 0 }}
         onClick={() => setSettings({ ...settings, [setting.id]: !val })}
         data-cuelume-toggle
     >
         <div className={`toggle-switch ${val ? "is-on" : ""}`}>
             <div className="toggle-switch-thumb" />
         </div>
-    </div>
+    </button>
 );
 
 const KeybindingSetting = ({ setting, val, settings, setSettings }: any) => {
     const [isRecording, setIsRecording] = useState(false);
     return (
-        <kbd
+        <button type="button"
             style={{
                 padding: "4px 8px",
                 background: isRecording ? "var(--accent-soft)" : "var(--bg-app)",
@@ -238,7 +238,7 @@ const KeybindingSetting = ({ setting, val, settings, setSettings }: any) => {
             }}
         >
             {isRecording ? "Press any key..." : typeof val === "string" || typeof val === "number" ? val : ""}
-        </kbd>
+        </button>
     );
 };
 
@@ -353,17 +353,18 @@ export function SettingsScreen() {
                     {!searchQuery && (
                         <div className="task-list">
                             {SETTINGS_TABS.map((tab) => (
-                                <div
+                                <button type="button"
                                     key={tab.id}
                                     className={`task-row ${activeTab === tab.id ? "is-active" : ""}`}
                                     onClick={() => setActiveTab(tab.id)}
+                                    style={{ background: "none", border: "none", font: "inherit", color: "inherit", textAlign: "left", width: "100%", padding: 0 }}
                                     data-cuelume-hover="tick"
                                     data-cuelume-toggle
                                 >
                                     <div className="task-row-title">
                                         {tab.label}
                                     </div>
-                                </div>
+                                </button>
                             ))}
                         </div>
                     )}

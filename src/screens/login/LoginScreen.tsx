@@ -97,7 +97,26 @@ export function LoginScreen() {
                             e.currentTarget.style.boxShadow =
                                 "0 8px 20px rgba(0, 0, 0, 0.4)";
                         }}
+                        onFocus={(e) => {
+                            e.currentTarget.style.transform =
+                                "translateY(-2px)";
+                            e.currentTarget.style.borderColor =
+                                "var(--accent-line)";
+                            e.currentTarget.style.background =
+                                "var(--bg-surface-hover)";
+                            e.currentTarget.style.boxShadow =
+                                "0 8px 20px rgba(0, 0, 0, 0.4)";
+                        }}
                         onMouseOut={(e) => {
+                            e.currentTarget.style.transform = "translateY(0)";
+                            e.currentTarget.style.borderColor =
+                                "var(--border-strong)";
+                            e.currentTarget.style.background =
+                                "var(--bg-surface)";
+                            e.currentTarget.style.boxShadow =
+                                "var(--shadow-btn-hover)";
+                        }}
+                        onBlur={(e) => {
                             e.currentTarget.style.transform = "translateY(0)";
                             e.currentTarget.style.borderColor =
                                 "var(--border-strong)";

@@ -26,7 +26,7 @@ export const storeRegistry = {
         try {
             const saved = localStorage.getItem(`taskroot_${key}`);
             return saved ? JSON.parse(saved) : [];
-        } catch (e) {
+        } catch {
             return [];
         }
     }

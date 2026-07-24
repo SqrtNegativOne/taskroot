@@ -14,7 +14,7 @@ describe("api.ts", () => {
         it("should abort fetch if timeout is reached", async () => {
             vi.stubGlobal(
                 "fetch",
-                vi.fn((_url: unknown, init: RequestInit) =>
+                vi.fn<(...args: never[]) => unknown>((_url: unknown, init: RequestInit) =>
                     new Promise((_resolve, reject) => {
                         if (init?.signal) {
                             init.signal.addEventListener("abort", () => {
@@ -31,14 +31,14 @@ describe("api.ts", () => {
                 timeout: 1000,
             });
 
-            // Attach the expect handler before the promise rejects
-            const expectPromise =
-                expect(promise).rejects.toThrow("Request timed out");
+            const p = promise.catch(e => e);
 
             // Fast forward timers and flush microtasks
             await vi.advanceTimersByTimeAsync(1500);
 
-            await expectPromise;
+            const err = await p;
+            expect(err).toBeInstanceOf(Error);
+            expect((err as Error).message).toBe("Request timed out");
             expect(global.fetch).toHaveBeenCalledOnce();
         });
     });

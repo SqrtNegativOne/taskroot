@@ -82,16 +82,17 @@ export function DayTimeline({
     React.useEffect(() => {
         const tick = () => {
             if (scrollRef.current) {
+                const currentMin = new Date().getHours() * 60 + new Date().getMinutes();
                 (scrollRef.current as HTMLDivElement).scrollTop = Math.max(
                     0,
-                    (nowMin - 60) * PX_PER_MIN - 12,
+                    (currentMin - 60) * PX_PER_MIN - 12,
                 );
             }
         };
         tick();
         const id = requestAnimationFrame(tick);
         return () => cancelAnimationFrame(id);
-    }, []); // Only run once on mount
+    }, []);
 
     React.useEffect(() => {
         const interval = setInterval(() => {
@@ -481,7 +482,7 @@ function EventBlock({
             window.removeEventListener("pointermove", move);
             window.removeEventListener("pointerup", up);
             if (!moved) {
-                onEventClick && onEventClick(event);
+                if (onEventClick) onEventClick(event);
                 return;
             }
             setDragOffset(null);

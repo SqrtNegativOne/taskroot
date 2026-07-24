@@ -3,7 +3,7 @@ import "../../../vitest-setup.ts";
 import React from "react";
 import "@testing-library/jest-dom";
 import { MemoryRouter } from "react-router-dom";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, fireEvent, waitFor } from "@testing-library/react";
 import { expect, test, vi, beforeEach, beforeAll } from "vitest";
 import { PlanScreen } from "./PlanScreen";
 
@@ -21,15 +21,15 @@ beforeAll(() => {
     // Mock matchMedia
     Object.defineProperty(window, 'matchMedia', {
         writable: true,
-        value: vi.fn().mockImplementation((query: any) => ({
+        value: vi.fn<(...args: never[]) => unknown>().mockImplementation((query: any) => ({
             matches: false,
             media: query,
             onchange: null,
-            addListener: vi.fn(), // Deprecated
-            removeListener: vi.fn(), // Deprecated
-            addEventListener: vi.fn(),
-            removeEventListener: vi.fn(),
-            dispatchEvent: vi.fn(),
+            addListener: vi.fn<(...args: never[]) => unknown>(), // Deprecated
+            removeListener: vi.fn<(...args: never[]) => unknown>(), // Deprecated
+            addEventListener: vi.fn<(...args: never[]) => unknown>(),
+            removeEventListener: vi.fn<(...args: never[]) => unknown>(),
+            dispatchEvent: vi.fn<(...args: never[]) => unknown>(),
         })),
     });
 
@@ -47,7 +47,7 @@ beforeAll(() => {
 beforeEach(() => {
     localStorage.clear();
     // clear jsdom prompt/confirm
-    window.confirm = vi.fn(() => true);
+    window.confirm = vi.fn<(...args: never[]) => unknown>(() => true);
 });
 
 test("deleting a task also deletes its associated events", async () => {

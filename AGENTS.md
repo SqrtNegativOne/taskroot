@@ -55,3 +55,4 @@ Taskroot is a web-based and desktop task management app focusing on planning, ex
 - Refactor classes if they exceed 10 methods.
 - Refactor any bit of code if it exceeds 4 levels of indentation.
 - The ideal number of arguments for a function is zero (niladic). Next comes one (monadic), followed closely by two (dyadic). Three arguments (triadic) should be avoided where possible. More than three (polyadic) requires very special justification—and then shouldn’t be used anyway.
+- After implementing any changes, run `bun oxlint`, and fix all errors and warnings. If you are unsure about a warning, ask for clarification in the code review.

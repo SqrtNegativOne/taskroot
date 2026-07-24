@@ -10,6 +10,7 @@ Taskroot is a web-based and desktop task management app focusing on planning, ex
 - **Frontend Framework**: React 19 with React Router for SPA navigation.
 - **Build Tool**: Vite (with Hot Module Replacement for fast development).
 - **Desktop Wrapper**: Electron (configured via `electron/main.ts` and `preload.cts`).
+- **Linter**: Oxlint (`oxlint`), configured via `.oxlintrc.json`.
 - **Language**: TypeScript (`.tsx` and `.ts` files).
 - **Styling**: Vanilla CSS (`src/index.css`) with extensive use of CSS variables for theming.
 - **Backend / Storage**: `localStorage` for offline and fast local prototyping, synced to Google Tasks and Google Calendar. 
@@ -18,10 +19,10 @@ Taskroot is a web-based and desktop task management app focusing on planning, ex
 
 ## Project Structure (`src/`)
 
-- `src/screens/plan/`: Components for the Plan screen (`PlanScreen.tsx`, `date-grid.tsx`, `tweaks-panel.tsx`, `shared-menus.tsx`).
+- `src/screens/plan/`: Components for the Plan screen (`PlanScreen.tsx`, `date-grid.tsx`, `shared-menus.tsx`).
 - `src/screens/do/`: Components for the Do screen (`DoScreen.tsx`, `RestScreen.tsx`, `kanban.tsx`, `stopwatch.tsx`, `distraction-log.tsx`, `tips-notes.tsx`).
 - `src/screens/login/`: Components for the login page (`LoginScreen.tsx`).
-- `src/screens/settings/`: Components for the settings screen (`SettingsScreen.tsx`, `settings.css`).
+- `src/screens/settings/`: Components for the settings screen (`SettingsScreen.tsx`, `SettingActions.tsx`, `settings.css`).
 - `src/screens/minitracker/`: Components for the mini tracker window (`MiniTrackerScreen.tsx`).
 - `src/screens/graph/`, `src/screens/recap/`, `src/screens/stats/`, `src/screens/wrap/`: Other specialized screens.
 - `src/components/`: Shared UI components used across multiple screens (e.g., `shell.tsx`, `collapsible.tsx`, `day-timeline.tsx`, `tasklist.tsx`).
@@ -54,4 +55,3 @@ Taskroot is a web-based and desktop task management app focusing on planning, ex
 - Refactor classes if they exceed 10 methods.
 - Refactor any bit of code if it exceeds 4 levels of indentation.
 - The ideal number of arguments for a function is zero (niladic). Next comes one (monadic), followed closely by two (dyadic). Three arguments (triadic) should be avoided where possible. More than three (polyadic) requires very special justification—and then shouldn’t be used anyway.
-  - Don't try to 

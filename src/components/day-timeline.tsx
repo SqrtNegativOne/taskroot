@@ -58,7 +58,6 @@ export function DayTimeline({
     setTimelineDate,
     dragState,
     setDragState,
-    // onDropToTime,
     onResizeEvent,
     onMoveEvent,
     onEventClick,
@@ -419,8 +418,6 @@ function EventBlock({
     lanes,
     onResize,
     onMove,
-    // dragState,
-    // setDragState,
     onEventClick,
 }: EventBlockProps) {
     const [dragOffset, setDragOffset] = useState<number | null>(null);

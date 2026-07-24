@@ -1,127 +1,8 @@
 import { useState, useEffect, useRef } from "react";
-import { Icon } from "../../components/icon";
-
-export interface Filter {
-    id: string;
-    column: string;
-    operator: string;
-    value: string | string[];
-}
-
-function MultiSelect({ options, values, onChange }: { options: string[], values: string[], onChange: (v: string[]) => void }) {
-    const [open, setOpen] = useState(false);
-    const ref = useRef<HTMLDivElement>(null);
-    useEffect(() => {
-        function handleClickOutside(e: PointerEvent) {
-            if (ref.current && !ref.current.contains(e.target as Node)) {
-                setOpen(false);
-            }
-        }
-        document.addEventListener("pointerdown", handleClickOutside);
-        return () => document.removeEventListener("pointerdown", handleClickOutside);
-    }, []);
-
-    const toggle = (opt: string) => {
-        if (values.includes(opt)) {
-            onChange(values.filter(v => v !== opt));
-        } else {
-            onChange([...values, opt]);
-        }
-    };
-
-    return (
-        <div ref={ref} style={{ position: "relative", flex: 1.5 }}>
-            <button
-                type="button"
-                className="selector-input" 
-                style={{
-                    padding: "4px 8px", border: "1px solid var(--border)", borderRadius: "4px", background: "var(--bg-app)", color: "var(--fg)", cursor: "pointer", minHeight: "24px", display: "flex", alignItems: "center", flexWrap: "wrap", gap: "4px",
-                    width: "100%", textAlign: "left", fontFamily: "inherit", fontSize: "inherit"
-                }}
-                onClick={() => setOpen(!open)}
-            >
-                {values.length === 0 ? <span style={{opacity: 0.5}}>None</span> : values.join(", ")}
-            </button>
-            {open && (
-                <div style={{
-                    position: "absolute", top: "100%", left: 0, right: 0, zIndex: 1001, background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: "4px", maxHeight: "150px", overflowY: "auto", display: "flex", flexDirection: "column", marginTop: "4px", boxShadow: "0 4px 12px rgba(0,0,0,0.2)"
-                }}>
-                    {options.map(o => (
-                        <button 
-                            key={o} 
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); toggle(o); }} 
-                            style={{
-                                padding: "4px 8px", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px",
-                                background: values.includes(o) ? "var(--accent-soft)" : "transparent",
-                                width: "100%", border: "none", textAlign: "left", color: "inherit", fontFamily: "inherit", fontSize: "inherit"
-                            }}
-                        >
-                            <input type="checkbox" checked={values.includes(o)} readOnly style={{margin: 0}} />
-                            {o}
-                        </button>
-                    ))}
-                </div>
-            )}
-        </div>
-    );
-}
-
-export interface Column {
-    id: string;
-    label: string;
-}
-
-export interface SortOption {
-    id: string;
-    label: string;
-}
-
-export interface FilterSortButtonsProps {
-    filters: Filter[];
-    setFilters: React.Dispatch<React.SetStateAction<Filter[]>>;
-    sort: string;
-    setSort: (sort: string) => void;
-    columns: Column[];
-    getValuesForColumn: (columnId: string) => string[];
-    sortOptions?: SortOption[];
-    align?: "left" | "right";
-}
-
-function useFilterActions(filters: Filter[], setFilters: React.Dispatch<React.SetStateAction<Filter[]>>, columns: Column[], getValuesForColumn: (c: string) => string[]) {
-    const addFilter = () => {
-        const firstCol = columns[0].id;
-        const firstVal = [getValuesForColumn(firstCol)[0] || ""];
-        setFilters([
-            ...filters,
-            {
-                id: Date.now().toString(),
-                column: firstCol,
-                operator: "is",
-                value: firstVal,
-            },
-        ]);
-    };
-
-    const updateFilter = (id: string, updates: Partial<Filter>) => {
-        setFilters((fs) =>
-            fs.map((f) => {
-                if (f.id !== id) return f;
-                const nf = { ...f, ...updates };
-                if (updates.column && updates.column !== f.column) {
-                    nf.value = [getValuesForColumn(updates.column)[0] || ""];
-                }
-                return nf;
-            }),
-        );
-    };
-
-    const removeFilter = (id: string) => {
-        setFilters((fs) => fs.filter((f) => f.id !== id));
-    };
-
-    return { addFilter, updateFilter, removeFilter };
-}
+import { Icon } from "../../../components/icon";
+import { useFilterActions } from "./useFilterActions";
+import { SelectInput, MultiSelect } from "../../../components/inputs";
+import type { FilterSortButtonsProps } from "./types";
 
 export function FilterSortButtons({
     filters,
@@ -274,49 +155,25 @@ export function FilterSortButtons({
                                 alignItems: "center",
                             }}
                         >
-                            <select
+                            <SelectInput
                                 value={f.column}
-                                onChange={(e) =>
-                                    updateFilter(f.id, {
-                                        column: e.target.value,
-                                    })
+                                onChange={(val: string) =>
+                                    updateFilter(f.id, { column: val })
                                 }
-                                className="selector-input"
-                                style={{
-                                    flex: 1,
-                                    padding: "4px 8px",
-                                    border: "1px solid var(--border)",
-                                    borderRadius: "4px",
-                                    background: "var(--bg-app)",
-                                    color: "var(--fg)",
-                                }}
-                            >
-                                {columns.map((c) => (
-                                    <option key={c.id} value={c.id}>
-                                        {c.label}
-                                    </option>
-                                ))}
-                            </select>
-                            <select
+                                options={columns.map(c => ({ label: c.label, value: c.id }))}
+                                style={{ flex: 1 }}
+                            />
+                            <SelectInput
                                 value={f.operator}
-                                onChange={(e) =>
-                                    updateFilter(f.id, {
-                                        operator: e.target.value,
-                                    })
+                                onChange={(val: string) =>
+                                    updateFilter(f.id, { operator: val })
                                 }
-                                className="selector-input"
-                                style={{
-                                    width: "75px",
-                                    padding: "4px 8px",
-                                    border: "1px solid var(--border)",
-                                    borderRadius: "4px",
-                                    background: "var(--bg-app)",
-                                    color: "var(--fg)",
-                                }}
-                            >
-                                <option value="is">is</option>
-                                <option value="is not">is not</option>
-                            </select>
+                                options={[
+                                    { label: "is", value: "is" },
+                                    { label: "is not", value: "is not" }
+                                ]}
+                                style={{ width: "75px" }}
+                            />
                             <MultiSelect 
                                 options={getValuesForColumn(f.column)}
                                 values={Array.isArray(f.value) ? f.value.map(String) : [String(f.value)]}
@@ -394,25 +251,12 @@ export function FilterSortButtons({
                         >
                             Sort by
                         </span>
-                        <select
+                        <SelectInput
                             value={sort}
-                            onChange={(e) => setSort(e.target.value)}
-                            className="selector-input"
-                            style={{
-                                flex: 1,
-                                padding: "4px 8px",
-                                border: "1px solid var(--border)",
-                                borderRadius: "4px",
-                                background: "var(--bg-app)",
-                                color: "var(--fg)",
-                            }}
-                        >
-                            {sortOptions.map((o) => (
-                                <option key={o.id} value={o.id}>
-                                    {o.label}
-                                </option>
-                            ))}
-                        </select>
+                            onChange={(val: string) => setSort(val)}
+                            options={sortOptions.map(o => ({ label: o.label, value: o.id }))}
+                            style={{ flex: 1 }}
+                        />
                     </div>
                 </div>
             )}

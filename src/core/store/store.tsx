@@ -118,7 +118,8 @@ export function useStored<T>(
         let result: T;
         if (typeof newValOrUpdater === "function") {
             setVal((prev: T) => {
-                const updater: Function = newValOrUpdater;
+                // We must use 'as' here because typeof cannot distinguish between T being a function and newValOrUpdater being an updater function.
+                const updater = newValOrUpdater as (prev: T) => T;
                 result = updater(prev);
 
                 if (interceptor) {

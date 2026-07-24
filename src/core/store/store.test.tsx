@@ -5,7 +5,7 @@ import { storeRegistry } from "./storeRegistry";
 import { taskSync, eventSync, pusher } from "../sync";
 
 const { __fakeUpdaters, triggerRemoteUpdate } = vi.hoisted(() => {
-    const updaters = new Map<string, Set<Function>>();
+    const updaters = new Map<string, Set<(data: unknown) => void>>();
     return {
         __fakeUpdaters: updaters,
         triggerRemoteUpdate: (key: string, data: unknown) => {
@@ -17,7 +17,7 @@ const { __fakeUpdaters, triggerRemoteUpdate } = vi.hoisted(() => {
 vi.mock("./storeRegistry", () => {
     return {
         storeRegistry: {
-            registerUpdater: (key: string, onData: Function) => {
+            registerUpdater: (key: string, onData: (data: unknown) => void) => {
                 if (!__fakeUpdaters.has(key)) {
                     __fakeUpdaters.set(key, new Set());
                 }

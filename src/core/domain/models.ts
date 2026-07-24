@@ -43,5 +43,8 @@ export interface AppEvent {
     description?: string;
     updatedAt?: number;
     _deleted?: boolean;
+    isInstance?: boolean;
+    baseEventId?: string;
+    endDate?: string | Date;
     [key: string]: unknown;
 }

@@ -1,6 +1,6 @@
 import type { AppTask } from "./models";
 
-export type BaseEvent = {
+type BaseEvent = {
     id: string;
     title?: string;
     date: string; // YYYY-MM-DD
@@ -17,26 +17,26 @@ export type BaseEvent = {
 };
 
 // Task plans: when you schedule a task for a certain time.
-export type TaskEvent = BaseEvent & {
+type TaskEvent = BaseEvent & {
     type: "plan";
     taskId: string;
 };
 
 // Informational: Deadlines, holidays, reminders. Can be full-day or time-bound.
-export type InfoEvent = BaseEvent & {
+type InfoEvent = BaseEvent & {
     type: "info";
     title: string;
 };
 
 // Busy: Meetings, group projects. Can be time-bound only.
-export type BusyEvent = BaseEvent & {
+type BusyEvent = BaseEvent & {
     type: "busy";
     title: string;
     isAllDay?: false;
 };
 
 // Log: What you actually did. (Unimplemented features for now)
-export type LogEvent = Omit<BaseEvent, "isAllDay" | "endDate"> & {
+type LogEvent = Omit<BaseEvent, "isAllDay" | "endDate"> & {
     type: "log";
     title: string;
     isAllDay: false;

@@ -28,7 +28,7 @@ interface TaskNodeProps {
     id: string;
 }
 const TaskNodeComponent = ({ data, id }: TaskNodeProps) => {
-    const task = data.task as Task;
+    const task = data.task;
 
     return (
         <div

@@ -247,7 +247,7 @@ function FlowtimeClockDisplay({
     );
 }
 
-export interface StopwatchState {
+interface StopwatchState {
     elapsed: number;
     runningSince: number | null;
     isBreak: boolean;
@@ -256,7 +256,7 @@ export interface StopwatchState {
     breakSoundPlayed: boolean;
 }
 
-export interface StopwatchContext {
+interface StopwatchContext {
     currentMs?: number;
     running?: boolean;
     isPristine?: boolean;
@@ -459,7 +459,7 @@ class GuzeyClockStrategy extends ClockStrategy {
     }
 
     onToggle({ state, setState, setTimeLogs, activeTask }: StopwatchContext) {
-        setState((s) => {
+        setState((s): StopwatchState => {
             if (s.runningSince) {
                 logWorkSession(
                     setTimeLogs,
@@ -468,7 +468,7 @@ class GuzeyClockStrategy extends ClockStrategy {
                     activeTask?.id,
                     "guzey",
                 );
-                return { ...s, runningSince: null } as StopwatchState;
+                return { ...s, runningSince: null };
             } else {
                 return { ...s, runningSince: Date.now() };
             }

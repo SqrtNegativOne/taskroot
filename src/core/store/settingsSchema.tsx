@@ -21,6 +21,10 @@ export interface AppSettings {
     syncInterval: number;
     keybindingOpenSettings: string;
     keybindingRestoreApp: string;
+    trackerOpacity?: number;
+    trackerHoverReduction?: number;
+    trackerDimmedOpacity?: number;
+    trackerShowBorder?: boolean;
     [key: string]: unknown; // Allow custom actions/etc if needed, though they shouldn't store values.
 }
 

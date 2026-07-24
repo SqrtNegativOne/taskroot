@@ -11,7 +11,7 @@ import { Icon } from "./icon";
 import { MONTHS, DOW_SHORT, PAD2 } from "../core/store/data";
 import { syncState, poller } from "../core/sync";
 
-export function WindowControls({ children }: { children?: React.ReactNode }) {
+function WindowControls({ children }: { children?: React.ReactNode }) {
     const handleMinimize = () => window.electronAPI?.minimizeWindow?.();
     const handleMaximize = () => window.electronAPI?.maximizeWindow?.();
     const handleClose = () => window.electronAPI?.closeWindow?.();
@@ -274,7 +274,7 @@ export function TitleBar({ current, today }) {
     );
 }
 
-export function StageIndicator({ current }) {
+function StageIndicator({ current }) {
     const stages = [
         { key: "plan", label: "plan", href: "/plan" },
         { key: "do", label: "do", href: "/do" },

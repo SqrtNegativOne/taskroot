@@ -12,7 +12,7 @@ import React, {
 
 export const TODAY = new Date();
 
-export const SAMPLE_TASKS = [];
+export const SAMPLE_TASKS: import('../domain/models').AppTask[] = [];
 
 // Events already on the calendar. Time is minutes from midnight.
 // type: 'plan' (planned task block) | 'info' (informational) | 'busy' (busy block)
@@ -112,7 +112,7 @@ export const MONTHS_LONG = [
     "December",
 ];
 export const DOW_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-export const DOW_TINY = ["S", "M", "T", "W", "T", "F", "S"];
+
 
 // ── More seed data for Do / Rest screens ────────────────────────────────────
 

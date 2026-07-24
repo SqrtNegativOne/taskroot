@@ -19,7 +19,7 @@ import {
 import { SETTINGS_SCHEMA, DEFAULT_SETTINGS } from "./settingsSchema";
 import type { AppSettings } from "./settingsSchema";
 
-export const VALID_STORE_KEYS = [
+const VALID_STORE_KEYS = [
     "settings",
     "tasks",
     "events",
@@ -68,54 +68,6 @@ export function purgeOrphanedData(
     }
 }
 
-let globalSettings: AppSettings | null = null;
-const settingsListeners = new Set<() => void>();
-
-export function useSetting<K extends keyof AppSettings>(
-    settingKey: K,
-): [AppSettings[K], (val: AppSettings[K]) => void] {
-    if (!globalSettings) {
-        try {
-            const raw = localStorage.getItem("taskroot_settings");
-            globalSettings = raw
-                ? { ...DEFAULT_SETTINGS, ...JSON.parse(raw) }
-                : { ...DEFAULT_SETTINGS };
-        } catch (e) {
-            globalSettings = { ...DEFAULT_SETTINGS };
-        }
-    }
-
-    const value = useSyncExternalStore(
-        (listener) => {
-            settingsListeners.add(listener);
-            return () => settingsListeners.delete(listener);
-        },
-        () => globalSettings![settingKey],
-    );
-
-    const [, setSettings] = useStored<AppSettings>(
-        "settings",
-        DEFAULT_SETTINGS,
-    );
-
-    const setter = useCallback(
-        (newVal: AppSettings[K]) => {
-            globalSettings = { ...globalSettings!, [settingKey]: newVal };
-            settingsListeners.forEach((l) => l());
-            setSettings(globalSettings);
-        },
-        [settingKey, setSettings],
-    );
-
-    useEffect(() => {
-        storeRegistry.registerUpdater("settings", (serverVal: AppSettings) => {
-            globalSettings = serverVal;
-            settingsListeners.forEach((l) => l());
-        });
-    }, []);
-
-    return [value, setter];
-}
 
 // React hook: manages local state, localStorage, and delegates remote sync to the ApiService
 export function useStored<T>(
@@ -254,7 +206,5 @@ export function useStored<T>(
 export function load(key: string, fallback: unknown) {
     return fallback;
 }
-export function save(key: string, value: unknown) {}
-export function ensure(key: string, initial: unknown) {}
 export function seedDefaults() {}
 

@@ -195,53 +195,10 @@ export function useTweaks(defaults) {
 // is what actually hides the panel.
 export function TweaksPanel({
     title = "Tweaks",
-    noDeckControls = false,
     children,
 }) {
     const [open, setOpen] = React.useState(false);
     const dragRef = React.useRef(null);
-    // Auto-inject a rail toggle when a <deck-stage> is on the page. The
-    // toggle drives the deck's per-viewer _railVisible via window message;
-    // state is mirrored from the same localStorage key the deck reads so
-    // the control reflects reality across reloads. The mechanism is the
-    // message — authors who want custom placement can post it directly
-    // and pass noDeckControls to suppress this one.
-    const hasDeckStage = React.useMemo(
-        () =>
-            typeof document !== "undefined" &&
-            !!document.querySelector("deck-stage"),
-        [],
-    );
-    // deck-stage enables its rail in connectedCallback, but this panel can
-    // mount before that element has upgraded. The initial read catches the
-    // common case; the listener covers mounting first. (Older deck-stage.js
-    // copies still wait for the host's __omelette_rail_enabled postMessage —
-    // same listener handles those.)
-    const [railEnabled, setRailEnabled] = React.useState(() => {
-        if (!hasDeckStage) return false;
-        const el = document.querySelector("deck-stage");
-        return el instanceof HTMLElement && "_railEnabled" in el && !!(el as any)._railEnabled;
-    });
-    React.useEffect(() => {
-        if (!hasDeckStage || railEnabled) return undefined;
-        const onMsg = (e) => {
-            if (e.data && e.data.type === "__omelette_rail_enabled")
-                setRailEnabled(true);
-        };
-        window.addEventListener("message", onMsg);
-        return () => window.removeEventListener("message", onMsg);
-    }, [hasDeckStage, railEnabled]);
-    const [railVisible, setRailVisible] = React.useState(() => {
-        try {
-            return localStorage.getItem("deck-stage.railVisible") !== "0";
-        } catch (e) {
-            return true;
-        }
-    });
-    const toggleRail = (on) => {
-        setRailVisible(on);
-        window.postMessage({ type: "__deck_rail_visible", on }, "*");
-    };
     const offsetRef = React.useRef({ x: 16, y: 16 });
     const PAD = 16;
 
@@ -337,15 +294,6 @@ export function TweaksPanel({
                 </div>
                 <div className="twk-body">
                     {children}
-                    {hasDeckStage && railEnabled && !noDeckControls && (
-                        <TweakSection label="Deck">
-                            <TweakToggle
-                                label="Thumbnail rail"
-                                value={railVisible}
-                                onChange={toggleRail}
-                            />
-                        </TweakSection>
-                    )}
                 </div>
             </div>
         </>
@@ -369,7 +317,7 @@ export function TweakSection({
     );
 }
 
-export function TweakRow({
+function TweakRow({
     label,
     value,
     children,
@@ -535,7 +483,7 @@ export function TweakRadio({ label, value, options, onChange }) {
     );
 }
 
-export function TweakSelect({ label, value, options, onChange }) {
+function TweakSelect({ label, value, options, onChange }) {
     return (
         <TweakRow label={label}>
             <select
@@ -557,7 +505,7 @@ export function TweakSelect({ label, value, options, onChange }) {
     );
 }
 
-export function TweakText({ label, value, placeholder, onChange }) {
+function TweakText({ label, value, placeholder, onChange }) {
     return (
         <TweakRow label={label}>
             <input
@@ -571,7 +519,7 @@ export function TweakText({ label, value, placeholder, onChange }) {
     );
 }
 
-export function TweakNumber({
+function TweakNumber({
     label,
     value,
     min,
@@ -712,7 +660,7 @@ export function TweakColor({ label, value, options, onChange }) {
     );
 }
 
-export function TweakButton({ label, onClick, secondary = false }) {
+function TweakButton({ label, onClick, secondary = false }) {
     return (
         <button
             type="button"

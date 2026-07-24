@@ -24,13 +24,13 @@ function timeToMin(t: string) {
     return parseInt(hh, 10) * 60 + parseInt(mm, 10);
 }
 
-export interface SegmentedControlProps<T> {
+interface SegmentedControlProps<T> {
     options: { label: string; value: T }[];
     value: T;
     onChange: (val: T) => void;
 }
 
-export function SegmentedControl<T>({
+function SegmentedControl<T>({
     options,
     value,
     onChange,

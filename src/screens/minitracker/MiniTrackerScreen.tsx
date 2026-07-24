@@ -225,15 +225,15 @@ export function MiniTrackerScreen() {
 
     const baseOpacity =
         settings.trackerOpacity !== undefined
-            ? (settings.trackerOpacity as number) / 100
+            ? settings.trackerOpacity / 100
             : 0.8;
     const hoverReduction =
         settings.trackerHoverReduction !== undefined
-            ? (settings.trackerHoverReduction as number) / 100
+            ? settings.trackerHoverReduction / 100
             : 0.2;
     const dimmedOpacity =
         settings.trackerDimmedOpacity !== undefined
-            ? (settings.trackerDimmedOpacity as number) / 100
+            ? settings.trackerDimmedOpacity / 100
             : 0.2;
 
     let currentOpacity = baseOpacity;
@@ -271,7 +271,7 @@ export function MiniTrackerScreen() {
                     padding: "16px",
                     boxSizing: "border-box",
                     textAlign: "center",
-                } as React.CSSProperties
+                }
             }
             title="Double-click to restore main window"
         >

@@ -411,7 +411,7 @@ function formatDateTime(s) {
     return `${MONTHS[parseInt(m, 10) - 1].toLowerCase()} ${parseInt(d, 10)} · ${time || ""}`;
 }
 
-export function hexAlpha(hex, alpha) {
+function hexAlpha(hex, alpha) {
     const h = hex.replace("#", "");
     const r = parseInt(h.slice(0, 2), 16);
     const g = parseInt(h.slice(2, 4), 16);

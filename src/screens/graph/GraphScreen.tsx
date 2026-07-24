@@ -10,7 +10,7 @@ import type { AppTask as Task } from "../../core/domain/models";
 export function GraphScreen() {
     const [tasks, setTasks] = useStored<Task[]>(
         "tasks",
-        SAMPLE_TASKS as Task[],
+        SAMPLE_TASKS,
     );
 
     // UI state — task list

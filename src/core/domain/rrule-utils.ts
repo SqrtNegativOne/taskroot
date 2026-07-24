@@ -74,7 +74,7 @@ export function expandEventsForView(
                         endDate: newEndDate,
                         isInstance: true,
                         baseEventId: event.id,
-                    } as AppEvent);
+                    });
                 }
             });
         } catch (e) {

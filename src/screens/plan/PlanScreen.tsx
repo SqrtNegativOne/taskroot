@@ -674,7 +674,7 @@ function TitleInput({
 
     const handleKeyDown = (e) => {
         if (e.key === "Enter") {
-            (e.target as HTMLElement).blur();
+            if (e.target instanceof HTMLElement) e.target.blur();
             if (onEnter) onEnter();
         }
     };

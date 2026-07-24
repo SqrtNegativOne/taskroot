@@ -60,11 +60,8 @@ export function DateGrid({
                     if (f.column === "type") {
                         match = e.type === f.value;
                     } else if (f.column === "tag") {
-                        const eventTags =
-                            "tags" in e
-                                ? (e as unknown as { tags: string[] }).tags
-                                : [];
-                        const taskTags = e.task ? e.task.tags : [];
+                        const eventTags = e.tags || [];
+                        const taskTags = e.task && e.task.tags ? e.task.tags : [];
                         const allTags = [...eventTags, ...taskTags].map((t) =>
                             typeof t === "string" ? t.toLowerCase() : "",
                         );
@@ -325,8 +322,8 @@ function DayCell({
                 canAccept ? "can-accept" : "",
             ].join(" ")}
             onDoubleClick={(e) => {
-                if ((e.target as HTMLElement).closest(".day-cell-event"))
-                    return;
+                if (!(e.target instanceof HTMLElement)) return;
+                if (e.target.closest(".day-cell-event")) return;
                 if (onAddEvent) onAddEvent(cell.date);
             }}
         >

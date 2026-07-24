@@ -44,7 +44,7 @@ describe("CounterClockStrategy", () => {
             setState,
             timeLogs: [],
             setTimeLogs: vi.fn(),
-            activeTask: { id: "t1", title: "Task", type: "task" } as import('../../core/domain/models').AppTask,
+            activeTask: { id: "t1", title: "Task" },
             allowNoTask: false,
             settings: {},
         });
@@ -64,7 +64,7 @@ describe("CounterClockStrategy", () => {
             setState: setState2,
             timeLogs: [],
             setTimeLogs,
-            activeTask: { id: "t1", title: "Task", type: "task" } as import('../../core/domain/models').AppTask,
+            activeTask: { id: "t1", title: "Task" },
             allowNoTask: false,
             settings: {},
         });
@@ -87,7 +87,7 @@ describe("FlowtimeClockStrategy", () => {
             setState,
             timeLogs: [],
             setTimeLogs: vi.fn(),
-            activeTask: { id: "t1", title: "Task", type: "task" } as import('../../core/domain/models').AppTask,
+            activeTask: { id: "t1", title: "Task" },
             allowNoTask: false,
             settings: {},
         });

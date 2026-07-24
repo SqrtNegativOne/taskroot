@@ -58,9 +58,8 @@ describe("SettingsScreen", () => {
         const firstSetting = SETTINGS_SCHEMA[0];
         if (!firstSetting) return; // skip if schema is empty
 
-        const searchInput = container.querySelector(
-            ".search-input",
-        ) as HTMLInputElement;
+        const searchInput = container.querySelector(".search-input");
+        if (!(searchInput instanceof HTMLInputElement)) return;
 
         act(() => {
             fireEvent.change(searchInput, {
@@ -83,11 +82,10 @@ describe("SettingsScreen", () => {
 
         // Find the clear data button by searching for "Delete everything"
         // Might need to switch to the correct tab first, or just search
-        const searchInput = container.querySelector(
-            ".search-input",
-        ) as HTMLInputElement;
+        const searchInput2 = container.querySelector(".search-input");
+        if (!(searchInput2 instanceof HTMLInputElement)) return;
         act(() => {
-            fireEvent.change(searchInput, {
+            fireEvent.change(searchInput2, {
                 target: { value: "Clear All Data" },
             });
         });

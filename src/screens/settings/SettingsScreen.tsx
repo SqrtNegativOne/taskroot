@@ -50,8 +50,8 @@ export function SegmentedControl<T>({
             if (!containerRef.current) return;
             const activeBtn = containerRef.current.querySelector(
                 'button[data-active="true"]',
-            ) as HTMLButtonElement;
-            if (activeBtn) {
+            );
+            if (activeBtn instanceof HTMLButtonElement) {
                 setThumbStyle({
                     left: activeBtn.offsetLeft,
                     top: activeBtn.offsetTop,

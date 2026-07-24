@@ -53,6 +53,7 @@ export type HydratedEvent = BaseEvent & {
     category?: string;
     priority?: string | number | null;
     isDone: boolean;
+    tags?: string[];
     task?: AppTask; // The raw task object if needed by the UI
 };
 

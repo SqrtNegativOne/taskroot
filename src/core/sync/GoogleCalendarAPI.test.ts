@@ -18,11 +18,12 @@ describe("GoogleCalendarAPI", () => {
 
     describe("fetchEvents", () => {
         it("requests events with proper parameters", async () => {
-            const mockFetch = api.fetchWithTimeout as ReturnType<typeof vi.fn>;
-            mockFetch.mockResolvedValueOnce({
-                ok: true,
-                json: async () => ({ items: [{ id: "e1" }] }),
-            });
+            const mockFetch = vi.mocked(api.fetchWithTimeout);
+            mockFetch.mockResolvedValueOnce(
+                new Response(JSON.stringify({ items: [{ id: "e1" }] }), {
+                    status: 200,
+                })
+            );
 
             const events = await googleCalendarAPI.fetchEvents(
                 "2024-01-01T00:00:00Z",
@@ -40,8 +41,10 @@ describe("GoogleCalendarAPI", () => {
         });
 
         it("throws Unauthorized on 401", async () => {
-            const mockFetch = api.fetchWithTimeout as ReturnType<typeof vi.fn>;
-            mockFetch.mockResolvedValueOnce({ ok: false, status: 401 });
+            const mockFetch = vi.mocked(api.fetchWithTimeout);
+            mockFetch.mockResolvedValueOnce(
+                new Response(null, { status: 401 })
+            );
 
             await expect(
                 googleCalendarAPI.fetchEvents("start", "end"),

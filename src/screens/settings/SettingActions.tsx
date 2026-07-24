@@ -98,11 +98,11 @@ function CustomSelect<T>({ options, value, onChange }: CustomSelectProps<T>) {
                                 textOverflow: "ellipsis",
                             }}
                             onMouseEnter={(e) =>
-                                ((e.target as HTMLDivElement).style.background =
+                                (e.currentTarget.style.background =
                                     "var(--bg-highlight)")
                             }
                             onMouseLeave={(e) =>
-                                ((e.target as HTMLDivElement).style.background =
+                                (e.currentTarget.style.background =
                                     value === o.value
                                         ? "var(--bg-highlight)"
                                         : "transparent")

@@ -19,25 +19,23 @@ describe("GoogleTasksAPI", () => {
 
     describe("fetchTasks", () => {
         it("handles pagination correctly", async () => {
-            const mockFetch = api.fetchWithTimeout as ReturnType<typeof vi.fn>;
+            const mockFetch = vi.mocked(api.fetchWithTimeout);
 
             // Page 1
-            mockFetch.mockResolvedValueOnce({
-                ok: true,
-                json: async () => ({
-                    items: [{ id: "task1" }],
-                    nextPageToken: "page2-token",
-                }),
-            });
+            mockFetch.mockResolvedValueOnce(
+                new Response(
+                    JSON.stringify({ items: [{ id: "task1" }], nextPageToken: "token123" }),
+                    { status: 200 }
+                )
+            );
 
             // Page 2
-            mockFetch.mockResolvedValueOnce({
-                ok: true,
-                json: async () => ({
-                    items: [{ id: "task2" }],
-                    nextPageToken: null,
-                }),
-            });
+            mockFetch.mockResolvedValueOnce(
+                new Response(
+                    JSON.stringify({ items: [{ id: "task2" }], nextPageToken: undefined }),
+                    { status: 200 }
+                )
+            );
 
             const tasks = await googleTasksAPI.fetchTasks();
 
@@ -48,8 +46,10 @@ describe("GoogleTasksAPI", () => {
         });
 
         it("throws Unauthorized on 401", async () => {
-            const mockFetch = api.fetchWithTimeout as ReturnType<typeof vi.fn>;
-            mockFetch.mockResolvedValueOnce({ ok: false, status: 401 });
+            const mockFetch = vi.mocked(api.fetchWithTimeout);
+            mockFetch.mockResolvedValueOnce(
+                new Response(null, { status: 401 })
+            );
 
             await expect(googleTasksAPI.fetchTasks()).rejects.toThrow(
                 "Unauthorized",

@@ -233,8 +233,8 @@ function TaskCanvasInner({ tasks, setTasks }: TaskCanvasProps) {
 
     const onDoubleClick = useCallback(
         (e: React.MouseEvent) => {
-            const target = e.target as HTMLElement;
-            if (target.closest(".react-flow__node")) return; // Do not create task if clicking on an existing node
+            if (!(e.target instanceof HTMLElement)) return;
+            if (e.target.closest(".react-flow__node")) return; // Do not create task if clicking on an existing node
 
             // Project screen coordinates to flow coordinates
             const position = screenToFlowPosition({

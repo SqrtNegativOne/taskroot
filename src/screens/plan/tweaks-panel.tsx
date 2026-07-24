@@ -217,15 +217,11 @@ export function TweaksPanel({
     // common case; the listener covers mounting first. (Older deck-stage.js
     // copies still wait for the host's __omelette_rail_enabled postMessage —
     // same listener handles those.)
-    const [railEnabled, setRailEnabled] = React.useState(
-        () =>
-            hasDeckStage &&
-            !!(
-                document.querySelector("deck-stage") as HTMLElement & {
-                    _railEnabled?: boolean;
-                }
-            )?._railEnabled,
-    );
+    const [railEnabled, setRailEnabled] = React.useState(() => {
+        if (!hasDeckStage) return false;
+        const el = document.querySelector("deck-stage");
+        return el instanceof HTMLElement && "_railEnabled" in el && !!(el as any)._railEnabled;
+    });
     React.useEffect(() => {
         if (!hasDeckStage || railEnabled) return undefined;
         const onMsg = (e) => {

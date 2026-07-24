@@ -9,10 +9,6 @@ import React, {
 import { Collapsible } from "../../components/collapsible";
 import {
     TODAY,
-    SAMPLE_TASKS,
-    SAMPLE_DISTRACTIONS,
-    SAMPLE_TIPS,
-    SAMPLE_NOTES,
 } from "../../core/store/data";
 import { DistractionLog } from "./distraction-log";
 import { Kanban } from "./kanban";
@@ -120,7 +116,7 @@ export function DoScreen() {
 }
 
 function DistractionBadge() {
-    const [rows] = useStored("distractions", SAMPLE_DISTRACTIONS);
+    const [rows] = useStored("distractions", []);
     return (
         <span className="badge-count">
             {rows.length} {rows.length === 1 ? "entry" : "entries"}
@@ -128,7 +124,7 @@ function DistractionBadge() {
     );
 }
 function KanbanBadge() {
-    const [tasks] = useTasksStore(SAMPLE_TASKS);
+    const [tasks] = useTasksStore([]);
     const active = tasks.filter((t) => t.status === "doing").length;
     return (
         <span className="badge-count">
@@ -137,7 +133,7 @@ function KanbanBadge() {
     );
 }
 function TipsBadge() {
-    const [tips] = useStored("tips", SAMPLE_TIPS);
+    const [tips] = useStored("tips", []);
     return (
         <span className="badge-count">
             {tips.length} {tips.length === 1 ? "tip" : "tips"}
@@ -145,7 +141,7 @@ function TipsBadge() {
     );
 }
 function NotesBadge() {
-    const [notes] = useStored("notes", SAMPLE_NOTES);
+    const [notes] = useStored("notes", []);
     return (
         <span className="badge-count">
             {notes.length} {notes.length === 1 ? "note" : "notes"}

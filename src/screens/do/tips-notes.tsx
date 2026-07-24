@@ -6,13 +6,13 @@ import React, {
     useCallback,
     Fragment,
 } from "react";
-import { SAMPLE_TIPS, SAMPLE_NOTES } from "../../core/store/data";
+
 import { useStored } from "../../core/store/store";
 
 // Tips list + Notes (Obsidian placeholder)
 
 export function TipsList() {
-    const [tips, setTips] = useStored("tips", SAMPLE_TIPS);
+    const [tips, setTips] = useStored("tips", []);
     const [adding, setAdding] = React.useState(false);
     const [draft, setDraft] = React.useState("");
 
@@ -76,7 +76,7 @@ export function TipsList() {
 }
 
 export function NotesList() {
-    const [notes, setNotes] = useStored("notes", SAMPLE_NOTES);
+    const [notes, setNotes] = useStored("notes", []);
     const [toast, setToast] = React.useState(null);
     const [adding, setAdding] = React.useState(false);
     const [draft, setDraft] = React.useState("");

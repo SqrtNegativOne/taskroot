@@ -6,7 +6,7 @@ import React, {
     useCallback,
     Fragment,
 } from "react";
-import { SAMPLE_TASKS, durationLabel } from "../../core/store/data";
+import { durationLabel } from "../../core/store/data";
 import { useStored, useTasksStore } from "../../core/store/store";
 
 // Kanban board — pulls tasks from the shared store, drag between columns to change status.
@@ -19,7 +19,7 @@ const KANBAN_COLUMNS = [
 ];
 
 export function Kanban() {
-    const [tasks, setTasks] = useTasksStore(SAMPLE_TASKS);
+    const [tasks, setTasks] = useTasksStore([]);
     const [drag, setDrag] = React.useState(null); // { taskId, x, y, overCol }
 
     const onTaskDown = (task) => (e) => {

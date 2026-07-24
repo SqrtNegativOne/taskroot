@@ -8,13 +8,8 @@ import React, {
 import { storeRegistry } from "./storeRegistry";
 import { taskSync, eventSync, pusher } from "../sync";
 import {
-    SAMPLE_TASKS,
-    SAMPLE_EVENTS,
     DEFAULT_STATUSES,
     DEFAULT_DISTRACTION_COLUMNS,
-    SAMPLE_DISTRACTIONS,
-    SAMPLE_TIPS,
-    SAMPLE_NOTES,
 } from "./data";
 import { SETTINGS_SCHEMA, DEFAULT_SETTINGS } from "./settingsSchema";
 import type { AppSettings } from "./settingsSchema";

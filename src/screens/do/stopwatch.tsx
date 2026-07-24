@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { SAMPLE_TASKS, SAMPLE_EVENTS, PAD2, ymd } from "../../core/store/data";
+import { PAD2, ymd } from "../../core/store/data";
 import { useStored, useTasksStore, useEventsStore } from "../../core/store/store";
 import { Icon } from "../../components/icon";
 
@@ -510,8 +510,8 @@ export function Stopwatch({ onBreakStatusChange }) {
         breakStartedAt: null,
         breakSoundPlayed: false,
     });
-    const [tasks, setTasks] = useTasksStore(SAMPLE_TASKS);
-    const [events] = useEventsStore(SAMPLE_EVENTS || []);
+    const [tasks, setTasks] = useTasksStore([]);
+    const [events] = useEventsStore([]);
     const [settings] = useStored<Partial<import('../../core/store/settingsSchema').AppSettings>>("settings", {});
     const [timeLogs, setTimeLogs] = useStored("time_logs", []);
 

@@ -8,8 +8,6 @@ import React, {
 } from "react";
 import {
     TODAY,
-    SAMPLE_TASKS,
-    SAMPLE_EVENTS,
     ymd,
     durationLabel,
 } from "../../core/store/data";
@@ -50,8 +48,8 @@ export function PlanScreen() {
     const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
 
     // Data state (persisted)
-    const [tasks, setTasks] = useTasksStore(SAMPLE_TASKS);
-    const [events, setEvents] = useEventsStore(SAMPLE_EVENTS);
+    const [tasks, setTasks] = useTasksStore([]);
+    const [events, setEvents] = useEventsStore([]);
 
     // Clean up empty items
     React.useEffect(() => {

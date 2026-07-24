@@ -8,7 +8,7 @@ import { DoScreen } from "./screens/do/DoScreen";
 import { SettingsScreen } from "./screens/settings/SettingsScreen";
 import { TitleBar } from "./components/shell";
 import { useStored, purgeOrphanedData, useSettingsStore, useTasksStore } from "./core/store/store";
-import { SAMPLE_TASKS, SAMPLE_EVENTS } from "./core/store/data";
+
 import { syncState, poller } from "./core/sync";
 import {
     NotificationProvider,
@@ -115,10 +115,10 @@ function AppRouter() {
 }
 
 function GlobalSync({ children }: { children: React.ReactNode }) {
-    const [tasks, setTasks, tasksLoaded] = useTasksStore(SAMPLE_TASKS);
+    const [tasks, setTasks, tasksLoaded] = useTasksStore([]);
     const [events, setEvents, eventsLoaded] = useStored(
         "events",
-        SAMPLE_EVENTS,
+        [],
     );
     const [settings] = useSettingsStore(DEFAULT_SETTINGS);
     const [initialSyncDone, setInitialSyncDone] = React.useState(

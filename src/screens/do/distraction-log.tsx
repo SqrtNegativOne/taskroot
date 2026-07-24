@@ -9,7 +9,6 @@ import React, {
 import {
     DEFAULT_STATUSES,
     DEFAULT_DISTRACTION_COLUMNS,
-    SAMPLE_DISTRACTIONS,
     MONTHS,
     PAD2,
 } from "../../core/store/data";
@@ -19,7 +18,7 @@ import { useStored } from "../../core/store/store";
 // Resizable columns, inline cell editing, custom status types.
 
 export function DistractionLog() {
-    const [rows, setRows] = useStored("distractions", SAMPLE_DISTRACTIONS);
+    const [rows, setRows] = useStored("distractions", []);
     const [statuses, setStatuses] = useStored(
         "distractionStatuses",
         DEFAULT_STATUSES,

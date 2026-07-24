@@ -12,13 +12,7 @@ import React, {
 
 export const TODAY = new Date();
 
-export const SAMPLE_TASKS: import('../domain/models').AppTask[] = [];
 
-// Events already on the calendar. Time is minutes from midnight.
-// type: 'plan' (planned task block) | 'info' (informational) | 'busy' (busy block)
-export const SAMPLE_EVENTS = [];
-export const SAMPLE_DISTRACTIONS: Record<string, unknown>[] = [];
-export const SAMPLE_NOTES: Record<string, unknown>[] = [];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -128,11 +122,7 @@ export const DEFAULT_DISTRACTION_COLUMNS = [
     { id: "created", label: "Created", width: 160, type: "datetime" },
 ];
 
-export const SAMPLE_TIPS = [
-    "If a thought pops into your head, write it down immediately.",
-    "When you feel stuck, the timer keeps running. Don't pause to think.",
-    "Two minutes of fake-it-til-you-make-it usually breaks the wall.",
-];
+
 
 export const REST_CHECKLIST_DEFAULTS = [
     { id: "r1", title: "Get out of your chair.", type: "check" },

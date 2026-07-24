@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { TitleBar } from "../../components/shell";
-import { TODAY, SAMPLE_TASKS } from "../../core/store/data";
+import { TODAY } from "../../core/store/data";
 import { useStored } from "../../core/store/store";
 import { TaskListPane } from "../../components/tasklist";
 import { SplitPane } from "../../components/split-pane";
@@ -10,7 +10,7 @@ import type { AppTask as Task } from "../../core/domain/models";
 export function GraphScreen() {
     const [tasks, setTasks] = useStored<Task[]>(
         "tasks",
-        SAMPLE_TASKS,
+        [],
     );
 
     // UI state — task list

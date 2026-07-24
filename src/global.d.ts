@@ -1,4 +1,4 @@
-export {};
+export type __Placeholder = unknown;
 
 declare global {
     interface ImportMetaEnv {

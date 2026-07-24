@@ -11,8 +11,8 @@ export function loadGoogleIdentityScript(): Promise<void> {
         script.src = "https://accounts.google.com/gsi/client";
         script.async = true;
         script.defer = true;
-        script.onload = () => resolve();
-        script.onerror = () => reject(new Error("Failed to load Google Identity Services script"));
+        script.addEventListener("load", () => resolve());
+        script.addEventListener("error", () => reject(new Error("Failed to load Google Identity Services script")));
         document.body.appendChild(script);
     });
 }

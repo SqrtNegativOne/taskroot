@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc", "vitest", "jsx-a11y", "promise", "react-perf"],
+  "plugins": ["react", "typescript", "oxc", "vitest", "jsx-a11y", "promise", "react-perf", "unicorn"],
   "categories": {
     "correctness": "error",
     "suspicious": "error"
@@ -13,6 +13,7 @@
     "eslint/no-underscore-dangle": "off",
     "jsx-a11y/no-autofocus": "off",
     "eslint/max-depth": ["warn", 4],
-    "eslint/complexity": ["warn", 15]
+    "eslint/complexity": ["warn", 15],
+    "eslint/max-lines": ["warn", 250]
   }
 }

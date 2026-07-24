@@ -53,7 +53,7 @@ export function TaskListPane({
     const allTags = React.useMemo(() => {
         const s = new Set<string>();
         tasks.forEach((t) => (t.tags || []).forEach((tag) => s.add(tag)));
-        return Array.from(s).sort();
+        return Array.from(s).toSorted();
     }, [tasks]);
 
     const filtered = React.useMemo(() => {
@@ -89,7 +89,7 @@ export function TaskListPane({
             title: (a, b) => a.title.localeCompare(b.title),
             added: () => 0,
         };
-        return [...xs].sort(cmp[sort] || (() => 0));
+        return xs.toSorted(cmp[sort] || (() => 0));
     }, [tasks, filters, sort, query]);
 
     const handleAddTask = () => {

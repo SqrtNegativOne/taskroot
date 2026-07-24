@@ -68,7 +68,7 @@ export function PlanScreen() {
     const allEventTags = React.useMemo(() => {
         const s = new Set<string>();
         tasks.forEach((t: AppTask) => (t.tags || []).forEach((tag) => s.add(tag)));
-        return Array.from(s).sort();
+        return Array.from(s).toSorted();
     }, [tasks]);
 
     const visibleEvents = React.useMemo(() => {
@@ -89,7 +89,7 @@ export function PlanScreen() {
                 events.forEach((e: AppEvent) => {
                     if (e.category) s.add(e.category);
                 });
-                return Array.from(s).sort();
+                return Array.from(s).toSorted();
             }
             return [];
         },

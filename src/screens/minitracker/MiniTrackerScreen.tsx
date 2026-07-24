@@ -206,6 +206,12 @@ function useMiniTrackerKeybindings(
 }
 
 
+const handleDoubleClick = () => {
+    if (window.electronAPI?.restoreMainWindow) {
+        window.electronAPI.restoreMainWindow();
+    }
+};
+
 export function MiniTrackerScreen() {
     const [state, setState] = useStopwatch();
     const [tasks] = useTasks();
@@ -275,11 +281,7 @@ export function MiniTrackerScreen() {
         running
     );
 
-    const handleDoubleClick = () => {
-        if (window.electronAPI?.restoreMainWindow) {
-            window.electronAPI.restoreMainWindow();
-        }
-    };
+
 
     useMiniTrackerKeybindings(settings.keybindingRestoreApp, setIsDimmed);
 

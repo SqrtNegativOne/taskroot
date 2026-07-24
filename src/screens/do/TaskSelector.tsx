@@ -66,7 +66,7 @@ export function TaskSelector({
 
         const safeEvents = events || [];
 
-        return [...filtered].sort((a: any, b: any) => {
+        return filtered.toSorted((a: any, b: any) => {
             const aEvents = safeEvents.filter(
                 (e: any) =>
                     e.taskId === a.id &&

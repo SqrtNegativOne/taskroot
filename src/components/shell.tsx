@@ -8,10 +8,11 @@ import { Icon } from "./icon";
 
 import { syncState, poller } from "../core/sync";
 
+const handleMinimize = () => window.electronAPI?.minimizeWindow?.();
+const handleMaximize = () => window.electronAPI?.maximizeWindow?.();
+const handleClose = () => window.electronAPI?.closeWindow?.();
+
 function WindowControls({ children }: { children?: React.ReactNode }) {
-    const handleMinimize = () => window.electronAPI?.minimizeWindow?.();
-    const handleMaximize = () => window.electronAPI?.maximizeWindow?.();
-    const handleClose = () => window.electronAPI?.closeWindow?.();
 
     return (
         <div className="window-controls">

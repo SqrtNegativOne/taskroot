@@ -49,7 +49,7 @@ export class Repository<T> {
 
     set(newValOrUpdater: T | ((prev: T) => T)): T {
         const prev = this.get();
-        const next = newValOrUpdater instanceof Function ? newValOrUpdater(prev) : newValOrUpdater;
+        const next = typeof newValOrUpdater === "function" ? (newValOrUpdater as Function)(prev) : newValOrUpdater;
         const mutated = this.interceptor ? this.interceptor(next, prev) : next;
         
         storeRegistry.setLocalData(this.key, mutated);

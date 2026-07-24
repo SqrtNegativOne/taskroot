@@ -84,6 +84,26 @@ export function NotificationProvider({
     );
 }
 
+const getColors = (type: NotificationType) => {
+    switch (type) {
+        case "error":
+            return {
+                bg: "rgba(220, 38, 38, 0.8)",
+                border: "rgba(248, 113, 113, 0.5)",
+            };
+        case "success":
+            return {
+                bg: "rgba(22, 163, 74, 0.8)",
+                border: "rgba(74, 222, 128, 0.5)",
+            };
+        default:
+            return {
+                bg: "rgba(30, 41, 59, 0.8)",
+                border: "rgba(71, 85, 105, 0.5)",
+            };
+    }
+};
+
 function NotificationItem({
     notification,
     onDismiss,
@@ -99,25 +119,6 @@ function NotificationItem({
             return () => clearTimeout(timer);
         }
     }, [notification.type, onDismiss]);
-    const getColors = (type: NotificationType) => {
-        switch (type) {
-            case "error":
-                return {
-                    bg: "rgba(220, 38, 38, 0.8)",
-                    border: "rgba(248, 113, 113, 0.5)",
-                };
-            case "success":
-                return {
-                    bg: "rgba(22, 163, 74, 0.8)",
-                    border: "rgba(74, 222, 128, 0.5)",
-                };
-            default:
-                return {
-                    bg: "rgba(30, 41, 59, 0.8)",
-                    border: "rgba(71, 85, 105, 0.5)",
-                };
-        }
-    };
 
     const colors = getColors(notification.type);
 

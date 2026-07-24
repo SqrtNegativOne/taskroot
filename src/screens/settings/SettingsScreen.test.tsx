@@ -22,6 +22,10 @@ vi.mock("../../core/store/api", () => ({
     },
 }));
 
+const renderWithRouter = (ui: React.ReactElement) => {
+    return render(<MemoryRouter>{ui}</MemoryRouter>);
+};
+
 describe("SettingsScreen", () => {
     beforeEach(() => {
         localStorage.clear();
@@ -39,9 +43,6 @@ describe("SettingsScreen", () => {
         vi.unstubAllGlobals();
     });
 
-    const renderWithRouter = (ui: React.ReactElement) => {
-        return render(<MemoryRouter>{ui}</MemoryRouter>);
-    };
 
     it("renders settings tabs", () => {
         renderWithRouter(<SettingsScreen />);

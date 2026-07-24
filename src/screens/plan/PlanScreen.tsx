@@ -20,7 +20,7 @@ import {
 } from "../../components/day-timeline";
 import { DateGrid } from "./date-grid";
 import { TitleBar } from "../../components/shell";
-import { load, useStored, seedDefaults, useSettingsStore, useTasksStore, useEventsStore } from "../../core/store/store";
+import { useStored, useSettingsStore, useTasksStore, useEventsStore } from "../../core/store/store";
 import { TaskListPane } from "../../components/tasklist";
 import { DEFAULT_SETTINGS } from "../../core/store/settingsSchema";
 
@@ -53,9 +53,8 @@ export function PlanScreen() {
     const [tasks, setTasks] = useTasksStore(SAMPLE_TASKS);
     const [events, setEvents] = useEventsStore(SAMPLE_EVENTS);
 
-    // Seed store on first load & clean up empty items
+    // Clean up empty items
     React.useEffect(() => {
-        seedDefaults();
         const validTasks = tasks.filter(
             (t) => t.isDraft || (t.title && t.title.trim() !== ""),
         );

@@ -232,8 +232,3 @@ export function useEventsStore(initial: AppEvent[]): [AppEvent[], (val: AppEvent
     );
 }
 
-// These are largely no-ops now since useStored handles everything
-export function load(key: string, fallback: unknown) {
-    return fallback;
-}
-export function seedDefaults() {}

@@ -3,119 +3,6 @@ import { api } from "../../core/store/api";
 import { useAuth } from "../../core/auth/AuthContext";
 import { useStored } from "../../core/store/store";
 
-interface CustomSelectProps<T> {
-    options: { label: string; value: T }[];
-    value: T;
-    onChange: (val: T) => void;
-}
-
-function CustomSelect<T>({ options, value, onChange }: CustomSelectProps<T>) {
-    const [open, setOpen] = React.useState(false);
-    const ref = React.useRef<HTMLDivElement>(null);
-
-    React.useEffect(() => {
-        const handleOutside = (e: MouseEvent) => {
-            if (ref.current && e.target instanceof Node && !ref.current.contains(e.target)) setOpen(false);
-        };
-        if (open) document.addEventListener("pointerdown", handleOutside);
-        return () => document.removeEventListener("pointerdown", handleOutside);
-    }, [open]);
-
-    const selectedOpt = options.find((o) => o.value === value);
-
-    return (
-        <div
-            ref={ref}
-            style={{ position: "relative", flex: 1, minWidth: "100px" }}
-        >
-            <div
-                onClick={() => setOpen(!open)}
-                style={{
-                    background: "var(--bg-input, var(--bg-surface))",
-                    color: "var(--fg)",
-                    border: "1px solid var(--border)",
-                    borderRadius: "4px",
-                    padding: "4px 8px",
-                    cursor: "pointer",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                }}
-            >
-                <span
-                    style={{
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                    }}
-                >
-                    {selectedOpt ? selectedOpt.label : "Select..."}
-                </span>
-                <span
-                    style={{
-                        fontSize: "10px",
-                        marginLeft: "8px",
-                        opacity: 0.7,
-                    }}
-                >
-                    ▼
-                </span>
-            </div>
-            {open && (
-                <div
-                    style={{
-                        position: "absolute",
-                        top: "100%",
-                        left: 0,
-                        right: 0,
-                        marginTop: "4px",
-                        background: "var(--bg-surface)",
-                        border: "1px solid var(--border)",
-                        borderRadius: "4px",
-                        maxHeight: "200px",
-                        overflowY: "auto",
-                        zIndex: 100,
-                        boxShadow: "var(--shadow-btn-hover)",
-                    }}
-                >
-                    {options.map((o) => (
-                        <div
-                            key={String(o.value)}
-                            onClick={() => {
-                                onChange(o.value);
-                                setOpen(false);
-                            }}
-                            style={{
-                                padding: "6px 8px",
-                                cursor: "pointer",
-                                color: "var(--fg)",
-                                background:
-                                    value === o.value
-                                        ? "var(--bg-highlight)"
-                                        : "transparent",
-                                whiteSpace: "nowrap",
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                            }}
-                            onMouseEnter={(e) =>
-                                (e.currentTarget.style.background =
-                                    "var(--bg-highlight)")
-                            }
-                            onMouseLeave={(e) =>
-                                (e.currentTarget.style.background =
-                                    value === o.value
-                                        ? "var(--bg-highlight)"
-                                        : "transparent")
-                            }
-                        >
-                            {o.label}
-                        </div>
-                    ))}
-                </div>
-            )}
-        </div>
-    );
-}
 
 export function ExportDataButton() {
     return (
@@ -154,7 +41,7 @@ export function ExportDataButton() {
 
 export function ImportTasksButton({ settings }: { settings: Partial<import('../../core/store/settingsSchema').AppSettings> }) {
     const [ingestText, setIngestText] = useState("");
-    const [tasks, setTasks] = useStored<import('../../core/domain/models').AppTask[]>("tasks", []);
+    const [, setTasks] = useStored<import('../../core/domain/models').AppTask[]>("tasks", []);
 
     return (
         <div

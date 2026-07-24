@@ -18,16 +18,14 @@ import { DistractionLog } from "./distraction-log";
 import { Kanban } from "./kanban";
 import { TitleBar } from "../../components/shell";
 import { Stopwatch } from "./stopwatch";
-import { useStored, seedDefaults, useTasksStore } from "../../core/store/store";
+import { useStored, useTasksStore } from "../../core/store/store";
 import { TipsList, NotesList } from "./tips-notes";
 import { RestScreen } from "./RestScreen";
 
 // Do screen — hero stopwatch + collapsible sections.
 
 export function DoScreen() {
-    React.useEffect(() => {
-        seedDefaults();
-    }, []);
+
     const [isBreak, setIsBreak] = useState(false);
     const [showRestOverride, setShowRestOverride] = useState(false);
 

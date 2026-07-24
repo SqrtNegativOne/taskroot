@@ -3,7 +3,7 @@ import Fuse from "fuse.js";
 import { TitleBar } from "../../components/shell";
 import { SearchBar } from "../../components/search-bar";
 import { TODAY } from "../../core/store/data";
-import { useStored, useSettingsStore } from "../../core/store/store";
+import { useSettingsStore } from "../../core/store/store";
 import "./settings.css";
 import {
     SETTINGS_SCHEMA,

@@ -13,14 +13,12 @@ import {
     DOW_SHORT,
 } from "../../core/store/data";
 import { TitleBar } from "../../components/shell";
-import { load, useStored, seedDefaults } from "../../core/store/store";
+import { useStored } from "../../core/store/store";
 
 // Rest screen — large checklist, editable, resets on each visit.
 
 export function RestScreen() {
-    React.useEffect(() => {
-        seedDefaults();
-    }, []);
+
 
     // Reset every visit: don't persist checks across reloads, but keep custom items.
     const [items, setItems] = useStored("restItems", REST_CHECKLIST_DEFAULTS);

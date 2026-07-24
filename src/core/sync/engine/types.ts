@@ -13,13 +13,21 @@ export const SyncAction = {
 } as const;
 export type SyncAction = (typeof SyncAction)[keyof typeof SyncAction];
 
-export interface SyncQueueItem {
-    type: SyncType;
-    action: SyncAction;
-    item: AppTask | AppEvent | { id: string; [key: string]: unknown };
-    id?: string;
-    calendarId?: string;
-}
+export type SyncQueueItem = 
+    | {
+          type: typeof SyncType.Task;
+          action: SyncAction;
+          item: AppTask;
+          id?: string;
+          calendarId?: never;
+      }
+    | {
+          type: typeof SyncType.Event;
+          action: SyncAction;
+          item: AppEvent;
+          id?: string;
+          calendarId?: string;
+      };
 
 export interface ISyncEngineContext {
     getLocalData: <T = unknown>(key: string) => T;

@@ -36,7 +36,7 @@ export class TaskSynchronizer {
             }
 
             const existingLocalTask = localId ? tasksMap.get(localId) : null;
-            const standardizedRemote: any = googleTasksAPI.toLocalTask(
+            const standardizedRemote = googleTasksAPI.toLocalTask(
                 remote,
                 existingLocalTask,
             );
@@ -80,7 +80,7 @@ export class TaskSynchronizer {
                     }
                     updated = true;
                 } else if ((q.action === SyncAction.Update || q.action === SyncAction.Create) && q.item && q.item.id) {
-                    tasksMap.set(q.item.id, q.item as import('../../domain/models').AppTask);
+                    tasksMap.set(q.item.id, q.item);
                     updated = true;
                 }
             }
@@ -146,9 +146,10 @@ export class TaskSynchronizer {
     }
 
     async processPushItem(taskOrEvent: SyncQueueItem) {
+        if (taskOrEvent.type !== SyncType.Task) return;
         if (taskOrEvent.action === SyncAction.Create) {
             const gid = await googleTasksAPI.createTask(
-                taskOrEvent.item as import('../../domain/models').AppTask,
+                taskOrEvent.item,
             );
             if (gid) {
                 const tasks = this.context.getLocalData<import('../../domain/models').AppTask[]>("tasks");
@@ -170,7 +171,7 @@ export class TaskSynchronizer {
         ) {
             await googleTasksAPI.updateTask(
                 taskOrEvent.id,
-                taskOrEvent.item as import('../../domain/models').AppTask,
+                taskOrEvent.item,
             );
         } else if (
             taskOrEvent.action === SyncAction.Delete &&

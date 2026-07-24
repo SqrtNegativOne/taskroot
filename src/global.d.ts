@@ -14,10 +14,23 @@ declare global {
         closeWindow: () => void;
         restoreMainWindow: () => void;
         onDeepLink: (callback: (route: string) => void) => void;
+        shutdownPC: () => void;
     }
 
     interface Window {
         electronAPI?: ElectronAPI;
-        google?: any; // To be typed later if needed, but this prevents the need for `window as any`
+        google?: {
+            accounts: {
+                oauth2: {
+                    initCodeClient: (config: {
+                        client_id: string;
+                        scope: string;
+                        ux_mode: string;
+                        callback: (response: { code?: string; error?: string }) => void;
+                        error_callback: (error: { message?: string }) => void;
+                    }) => { requestCode: () => void };
+                };
+            };
+        };
     }
 }

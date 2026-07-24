@@ -35,12 +35,12 @@ export function Kanban() {
                 return;
             active = true;
             const el = document.elementFromPoint(ev.clientX, ev.clientY);
-            const colEl = (el as HTMLElement)?.closest("[data-kanban-col]");
+            const colEl = el instanceof Element ? el.closest("[data-kanban-col]") : null;
             setDrag({
                 taskId: task.id,
                 x: ev.clientX,
                 y: ev.clientY,
-                overCol: (colEl as HTMLElement)?.dataset?.kanbanCol || null,
+                overCol: colEl instanceof HTMLElement ? (colEl.dataset?.kanbanCol || null) : null,
             });
         };
         const up = (ev) => {
@@ -48,18 +48,17 @@ export function Kanban() {
             window.removeEventListener("pointerup", up);
             if (active) {
                 const el = document.elementFromPoint(ev.clientX, ev.clientY);
-                const colEl = (el as HTMLElement)?.closest("[data-kanban-col]");
+                const colEl = el instanceof Element ? el.closest("[data-kanban-col]") : null;
                 if (
-                    colEl &&
-                    (colEl as HTMLElement).dataset.kanbanCol !== task.status
+                    colEl instanceof HTMLElement &&
+                    colEl.dataset.kanbanCol !== task.status
                 ) {
                     setTasks((ts) =>
                         ts.map((t) =>
                             t.id === task.id
                                 ? {
                                       ...t,
-                                      status: (colEl as HTMLElement).dataset
-                                          .kanbanCol,
+                                      status: colEl.dataset.kanbanCol,
                                   }
                                 : t,
                         ),

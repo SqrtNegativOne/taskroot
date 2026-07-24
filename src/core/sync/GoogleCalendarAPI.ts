@@ -52,7 +52,7 @@ export class GoogleCalendarAPI {
         return data.items || [];
     }
 
-    async fetchCalendars() {
+    async fetchCalendars(): Promise<{id: string, summary: string}[]> {
         if (!this.token)
             return [{ id: "primary", summary: "Primary Calendar" }];
         const res = await this.fetchWithAuth(

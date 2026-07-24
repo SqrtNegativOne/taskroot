@@ -24,10 +24,10 @@ export class EventSynchronizer {
         const calendars = await googleCalendarAPI.fetchCalendars();
         this.context.setLocalData(
             "calendars",
-            calendars.map((c: any) => ({ id: c.id, summary: c.summary })),
+            calendars.map((c) => ({ id: c.id, summary: c.summary })),
         );
 
-        const allRemoteEvents: any[] = [];
+        const allRemoteEvents: (import('../../domain/models').AppEvent & { _deleted?: boolean })[] = [];
         for (const cal of calendars) {
             const remoteEvents = await googleCalendarAPI.fetchEvents(
                 timeMin.toISOString(),
@@ -90,7 +90,7 @@ export class EventSynchronizer {
                     }
                     updated = true;
                 } else if ((q.action === SyncAction.Update || q.action === SyncAction.Create) && q.item && q.item.id) {
-                    eventsMap.set(q.item.id, q.item as import('../../domain/models').AppEvent);
+                    eventsMap.set(q.item.id, q.item);
                     updated = true;
                 }
             }
@@ -127,7 +127,7 @@ export class EventSynchronizer {
                 continue;
             }
 
-            const calendars = this.context.getLocalData<any[]>("calendars");
+            const calendars = this.context.getLocalData<{id: string, summary: string}[]>("calendars");
             let targetCalendarId = prev.googleCalendarId || "primary";
             if (event.category) {
                 const cal = calendars.find((c) => c.summary === event.category);
@@ -185,13 +185,14 @@ export class EventSynchronizer {
     }
 
     async processPushItem(taskOrEvent: SyncQueueItem) {
+        if (taskOrEvent.type !== SyncType.Event) return;
         const tasks = this.context.getLocalData<import('../../domain/models').AppTask[]>("tasks");
         let targetCalendarId =
-            (taskOrEvent.item as import('../../domain/models').AppEvent).googleCalendarId as string || "primary";
+            taskOrEvent.item.googleCalendarId || "primary";
 
         if (taskOrEvent.action === SyncAction.Create) {
             const res = await googleCalendarAPI.createEvent(
-                taskOrEvent.item as import('../../domain/models').AppEvent,
+                taskOrEvent.item,
                 tasks,
                 targetCalendarId,
             );
@@ -216,7 +217,7 @@ export class EventSynchronizer {
         ) {
             await googleCalendarAPI.updateEvent(
                 taskOrEvent.id,
-                taskOrEvent.item as import('../../domain/models').AppEvent,
+                taskOrEvent.item,
                 tasks,
                 taskOrEvent.calendarId,
             );

@@ -222,11 +222,11 @@ function DLogRow({
                                         setEditingCell(null);
                                     }}
                                     onKeyDown={(e) => {
-                                        if (e.key === "Enter") {
-                                            (e.target as HTMLElement).blur();
+                                        if (e.key === "Enter" && e.currentTarget instanceof HTMLElement) {
+                                            e.currentTarget.blur();
                                         }
-                                        if (e.key === "Escape") {
-                                            (e.target as HTMLElement).blur();
+                                        if (e.key === "Escape" && e.currentTarget instanceof HTMLElement) {
+                                            e.currentTarget.blur();
                                             setEditingCell(null);
                                         }
                                     }}

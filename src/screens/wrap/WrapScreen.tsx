@@ -5,12 +5,9 @@ import { useStored } from "../../core/store/store";
 import { DayTimeline } from "../../components/day-timeline";
 
 export function WrapScreen() {
-    const [settings] = useStored<any>("settings", {
-        earliest_wake_time: 480,
-        last_sleep_time: 1320,
-    });
-    const [events] = useStored<any[]>("events", []);
-    const [tasks] = useStored<any[]>("tasks", []);
+    const [settings] = useStored<typeof import('../../core/store/settingsSchema').DEFAULT_SETTINGS>("settings", import('../../core/store/settingsSchema').DEFAULT_SETTINGS);
+    const [events] = useStored<import('../../core/domain/models').AppEvent[]>("events", []);
+    const [tasks] = useStored<import('../../core/domain/models').AppTask[]>("tasks", []);
 
     const [step, setStep] = useState(1);
     const [answers, setAnswers] = useState({
@@ -319,10 +316,10 @@ export function WrapScreen() {
                                 }
                                 onClick={() => {
                                     if (
-                                        (window as any).electronAPI &&
-                                        (window as any).electronAPI.shutdownPC
+                                        window.electronAPI &&
+                                        window.electronAPI.shutdownPC
                                     ) {
-                                        (window as any).electronAPI.shutdownPC();
+                                        window.electronAPI.shutdownPC();
                                     } else {
                                         alert("PC would shutdown now!");
                                     }

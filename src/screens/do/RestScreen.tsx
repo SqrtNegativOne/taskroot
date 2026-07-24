@@ -118,7 +118,7 @@ export function RestScreen() {
                                     }
                                     onKeyDown={(e) => {
                                         if (e.key === "Enter") {
-                                            (e.target as HTMLElement).blur();
+                                            if (e.currentTarget instanceof HTMLElement) e.currentTarget.blur();
                                         }
                                         if (e.key === "Escape")
                                             setEditing(null);

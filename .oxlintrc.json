@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
+  "plugins": ["react", "typescript", "oxc", "vitest", "jsx-a11y", "promise", "react-perf"],
   "categories": {
     "correctness": "error",
     "suspicious": "error",
@@ -10,6 +10,7 @@
   },
   "rules": {
     "react/rules-of-hooks": "error",
+    "react/exhaustive-deps": "warn",
     "react/only-export-components": ["warn", { "allowConstantExport": true }]
   }
 }

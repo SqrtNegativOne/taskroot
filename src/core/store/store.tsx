@@ -1,16 +1,10 @@
-import React, {
+import {
     useState,
     useEffect,
-    useSyncExternalStore,
-    useCallback,
 } from "react";
 
 import { storeRegistry } from "./storeRegistry";
 import { taskSync, eventSync, pusher } from "../sync";
-import {
-    DEFAULT_STATUSES,
-    DEFAULT_DISTRACTION_COLUMNS,
-} from "./data";
 import { SETTINGS_SCHEMA, DEFAULT_SETTINGS } from "./settingsSchema";
 import type { AppSettings } from "./settingsSchema";
 import type { AppTask, AppEvent } from "../domain/models";

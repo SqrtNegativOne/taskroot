@@ -6,17 +6,17 @@ import { googleCalendarAPI } from "../GoogleCalendarAPI";
 import { googleTasksAPI } from "../GoogleTasksAPI";
 
 export class Poller {
-    private pollInterval: any = null;
+    private pollInterval: ReturnType<typeof setInterval> | null = null;
     private taskSync: TaskSynchronizer;
     private eventSync: EventSynchronizer;
     private pusher: Pusher;
-    private getSettings: () => any;
+    private getSettings: () => Partial<import('../../store/settingsSchema').AppSettings>;
 
     constructor(
         taskSync: TaskSynchronizer,
         eventSync: EventSynchronizer,
         pusher: Pusher,
-        getSettings: () => any
+        getSettings: () => Partial<import('../../store/settingsSchema').AppSettings>
     ) {
         this.taskSync = taskSync;
         this.eventSync = eventSync;
@@ -96,13 +96,15 @@ export class Poller {
             await this.taskSync.pollTasks();
             await this.eventSync.pollEvents();
             this.pusher.trigger();
-        } catch (e: any) {
+        } catch (e: unknown) {
             console.error("Poller poll error:", e);
-            if (e.message !== "Unauthorized") {
-                syncState.error = e.message || "Error during synchronization";
-            } else {
+            if (e instanceof Error && e.message === "Unauthorized") {
                 // If token bouncer couldn't refresh, it throws Unauthorized
                 syncState.error = "Failed to refresh Google session. You may need to log out and log back in.";
+            } else if (e instanceof Error) {
+                syncState.error = e.message || "Error during synchronization";
+            } else {
+                syncState.error = "Error during synchronization";
             }
         } finally {
             syncState.isPolling = false;

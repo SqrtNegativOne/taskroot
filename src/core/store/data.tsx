@@ -17,8 +17,8 @@ export const SAMPLE_TASKS = [];
 // Events already on the calendar. Time is minutes from midnight.
 // type: 'plan' (planned task block) | 'info' (informational) | 'busy' (busy block)
 export const SAMPLE_EVENTS = [];
-export const SAMPLE_DISTRACTIONS: any[] = [];
-export const SAMPLE_NOTES: any[] = [];
+export const SAMPLE_DISTRACTIONS: Record<string, unknown>[] = [];
+export const SAMPLE_NOTES: Record<string, unknown>[] = [];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

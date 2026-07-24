@@ -14,18 +14,18 @@ describe("Logger", () => {
         mockLogToFile = vi.fn();
 
         // Mock window.electronAPI
-        (global as any).window = {
+        vi.stubGlobal("window", {
             electronAPI: {
                 logToFile: mockLogToFile,
             },
-        };
+        });
     });
 
     afterEach(() => {
         console.log = originalConsoleLog;
         console.warn = originalConsoleWarn;
         console.error = originalConsoleError;
-        delete (global as any).window;
+        vi.unstubAllGlobals();
     });
 
     it("logs info to console and electronAPI", () => {
@@ -55,7 +55,7 @@ describe("Logger", () => {
     });
 
     it("works correctly when electronAPI is not available", () => {
-        (global as any).window = {};
+        vi.stubGlobal("window", {});
 
         expect(() => {
             logger.info("Test info without electron");

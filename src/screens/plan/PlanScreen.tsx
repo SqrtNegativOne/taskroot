@@ -296,7 +296,7 @@ export function PlanScreen() {
         setEvents((prev) => [...prev, newEvent]);
     };
 
-    const onAddTask = (defaults: any = {}) => {
+    const onAddTask = (defaults: Partial<import('../../core/domain/models').AppTask> = {}) => {
         const id = `t${Date.now()}`;
         setTasks((ts) => [
             {
@@ -1308,7 +1308,7 @@ function InspectorPane({
                                         label="Include time"
                                         checked={!currentItem.isAllDay}
                                         onChange={(checked) => {
-                                            const updates: any = {
+                                            const updates: Partial<import('../../core/domain/models').AppTask> = {
                                                 isAllDay: !checked,
                                             };
                                             if (currentItem.type !== "plan")

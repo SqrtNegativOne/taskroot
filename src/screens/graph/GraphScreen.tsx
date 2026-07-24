@@ -114,7 +114,7 @@ export function GraphScreen() {
                         query={query}
                         setQuery={setQuery}
                         onDragStart={() => {}}
-                        onAddTask={(defaults: any = {}) => {
+                        onAddTask={(defaults: Partial<import('../../core/domain/models').AppTask> = {}) => {
                             const id = `t${Date.now()}`;
                             setTasks((ts) => [
                                 {

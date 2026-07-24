@@ -24,7 +24,7 @@ type TaskCanvasProps = {
 
 // Custom Node Component
 interface TaskNodeProps {
-    data: { task: Task; [key: string]: any };
+    data: { task: Task; [key: string]: unknown };
     id: string;
 }
 const TaskNodeComponent = ({ data, id }: TaskNodeProps) => {

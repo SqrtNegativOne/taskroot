@@ -13,21 +13,22 @@ import { Icon } from "./icon";
 import { SearchBar } from "./search-bar";
 import { FilterSortButtons } from "../screens/plan/shared-menus";
 import { computeFilterDefaults } from "../core/domain/filters";
+import type { AppTask, AppFilter } from "../core/domain/models";
 
 // Task list — left column. Filter, sort, draggable items.
 
 export interface TaskListPaneProps {
-    tasks: any[];
-    setTasks: (updater: (prev: any[]) => any[]) => void;
-    filters: any[];
-    setFilters: (filters: any[]) => void;
+    tasks: AppTask[];
+    setTasks: React.Dispatch<React.SetStateAction<AppTask[]>>;
+    filters: AppFilter[];
+    setFilters: React.Dispatch<React.SetStateAction<AppFilter[]>>;
     sort: string;
     setSort: (sort: string) => void;
     query: string;
     setQuery: (q: string) => void;
-    onDragStart?: (e: any, task: any) => void;
+    onDragStart?: (e: React.PointerEvent<HTMLElement> | React.MouseEvent<HTMLElement>, task: AppTask) => void;
     activeDragId?: string | null;
-    onAddTask: (defaults?: any) => void;
+    onAddTask: (defaults?: Partial<AppTask>) => void;
     onDeleteTask?: (id: string) => void;
     footer?: React.ReactNode;
 }
@@ -76,7 +77,7 @@ export function TaskListPane({
                 } else if (f.column === "priority") {
                     match = t.priority === f.value;
                 } else if (f.column === "tag") {
-                    match = t.tags.includes(f.value);
+                    match = t.tags.includes(String(f.value));
                 }
                 return f.operator === "is not" ? !match : match;
             });
@@ -167,7 +168,8 @@ export function TaskListPane({
             <div
                 className="task-list"
                 onDoubleClick={(e) => {
-                    const target = e.target as Element;
+                    if (!(e.target instanceof Element)) return;
+                    const target = e.target;
                     if (
                         !target.closest(".task-row") &&
                         !target.closest("button")
@@ -385,3 +387,4 @@ function TaskRow({
         </div>
     );
 }
+

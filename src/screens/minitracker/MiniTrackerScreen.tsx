@@ -19,7 +19,7 @@ export function MiniTrackerScreen() {
         breakSoundPlayed: false,
     });
     const [tasks] = useStored("tasks", []);
-    const [settings] = useStored<any>("settings", {});
+    const [settings] = useStored<Partial<import('../../core/store/settingsSchema').AppSettings>>("settings", {});
     const [now, setNow] = useState(Date.now());
     const [isHovered, setIsHovered] = useState(false);
     const [isDimmed, setIsDimmed] = useState(false);
@@ -66,7 +66,7 @@ export function MiniTrackerScreen() {
         state.breakSoundPlayed,
     ]);
 
-    const activeTask = tasks?.find((t: any) => t.status === "doing");
+    const activeTask = tasks?.find((t: import('../../core/domain/models').AppTask) => t.status === "doing");
     const clockStyle = settings.clockStyle || "counter";
 
     const running = state.runningSince != null;
@@ -225,15 +225,15 @@ export function MiniTrackerScreen() {
 
     const baseOpacity =
         settings.trackerOpacity !== undefined
-            ? settings.trackerOpacity / 100
+            ? (settings.trackerOpacity as number) / 100
             : 0.8;
     const hoverReduction =
         settings.trackerHoverReduction !== undefined
-            ? settings.trackerHoverReduction / 100
+            ? (settings.trackerHoverReduction as number) / 100
             : 0.2;
     const dimmedOpacity =
         settings.trackerDimmedOpacity !== undefined
-            ? settings.trackerDimmedOpacity / 100
+            ? (settings.trackerDimmedOpacity as number) / 100
             : 0.2;
 
     let currentOpacity = baseOpacity;

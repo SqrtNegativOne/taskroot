@@ -28,15 +28,15 @@ describe("SettingsScreen", () => {
         vi.clearAllMocks();
 
         // Mock resize observer which is used in SegmentedControl
-        global.ResizeObserver = class ResizeObserver {
+        vi.stubGlobal("ResizeObserver", class ResizeObserver {
             observe() {}
             unobserve() {}
             disconnect() {}
-        };
+        });
     });
 
     afterEach(() => {
-        delete (global as any).ResizeObserver;
+        vi.unstubAllGlobals();
     });
 
     const renderWithRouter = (ui: React.ReactElement) => {

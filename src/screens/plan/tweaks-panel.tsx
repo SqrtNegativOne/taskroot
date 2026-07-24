@@ -380,7 +380,7 @@ export function TweakRow({
     inline = false,
 }: {
     label: React.ReactNode;
-    value?: any;
+    value?: React.ReactNode;
     children?: React.ReactNode;
     inline?: boolean;
 }) {

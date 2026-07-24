@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { hydrateEvents, type AppEvent } from "./events";
+import { hydrateEvents } from "./events";
+import { createMockAppEvent } from "../utils/testUtils";
 
 describe("hydrateEvents", () => {
     it("should hydrate a plan event using the corresponding task data", () => {
@@ -21,15 +22,15 @@ describe("hydrateEvents", () => {
         ];
 
         const events = [
-            {
+            createMockAppEvent({
                 id: "e1",
                 type: "plan",
                 date: "2026-05-20",
                 start: 600,
                 end: 660,
                 taskId: "t2",
-            },
-        ] as AppEvent[];
+            }),
+        ];
 
         const hydrated = hydrateEvents(events, tasks);
 
@@ -42,15 +43,15 @@ describe("hydrateEvents", () => {
     it("should allow busy events to have their own titles and no task", () => {
         const tasks = [];
         const events = [
-            {
+            createMockAppEvent({
                 id: "e1",
                 type: "busy",
                 date: "2026-05-20",
                 start: 600,
                 end: 660,
                 title: "Team Sync",
-            },
-        ] as AppEvent[];
+            }),
+        ];
 
         const hydrated = hydrateEvents(events, tasks);
 
@@ -61,15 +62,15 @@ describe("hydrateEvents", () => {
 
     it("should reflect name updates dynamically (name update thing)", () => {
         const events = [
-            {
+            createMockAppEvent({
                 id: "e1",
                 type: "plan",
                 date: "2026-05-20",
                 start: 600,
                 end: 660,
                 taskId: "t1",
-            },
-        ] as AppEvent[];
+            }),
+        ];
 
         // Initial state
         let tasks = [

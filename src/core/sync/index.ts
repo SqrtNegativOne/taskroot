@@ -5,8 +5,8 @@ import { EventSynchronizer } from "./engine/EventSynchronizer";
 import { Pusher } from "./engine/Pusher";
 import { Poller } from "./engine/Poller";
 
-const prevTasksMap = new Map<string, any>();
-const prevEventsMap = new Map<string, any>();
+const prevTasksMap = new Map<string, import('../domain/models').AppTask>();
+const prevEventsMap = new Map<string, import('../domain/models').AppEvent>();
 
 function getSettings() {
     return storeRegistry.getLocalData("settings") || { enableCalendarSync: true, enableTasksSync: true };
@@ -17,16 +17,16 @@ const context = {
     setLocalData: storeRegistry.setLocalData,
     prevTasksMap,
     prevEventsMap,
-    updatePrevTasksMap: (tasks: any[]) => {
+    updatePrevTasksMap: (tasks: import('../domain/models').AppTask[]) => {
         prevTasksMap.clear();
         for (const t of tasks) prevTasksMap.set(t.id, { ...t });
     },
-    updatePrevEventsMap: (events: any[]) => {
+    updatePrevEventsMap: (events: import('../domain/models').AppEvent[]) => {
         prevEventsMap.clear();
         for (const e of events) prevEventsMap.set(e.id, { ...e });
     },
     getSettings,
-    pushQueue: null as any, // will be set
+    pushQueue: null as unknown as import('./engine/SyncQueue').SyncQueue, // will be set
     notifyError: (msg: string) => { syncState.error = msg; },
     updateStatus: () => {}, // SyncState derives this now
 };

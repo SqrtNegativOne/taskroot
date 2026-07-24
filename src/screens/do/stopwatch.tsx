@@ -5,7 +5,7 @@ import { Icon } from "../../components/icon";
 
 // Helper to log sessions
 export function logWorkSession(
-    setTimeLogs: any,
+    setTimeLogs: React.Dispatch<React.SetStateAction<import('../../core/domain/models').AppEvent[]>>,
     startMs: number,
     endMs: number,
     taskId: string | null,
@@ -17,11 +17,13 @@ export function logWorkSession(
         ...(logs || []),
         {
             id: `log-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+            title: `Worked on ${taskId || "Task"}`,
+            type: "time_log" as const,
             start: startMs,
             end: endMs,
-            taskId: taskId || null,
+            taskId: taskId || "",
             clockStyle,
-            date: new Date().toISOString(),
+            date: ymd(new Date(startMs)),
         },
     ]);
 }
@@ -245,16 +247,46 @@ function FlowtimeClockDisplay({
     );
 }
 
+export interface StopwatchState {
+    elapsed: number;
+    runningSince: number | null;
+    isBreak: boolean;
+    breakAllowedMs: number;
+    breakStartedAt: number | null;
+    breakSoundPlayed: boolean;
+}
+
+export interface StopwatchContext {
+    currentMs?: number;
+    running?: boolean;
+    isPristine?: boolean;
+    toggle?: () => void;
+    startSession?: () => void;
+    stopSession?: () => void;
+    reset?: () => void;
+    currentTask?: import('../../core/domain/models').AppTask | null;
+    state?: StopwatchState;
+    setState?: React.Dispatch<React.SetStateAction<StopwatchState>>;
+    timeLogs?: import('../../core/domain/models').AppEvent[];
+    setTimeLogs?: React.Dispatch<React.SetStateAction<import('../../core/domain/models').AppEvent[]>>;
+    setSelectorOpen?: React.Dispatch<React.SetStateAction<boolean>>;
+    activeTask?: import('../../core/domain/models').AppTask | null;
+    onBreakStatus?: boolean;
+    allowNoTask?: boolean;
+    settings?: Partial<import('../../core/store/settingsSchema').AppSettings>;
+    [key: string]: unknown;
+}
+
 abstract class ClockStrategy {
-    abstract renderDisplay(context: any): React.ReactNode;
-    abstract requiresAnimationLoop(context: any): boolean;
-    abstract onToggle(context: any): void;
-    abstract onTaskSelected(context: any): void;
-    abstract onReset(context: any): void;
+    abstract renderDisplay(context: StopwatchContext): React.ReactNode;
+    abstract requiresAnimationLoop(context: StopwatchContext): boolean;
+    abstract onToggle(context: StopwatchContext): void;
+    abstract onTaskSelected(context: StopwatchContext): void;
+    abstract onReset(context: StopwatchContext): void;
 }
 
 class CounterClockStrategy extends ClockStrategy {
-    renderDisplay({ currentMs, running, isPristine, toggle }) {
+    renderDisplay({ currentMs, running, isPristine, toggle }: StopwatchContext) {
         return (
             <CounterClockDisplay
                 running={running}
@@ -265,7 +297,7 @@ class CounterClockStrategy extends ClockStrategy {
         );
     }
 
-    requiresAnimationLoop({ state }) {
+    requiresAnimationLoop({ state }: StopwatchContext) {
         return state.runningSince != null;
     }
 
@@ -278,7 +310,7 @@ class CounterClockStrategy extends ClockStrategy {
         activeTask,
         allowNoTask,
         settings,
-    }) {
+    }: StopwatchContext) {
         if (isPristine && !activeTask && !allowNoTask) {
             setSelectorOpen(true);
             return;
@@ -293,6 +325,7 @@ class CounterClockStrategy extends ClockStrategy {
                     "counter",
                 );
                 return {
+                    ...s,
                     elapsed: s.elapsed + (Date.now() - s.runningSince),
                     runningSince: null,
                 };
@@ -301,14 +334,14 @@ class CounterClockStrategy extends ClockStrategy {
         });
     }
 
-    onTaskSelected({ running, setState, setSelectorOpen }) {
+    onTaskSelected({ running, setState, setSelectorOpen }: StopwatchContext) {
         setSelectorOpen(false);
         if (!running) {
             setState((s) => ({ ...s, runningSince: Date.now() }));
         }
     }
 
-    onReset({ state, setState, setSelectorOpen, setTimeLogs, activeTask }) {
+    onReset({ state, setState, setSelectorOpen, setTimeLogs, activeTask }: StopwatchContext) {
         if (state.runningSince) {
             logWorkSession(
                 setTimeLogs,
@@ -318,13 +351,13 @@ class CounterClockStrategy extends ClockStrategy {
                 "counter",
             );
         }
-        setState({ elapsed: 0, runningSince: null });
+        setState((s) => ({ ...s, elapsed: 0, runningSince: null }));
         setSelectorOpen(false);
     }
 }
 
 class FlowtimeClockStrategy extends ClockStrategy {
-    renderDisplay({ currentMs, running, isPristine, toggle, state }) {
+    renderDisplay({ currentMs, running, isPristine, toggle, state }: StopwatchContext) {
         let breakRem = 0;
         if (state.isBreak && state.breakStartedAt) {
             breakRem =
@@ -342,7 +375,7 @@ class FlowtimeClockStrategy extends ClockStrategy {
         );
     }
 
-    requiresAnimationLoop({ state }) {
+    requiresAnimationLoop({ state }: StopwatchContext) {
         return state.runningSince != null || state.isBreak;
     }
 
@@ -355,7 +388,7 @@ class FlowtimeClockStrategy extends ClockStrategy {
         activeTask,
         allowNoTask,
         settings,
-    }) {
+    }: StopwatchContext) {
         if (isPristine && !activeTask && !allowNoTask) {
             setSelectorOpen(true);
             return;
@@ -381,14 +414,14 @@ class FlowtimeClockStrategy extends ClockStrategy {
         });
     }
 
-    onTaskSelected({ running, setState, setSelectorOpen, state }) {
+    onTaskSelected({ running, setState, setSelectorOpen, state }: StopwatchContext) {
         setSelectorOpen(false);
         if (!running && !state.isBreak) {
             setState((s) => ({ ...s, runningSince: Date.now() }));
         }
     }
 
-    onReset({ state, setState, setSelectorOpen, setTimeLogs, activeTask }) {
+    onReset({ state, setState, setSelectorOpen, setTimeLogs, activeTask }: StopwatchContext) {
         if (state.runningSince && !state.isBreak) {
             logWorkSession(
                 setTimeLogs,
@@ -398,19 +431,20 @@ class FlowtimeClockStrategy extends ClockStrategy {
                 "flowtime",
             );
         }
-        setState({
+        setState((s) => ({
+            ...s,
             elapsed: 0,
             runningSince: null,
             isBreak: false,
             breakAllowedMs: 0,
             breakStartedAt: null,
-        });
+        }));
         setSelectorOpen(false);
     }
 }
 
 class GuzeyClockStrategy extends ClockStrategy {
-    renderDisplay({ toggle, onBreakStatus, state }) {
+    renderDisplay({ toggle, onBreakStatus, state }: StopwatchContext) {
         return (
             <GuzeyClockDisplay
                 toggleSelector={toggle}
@@ -424,7 +458,7 @@ class GuzeyClockStrategy extends ClockStrategy {
         return false;
     }
 
-    onToggle({ state, setState, setTimeLogs, activeTask }) {
+    onToggle({ state, setState, setTimeLogs, activeTask }: StopwatchContext) {
         setState((s) => {
             if (s.runningSince) {
                 logWorkSession(
@@ -434,19 +468,19 @@ class GuzeyClockStrategy extends ClockStrategy {
                     activeTask?.id,
                     "guzey",
                 );
-                return { ...s, runningSince: null };
+                return { ...s, runningSince: null } as StopwatchState;
             } else {
                 return { ...s, runningSince: Date.now() };
             }
         });
     }
 
-    onTaskSelected({ setSelectorOpen, setState }) {
+    onTaskSelected({ setSelectorOpen, setState }: StopwatchContext) {
         setSelectorOpen(false);
         setState((s) => ({ ...s, runningSince: Date.now() }));
     }
 
-    onReset({ setSelectorOpen, setState, setTimeLogs, activeTask, state }) {
+    onReset({ setSelectorOpen, setState, setTimeLogs, activeTask, state }: StopwatchContext) {
         if (state.runningSince) {
             logWorkSession(
                 setTimeLogs,
@@ -478,7 +512,7 @@ export function Stopwatch({ onBreakStatusChange }) {
     });
     const [tasks, setTasks] = useStored("tasks", SAMPLE_TASKS);
     const [events] = useStored("events", SAMPLE_EVENTS || []);
-    const [settings] = useStored<any>("settings", {});
+    const [settings] = useStored<Partial<import('../../core/store/settingsSchema').AppSettings>>("settings", {});
     const [timeLogs, setTimeLogs] = useStored("time_logs", []);
 
     const strategy =

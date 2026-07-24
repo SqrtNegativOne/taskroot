@@ -21,7 +21,7 @@ export interface AppSettings {
     syncInterval: number;
     keybindingOpenSettings: string;
     keybindingRestoreApp: string;
-    [key: string]: any; // Allow custom actions/etc if needed, though they shouldn't store values.
+    [key: string]: unknown; // Allow custom actions/etc if needed, though they shouldn't store values.
 }
 
 export type SettingType =
@@ -41,16 +41,16 @@ export interface SettingSchema {
     description?: string;
     keywords?: string[];
     type: SettingType;
-    defaultValue?: any;
-    options?: { label: string; value: any }[];
+    defaultValue?: unknown;
+    options?: { label: string; value: string | number }[];
     min?: number;
     max?: number;
     action?: string;
     placeholder?: string;
     beta?: boolean;
     danger?: boolean;
-    render?: (props: { settings: any; setSettings: any }) => ReactNode;
-    showIf?: (settings: any) => boolean;
+    render?: (props: { settings: Partial<AppSettings>; setSettings: React.Dispatch<React.SetStateAction<Partial<AppSettings>>> }) => ReactNode;
+    showIf?: (settings: Record<string, unknown>) => boolean;
 }
 
 export const SETTINGS_SCHEMA: SettingSchema[] = [
@@ -314,9 +314,22 @@ export const SETTINGS_TABS = [
     { id: "tracker_window", label: "Tracker window" },
 ];
 
-export const DEFAULT_SETTINGS = SETTINGS_SCHEMA.reduce((acc, schema) => {
-    if (schema.defaultValue !== undefined) {
-        acc[schema.id] = schema.defaultValue;
-    }
-    return acc;
-}, {} as AppSettings);
+export const DEFAULT_SETTINGS: AppSettings = {
+    defaultCalendarView: "month",
+    defaultTaskDuration: 0,
+    earliest_wake_time: 480,
+    last_sleep_time: 1320,
+    recapDay: "",
+    clockStyle: "counter",
+    allowStopwatchWithoutTask: false,
+    flowtimeBreakDivisor: 5,
+    enableCalendarSync: true,
+    enableTasksSync: true,
+    syncInterval: 5,
+    keybindingOpenSettings: "Ctrl+,",
+    keybindingRestoreApp: "Ctrl+Alt+R",
+    trackerShowBorder: true,
+    trackerOpacity: 80,
+    trackerHoverReduction: 20,
+    trackerDimmedOpacity: 20,
+};

@@ -108,10 +108,10 @@ export function SegmentedControl<T>({
                     zIndex: -1,
                 }}
             />
-            {options.map((opt: any) => (
+            {options.map((opt) => (
                 <button
                     type="button"
-                    key={opt.value}
+                    key={String(opt.value)}
                     data-active={opt.value === value}
                     onClick={() => onChange(opt.value)}
                     data-cuelume-toggle
@@ -145,7 +145,7 @@ export function SettingsScreen() {
     const [recordingKeybinding, setRecordingKeybinding] = useState<
         string | null
     >(null);
-    const [settings, setSettings] = useStored<any>(
+    const [settings, setSettings] = useStored<import('../../core/store/settingsSchema').AppSettings>(
         "settings",
         DEFAULT_SETTINGS,
     );
@@ -179,7 +179,7 @@ export function SettingsScreen() {
         return grouped;
     }, [displayedSettings]);
 
-    const renderSetting = (setting: any) => {
+    const renderSetting = (setting: import('../../core/store/settingsSchema').SettingSchema) => {
         const val =
             settings[setting.id] !== undefined
                 ? settings[setting.id]
@@ -252,7 +252,7 @@ export function SettingsScreen() {
                         >
                             <SegmentedControl
                                 value={val}
-                                onChange={(v: any) =>
+                                onChange={(v) =>
                                     setSettings({
                                         ...settings,
                                         [setting.id]:
@@ -276,7 +276,7 @@ export function SettingsScreen() {
                         >
                             <input
                                 type="time"
-                                value={minToTime(val)}
+                                value={minToTime(val as number)}
                                 onChange={(e) =>
                                     setSettings({
                                         ...settings,
@@ -306,7 +306,7 @@ export function SettingsScreen() {
                                 type="number"
                                 min={setting.min}
                                 max={setting.max}
-                                value={val}
+                                value={val as string | number | readonly string[]}
                                 onChange={(e) =>
                                     setSettings({
                                         ...settings,
@@ -416,7 +416,7 @@ export function SettingsScreen() {
                         >
                             {recordingKeybinding === setting.id
                                 ? "Press any key..."
-                                : val || ""}
+                                : (val as React.ReactNode) || ""}
                         </kbd>
                     )}
                     {setting.type === "custom" &&

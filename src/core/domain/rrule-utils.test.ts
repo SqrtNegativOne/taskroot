@@ -1,15 +1,16 @@
 import { describe, it, expect } from "vitest";
 import { expandEventsForView } from "./rrule-utils";
-import type { AppEvent, HydratedEvent } from "./events";
+import type { HydratedEvent } from "./events";
+import { createMockAppEvent } from "../utils/testUtils";
 
 describe("rrule-utils", () => {
     it("does not touch non-recurring events", () => {
         const baseEvents = [
-            {
+            createMockAppEvent({
                 id: "1",
                 title: "Normal Event",
                 date: "2026-07-15",
-            } as unknown as AppEvent,
+            }),
         ];
         const viewStart = new Date("2026-07-01T00:00:00Z");
         const viewEnd = new Date("2026-07-31T23:59:59Z");
@@ -21,12 +22,12 @@ describe("rrule-utils", () => {
 
     it("expands daily recurring events", () => {
         const baseEvents = [
-            {
+            createMockAppEvent({
                 id: "2",
                 title: "Daily Standup",
                 date: "2026-07-10",
                 rrule: "FREQ=DAILY;COUNT=5",
-            } as unknown as AppEvent,
+            }),
         ];
         const viewStart = new Date("2026-07-01T00:00:00Z");
         const viewEnd = new Date("2026-07-31T23:59:59Z");
@@ -39,19 +40,19 @@ describe("rrule-utils", () => {
 
     it("handles exceptions in recurring events", () => {
         const baseEvents = [
-            {
+            createMockAppEvent({
                 id: "3",
                 title: "Weekly Meeting",
                 date: "2026-07-01",
                 rrule: "FREQ=WEEKLY;COUNT=3",
-            } as unknown as AppEvent,
-            {
+            }),
+            createMockAppEvent({
                 id: "exception_1",
                 title: "Weekly Meeting (Moved)",
                 recurringEventId: "3",
                 originalStartDate: "2026-07-08",
                 date: "2026-07-09",
-            } as unknown as AppEvent,
+            }),
         ];
         const viewStart = new Date("2026-07-01T00:00:00Z");
         const viewEnd = new Date("2026-07-31T23:59:59Z");

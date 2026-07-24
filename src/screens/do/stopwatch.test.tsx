@@ -24,10 +24,10 @@ describe("CounterClockStrategy", () => {
 
     test("requiresAnimationLoop when running", () => {
         expect(
-            strategy.requiresAnimationLoop({ state: { runningSince: 123 } }),
+            strategy.requiresAnimationLoop({ state: { runningSince: 123, elapsed: 0, isBreak: false, breakAllowedMs: 0, breakStartedAt: null, breakSoundPlayed: false } }),
         ).toBe(true);
         expect(
-            strategy.requiresAnimationLoop({ state: { runningSince: null } }),
+            strategy.requiresAnimationLoop({ state: { runningSince: null, elapsed: 0, isBreak: false, breakAllowedMs: 0, breakStartedAt: null, breakSoundPlayed: false } }),
         ).toBe(false);
     });
 
@@ -44,7 +44,7 @@ describe("CounterClockStrategy", () => {
             setState,
             timeLogs: [],
             setTimeLogs: vi.fn(),
-            activeTask: { id: "t1" },
+            activeTask: { id: "t1", title: "Task", type: "task" } as import('../../core/domain/models').AppTask,
             allowNoTask: false,
             settings: {},
         });
@@ -64,7 +64,7 @@ describe("CounterClockStrategy", () => {
             setState: setState2,
             timeLogs: [],
             setTimeLogs,
-            activeTask: { id: "t1" },
+            activeTask: { id: "t1", title: "Task", type: "task" } as import('../../core/domain/models').AppTask,
             allowNoTask: false,
             settings: {},
         });
@@ -87,7 +87,7 @@ describe("FlowtimeClockStrategy", () => {
             setState,
             timeLogs: [],
             setTimeLogs: vi.fn(),
-            activeTask: { id: "t1" },
+            activeTask: { id: "t1", title: "Task", type: "task" } as import('../../core/domain/models').AppTask,
             allowNoTask: false,
             settings: {},
         });
@@ -101,6 +101,7 @@ describe("GuzeyClockStrategy", () => {
     const strategy = CLOCK_STRATEGIES.guzey;
 
     test("requiresAnimationLoop is false", () => {
-        expect(strategy.requiresAnimationLoop({ state: {} })).toBe(false);
+        expect(strategy.requiresAnimationLoop({ state: { runningSince: 1000, elapsed: 0, isBreak: false, breakAllowedMs: 0, breakStartedAt: null, breakSoundPlayed: false } })).toBe(false);
     });
 });
+

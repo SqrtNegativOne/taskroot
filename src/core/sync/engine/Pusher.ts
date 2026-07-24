@@ -8,12 +8,12 @@ export class Pusher {
     private pushQueue = new SyncQueue();
     private taskSync: TaskSynchronizer;
     private eventSync: EventSynchronizer;
-    private getSettings: () => any;
+    private getSettings: () => Partial<import('../../store/settingsSchema').AppSettings>;
 
     constructor(
         taskSync: TaskSynchronizer,
         eventSync: EventSynchronizer,
-        getSettings: () => any
+        getSettings: () => Partial<import('../../store/settingsSchema').AppSettings>
     ) {
         this.taskSync = taskSync;
         this.eventSync = eventSync;
@@ -53,9 +53,9 @@ export class Pusher {
                     await this.eventSync.processPushItem(taskOrEvent);
                 }
                 this.pushQueue.shift();
-            } catch (e: any) {
+            } catch (e: unknown) {
                 console.error("Push failed, keeping in queue", e);
-                syncState.error = e.message || "Error syncing item to Google.";
+                syncState.error = e instanceof Error ? e.message : "Error syncing item to Google.";
                 break;
             }
         }

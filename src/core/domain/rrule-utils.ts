@@ -80,7 +80,7 @@ export function expandEventsForView(
         } catch (e) {
             console.error(
                 "Failed to parse RRULE for event",
-                (event as any).title || event.id,
+                (event as import('./models').AppEvent).title || event.id,
                 e,
             );
             // Fallback: just show the base event if rule is invalid

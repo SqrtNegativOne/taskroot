@@ -53,7 +53,7 @@ export function purgeOrphanedData(
         if (!key || !key.startsWith("taskroot_")) continue;
 
         const rawKey = key.replace("taskroot_", "");
-        if (!VALID_STORE_KEYS.includes(rawKey as StoreKey)) {
+        if (!VALID_STORE_KEYS.some((k) => k === rawKey)) {
             keysToRemove.push(key);
         }
     }
@@ -95,7 +95,7 @@ export function useSetting<K extends keyof AppSettings>(
 
     const [, setSettings] = useStored<AppSettings>(
         "settings",
-        DEFAULT_SETTINGS as AppSettings,
+        DEFAULT_SETTINGS,
     );
 
     const setter = useCallback(
@@ -108,7 +108,7 @@ export function useSetting<K extends keyof AppSettings>(
     );
 
     useEffect(() => {
-        storeRegistry.registerUpdater("settings", (serverVal: any) => {
+        storeRegistry.registerUpdater("settings", (serverVal: AppSettings) => {
             globalSettings = serverVal;
             settingsListeners.forEach((l) => l());
         });
@@ -127,7 +127,7 @@ export function useStored<T>(
             const saved = localStorage.getItem(`taskroot_${key}`);
             let parsed = saved ? JSON.parse(saved) : initial;
             if (key === "settings") {
-                const result: any = { ...DEFAULT_SETTINGS };
+                const result: Partial<import('./settingsSchema').AppSettings> = { ...DEFAULT_SETTINGS };
                 if (parsed && typeof parsed === "object") {
                     for (const s of SETTINGS_SCHEMA) {
                         if (!(s.id in parsed)) continue;
@@ -225,7 +225,7 @@ export function useStored<T>(
 
             // Auto-inject updatedAt (if we have access to prev state, but since we don't easily, we just update all without updatedAt or assume they are fresh)
             if (Array.isArray(result)) {
-                result = result.map((newItem: any) => {
+                result = result.map((newItem: Record<string, unknown>) => {
                     if (newItem && newItem.id && !newItem.updatedAt) {
                         return { ...newItem, updatedAt: Date.now() };
                     }
@@ -251,9 +251,10 @@ export function useStored<T>(
 }
 
 // These are largely no-ops now since useStored handles everything
-export function load(key: string, fallback: any) {
+export function load(key: string, fallback: unknown) {
     return fallback;
 }
-export function save(key: string, value: any) {}
-export function ensure(key: string, initial: any) {}
+export function save(key: string, value: unknown) {}
+export function ensure(key: string, initial: unknown) {}
 export function seedDefaults() {}
+

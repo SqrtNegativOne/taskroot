@@ -12,8 +12,9 @@ describe("api.ts", () => {
         });
 
         it("should abort fetch if timeout is reached", async () => {
-            global.fetch = vi.fn(
-                (url, init: any) =>
+            vi.stubGlobal(
+                "fetch",
+                vi.fn((url, init: RequestInit) =>
                     new Promise((resolve, reject) => {
                         if (init?.signal) {
                             init.signal.addEventListener("abort", () => {
@@ -22,8 +23,9 @@ describe("api.ts", () => {
                                 reject(err);
                             });
                         }
-                    }),
-            ) as any;
+                    })
+                )
+            );
 
             const promise = fetchWithTimeout("https://example.com", {
                 timeout: 1000,

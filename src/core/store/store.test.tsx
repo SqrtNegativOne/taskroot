@@ -4,23 +4,27 @@ import { useStored } from "./store";
 import { storeRegistry } from "./storeRegistry";
 import { taskSync, eventSync, pusher } from "../sync";
 
-vi.mock("./storeRegistry", () => {
+const { __fakeUpdaters, triggerRemoteUpdate } = vi.hoisted(() => {
     const updaters = new Map<string, Set<Function>>();
+    return {
+        __fakeUpdaters: updaters,
+        triggerRemoteUpdate: (key: string, data: unknown) => {
+            updaters.get(key)?.forEach((cb) => cb(data));
+        },
+    };
+});
 
+vi.mock("./storeRegistry", () => {
     return {
         storeRegistry: {
-            __fakeUpdaters: updaters,
             registerUpdater: (key: string, onData: Function) => {
-                if (!updaters.has(key)) {
-                    updaters.set(key, new Set());
+                if (!__fakeUpdaters.has(key)) {
+                    __fakeUpdaters.set(key, new Set());
                 }
-                updaters.get(key)!.add(onData);
+                __fakeUpdaters.get(key)!.add(onData);
                 return () => {
-                    updaters.get(key)?.delete(onData);
+                    __fakeUpdaters.get(key)?.delete(onData);
                 };
-            },
-            triggerRemoteUpdate: (key: string, data: any) => {
-                updaters.get(key)?.forEach((cb) => cb(data));
             },
         },
     };
@@ -38,7 +42,7 @@ describe("useStored Hook", () => {
     beforeEach(() => {
         // Clear localStorage before each test
         localStorage.clear();
-        (storeRegistry as any).__fakeUpdaters.clear();
+        __fakeUpdaters.clear();
         vi.clearAllMocks();
     });
 
@@ -86,8 +90,8 @@ describe("useStored Hook", () => {
         );
 
         act(() => {
-            const setter = result.current[1] as any;
-            setter((prev: any) => ({ count: prev.count + 3 }));
+            const setter = result.current[1];
+            setter((prev) => ({ count: prev.count + 3 }));
         });
 
         expect(result.current[0]).toEqual({ count: 5 });
@@ -102,7 +106,7 @@ describe("useStored Hook", () => {
         );
 
         act(() => {
-            (storeRegistry as any).triggerRemoteUpdate("test_key", { count: 42 }); // Simulate data coming from cloud
+            triggerRemoteUpdate("test_key", { count: 42 }); // Simulate data coming from cloud
         });
 
         expect(result.current[0]).toEqual({ count: 42 });

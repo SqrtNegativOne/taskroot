@@ -4,7 +4,7 @@ import { TODAY } from "../../core/store/data";
 import { useStored } from "../../core/store/store";
 
 export function RecapScreen() {
-    const [settings] = useStored<any>("settings", { recapDay: "" });
+    const [settings] = useStored<Partial<import('../../core/store/settingsSchema').AppSettings>>("settings", { recapDay: "" });
 
     const todayName = TODAY.toLocaleDateString("en-US", {
         weekday: "long",

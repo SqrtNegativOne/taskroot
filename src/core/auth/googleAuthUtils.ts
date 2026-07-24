@@ -24,15 +24,16 @@ export function requestGoogleAuthCode(): Promise<string> {
                 client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
                 scope: "https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/tasks",
                 ux_mode: "popup",
-                callback: (response: any) => {
-                    if (response.code) {
-                        resolve(response.code);
+                callback: (response: unknown) => {
+                    const res = response as { code?: string };
+                    if (res.code) {
+                        resolve(res.code);
                     } else {
-                        reject(new Error(response.error || "Failed to get auth code from Google popup"));
+                        reject(new Error((response as { error?: string })?.error || "Failed to get auth code from Google popup"));
                     }
                 },
-                error_callback: (error: any) => {
-                    reject(new Error(error?.message || "Google popup error"));
+                error_callback: (error: unknown) => {
+                    reject(new Error((error as { message?: string })?.message || "Google popup error"));
                 },
             });
             client.requestCode();
@@ -69,3 +70,4 @@ export async function exchangeAuthCodeForTokens(code: string): Promise<{ accessT
         throw new Error(data.error_description || data.error || "Failed to exchange token");
     }
 }
+

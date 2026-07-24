@@ -4,7 +4,7 @@ import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import { expect, test } from "vitest";
 import { DateGrid } from "./date-grid";
-import type { AppEvent } from "../../core/domain/events";
+import { createMockAppEvent } from "../../core/utils/testUtils";
 import type { AppTask } from "../../core/domain/models";
 import { ymd } from "../../core/store/data";
 
@@ -14,8 +14,8 @@ test("filters events by category correctly", () => {
 
     // Fakes
     const tasks: AppTask[] = [];
-    const events: AppEvent[] = [
-        {
+    const events = [
+        createMockAppEvent({
             id: "e1",
             title: "Event One",
             date: todayStr,
@@ -24,8 +24,8 @@ test("filters events by category correctly", () => {
             type: "info",
             category: "Work",
             isAllDay: false,
-        } as any,
-        {
+        }),
+        createMockAppEvent({
             id: "e2",
             title: "Event Two",
             date: todayStr,
@@ -34,8 +34,8 @@ test("filters events by category correctly", () => {
             type: "info",
             category: "Personal",
             isAllDay: false,
-        } as any,
-        {
+        }),
+        createMockAppEvent({
             id: "e3",
             title: "Event Three",
             date: todayStr,
@@ -43,7 +43,7 @@ test("filters events by category correctly", () => {
             end: 860,
             type: "info",
             isAllDay: false,
-        } as any,
+        }),
     ];
 
     const filter = [{ column: "category", operator: "is", value: "Work" }];
@@ -80,8 +80,8 @@ test("filters out events by category correctly using 'is not'", () => {
 
     // Fakes
     const tasks: AppTask[] = [];
-    const events: AppEvent[] = [
-        {
+    const events = [
+        createMockAppEvent({
             id: "e1",
             title: "Event One",
             date: todayStr,
@@ -90,8 +90,8 @@ test("filters out events by category correctly using 'is not'", () => {
             type: "info",
             category: "Work",
             isAllDay: false,
-        } as any,
-        {
+        }),
+        createMockAppEvent({
             id: "e2",
             title: "Event Two",
             date: todayStr,
@@ -100,7 +100,7 @@ test("filters out events by category correctly using 'is not'", () => {
             type: "info",
             category: "Personal",
             isAllDay: false,
-        } as any,
+        }),
     ];
 
     const filter = [{ column: "category", operator: "is not", value: "Work" }];

@@ -124,7 +124,7 @@ export function DistractionLog() {
                     )}
                     {rows.map((row) => (
                         <DLogRow
-                            key={row.id}
+                            key={String(row.id)}
                             row={row}
                             columns={columns}
                             statuses={statuses}
@@ -152,7 +152,7 @@ export function DistractionLog() {
                 </span>
                 <span className="dlog-foot-sep">·</span>
                 {statuses.map((s) => (
-                    <span key={s.id} className="dlog-foot-stat">
+                    <span key={String(s.id)} className="dlog-foot-stat">
                         <span
                             className="status-chip"
                             style={{
@@ -418,3 +418,4 @@ export function hexAlpha(hex, alpha) {
     const b = parseInt(h.slice(4, 6), 16);
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
+

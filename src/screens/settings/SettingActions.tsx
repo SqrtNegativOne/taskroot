@@ -14,14 +14,14 @@ function CustomSelect<T>({ options, value, onChange }: CustomSelectProps<T>) {
     const ref = React.useRef<HTMLDivElement>(null);
 
     React.useEffect(() => {
-        const handleOutside = (e: any) => {
-            if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+        const handleOutside = (e: MouseEvent) => {
+            if (ref.current && e.target instanceof Node && !ref.current.contains(e.target)) setOpen(false);
         };
         if (open) document.addEventListener("pointerdown", handleOutside);
         return () => document.removeEventListener("pointerdown", handleOutside);
     }, [open]);
 
-    const selectedOpt = options.find((o: any) => o.value === value);
+    const selectedOpt = options.find((o) => o.value === value);
 
     return (
         <div
@@ -78,9 +78,9 @@ function CustomSelect<T>({ options, value, onChange }: CustomSelectProps<T>) {
                         boxShadow: "var(--shadow-btn-hover)",
                     }}
                 >
-                    {options.map((o: any) => (
+                    {options.map((o) => (
                         <div
-                            key={o.value}
+                            key={String(o.value)}
                             onClick={() => {
                                 onChange(o.value);
                                 setOpen(false);
@@ -122,7 +122,7 @@ export function ExportDataButton() {
         <button
             className="sw-btn"
             onClick={() => {
-                const data: Record<string, any> = {};
+                const data: Record<string, unknown> = {};
                 for (let i = 0; i < localStorage.length; i++) {
                     const key = localStorage.key(i);
                     if (key && key.startsWith("taskroot_")) {
@@ -152,9 +152,9 @@ export function ExportDataButton() {
     );
 }
 
-export function ImportTasksButton({ settings }: { settings: any }) {
+export function ImportTasksButton({ settings }: { settings: Partial<import('../../core/store/settingsSchema').AppSettings> }) {
     const [ingestText, setIngestText] = useState("");
-    const [tasks, setTasks] = useStored<any[]>("tasks", []);
+    const [tasks, setTasks] = useStored<import('../../core/domain/models').AppTask[]>("tasks", []);
 
     return (
         <div

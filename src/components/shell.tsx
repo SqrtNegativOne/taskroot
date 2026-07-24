@@ -119,7 +119,8 @@ export function TitleBar({ current, today }) {
         const handleOutsideClick = (e: PointerEvent) => {
             if (
                 dropdownRef.current &&
-                !dropdownRef.current.contains(e.target as Node)
+                e.target instanceof Node &&
+                !dropdownRef.current.contains(e.target)
             ) {
                 setDropdownOpen(false);
             }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "@fontsource/atkinson-hyperlegible-next";
-import { useStored } from "../../core/store/store";
+import { useStored, useTasksStore } from "../../core/store/store";
 import { PAD2 } from "../../core/store/data";
 
 function splitTime(ms: number) {
@@ -18,7 +18,7 @@ export function MiniTrackerScreen() {
         breakStartedAt: null,
         breakSoundPlayed: false,
     });
-    const [tasks] = useStored("tasks", []);
+    const [tasks] = useTasksStore([]);
     const [settings] = useStored<Partial<import('../../core/store/settingsSchema').AppSettings>>("settings", {});
     const [now, setNow] = useState(Date.now());
     const [isHovered, setIsHovered] = useState(false);

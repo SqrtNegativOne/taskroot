@@ -3,7 +3,7 @@ import Fuse from "fuse.js";
 import { TitleBar } from "../../components/shell";
 import { SearchBar } from "../../components/search-bar";
 import { TODAY } from "../../core/store/data";
-import { useStored } from "../../core/store/store";
+import { useStored, useSettingsStore } from "../../core/store/store";
 import "./settings.css";
 import {
     SETTINGS_SCHEMA,
@@ -140,15 +140,125 @@ function SegmentedControl<T>({
     );
 }
 
+const SelectSetting = ({ setting, val, settings, setSettings }: any) => (
+    <label style={{ display: "flex", gap: "12px", alignItems: "center", color: "var(--fg)" }}>
+        <SegmentedControl
+            value={val}
+            onChange={(v) =>
+                setSettings({
+                    ...settings,
+                    [setting.id]: typeof val === "number" ? Number(v) : v,
+                })
+            }
+            options={setting.options}
+        />
+    </label>
+);
+
+const TimeSetting = ({ setting, val, settings, setSettings }: any) => (
+    <label style={{ display: "flex", gap: "12px", alignItems: "center", color: "var(--fg)" }}>
+        <input
+            type="time"
+            value={typeof val === "number" ? minToTime(val) : "00:00"}
+            onChange={(e) =>
+                setSettings({ ...settings, [setting.id]: timeToMin(e.target.value) })
+            }
+            style={{
+                background: "var(--bg-input)", color: "var(--fg)", border: "1px solid var(--border)",
+                borderRadius: "4px", padding: "4px 8px"
+            }}
+        />
+    </label>
+);
+
+const NumberSetting = ({ setting, val, settings, setSettings }: any) => (
+    <label style={{ display: "flex", gap: "12px", alignItems: "center", color: "var(--fg)" }}>
+        <input
+            type="number"
+            min={setting.min}
+            max={setting.max}
+            value={typeof val === "number" || typeof val === "string" ? val : ""}
+            onChange={(e) =>
+                setSettings({ ...settings, [setting.id]: Number(e.target.value) || 0 })
+            }
+            style={{
+                background: "var(--bg-input)", color: "var(--fg)", border: "1px solid var(--border)",
+                borderRadius: "4px", padding: "4px 8px", width: "80px"
+            }}
+        />
+    </label>
+);
+
+const CheckboxSetting = ({ setting, val, settings, setSettings }: any) => (
+    <div
+        style={{ display: "flex", gap: "12px", alignItems: "center", color: "var(--fg)", cursor: "pointer" }}
+        onClick={() => setSettings({ ...settings, [setting.id]: !val })}
+        data-cuelume-toggle
+    >
+        <div className={`toggle-switch ${val ? "is-on" : ""}`}>
+            <div className="toggle-switch-thumb" />
+        </div>
+    </div>
+);
+
+const KeybindingSetting = ({ setting, val, settings, setSettings }: any) => {
+    const [isRecording, setIsRecording] = useState(false);
+    return (
+        <kbd
+            style={{
+                padding: "4px 8px",
+                background: isRecording ? "var(--accent-soft)" : "var(--bg-app)",
+                border: "1px solid " + (isRecording ? "var(--accent)" : "var(--border)"),
+                borderRadius: "4px", fontSize: "0.9em", fontFamily: "monospace", cursor: "pointer",
+                color: "var(--fg)", display: "inline-block"
+            }}
+            onClick={(e) => {
+                e.preventDefault();
+                setIsRecording(true);
+                const handler = (evt: KeyboardEvent) => {
+                    evt.preventDefault();
+                    evt.stopPropagation();
+                    if (evt.key === "Escape") {
+                        setIsRecording(false);
+                        window.removeEventListener("keydown", handler);
+                        return;
+                    }
+                    const parts = [];
+                    if (evt.ctrlKey) parts.push("Ctrl");
+                    if (evt.metaKey) parts.push("Meta");
+                    if (evt.altKey) parts.push("Alt");
+                    if (evt.shiftKey) parts.push("Shift");
+                    if (!["Control", "Meta", "Alt", "Shift"].includes(evt.key)) {
+                        parts.push(evt.key === " " ? "Space" : evt.key.length === 1 ? evt.key.toUpperCase() : evt.key);
+                        setSettings({ ...settings, [setting.id]: parts.join("+") });
+                        setIsRecording(false);
+                        window.removeEventListener("keydown", handler);
+                    }
+                };
+                window.addEventListener("keydown", handler);
+            }}
+        >
+            {isRecording ? "Press any key..." : typeof val === "string" || typeof val === "number" ? val : ""}
+        </kbd>
+    );
+};
+
+const CustomSetting = ({ setting, settings, setSettings }: any) => {
+    return setting.render?.({ settings, setSettings }) || null;
+};
+
+const SETTING_RENDERERS: Record<string, React.FC<any>> = {
+    select: SelectSetting,
+    time: TimeSetting,
+    number: NumberSetting,
+    checkbox: CheckboxSetting,
+    keybinding: KeybindingSetting,
+    custom: CustomSetting
+};
+
 export function SettingsScreen() {
     const [activeTab, setActiveTab] = useState("general");
-    const [recordingKeybinding, setRecordingKeybinding] = useState<
-        string | null
-    >(null);
-    const [settings, setSettings] = useStored<import('../../core/store/settingsSchema').AppSettings>(
-        "settings",
-        DEFAULT_SETTINGS,
-    );
+    const [settings, setSettings] = useSettingsStore(DEFAULT_SETTINGS);
     const [searchQuery, setSearchQuery] = useState("");
 
     const fuse = useMemo(
@@ -186,6 +296,7 @@ export function SettingsScreen() {
                 : setting.defaultValue;
 
         const isComplex = setting.type === "custom";
+        const Renderer = SETTING_RENDERERS[setting.type];
 
         return (
             <div
@@ -200,32 +311,12 @@ export function SettingsScreen() {
                     gap: isComplex ? "8px" : "16px",
                 }}
             >
-                <div
-                    style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "4px",
-                        flex: 1,
-                    }}
-                >
-                    <div
-                        className="settings-section-title"
-                        style={{
-                            color: setting.danger ? "var(--red)" : undefined,
-                        }}
-                    >
-                        {setting.label}{" "}
-                        {setting.beta && (
-                            <span className="status-pill status-nextup">
-                                BETA
-                            </span>
-                        )}
+                <div style={{ display: "flex", flexDirection: "column", gap: "4px", flex: 1 }}>
+                    <div className="settings-section-title" style={{ color: setting.danger ? "var(--red)" : undefined }}>
+                        {setting.label} {setting.beta && <span className="status-pill status-nextup">BETA</span>}
                     </div>
                     {setting.description && (
-                        <div
-                            className="settings-section-desc dim"
-                            style={{ marginBottom: 0 }}
-                        >
+                        <div className="settings-section-desc dim" style={{ marginBottom: 0 }}>
                             {setting.description}
                         </div>
                     )}
@@ -236,191 +327,10 @@ export function SettingsScreen() {
                         margin: 0,
                         flexShrink: 0,
                         display: setting.danger ? "flex" : "block",
-                        justifyContent: setting.danger
-                            ? "flex-end"
-                            : "flex-start",
+                        justifyContent: setting.danger ? "flex-end" : "flex-start",
                     }}
                 >
-                    {setting.type === "select" && (
-                        <label
-                            style={{
-                                display: "flex",
-                                gap: "12px",
-                                alignItems: "center",
-                                color: "var(--fg)",
-                            }}
-                        >
-                            <SegmentedControl
-                                value={val}
-                                onChange={(v) =>
-                                    setSettings({
-                                        ...settings,
-                                        [setting.id]:
-                                            typeof val === "number"
-                                                ? Number(v)
-                                                : v,
-                                    })
-                                }
-                                options={setting.options}
-                            />
-                        </label>
-                    )}
-                    {setting.type === "time" && (
-                        <label
-                            style={{
-                                display: "flex",
-                                gap: "12px",
-                                alignItems: "center",
-                                color: "var(--fg)",
-                            }}
-                        >
-                            <input
-                                type="time"
-                                value={minToTime(val as number)}
-                                onChange={(e) =>
-                                    setSettings({
-                                        ...settings,
-                                        [setting.id]: timeToMin(e.target.value),
-                                    })
-                                }
-                                style={{
-                                    background: "var(--bg-input)",
-                                    color: "var(--fg)",
-                                    border: "1px solid var(--border)",
-                                    borderRadius: "4px",
-                                    padding: "4px 8px",
-                                }}
-                            />
-                        </label>
-                    )}
-                    {setting.type === "number" && (
-                        <label
-                            style={{
-                                display: "flex",
-                                gap: "12px",
-                                alignItems: "center",
-                                color: "var(--fg)",
-                            }}
-                        >
-                            <input
-                                type="number"
-                                min={setting.min}
-                                max={setting.max}
-                                value={val as string | number | readonly string[]}
-                                onChange={(e) =>
-                                    setSettings({
-                                        ...settings,
-                                        [setting.id]:
-                                            Number(e.target.value) || 0,
-                                    })
-                                }
-                                style={{
-                                    background: "var(--bg-input)",
-                                    color: "var(--fg)",
-                                    border: "1px solid var(--border)",
-                                    borderRadius: "4px",
-                                    padding: "4px 8px",
-                                    width: "80px",
-                                }}
-                            />
-                        </label>
-                    )}
-                    {setting.type === "checkbox" && (
-                        <div
-                            style={{
-                                display: "flex",
-                                gap: "12px",
-                                alignItems: "center",
-                                color: "var(--fg)",
-                                cursor: "pointer",
-                            }}
-                            onClick={() =>
-                                setSettings({ ...settings, [setting.id]: !val })
-                            }
-                            data-cuelume-toggle
-                        >
-                            <div
-                                className={`toggle-switch ${val ? "is-on" : ""}`}
-                            >
-                                <div className="toggle-switch-thumb" />
-                            </div>
-                        </div>
-                    )}
-                    {setting.type === "keybinding" && (
-                        <kbd
-                            style={{
-                                padding: "4px 8px",
-                                background:
-                                    recordingKeybinding === setting.id
-                                        ? "var(--accent-soft)"
-                                        : "var(--bg-app)",
-                                border:
-                                    "1px solid " +
-                                    (recordingKeybinding === setting.id
-                                        ? "var(--accent)"
-                                        : "var(--border)"),
-                                borderRadius: "4px",
-                                fontSize: "0.9em",
-                                fontFamily: "monospace",
-                                cursor: "pointer",
-                                color: "var(--fg)",
-                                display: "inline-block",
-                            }}
-                            onClick={(e) => {
-                                e.preventDefault();
-                                setRecordingKeybinding(setting.id);
-                                const handler = (evt: KeyboardEvent) => {
-                                    evt.preventDefault();
-                                    evt.stopPropagation();
-                                    if (evt.key === "Escape") {
-                                        setRecordingKeybinding(null);
-                                        window.removeEventListener(
-                                            "keydown",
-                                            handler,
-                                        );
-                                        return;
-                                    }
-                                    const parts = [];
-                                    if (evt.ctrlKey) parts.push("Ctrl");
-                                    if (evt.metaKey) parts.push("Meta");
-                                    if (evt.altKey) parts.push("Alt");
-                                    if (evt.shiftKey) parts.push("Shift");
-                                    if (
-                                        ![
-                                            "Control",
-                                            "Meta",
-                                            "Alt",
-                                            "Shift",
-                                        ].includes(evt.key)
-                                    ) {
-                                        parts.push(
-                                            evt.key === " "
-                                                ? "Space"
-                                                : evt.key.length === 1
-                                                  ? evt.key.toUpperCase()
-                                                  : evt.key,
-                                        );
-                                        setSettings({
-                                            ...settings,
-                                            [setting.id]: parts.join("+"),
-                                        });
-                                        setRecordingKeybinding(null);
-                                        window.removeEventListener(
-                                            "keydown",
-                                            handler,
-                                        );
-                                    }
-                                };
-                                window.addEventListener("keydown", handler);
-                            }}
-                        >
-                            {recordingKeybinding === setting.id
-                                ? "Press any key..."
-                                : (val as React.ReactNode) || ""}
-                        </kbd>
-                    )}
-                    {setting.type === "custom" &&
-                        setting.render?.({ settings, setSettings })}
+                    {Renderer && <Renderer setting={setting} val={val} settings={settings} setSettings={setSettings} />}
                 </div>
             </div>
         );

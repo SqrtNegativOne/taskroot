@@ -18,7 +18,7 @@ import { DistractionLog } from "./distraction-log";
 import { Kanban } from "./kanban";
 import { TitleBar } from "../../components/shell";
 import { Stopwatch } from "./stopwatch";
-import { useStored, seedDefaults } from "../../core/store/store";
+import { useStored, seedDefaults, useTasksStore } from "../../core/store/store";
 import { TipsList, NotesList } from "./tips-notes";
 import { RestScreen } from "./RestScreen";
 
@@ -130,7 +130,7 @@ function DistractionBadge() {
     );
 }
 function KanbanBadge() {
-    const [tasks] = useStored("tasks", SAMPLE_TASKS);
+    const [tasks] = useTasksStore(SAMPLE_TASKS);
     const active = tasks.filter((t) => t.status === "doing").length;
     return (
         <span className="badge-count">

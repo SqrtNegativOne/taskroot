@@ -20,8 +20,9 @@ import {
 } from "../../components/day-timeline";
 import { DateGrid } from "./date-grid";
 import { TitleBar } from "../../components/shell";
-import { load, useStored, seedDefaults } from "../../core/store/store";
+import { load, useStored, seedDefaults, useSettingsStore, useTasksStore, useEventsStore } from "../../core/store/store";
 import { TaskListPane } from "../../components/tasklist";
+import { DEFAULT_SETTINGS } from "../../core/store/settingsSchema";
 
 import {
     useTweaks,
@@ -49,8 +50,8 @@ export function PlanScreen() {
     const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
 
     // Data state (persisted)
-    const [tasks, setTasks] = useStored("tasks", SAMPLE_TASKS);
-    const [events, setEvents] = useStored("events", SAMPLE_EVENTS);
+    const [tasks, setTasks] = useTasksStore(SAMPLE_TASKS);
+    const [events, setEvents] = useEventsStore(SAMPLE_EVENTS);
 
     // Seed store on first load & clean up empty items
     React.useEffect(() => {
@@ -83,10 +84,7 @@ export function PlanScreen() {
     const [sort, setSort] = useStored("taskSort", "priority");
 
     // UI state — calendar
-    const [settings] = useStored("settings", {
-        defaultCalendarView: "month",
-        defaultTaskDuration: 0,
-    });
+    const [settings] = useSettingsStore(DEFAULT_SETTINGS);
     const [view, setView] = React.useState(
         settings.defaultCalendarView || "month",
     );

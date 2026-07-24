@@ -46,8 +46,9 @@ Taskroot is a web-based and desktop task management app focusing on planning, ex
 
 ## Style (Important)
 - Prefer inline exports over bottom exports.
-- Do not use `any` type ever.
+- Do not use `any` type ever. Or `Function`.
 - Never use `as` type assertions unless absolutely necessary. If you find yourself needing to use `as`, consider refactoring the code to avoid it. If you must use `as`, you must include a comment in the code before it explaining why it is necessary. `as const` is fine obviously.
+- Prefer compile-time type inference over runtime type assertions or checks (e.g., `typeof`).
 - Refactor files if they exceed 250 LOC.
 - Refactor classes if they exceed 10 methods.
 - Refactor any bit of code if it exceeds 4 levels of indentation.

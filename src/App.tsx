@@ -7,7 +7,7 @@ import { PlanScreen } from "./screens/plan/PlanScreen";
 import { DoScreen } from "./screens/do/DoScreen";
 import { SettingsScreen } from "./screens/settings/SettingsScreen";
 import { TitleBar } from "./components/shell";
-import { useStored, purgeOrphanedData } from "./core/store/store";
+import { useStored, purgeOrphanedData, useSettingsStore, useTasksStore } from "./core/store/store";
 import { SAMPLE_TASKS, SAMPLE_EVENTS } from "./core/store/data";
 import { syncState, poller } from "./core/sync";
 import {
@@ -50,7 +50,7 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
 
 function AppRouter() {
     const navigate = useNavigate();
-    const [settings] = useStored("settings", {
+    const [settings] = useSettingsStore({
         keybindingOpenSettings: "Ctrl+,",
     });
 
@@ -115,12 +115,12 @@ function AppRouter() {
 }
 
 function GlobalSync({ children }: { children: React.ReactNode }) {
-    const [tasks, setTasks, tasksLoaded] = useStored("tasks", SAMPLE_TASKS);
+    const [tasks, setTasks, tasksLoaded] = useTasksStore(SAMPLE_TASKS);
     const [events, setEvents, eventsLoaded] = useStored(
         "events",
         SAMPLE_EVENTS,
     );
-    const [settings] = useStored("settings", DEFAULT_SETTINGS);
+    const [settings] = useSettingsStore(DEFAULT_SETTINGS);
     const [initialSyncDone, setInitialSyncDone] = React.useState(
         syncState.initialSyncComplete,
     );

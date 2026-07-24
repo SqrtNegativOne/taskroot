@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import { TitleBar } from "../../components/shell";
 import { TODAY, minutesToHHMM } from "../../core/store/data";
-import { useStored } from "../../core/store/store";
+import { useStored, useSettingsStore } from "../../core/store/store";
+import { DEFAULT_SETTINGS } from "../../core/store/settingsSchema";
 import { DayTimeline } from "../../components/day-timeline";
 
 export function WrapScreen() {
-    const [settings] = useStored<typeof import('../../core/store/settingsSchema').DEFAULT_SETTINGS>("settings", import('../../core/store/settingsSchema').DEFAULT_SETTINGS);
+    const [settings] = useSettingsStore(DEFAULT_SETTINGS);
     const [events] = useStored<import('../../core/domain/models').AppEvent[]>("events", []);
     const [tasks] = useStored<import('../../core/domain/models').AppTask[]>("tasks", []);
 

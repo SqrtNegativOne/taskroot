@@ -1,15 +1,15 @@
 // A simple registry to let Sync modules update the local store (React state + localStorage)
-const updaters = new Map<string, Set<(val: unknown) => void>>();
+const updaters = new Map<string, Set<Function>>();
 
 export const storeRegistry = {
     registerUpdater<T>(key: string, updater: (val: T) => void) {
         if (!updaters.has(key)) {
             updaters.set(key, new Set());
         }
-        updaters.get(key)!.add(updater as (val: unknown) => void);
+        updaters.get(key)!.add(updater);
         return () => {
             const set = updaters.get(key);
-            if (set) set.delete(updater as (val: unknown) => void);
+            if (set) set.delete(updater);
         };
     },
     

@@ -128,6 +128,83 @@ function getMiniTrackerContainerStyle(currentOpacity: number, showBorder: boolea
         textAlign: "center",
     };
 }
+function isRestoreShortcut(e: KeyboardEvent, keybindingRestoreApp: string | undefined) {
+    const kb = keybindingRestoreApp || "Ctrl+Alt+R";
+    const parts = kb.split("+");
+    const key = parts.pop();
+    const needsCtrl = parts.includes("Ctrl");
+    const needsAlt = parts.includes("Alt");
+    const needsShift = parts.includes("Shift");
+    const needsMeta = parts.includes("Meta");
+
+    const keyMatch =
+        e.key.toUpperCase() === key?.toUpperCase() ||
+        (e.key === " " && key === "Space");
+        
+    return e.ctrlKey === needsCtrl &&
+           e.altKey === needsAlt &&
+           e.shiftKey === needsShift &&
+           e.metaKey === needsMeta &&
+           keyMatch;
+}
+
+function isDimShortcut(e: KeyboardEvent) {
+    return e.key.toLowerCase() === "h" &&
+           !e.ctrlKey &&
+           !e.altKey &&
+           !e.metaKey &&
+           !e.shiftKey;
+}
+
+function getClockContent(
+    activeTask: any,
+    allowStopwatchWithoutTask: boolean,
+    clockStyle: string,
+    currentMs: number,
+    state: any,
+    now: number,
+    running: boolean
+) {
+    if (!activeTask && !allowStopwatchWithoutTask) {
+        return <div style={{ color: "var(--fg-dim)" }}>No active task.</div>;
+    }
+    
+    const taskName = activeTask ? activeTask.title : "Work session";
+
+    if (clockStyle === "counter") {
+        return <CounterClock currentMs={currentMs} taskName={taskName} />;
+    }
+    if (clockStyle === "flowtime") {
+        return <FlowtimeClock isBreak={state.isBreak} breakStartedAt={state.breakStartedAt} breakAllowedMs={state.breakAllowedMs} now={now} currentMs={currentMs} taskName={taskName} />;
+    }
+    if (clockStyle === "guzey") {
+        return <GuzeyClock now={now} running={running} taskName={taskName} />;
+    }
+    return null;
+}
+
+function useMiniTrackerKeybindings(
+    keybindingRestoreApp: string | undefined,
+    setIsDimmed: React.Dispatch<React.SetStateAction<boolean>>
+) {
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (isRestoreShortcut(e, keybindingRestoreApp)) {
+                e.preventDefault();
+                if (window.electronAPI?.restoreMainWindow) {
+                    window.electronAPI.restoreMainWindow();
+                }
+            }
+
+            if (isDimShortcut(e)) {
+                setIsDimmed((prev) => !prev);
+            }
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [keybindingRestoreApp, setIsDimmed]);
+}
+
 
 export function MiniTrackerScreen() {
     const [state, setState] = useStopwatch();
@@ -188,21 +265,15 @@ export function MiniTrackerScreen() {
         state.elapsed +
         (running && !state.isBreak ? now - state.runningSince : 0);
 
-    let content = null;
-
-    if (!activeTask && !settings.allowStopwatchWithoutTask) {
-        content = <div style={{ color: "var(--fg-dim)" }}>No active task.</div>;
-    } else {
-        const taskName = activeTask ? activeTask.title : "Work session";
-
-        if (clockStyle === "counter") {
-            content = <CounterClock currentMs={currentMs} taskName={taskName} />;
-        } else if (clockStyle === "flowtime") {
-            content = <FlowtimeClock isBreak={state.isBreak} breakStartedAt={state.breakStartedAt} breakAllowedMs={state.breakAllowedMs} now={now} currentMs={currentMs} taskName={taskName} />;
-        } else if (clockStyle === "guzey") {
-            content = <GuzeyClock now={now} running={running} taskName={taskName} />;
-        }
-    }
+    const content = getClockContent(
+        activeTask,
+        settings.allowStopwatchWithoutTask ?? false,
+        clockStyle,
+        currentMs,
+        state,
+        now,
+        running
+    );
 
     const handleDoubleClick = () => {
         if (window.electronAPI?.restoreMainWindow) {
@@ -210,43 +281,7 @@ export function MiniTrackerScreen() {
         }
     };
 
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            const kb = settings.keybindingRestoreApp || "Ctrl+Alt+R";
-            const parts = kb.split("+");
-            const key = parts.pop();
-            const needsCtrl = parts.includes("Ctrl");
-            const needsAlt = parts.includes("Alt");
-            const needsShift = parts.includes("Shift");
-            const needsMeta = parts.includes("Meta");
-
-            const keyMatch =
-                e.key.toUpperCase() === key?.toUpperCase() ||
-                (e.key === " " && key === "Space");
-            if (
-                e.ctrlKey === needsCtrl &&
-                e.altKey === needsAlt &&
-                e.shiftKey === needsShift &&
-                e.metaKey === needsMeta &&
-                keyMatch
-            ) {
-                e.preventDefault();
-                handleDoubleClick();
-            }
-
-            if (
-                e.key.toLowerCase() === "h" &&
-                !e.ctrlKey &&
-                !e.altKey &&
-                !e.metaKey &&
-                !e.shiftKey
-            ) {
-                setIsDimmed((prev) => !prev);
-            }
-        };
-        window.addEventListener("keydown", handleKeyDown);
-        return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [settings.keybindingRestoreApp]);
+    useMiniTrackerKeybindings(settings.keybindingRestoreApp, setIsDimmed);
 
     const baseOpacity =
         settings.trackerOpacity !== undefined

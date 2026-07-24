@@ -19,17 +19,17 @@ Taskroot is a web-based and desktop task management app focusing on planning, ex
 
 ## Project Structure (`src/`)
 
-- `src/screens/plan/`: Components for the Plan screen (`PlanScreen.tsx`, `date-grid.tsx`, `shared-menus.tsx`).
-- `src/screens/do/`: Components for the Do screen (`DoScreen.tsx`, `RestScreen.tsx`, `kanban.tsx`, `stopwatch.tsx`, `distraction-log.tsx`, `tips-notes.tsx`).
+- `src/screens/plan/`: Components for the Plan screen (`PlanScreen.tsx`, `date-grid.tsx`, `shared-menus/` directory, `drag-helpers.tsx`, `use-drag-and-drop.ts`, `use-plan-actions.ts`).
+- `src/screens/do/`: Components for the Do screen (`DoScreen.tsx`, `RestScreen.tsx`, `TaskSelector.tsx`, `kanban.tsx`, `stopwatch.tsx`, `distraction-log/` directory, `tips-notes.tsx`, `useStopwatchKeyboard.ts`).
 - `src/screens/login/`: Components for the login page (`LoginScreen.tsx`).
-- `src/screens/settings/`: Components for the settings screen (`SettingsScreen.tsx`, `SettingActions.tsx`, `settings.css`).
+- `src/screens/settings/`: Components for the settings screen (`SettingsScreen.tsx`, `SettingActions.tsx`, `SettingRenderers.tsx`, `settings.css`).
 - `src/screens/minitracker/`: Components for the mini tracker window (`MiniTrackerScreen.tsx`).
 - `src/screens/graph/`, `src/screens/recap/`, `src/screens/stats/`, `src/screens/wrap/`: Other specialized screens.
-- `src/components/`: Shared UI components used across multiple screens (e.g., `shell.tsx`, `collapsible.tsx`, `day-timeline.tsx`, `tasklist.tsx`).
+- `src/components/`: Shared UI components used across multiple screens (e.g., `shell.tsx`, `collapsible.tsx`, `tasklist.tsx`, `split-pane.tsx`, `search-bar.tsx`, `icon.tsx`, `day-timeline/`, `inputs/`, `inspector-pane/`).
 - `src/core/`: Core business logic, context providers, and data layer, categorized by responsibility:
   - `sync/`: External sync & third-party APIs (`index.ts`, `SyncState.ts`, `GoogleCalendarAPI.ts`, `GoogleTasksAPI.ts`, and the `engine/` subdirectory containing `SyncQueue.ts`, `TaskSynchronizer.ts`, `EventSynchronizer.ts`, `Pusher.ts`, `Poller.ts`, and `types.ts` for modular sync processing).
-  - `store/`: State management & persistence (`store.tsx`, `storeRegistry.ts`, `api.ts`, `data.tsx`, `settingsSchema.tsx`).
-  - `domain/`: Business logic & transformations (`events.ts`, `filters.ts`, `rrule-utils.ts`).
+  - `store/`: State management & persistence (`hooks.ts`, `repositories.ts`, `storeRegistry.ts`, `api.ts`, `data.tsx`, `settingsSchema.tsx`).
+  - `domain/`: Business logic & transformations (`events.ts`, `filters.ts`, `rrule-utils.ts`, `models.ts`).
   - `auth/`: Authentication (`AuthContext.tsx`, `googleAuthUtils.ts`, `TokenBouncer.ts`).
   - `utils/`: App-wide utilities (`logger.ts`, `notifications.tsx`).
 - `src/App.tsx`: The root application component. Orchestrates routing, authentication bypass for dev, and global sync contexts.

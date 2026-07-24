@@ -10,6 +10,7 @@ import { useDistractions, useTasks, useNotes, useTips } from "../../core/store/h
 
 import { TipsList, NotesList } from "./tips-notes";
 import { RestScreen } from "./RestScreen";
+import "./do-screen.css";
 
 // Do screen — hero stopwatch + collapsible sections.
 

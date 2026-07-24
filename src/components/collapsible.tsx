@@ -1,4 +1,5 @@
 import React from "react";
+import "./collapsible.css";
 
 // Collapsible toggle primitive — TUI-style with chevron.
 

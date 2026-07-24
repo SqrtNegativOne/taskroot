@@ -4,6 +4,7 @@ import { useCalendars } from "../../core/store/hooks";
 import { TitleInput, DescriptionInput } from "./inspector-shared";
 import { TaskInspector } from "./inspector-task";
 import { EventInspector } from "./inspector-event";
+import "./inspector.css";
 
 interface InspectorPaneProps {
     inspectorState: { type: string; id: string } | null;

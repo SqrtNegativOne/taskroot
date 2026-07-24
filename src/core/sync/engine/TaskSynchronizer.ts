@@ -44,7 +44,7 @@ export class TaskSynchronizer {
             if (standardizedRemote._deleted) {
                 if (existingLocalTask) {
                     const localUpdated = existingLocalTask.updatedAt || 0;
-                    if (standardizedRemote.updatedAt > localUpdated) {
+                    if ((standardizedRemote.updatedAt || 0) > localUpdated) {
                         tasksMap.delete(existingLocalTask.id);
                         updated = true;
                     }
@@ -52,17 +52,19 @@ export class TaskSynchronizer {
                 continue;
             }
 
-            if (existingLocalTask) {
-                const localUpdated = existingLocalTask.updatedAt || 0;
-                const remoteUpdated = standardizedRemote.updatedAt || 0;
+            if ("title" in standardizedRemote) {
+                if (existingLocalTask) {
+                    const localUpdated = existingLocalTask.updatedAt || 0;
+                    const remoteUpdated = standardizedRemote.updatedAt || 0;
 
-                if (remoteUpdated > localUpdated) {
-                    tasksMap.set(existingLocalTask.id, standardizedRemote);
+                    if (remoteUpdated > localUpdated) {
+                        tasksMap.set(existingLocalTask.id, standardizedRemote);
+                        updated = true;
+                    }
+                } else {
+                    tasksMap.set(standardizedRemote.id, standardizedRemote);
                     updated = true;
                 }
-            } else {
-                tasksMap.set(standardizedRemote.id, standardizedRemote);
-                updated = true;
             }
         }
 

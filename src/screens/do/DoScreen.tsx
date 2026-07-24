@@ -1,20 +1,14 @@
-import React, {
+import {
     useState,
     useEffect,
-    useRef,
-    useMemo,
-    useCallback,
-    Fragment,
 } from "react";
 import { Collapsible } from "../../components/collapsible";
-import {
-    TODAY,
-} from "../../core/store/data";
 import { DistractionLog } from "./distraction-log";
 import { Kanban } from "./kanban";
 import { TitleBar } from "../../components/shell";
 import { Stopwatch } from "./stopwatch";
-import { useStored, useTasksStore } from "../../core/store/store";
+import { useDistractions, useTasks, useNotes, useTips } from "../../core/store/hooks";
+
 import { TipsList, NotesList } from "./tips-notes";
 import { RestScreen } from "./RestScreen";
 
@@ -35,7 +29,7 @@ export function DoScreen() {
 
     return (
         <div className="app app-do">
-            <TitleBar today={TODAY} current="do" />
+            <TitleBar current="do" />
 
             <main className="do-main">
                 <Stopwatch onBreakStatusChange={setIsBreak} />
@@ -116,7 +110,7 @@ export function DoScreen() {
 }
 
 function DistractionBadge() {
-    const [rows] = useStored("distractions", []);
+    const [rows] = useDistractions();
     return (
         <span className="badge-count">
             {rows.length} {rows.length === 1 ? "entry" : "entries"}
@@ -124,7 +118,7 @@ function DistractionBadge() {
     );
 }
 function KanbanBadge() {
-    const [tasks] = useTasksStore([]);
+    const [tasks] = useTasks();
     const active = tasks.filter((t) => t.status === "doing").length;
     return (
         <span className="badge-count">
@@ -133,7 +127,7 @@ function KanbanBadge() {
     );
 }
 function TipsBadge() {
-    const [tips] = useStored("tips", []);
+    const [tips] = useTips();
     return (
         <span className="badge-count">
             {tips.length} {tips.length === 1 ? "tip" : "tips"}
@@ -141,7 +135,7 @@ function TipsBadge() {
     );
 }
 function NotesBadge() {
-    const [notes] = useStored("notes", []);
+    const [notes] = useNotes();
     return (
         <span className="badge-count">
             {notes.length} {notes.length === 1 ? "note" : "notes"}

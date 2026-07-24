@@ -66,8 +66,8 @@ describe("GoogleCalendarAPI", () => {
             expect(
                 googleEvent.extendedProperties?.private?.taskrootEventId,
             ).toBe("e123");
-            expect(googleEvent.start.dateTime).toContain("2024-05-10T10:00:00");
-            expect(googleEvent.end.dateTime).toContain("2024-05-10T11:00:00");
+            expect(googleEvent.start?.dateTime).toContain("2024-05-10T10:00:00");
+            expect(googleEvent.end?.dateTime).toContain("2024-05-10T11:00:00");
         });
 
         it("handles events ending at midnight (end >= 24)", () => {
@@ -80,8 +80,8 @@ describe("GoogleCalendarAPI", () => {
             }); // 00:00 to 24:00
             const googleEvent = googleCalendarAPI.toGoogleEvent(localEvent, []);
 
-            expect(googleEvent.start.dateTime).toContain("2024-05-10T00:00:00");
-            expect(googleEvent.end.dateTime).toContain("2024-05-11T00:00:00");
+            expect(googleEvent.start?.dateTime).toContain("2024-05-10T00:00:00");
+            expect(googleEvent.end?.dateTime).toContain("2024-05-11T00:00:00");
         });
     });
 

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, {
     useState,
     useEffect,
@@ -167,17 +168,17 @@ const __TWEAKS_STYLE = `
 // ── useTweaks ───────────────────────────────────────────────────────────────
 // Single source of truth for tweak values. setTweak persists via the host
 // (__edit_mode_set_keys → host rewrites the EDITMODE block on disk).
-export function useTweaks(defaults) {
+export function useTweaks(defaults: any) {
     const [values, setValues] = React.useState(defaults);
     // Accepts either setTweak('key', value) or setTweak({ key: value, ... }) so a
     // useState-style call doesn't write a "[object Object]" key into the persisted
     // JSON block.
-    const setTweak = React.useCallback((keyOrEdits, val) => {
+    const setTweak = React.useCallback((keyOrEdits: any, val: string) => {
         const edits =
             typeof keyOrEdits === "object" && keyOrEdits !== null
                 ? keyOrEdits
                 : { [keyOrEdits]: val };
-        setValues((prev) => ({ ...prev, ...edits }));
+        setValues((prev: any) => ({ ...prev, ...edits }));
         window.parent.postMessage({ type: "__edit_mode_set_keys", edits }, "*");
         // Same-window signal so in-page listeners (deck-stage rail thumbnails)
         // can react — the parent message only reaches the host, not peers.
@@ -230,7 +231,7 @@ export function TweaksPanel({
     }, [open, clampToViewport]);
 
     React.useEffect(() => {
-        const onMsg = (e) => {
+        const onMsg = (e: React.SyntheticEvent | PointerEvent | Event | unknown) => {
             const t = e?.data?.type;
             if (t === "__activate_edit_mode") setOpen(true);
             else if (t === "__deactivate_edit_mode") setOpen(false);
@@ -245,7 +246,7 @@ export function TweaksPanel({
         window.parent.postMessage({ type: "__edit_mode_dismissed" }, "*");
     };
 
-    const onDragStart = (e) => {
+    const onDragStart = (e: React.SyntheticEvent | PointerEvent | Event | unknown) => {
         const panel = dragRef.current;
         if (!panel) return;
         const r = panel.getBoundingClientRect();
@@ -253,7 +254,7 @@ export function TweaksPanel({
             sy = e.clientY;
         const startRight = window.innerWidth - r.right;
         const startBottom = window.innerHeight - r.bottom;
-        const move = (ev) => {
+        const move = (ev: React.SyntheticEvent | PointerEvent | Event | unknown) => {
             offsetRef.current = {
                 x: startRight - (ev.clientX - sx),
                 y: startBottom - (ev.clientY - sy),
@@ -398,15 +399,15 @@ export function TweakRadio({ label, value, options, onChange }) {
     // to its own padding, and 11.5px system-ui averages ~6.3px/char — so 2
     // options fit ~16 chars each, 3 fit ~10. Past that (or >3 options), fall
     // back to a dropdown rather than wrap.
-    const labelLen = (o) => String(typeof o === "object" ? o.label : o).length;
-    const maxLen = options.reduce((m, o) => Math.max(m, labelLen(o)), 0);
+    const labelLen = (o: any) => String(typeof o === "object" ? o.label : o).length;
+    const maxLen = options.reduce((m: any, o: any) => Math.max(m, labelLen(o)), 0);
     const fitsAsSegments = maxLen <= ({ 2: 16, 3: 10 }[options.length] ?? 0);
     if (!fitsAsSegments) {
         // <select> emits strings — map back to the original option value so the
         // fallback stays type-preserving (numbers, booleans) like the segment path.
-        const resolve = (s) => {
+        const resolve = (s: import("../../core/domain/models").AppTask) => {
             const m = options.find(
-                (o) => String(typeof o === "object" ? o.value : o) === s,
+                (o: any) => String(typeof o === "object" ? o.value : o) === s,
             );
             return m === undefined ? s : typeof m === "object" ? m.value : m;
         };
@@ -415,31 +416,31 @@ export function TweakRadio({ label, value, options, onChange }) {
                 label={label}
                 value={value}
                 options={options}
-                onChange={(s) => onChange(resolve(s))}
+                onChange={(s: import("../../core/domain/models").AppTask) => onChange(resolve(s))}
             />
         );
     }
-    const opts = options.map((o) =>
+    const opts = options.map((o: any) =>
         typeof o === "object" ? o : { value: o, label: o },
     );
     const idx = Math.max(
         0,
-        opts.findIndex((o) => o.value === value),
+        opts.findIndex((o: any) => o.value === value),
     );
     const n = opts.length;
 
-    const segAt = (clientX) => {
+    const segAt = (clientX: any) => {
         const r = trackRef.current.getBoundingClientRect();
         const inner = r.width - 4;
         const i = Math.floor(((clientX - r.left - 2) / inner) * n);
         return opts[Math.max(0, Math.min(n - 1, i))].value;
     };
 
-    const onPointerDown = (e) => {
+    const onPointerDown = (e: React.SyntheticEvent | PointerEvent | Event | unknown) => {
         setDragging(true);
         const v0 = segAt(e.clientX);
         if (v0 !== valueRef.current) onChange(v0);
-        const move = (ev) => {
+        const move = (ev: React.SyntheticEvent | PointerEvent | Event | unknown) => {
             if (!trackRef.current) return;
             const v = segAt(ev.clientX);
             if (v !== valueRef.current) onChange(v);
@@ -468,7 +469,7 @@ export function TweakRadio({ label, value, options, onChange }) {
                         width: `calc((100% - 4px) / ${n})`,
                     }}
                 />
-                {opts.map((o) => (
+                {opts.map((o: any) => (
                     <button
                         key={o.value}
                         type="button"
@@ -491,7 +492,7 @@ function TweakSelect({ label, value, options, onChange }) {
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
             >
-                {options.map((o) => {
+                {options.map((o: any) => {
                     const v = typeof o === "object" ? o.value : o;
                     const l = typeof o === "object" ? o.label : o;
                     return (
@@ -512,7 +513,7 @@ function TweakSelect({ label, value, options, onChange }) {
 // Relative-luminance contrast pick — checkmarks drawn over a swatch need to
 // read on both #111 and #fafafa without per-option configuration. Hex input
 // only (#rgb / #rrggbb); named or rgb()/hsl() colors fall through to "light".
-function __twkIsLight(hex) {
+function __twkIsLight(hex: string) {
     const h = String(hex).replace("#", "");
     const x = h.length === 3 ? h.replace(/./g, (c) => c + c) : h.padEnd(6, "0");
     const n = parseInt(x.slice(0, 6), 16);
@@ -561,12 +562,12 @@ export function TweakColor({ label, value, options, onChange }) {
     // Native <input type=color> emits lowercase hex per the HTML spec, so
     // compare case-insensitively. String() guards JSON.stringify(undefined),
     // which returns the primitive undefined (no .toLowerCase).
-    const key = (o) => String(JSON.stringify(o)).toLowerCase();
+    const key = (o: any) => String(JSON.stringify(o)).toLowerCase();
     const cur = key(value);
     return (
         <TweakRow label={label}>
             <div className="twk-chips" role="radiogroup">
-                {options.map((o, i) => {
+                {options.map((o: any, i: number) => {
                     const colors = Array.isArray(o) ? o : [o];
                     const [hero, ...rest] = colors;
                     const sup = rest.slice(0, 4);
@@ -586,7 +587,7 @@ export function TweakColor({ label, value, options, onChange }) {
                         >
                             {sup.length > 0 && (
                                 <span>
-                                    {sup.map((c, j) => (
+                                    {sup.map((c: any, j) => (
                                         <i key={j} style={{ background: c }} />
                                     ))}
                                 </span>

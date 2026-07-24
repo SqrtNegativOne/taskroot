@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 
 export function SplitPane({
     direction = "horizontal",
@@ -6,20 +6,26 @@ export function SplitPane({
     minSize = 100,
     snapThreshold = 50,
     children,
+}: {
+    direction?: "horizontal" | "vertical";
+    defaultSize?: number;
+    minSize?: number;
+    snapThreshold?: number;
+    children: React.ReactNode;
 }) {
     const [size, setSize] = useState(defaultSize);
     const [isDragging, setIsDragging] = useState(false);
-    const containerRef = useRef(null);
+    const containerRef = useRef<HTMLDivElement>(null);
 
     const isHoriz = direction === "horizontal";
 
-    const onPointerDown = (e) => {
+    const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
         e.preventDefault();
         setIsDragging(true);
-        e.target.setPointerCapture(e.pointerId);
+        (e.target as Element).setPointerCapture(e.pointerId);
     };
 
-    const onPointerMove = (e) => {
+    const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
         if (!isDragging || !containerRef.current) return;
         const rect = containerRef.current.getBoundingClientRect();
         let newSize;
@@ -38,9 +44,9 @@ export function SplitPane({
         setSize(newSize);
     };
 
-    const onPointerUp = (e) => {
+    const onPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
         setIsDragging(false);
-        e.target.releasePointerCapture(e.pointerId);
+        (e.target as Element).releasePointerCapture(e.pointerId);
     };
 
     const childArray = React.Children.toArray(children);

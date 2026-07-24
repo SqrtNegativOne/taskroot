@@ -1,14 +1,13 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { TitleBar } from "../../components/shell";
 import { TODAY, minutesToHHMM } from "../../core/store/data";
-import { useStored, useSettingsStore } from "../../core/store/store";
-import { DEFAULT_SETTINGS } from "../../core/store/settingsSchema";
+import { useEvents, useSettings, useTasks } from "../../core/store/hooks";
 import { DayTimeline } from "../../components/day-timeline";
 
 export function WrapScreen() {
-    const [settings] = useSettingsStore(DEFAULT_SETTINGS);
-    const [events] = useStored<import('../../core/domain/models').AppEvent[]>("events", []);
-    const [tasks] = useStored<import('../../core/domain/models').AppTask[]>("tasks", []);
+    const [settings] = useSettings();
+    const [events] = useEvents();
+    const [tasks] = useTasks();
 
     const [step, setStep] = useState(1);
     const [answers, setAnswers] = useState({
@@ -18,7 +17,17 @@ export function WrapScreen() {
         try: "",
     });
 
-    const logEvents = events.filter((e) => e.type === "log");
+    const logEvents: import("../../core/domain/events").AppEvent[] = events
+        .filter((e) => e.type === "log")
+        .map((e) => ({
+            id: e.id,
+            title: e.title,
+            date: e.date,
+            start: e.start,
+            end: e.end,
+            type: "log" as const,
+            isAllDay: false as const,
+        }));
 
     // Calculate untracked time
     const wake = settings.earliest_wake_time || 480;
@@ -36,7 +45,7 @@ export function WrapScreen() {
 
     return (
         <div className="app">
-            <TitleBar current="wrap" today={TODAY} />
+            <TitleBar current="wrap"  />
             <div
                 className="main"
                 style={{

@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { api } from "../../core/store/api";
 import { useAuth } from "../../core/auth/AuthContext";
-import { useStored } from "../../core/store/store";
+import { useTasks } from "../../core/store/hooks";
+
 
 
 export function ExportDataButton() {
@@ -41,7 +42,7 @@ export function ExportDataButton() {
 
 export function ImportTasksButton({ settings }: { settings: Partial<import('../../core/store/settingsSchema').AppSettings> }) {
     const [ingestText, setIngestText] = useState("");
-    const [, setTasks] = useStored<import('../../core/domain/models').AppTask[]>("tasks", []);
+    const [, setTasks] = useTasks();
 
     return (
         <div

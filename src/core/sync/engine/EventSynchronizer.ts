@@ -13,7 +13,6 @@ export class EventSynchronizer {
         if (settings.enableCalendarSync === false) return;
 
         const events = this.context.getLocalData<import('../../domain/models').AppEvent[]>("events");
-        const tasks = this.context.getLocalData<import('../../domain/models').AppTask[]>("tasks"); // Needed for resolving task references
         this.context.updatePrevEventsMap(events);
 
         const timeMin = new Date();
@@ -36,7 +35,7 @@ export class EventSynchronizer {
             );
             if (remoteEvents) {
                 allRemoteEvents.push(
-                    ...remoteEvents.map((e) =>
+                    ...remoteEvents.map((e: gapi.client.calendar.Event) =>
                         googleCalendarAPI.toLocalEvent(e, cal.id, cal.summary),
                     ),
                 );
@@ -54,7 +53,7 @@ export class EventSynchronizer {
             if (remote._deleted) {
                 if (existingLocalEvent) {
                     const localUpdated = existingLocalEvent.updatedAt || 0;
-                    if (remote.updatedAt > localUpdated) {
+                    if ((remote.updatedAt || 0) > localUpdated) {
                         eventsMap.delete(existingLocalEvent.id);
                         updated = true;
                     }

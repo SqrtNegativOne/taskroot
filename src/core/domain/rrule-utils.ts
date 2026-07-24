@@ -67,14 +67,24 @@ export function expandEventsForView(
                         newEndDate = `${ey}-${em}-${ed}`;
                     }
 
-                    flattenedInstances.push({
-                        ...event,
-                        id: `${event.id}_${date.getTime()}`,
-                        date: dateStr,
-                        endDate: newEndDate,
-                        isInstance: true,
-                        baseEventId: event.id,
-                    });
+                    if (event.type === "log") {
+                        flattenedInstances.push({
+                            ...event,
+                            id: `${event.id}_${date.getTime()}`,
+                            date: dateStr,
+                            isInstance: true,
+                            baseEventId: event.id,
+                        });
+                    } else {
+                        flattenedInstances.push({
+                            ...event,
+                            id: `${event.id}_${date.getTime()}`,
+                            date: dateStr,
+                            endDate: newEndDate,
+                            isInstance: true,
+                            baseEventId: event.id,
+                        });
+                    }
                 }
             });
         } catch (e) {

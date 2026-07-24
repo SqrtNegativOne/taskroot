@@ -26,7 +26,7 @@ describe("Collapsible UI Component", () => {
         // 2. Assert initial state (should be closed, meaning the content isn't visible)
         // Actually, by default in collapsible.tsx, it might be open or closed depending on its default state.
         // Let's assume defaultOpen is false.
-        const content = screen.queryByText("Hidden Content");
+        screen.queryByText("Hidden Content");
         // We expect it to NOT be in the document initially if defaultOpen=false,
         // OR we expect its wrapper to be closed. We'll simulate a click.
 

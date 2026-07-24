@@ -1,11 +1,9 @@
-import React from "react";
 import { TitleBar } from "../../components/shell";
-import { TODAY } from "../../core/store/data";
 
 export function StatsScreen() {
     return (
         <div className="app">
-            <TitleBar current="stats" today={TODAY} />
+            <TitleBar current="stats"  />
             <div
                 className="main"
                 style={{

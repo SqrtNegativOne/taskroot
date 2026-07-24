@@ -2,13 +2,10 @@ import React, {
     useState,
     useEffect,
     useRef,
-    useMemo,
-    useCallback,
-    Fragment,
 } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Icon } from "./icon";
-import { MONTHS, DOW_SHORT, PAD2 } from "../core/store/data";
+
 import { syncState, poller } from "../core/sync";
 
 function WindowControls({ children }: { children?: React.ReactNode }) {
@@ -82,7 +79,7 @@ export function LoginTitleBar() {
 }
 
 // Shared top bar + clickable stage indicator. Used across Plan, Do, Rest.
-export function TitleBar({ current, today }) {
+export function TitleBar({ current }: { current: string }) {
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const navigate = useNavigate();
@@ -274,7 +271,7 @@ export function TitleBar({ current, today }) {
     );
 }
 
-function StageIndicator({ current }) {
+function StageIndicator({ current }: { current: string }) {
     const stages = [
         { key: "plan", label: "plan", href: "/plan" },
         { key: "do", label: "do", href: "/do" },

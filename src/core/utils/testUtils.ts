@@ -1,4 +1,4 @@
-import { AppEvent, AppTask } from "../domain/models";
+import type { AppEvent, AppTask } from "../domain/models";
 
 let nextId = 1;
 export function createMockAppEvent(overrides: Partial<AppEvent> = {}): AppEvent {

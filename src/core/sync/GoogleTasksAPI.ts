@@ -114,7 +114,7 @@ export class GoogleTasksAPI {
 
     toLocalTask(googleTask: gapi.client.tasks.Task, existingLocalTask: AppTask | null = null): AppTask | { id: string; _deleted: boolean; updatedAt: number; } {
         if (googleTask.deleted) {
-            let id = googleTask.id;
+            let id = googleTask.id || "";
             if (existingLocalTask) id = existingLocalTask.id;
             return {
                 id,
@@ -127,7 +127,7 @@ export class GoogleTasksAPI {
             localStatus = "done";
         }
 
-        let id = googleTask.id;
+        let id = googleTask.id || "";
         const match = (googleTask.notes || "").match(
             /Taskroot Task ID: (t[0-9a-zA-Z-]+)/,
         );
@@ -139,7 +139,7 @@ export class GoogleTasksAPI {
             id = existingLocalTask.id;
         }
 
-        const defaultTask = {
+        const defaultTask: AppTask = {
             id,
             googleTaskId: googleTask.id,
             title: googleTask.title || "",
@@ -148,7 +148,6 @@ export class GoogleTasksAPI {
             tags: [],
             subtasks: [],
             parent_task: null,
-            dependency: null,
             est: 0,
             added: new Date().toISOString(),
             isDraft: false,

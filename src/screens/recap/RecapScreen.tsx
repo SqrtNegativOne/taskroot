@@ -1,10 +1,10 @@
-import React from "react";
 import { TitleBar } from "../../components/shell";
 import { TODAY } from "../../core/store/data";
-import { useStored } from "../../core/store/store";
+import { useSettings } from "../../core/store/hooks";
+
 
 export function RecapScreen() {
-    const [settings] = useStored<Partial<import('../../core/store/settingsSchema').AppSettings>>("settings", { recapDay: "" });
+    const [settings] = useSettings();
 
     const todayName = TODAY.toLocaleDateString("en-US", {
         weekday: "long",
@@ -15,7 +15,7 @@ export function RecapScreen() {
 
     return (
         <div className="app">
-            <TitleBar current="recap" today={TODAY} />
+            <TitleBar current="recap"  />
             <div
                 className="main"
                 style={{

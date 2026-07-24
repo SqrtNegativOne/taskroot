@@ -1,10 +1,11 @@
 import { describe, it, expect } from "vitest";
 import { hydrateEvents } from "./events";
-import { createMockAppEvent } from "../utils/testUtils";
+import type { AppEvent } from "./events";
+import type { AppTask } from "./models";
 
 describe("hydrateEvents", () => {
     it("should hydrate a plan event using the corresponding task data", () => {
-        const tasks = [
+        const tasks: AppTask[] = [
             {
                 id: "t1",
                 title: "Task 1",
@@ -21,15 +22,15 @@ describe("hydrateEvents", () => {
             },
         ];
 
-        const events = [
-            createMockAppEvent({
+        const events: AppEvent[] = [
+            {
                 id: "e1",
                 type: "plan",
                 date: "2026-05-20",
                 start: 600,
                 end: 660,
                 taskId: "t2",
-            }),
+            }
         ];
 
         const hydrated = hydrateEvents(events, tasks);
@@ -41,16 +42,16 @@ describe("hydrateEvents", () => {
     });
 
     it("should allow busy events to have their own titles and no task", () => {
-        const tasks = [];
-        const events = [
-            createMockAppEvent({
+        const tasks: AppTask[] = [];
+        const events: AppEvent[] = [
+            {
                 id: "e1",
                 type: "busy",
                 date: "2026-05-20",
                 start: 600,
                 end: 660,
                 title: "Team Sync",
-            }),
+            }
         ];
 
         const hydrated = hydrateEvents(events, tasks);
@@ -61,19 +62,19 @@ describe("hydrateEvents", () => {
     });
 
     it("should reflect name updates dynamically (name update thing)", () => {
-        const events = [
-            createMockAppEvent({
+        const events: AppEvent[] = [
+            {
                 id: "e1",
                 type: "plan",
                 date: "2026-05-20",
                 start: 600,
                 end: 660,
                 taskId: "t1",
-            }),
+            }
         ];
 
         // Initial state
-        let tasks = [
+        let tasks: AppTask[] = [
             {
                 id: "t1",
                 title: "Old Name",

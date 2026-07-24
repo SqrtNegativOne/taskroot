@@ -1,19 +1,11 @@
-import React, {
-    useState,
-    useEffect,
-    useRef,
-    useMemo,
-    useCallback,
-    Fragment,
-} from "react";
+import React from "react";
 import {
     TODAY,
-    REST_CHECKLIST_DEFAULTS,
     MONTHS,
     DOW_SHORT,
 } from "../../core/store/data";
-import { TitleBar } from "../../components/shell";
-import { useStored } from "../../core/store/store";
+import { useRestItems } from "../../core/store/hooks";
+
 
 // Rest screen — large checklist, editable, resets on each visit.
 
@@ -21,15 +13,15 @@ export function RestScreen() {
 
 
     // Reset every visit: don't persist checks across reloads, but keep custom items.
-    const [items, setItems] = useStored("restItems", REST_CHECKLIST_DEFAULTS);
+    const [items, setItems] = useRestItems();
     // Local check state — not persisted, resets every page load
-    const [checked, setChecked] = React.useState({});
-    const [editing, setEditing] = React.useState(null);
+    const [checked, setChecked] = React.useState<Record<string, boolean>>({});
+    const [editing, setEditing] = React.useState<string | null>(null);
     const [adding, setAdding] = React.useState(false);
     const [draft, setDraft] = React.useState("");
 
-    const toggle = (id) => setChecked((c) => ({ ...c, [id]: !c[id] }));
-    const updateItem = (id, title) => {
+    const toggle = (id: string) => setChecked((c) => ({ ...c, [id]: !c[id] }));
+    const updateItem = (id: string, title: string) => {
         if (!title.trim()) {
             setItems((its) => its.filter((i) => i.id !== id));
         } else {
@@ -55,7 +47,7 @@ export function RestScreen() {
         setDraft("");
         setAdding(false);
     };
-    const removeItem = (id) =>
+    const removeItem = (id: string) =>
         setItems((its) => its.filter((i) => i.id !== id));
 
     const allChecked = items.length > 0 && items.every((i) => checked[i.id]);
@@ -86,7 +78,7 @@ export function RestScreen() {
                 </header>
 
                 <ol className="rest-list">
-                    {items.map((item, idx) => (
+                    {items.map((item) => (
                         <li
                             key={item.id}
                             className={`rest-item ${checked[item.id] ? "is-checked" : ""}`}

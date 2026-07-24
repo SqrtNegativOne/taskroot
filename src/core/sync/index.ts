@@ -26,17 +26,17 @@ const context = {
         for (const e of events) prevEventsMap.set(e.id, { ...e });
     },
     getSettings,
-    get pushQueue() { return pusher.queue; },
+    get pushQueue(): import('./engine/SyncQueue').SyncQueue { return pusher.queue; },
     notifyError: (msg: string) => { syncState.error = msg; },
     updateStatus: () => {}, // SyncState derives this now
 };
 
-export const taskSync = new TaskSynchronizer(context);
-export const eventSync = new EventSynchronizer(context);
+export const taskSync: TaskSynchronizer = new TaskSynchronizer(context);
+export const eventSync: EventSynchronizer = new EventSynchronizer(context);
 
-export const pusher = new Pusher(taskSync, eventSync, getSettings);
+export const pusher: Pusher = new Pusher(taskSync, eventSync, getSettings);
 
 
-export const poller = new Poller(taskSync, eventSync, pusher, getSettings);
+export const poller: Poller = new Poller(taskSync, eventSync, pusher, getSettings);
 
 export { syncState } from "./SyncState";

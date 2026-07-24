@@ -1,5 +1,33 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Icon } from "../../components/icon";
+
+export interface Filter {
+    id: string;
+    column: string;
+    operator: string;
+    value: string;
+}
+
+export interface Column {
+    id: string;
+    label: string;
+}
+
+export interface SortOption {
+    id: string;
+    label: string;
+}
+
+export interface FilterSortButtonsProps {
+    filters: Filter[];
+    setFilters: React.Dispatch<React.SetStateAction<Filter[]>>;
+    sort: string;
+    setSort: (sort: string) => void;
+    columns: Column[];
+    getValuesForColumn: (columnId: string) => string[];
+    sortOptions?: SortOption[];
+    align?: "left" | "right";
+}
 
 export function FilterSortButtons({
     filters,
@@ -10,12 +38,12 @@ export function FilterSortButtons({
     getValuesForColumn,
     sortOptions,
     align = "left",
-}) {
+}: FilterSortButtonsProps) {
     const [showFilters, setShowFilters] = useState(false);
     const [closingFilters, setClosingFilters] = useState(false);
     const [showSort, setShowSort] = useState(false);
     const [closingSort, setClosingSort] = useState(false);
-    const ref = useRef(null);
+    const ref = useRef<HTMLDivElement>(null);
 
     const closeFilters = () => {
         setClosingFilters(true);
@@ -34,8 +62,8 @@ export function FilterSortButtons({
     };
 
     useEffect(() => {
-        function handleClickOutside(e) {
-            if (ref.current && !ref.current.contains(e.target)) {
+        function handleClickOutside(e: PointerEvent) {
+            if (ref.current && !ref.current.contains(e.target as Node)) {
                 if (showFilters && !closingFilters) closeFilters();
                 if (showSort && !closingSort) closeSort();
             }
@@ -59,7 +87,7 @@ export function FilterSortButtons({
         ]);
     };
 
-    const updateFilter = (id, updates) => {
+    const updateFilter = (id: string, updates: Partial<Filter>) => {
         setFilters((fs) =>
             fs.map((f) => {
                 if (f.id !== id) return f;
@@ -72,7 +100,7 @@ export function FilterSortButtons({
         );
     };
 
-    const removeFilter = (id) => {
+    const removeFilter = (id: string) => {
         setFilters((fs) => fs.filter((f) => f.id !== id));
     };
 

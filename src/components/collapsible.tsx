@@ -1,15 +1,15 @@
-import React, {
-    useState,
-    useEffect,
-    useRef,
-    useMemo,
-    useCallback,
-    Fragment,
-} from "react";
+import React from "react";
 
 // Collapsible toggle primitive — TUI-style with chevron.
 
-export function Collapsible({ title, badge, defaultOpen = false, children }) {
+export interface CollapsibleProps {
+    title: React.ReactNode;
+    badge?: React.ReactNode;
+    defaultOpen?: boolean;
+    children?: React.ReactNode;
+}
+
+export function Collapsible({ title, badge, defaultOpen = false, children }: CollapsibleProps) {
     const [open, setOpen] = React.useState(defaultOpen);
     return (
         <section className={`collapsible ${open ? "is-open" : ""}`}>

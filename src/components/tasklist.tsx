@@ -1,10 +1,5 @@
 import React, {
     useState,
-    useEffect,
-    useRef,
-    useMemo,
-    useCallback,
-    Fragment,
 } from "react";
 import { play } from "cuelume";
 import Fuse from "fuse.js";
@@ -48,11 +43,11 @@ export function TaskListPane({
     onDeleteTask,
     footer,
 }: TaskListPaneProps) {
-    const updateTask = (id, updates) =>
+    const updateTask = (id: string, updates: Partial<AppTask>) =>
         setTasks((ts) =>
             ts.map((t) => (t.id === id ? { ...t, ...updates } : t)),
         );
-    const deleteTask = (id) => {
+    const deleteTask = (id: string) => {
         if (onDeleteTask) {
             onDeleteTask(id);
         } else {
@@ -62,7 +57,7 @@ export function TaskListPane({
 
     const allTags = React.useMemo(() => {
         const s = new Set<string>();
-        tasks.forEach((t) => t.tags.forEach((tag) => s.add(tag)));
+        tasks.forEach((t) => (t.tags || []).forEach((tag) => s.add(tag)));
         return Array.from(s).sort();
     }, [tasks]);
 
@@ -77,7 +72,7 @@ export function TaskListPane({
                 } else if (f.column === "priority") {
                     match = t.priority === f.value;
                 } else if (f.column === "tag") {
-                    match = t.tags.includes(String(f.value));
+                    match = (t.tags || []).includes(String(f.value));
                 }
                 return f.operator === "is not" ? !match : match;
             });
@@ -89,15 +84,14 @@ export function TaskListPane({
             });
             xs = fuse.search(query).map((result) => result.item);
         }
-        const cmp =
-            {
-                priority: (a, b) => b.priority - a.priority,
-                due: (a, b) => (a.due || "9999").localeCompare(b.due || "9999"),
-                est: (a, b) => (a.est || 0) - (b.est || 0),
-                title: (a, b) => a.title.localeCompare(b.title),
-                added: () => 0,
-            }[sort] || (() => 0);
-        return [...xs].sort(cmp);
+        const cmp: Record<string, (a: AppTask, b: AppTask) => number> = {
+            priority: (a, b) => Number(b.priority || 0) - Number(a.priority || 0),
+            due: (a, b) => (a.due || "9999").localeCompare(b.due || "9999"),
+            est: (a, b) => (a.est || 0) - (b.est || 0),
+            title: (a, b) => a.title.localeCompare(b.title),
+            added: () => 0,
+        };
+        return [...xs].sort(cmp[sort] || (() => 0));
     }, [tasks, filters, sort, query]);
 
     const handleAddTask = () => {
@@ -119,8 +113,8 @@ export function TaskListPane({
                     }}
                 >
                     <FilterSortButtons
-                        filters={filters}
-                        setFilters={setFilters}
+                        filters={filters as (AppFilter & { id: string; value: string })[]}
+                        setFilters={setFilters as unknown as React.Dispatch<React.SetStateAction<(AppFilter & { id: string; value: string })[]>>}
                         sort={sort}
                         setSort={setSort}
                         columns={[
@@ -128,10 +122,10 @@ export function TaskListPane({
                             { id: "priority", label: "Priority" },
                             { id: "tag", label: "Tag" },
                         ]}
-                        getValuesForColumn={(col) => {
+                        getValuesForColumn={(col: string) => {
                             if (col === "status")
                                 return ["todo", "next-up", "doing", "done"];
-                            if (col === "priority") return [0, 1, 2, 3, 4];
+                            if (col === "priority") return ["0", "1", "2", "3", "4"];
                             if (col === "tag") return allTags;
                             return [];
                         }}
@@ -187,11 +181,10 @@ export function TaskListPane({
                         </span>
                     </div>
                 ) : (
-                    filtered.map((t, i) => (
+                    filtered.map((t) => (
                         <TaskRow
                             key={t.id}
                             task={t}
-                            index={i}
                             onDragStart={onDragStart}
                             dragging={activeDragId === t.id}
                             updateTask={updateTask}
@@ -207,19 +200,27 @@ export function TaskListPane({
     );
 }
 
+export interface TaskRowProps {
+    task: AppTask;
+    onDragStart?: (e: React.PointerEvent<HTMLDivElement> | React.MouseEvent<HTMLDivElement>, task: AppTask) => void;
+    dragging?: boolean;
+    updateTask: (id: string, updates: Partial<AppTask>) => void;
+    deleteTask: (id: string) => void;
+    filters: AppFilter[];
+}
+
 function TaskRow({
     task,
-    index,
     onDragStart,
     dragging,
     updateTask,
     deleteTask,
     filters,
-}) {
+}: TaskRowProps) {
     const [isExiting, setIsExiting] = useState(false);
     const [isChecking, setIsChecking] = useState(false);
 
-    const willBeFilteredOut = (newStatus) => {
+    const willBeFilteredOut = (newStatus: string) => {
         if (!filters || filters.length === 0) return false;
         const mockTask = { ...task, status: newStatus };
         for (const f of filters) {
@@ -230,7 +231,7 @@ function TaskRow({
             } else if (f.column === "priority") {
                 match = mockTask.priority === f.value;
             } else if (f.column === "tag") {
-                match = mockTask.tags.includes(f.value);
+                match = (mockTask.tags || []).includes(String(f.value));
             }
             const passes = f.operator === "is not" ? !match : match;
             if (!passes) return true;
@@ -238,15 +239,15 @@ function TaskRow({
         return false;
     };
 
-    const handlePointerDown = (e) => {
+    const handlePointerDown = (e: React.PointerEvent<HTMLDivElement> | React.MouseEvent<HTMLDivElement>) => {
         if (e.button !== 0) return;
         if (
-            e.target.closest(".task-row-subtask-toggle") ||
-            e.target.closest(".task-row-actions") ||
-            e.target.closest(".task-circle")
+            (e.target as Element).closest(".task-row-subtask-toggle") ||
+            (e.target as Element).closest(".task-row-actions") ||
+            (e.target as Element).closest(".task-circle")
         )
             return;
-        onDragStart(e, task);
+        onDragStart?.(e, task);
     };
 
     const dueStr = task.due ? dueLabel(task.due, TODAY) : "";
@@ -342,8 +343,8 @@ function TaskRow({
                     </div>
                 </div>
                 {((!!task.est && task.est > 0) ||
-                    task.tags.length > 0 ||
-                    task.subtasks.length > 0 ||
+                    (task.tags || []).length > 0 ||
+                    (task.subtasks || []).length > 0 ||
                     !!dueStr) && (
                     <div className="task-row-line2">
                         {!!task.est && task.est > 0 && (
@@ -351,27 +352,27 @@ function TaskRow({
                                 <span className="meta-est">
                                     {durationLabel(task.est)}
                                 </span>
-                                {task.tags.length > 0 && (
+                                {(task.tags || []).length > 0 && (
                                     <span className="meta-sep">·</span>
                                 )}
                             </>
                         )}
-                        {task.tags.map((tag, i) => (
+                        {(task.tags || []).map((tag, i) => (
                             <React.Fragment key={tag}>
                                 <span className="meta-tag">#{tag}</span>
-                                {i < task.tags.length - 1 && (
+                                {i < (task.tags || []).length - 1 && (
                                     <span className="meta-tag-sep">,</span>
                                 )}
                             </React.Fragment>
                         ))}
                         <span className="meta-spacer" />
-                        {task.subtasks.length > 0 && (
+                        {(task.subtasks || []).length > 0 && (
                             <span
                                 className="meta-subtasks"
-                                title={`${task.subtasks.filter((s) => s.done).length}/${task.subtasks.length} subtasks done`}
+                                title={`${(task.subtasks || []).filter((s) => s.done).length}/${(task.subtasks || []).length} subtasks done`}
                             >
-                                ☐{task.subtasks.filter((s) => s.done).length}/
-                                {task.subtasks.length}
+                                ☐{(task.subtasks || []).filter((s) => s.done).length}/
+                                {(task.subtasks || []).length}
                             </span>
                         )}
                         {dueStr && (

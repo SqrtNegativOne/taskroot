@@ -2,13 +2,12 @@ import React, { useState, useMemo } from "react";
 import Fuse from "fuse.js";
 import { TitleBar } from "../../components/shell";
 import { SearchBar } from "../../components/search-bar";
-import { TODAY } from "../../core/store/data";
-import { useSettingsStore } from "../../core/store/store";
+import { useSettings } from "../../core/store/hooks";
+
 import "./settings.css";
 import {
     SETTINGS_SCHEMA,
     SETTINGS_TABS,
-    DEFAULT_SETTINGS,
 } from "../../core/store/settingsSchema";
 
 function minToTime(m: number) {
@@ -144,7 +143,7 @@ const SelectSetting = ({ setting, val, settings, setSettings }: any) => (
     <label style={{ display: "flex", gap: "12px", alignItems: "center", color: "var(--fg)" }}>
         <SegmentedControl
             value={val}
-            onChange={(v) =>
+            onChange={(v: unknown) =>
                 setSettings({
                     ...settings,
                     [setting.id]: typeof val === "number" ? Number(v) : v,
@@ -258,7 +257,7 @@ const SETTING_RENDERERS: Record<string, React.FC<any>> = {
 
 export function SettingsScreen() {
     const [activeTab, setActiveTab] = useState("general");
-    const [settings, setSettings] = useSettingsStore(DEFAULT_SETTINGS);
+    const [settings, setSettings] = useSettings();
     const [searchQuery, setSearchQuery] = useState("");
 
     const fuse = useMemo(
@@ -338,7 +337,7 @@ export function SettingsScreen() {
 
     return (
         <div className="app app-settings">
-            <TitleBar current="settings" today={TODAY} />
+            <TitleBar current="settings"  />
             <div className="main settings-main">
                 <div
                     className="task-pane settings-sidebar"

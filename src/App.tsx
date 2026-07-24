@@ -1,13 +1,15 @@
 import React from "react";
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./core/auth/AuthContext";
-import { DEFAULT_SETTINGS } from "./core/store/settingsSchema";
+
 
 import { PlanScreen } from "./screens/plan/PlanScreen";
 import { DoScreen } from "./screens/do/DoScreen";
 import { SettingsScreen } from "./screens/settings/SettingsScreen";
-import { TitleBar } from "./components/shell";
-import { useStored, purgeOrphanedData, useSettingsStore, useTasksStore } from "./core/store/store";
+
+import { useEvents, useSettings, useTasks } from "./core/store/hooks";
+import { purgeOrphanedData } from "./core/store/repositories";
+
 
 import { syncState, poller } from "./core/sync";
 import {
@@ -50,9 +52,7 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
 
 function AppRouter() {
     const navigate = useNavigate();
-    const [settings] = useSettingsStore({
-        keybindingOpenSettings: "Ctrl+,",
-    });
+    const [settings] = useSettings();
 
     React.useEffect(() => {
         const api = window.electronAPI;
@@ -115,12 +115,9 @@ function AppRouter() {
 }
 
 function GlobalSync({ children }: { children: React.ReactNode }) {
-    const [tasks, setTasks, tasksLoaded] = useTasksStore([]);
-    const [events, setEvents, eventsLoaded] = useStored(
-        "events",
-        [],
-    );
-    const [settings] = useSettingsStore(DEFAULT_SETTINGS);
+    const [, , tasksLoaded] = useTasks();
+    const [, , eventsLoaded] = useEvents();
+    const [settings] = useSettings();
     const [initialSyncDone, setInitialSyncDone] = React.useState(
         syncState.initialSyncComplete,
     );

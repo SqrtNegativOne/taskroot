@@ -1,16 +1,10 @@
 import React, {
     useState,
-    useEffect,
-    useRef,
-    useMemo,
-    useCallback,
     Fragment,
 } from "react";
 import {
-    TODAY,
     ymd,
     hhmmShort,
-    durationLabel,
     MONTHS,
     DOW_SHORT,
     PAD2,
@@ -18,11 +12,40 @@ import {
     sameDay,
 } from "../core/store/data";
 import { hydrateEvents } from "../core/domain/events";
+import type { AppEvent, HydratedEvent } from "../core/domain/events";
+import type { AppTask, AppFilter } from "../core/domain/models";
 
 // Day timeline: vertical, 24h scrollable, with drag-to-schedule + resize.
 
 export const PX_PER_MIN = 56 / 60; // 56 px per hour
 export const SNAP_MIN = 15;
+
+export interface DragStateTarget {
+    kind: string;
+    minute: number;
+    duration?: number;
+}
+export interface DragState {
+    target: DragStateTarget | null;
+}
+
+export interface DayTimelineProps {
+    events: AppEvent[];
+    tasks: AppTask[];
+    filter?: AppFilter[];
+    sort?: string;
+    filterMenu?: React.ReactNode;
+    today: Date;
+    timelineDate: Date;
+    setTimelineDate: (d: Date) => void;
+    dragState: DragState | null;
+    setDragState: React.Dispatch<React.SetStateAction<DragState | null>>;
+    onDropToTime?: (e: unknown) => void;
+    onResizeEvent: (id: string, start: number, end: number) => void;
+    onMoveEvent: (id: string, start: number, end: number) => void;
+    onEventClick?: (e: HydratedEvent) => void;
+    onAddEvent?: (d: Date, start: number, end: number) => void;
+}
 
 export function DayTimeline({
     events,
@@ -35,19 +58,19 @@ export function DayTimeline({
     setTimelineDate,
     dragState,
     setDragState,
-    onDropToTime,
+    // onDropToTime,
     onResizeEvent,
     onMoveEvent,
     onEventClick,
     onAddEvent,
-}) {
+}: DayTimelineProps) {
     const containerRef = React.useRef(null);
     const scrollRef = React.useRef(null);
 
     const viewDate = timelineDate || today;
     const isToday = sameDay(viewDate, today);
 
-    const [createPreview, setCreatePreview] = React.useState(null);
+    const [createPreview, setCreatePreview] = React.useState<{start: number, end: number} | null>(null);
 
     // Current-time line
     const [nowMin, setNowMin] = React.useState(() => {
@@ -59,7 +82,7 @@ export function DayTimeline({
     React.useEffect(() => {
         const tick = () => {
             if (scrollRef.current) {
-                scrollRef.current.scrollTop = Math.max(
+                (scrollRef.current as HTMLDivElement).scrollTop = Math.max(
                     0,
                     (nowMin - 60) * PX_PER_MIN - 12,
                 );
@@ -97,11 +120,11 @@ export function DayTimeline({
                 if (f.column === "type") {
                     match = e.type === f.value;
                 } else if (f.column === "tag") {
-                    const taskTags = e.task ? e.task.tags : [];
+                    const taskTags = (e.task ? e.task.tags : []) || [];
                     const allTags = taskTags.map((t) =>
                         typeof t === "string" ? t.toLowerCase() : "",
                     );
-                    match = allTags.includes(f.value.toLowerCase());
+                    match = allTags.includes(String(f.value).toLowerCase());
                 } else if (f.column === "taskStatus") {
                     if (f.value === "none") {
                         match = !e.task;
@@ -146,13 +169,13 @@ export function DayTimeline({
     const dropPreview =
         dragState?.target?.kind === "day-time" ? dragState.target : null;
 
-    const onGridPointerDown = (e) => {
-        if (e.target.closest(".day-event") || e.target.closest(".day-now"))
+    const onGridPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+        if ((e.target as Element).closest(".day-event") || (e.target as Element).closest(".day-now"))
             return;
         if (e.button !== 0) return;
         e.preventDefault();
 
-        const grid = containerRef.current;
+        const grid = containerRef.current as HTMLDivElement | null;
         if (!grid) return;
         const rect = grid.getBoundingClientRect();
         const startY = e.clientY - rect.top;
@@ -160,7 +183,7 @@ export function DayTimeline({
 
         let active = false;
 
-        const move = (ev) => {
+        const move = (ev: PointerEvent) => {
             active = true;
             const currentY = ev.clientY - rect.top;
             const moveMin =
@@ -173,7 +196,7 @@ export function DayTimeline({
             });
         };
 
-        const up = (ev) => {
+        const up = (ev: PointerEvent) => {
             window.removeEventListener("pointermove", move);
             window.removeEventListener("pointerup", up);
             if (!active) {
@@ -376,6 +399,18 @@ export function DayTimeline({
     );
 }
 
+interface EventBlockProps {
+    event: HydratedEvent;
+    task?: AppTask;
+    lane: number;
+    lanes: number;
+    onResize: (id: string, start: number, end: number) => void;
+    onMove: (id: string, start: number, end: number) => void;
+    dragState?: DragState | null;
+    setDragState?: React.Dispatch<React.SetStateAction<DragState | null>>;
+    onEventClick?: (e: HydratedEvent) => void;
+}
+
 function EventBlock({
     event,
     task,
@@ -383,22 +418,22 @@ function EventBlock({
     lanes,
     onResize,
     onMove,
-    dragState,
-    setDragState,
+    // dragState,
+    // setDragState,
     onEventClick,
-}) {
-    const [dragOffset, setDragOffset] = useState(null);
+}: EventBlockProps) {
+    const [dragOffset, setDragOffset] = useState<number | null>(null);
 
     const title = event.title;
     const pri = event.priority;
 
-    const onResizeStart = (edge) => (e) => {
+    const onResizeStart = (edge: "top" | "bottom") => (e: React.PointerEvent<HTMLDivElement>) => {
         e.stopPropagation();
         e.preventDefault();
         const startY = e.clientY;
         const startStart = event.start;
-        const startEnd = event.end;
-        const move = (ev) => {
+        const startEnd = event.end || 0;
+        const move = (ev: PointerEvent) => {
             const dy = ev.clientY - startY;
             const dm = Math.round(dy / PX_PER_MIN / SNAP_MIN) * SNAP_MIN;
             if (edge === "bottom") {
@@ -423,21 +458,20 @@ function EventBlock({
         window.addEventListener("pointerup", up);
     };
 
-    const onBodyDown = (e) => {
-        if (e.target.closest(".day-event-handle")) return;
+    const onBodyDown = (e: React.PointerEvent<HTMLDivElement>) => {
+        if ((e.target as Element).closest(".day-event-handle")) return;
         if (e.button !== 0) return;
         e.preventDefault();
         const startY = e.clientY;
-        const startStart = event.start;
-        const startEnd = event.end;
+        const startStart = event.start || 0;
+        const startEnd = event.end || 0;
         let moved = false;
         let finalDm = 0;
-        const move = (ev) => {
+        const move = (ev: PointerEvent) => {
             const dy = ev.clientY - startY;
             if (!moved && Math.abs(dy) < 4) return;
             moved = true;
             const dm = Math.round(dy / PX_PER_MIN / SNAP_MIN) * SNAP_MIN;
-            const dur = startEnd - startStart;
             const minDm = -startStart;
             const maxDm = 24 * 60 - startEnd;
             finalDm = Math.max(minDm, Math.min(maxDm, dm));
@@ -463,7 +497,7 @@ function EventBlock({
         window.addEventListener("pointerup", up);
     };
 
-    const renderBlock = (start, end, isGhost, isFloating) => {
+    const renderBlock = (start: number, end: number, isGhost: boolean, isFloating: boolean) => {
         const top = start * PX_PER_MIN;
         const height = (end - start) * PX_PER_MIN;
         const compact = height < 40;
@@ -499,9 +533,9 @@ function EventBlock({
                     {!compact &&
                         event.type === "plan" &&
                         task &&
-                        task.tags.length > 0 && (
+                        (task.tags || []).length > 0 && (
                             <div className="day-event-tags">
-                                {task.tags.map((t) => (
+                                {(task.tags || []).map((t) => (
                                     <span key={t} className="day-event-tag">
                                         #{t}
                                     </span>
@@ -524,35 +558,35 @@ function EventBlock({
     if (dragOffset !== null) {
         return (
             <Fragment>
-                {renderBlock(event.start, event.end, true, false)}
+                {renderBlock(event.start || 0, event.end || 0, true, false)}
                 {renderBlock(
-                    event.start + dragOffset,
-                    event.end + dragOffset,
+                    (event.start || 0) + dragOffset,
+                    (event.end || 0) + dragOffset,
                     false,
                     true,
                 )}
             </Fragment>
         );
     }
-    return renderBlock(event.start, event.end, false, false);
+    return renderBlock(event.start || 0, event.end || 0, false, false);
 }
 
 // Simple overlap layout: assign each event to the earliest lane that's free.
-function layoutEvents(events) {
-    const placed = [];
-    const result = [];
+function layoutEvents(events: HydratedEvent[]) {
+    const placed: { start: number, end: number, lane: number }[] = [];
+    const result: { event: HydratedEvent, lane: number, lanes?: number }[] = [];
     for (const ev of events) {
         let lane = 0;
         while (
             placed.some(
                 (p) =>
                     p.lane === lane &&
-                    !(p.end <= ev.start || p.start >= ev.end),
+                    !(p.end <= (ev.start || 0) || p.start >= (ev.end || 0)),
             )
         ) {
             lane++;
         }
-        placed.push({ start: ev.start, end: ev.end, lane });
+        placed.push({ start: ev.start || 0, end: ev.end || 0, lane });
         result.push({ event: ev, lane });
     }
     // Determine total lanes per cluster (events that overlap any chain)
@@ -560,7 +594,7 @@ function layoutEvents(events) {
     return result.map((r) => {
         let maxLane = r.lane;
         for (const p of placed) {
-            if (!(p.end <= r.event.start || p.start >= r.event.end)) {
+            if (!(p.end <= (r.event.start || 0) || p.start >= (r.event.end || 0))) {
                 if (p.lane > maxLane) maxLane = p.lane;
             }
         }

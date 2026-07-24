@@ -4,12 +4,8 @@ import {
     MiniMap,
     Controls,
     Background,
-    useNodesState,
-    useEdgesState,
-    addEdge,
     Handle,
     Position,
-    applyNodeChanges,
     useReactFlow,
     ReactFlowProvider,
 } from "@xyflow/react";
@@ -27,7 +23,7 @@ interface TaskNodeProps {
     data: { task: Task; [key: string]: unknown };
     id: string;
 }
-const TaskNodeComponent = ({ data, id }: TaskNodeProps) => {
+const TaskNodeComponent = ({ data }: TaskNodeProps) => {
     const task = data.task;
 
     return (
@@ -182,7 +178,7 @@ function TaskCanvasInner({ tasks, setTasks }: TaskCanvasProps) {
         [setTasks],
     );
 
-    const isValidConnection = useCallback((connection: Connection) => {
+    const isValidConnection = useCallback((connection: Connection | Edge) => {
         if (
             connection.sourceHandle === "child" &&
             connection.targetHandle === "parent"

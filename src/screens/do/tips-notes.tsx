@@ -1,18 +1,19 @@
-import React, {
-    useState,
-    useEffect,
-    useRef,
-    useMemo,
-    useCallback,
-    Fragment,
-} from "react";
+import React from "react";
 
-import { useStored } from "../../core/store/store";
+import { useNotes, useTips } from "../../core/store/hooks";
+
+
+export interface AppNote {
+    id: string;
+    title: string;
+    vault: string;
+    path: string;
+}
 
 // Tips list + Notes (Obsidian placeholder)
 
 export function TipsList() {
-    const [tips, setTips] = useStored("tips", []);
+    const [tips, setTips] = useTips();
     const [adding, setAdding] = React.useState(false);
     const [draft, setDraft] = React.useState("");
 
@@ -76,17 +77,19 @@ export function TipsList() {
 }
 
 export function NotesList() {
-    const [notes, setNotes] = useStored("notes", []);
-    const [toast, setToast] = React.useState(null);
+    const [notesRaw, setNotesRaw] = useNotes();
+    const notes = notesRaw as unknown as AppNote[];
+    const setNotes = setNotesRaw as unknown as React.Dispatch<React.SetStateAction<AppNote[]>>;
+    const [toast, setToast] = React.useState<string | null>(null);
     const [adding, setAdding] = React.useState(false);
     const [draft, setDraft] = React.useState("");
 
-    const openInObsidian = (note) => {
+    const openInObsidian = (note: AppNote) => {
         // Mocked — would normally fire obsidian:// deep link
         setToast(`would open obsidian://${note.vault}/${note.path}`);
         setTimeout(() => setToast(null), 2200);
     };
-    const remove = (id) => setNotes((ns) => ns.filter((n) => n.id !== id));
+    const remove = (id: string) => setNotes((ns) => ns.filter((n) => n.id !== id));
     const addNote = () => {
         const title = draft.trim();
         if (!title) {

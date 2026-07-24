@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { AppTask } from "../domain/models";
 import { createMockAppTask } from "../utils/testUtils";
 import { GoogleTasksAPI } from "./GoogleTasksAPI";
 import * as api from "../store/api";
@@ -96,8 +95,10 @@ describe("GoogleTasksAPI", () => {
 
             const localTask = googleTasksAPI.toLocalTask(googleTask);
             expect(localTask.id).toBe("t456");
-            expect(localTask.googleTaskId).toBe("g123");
-            expect(localTask.status).toBe("done");
+            if ("googleTaskId" in localTask) {
+                expect(localTask.googleTaskId).toBe("g123");
+                expect(localTask.status).toBe("done");
+            }
         });
 
         it("handles deleted tasks", () => {

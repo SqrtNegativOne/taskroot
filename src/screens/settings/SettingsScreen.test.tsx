@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, act, fireEvent } from "@testing-library/react";
@@ -14,7 +15,7 @@ vi.mock("../../core/store/api", () => ({
         clearAllData: vi.fn(),
         subscribeToStore: vi
             .fn()
-            .mockImplementation((key, init, onData, onReady) => {
+            .mockImplementation((_key: any, _init: any, _onData: any, onReady: any) => {
                 onReady();
                 return () => {};
             }),

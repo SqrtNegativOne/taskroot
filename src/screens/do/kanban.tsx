@@ -1,13 +1,7 @@
-import React, {
-    useState,
-    useEffect,
-    useRef,
-    useMemo,
-    useCallback,
-    Fragment,
-} from "react";
+import React from "react";
 import { durationLabel } from "../../core/store/data";
-import { useStored, useTasksStore } from "../../core/store/store";
+import { useTasks } from "../../core/store/hooks";
+import type { AppTask } from "../../core/domain/models";
 
 // Kanban board — pulls tasks from the shared store, drag between columns to change status.
 
@@ -19,15 +13,15 @@ const KANBAN_COLUMNS = [
 ];
 
 export function Kanban() {
-    const [tasks, setTasks] = useTasksStore([]);
-    const [drag, setDrag] = React.useState(null); // { taskId, x, y, overCol }
+    const [tasks, setTasks] = useTasks();
+    const [drag, setDrag] = React.useState<{ taskId: string; x: number; y: number; overCol: string | null } | null>(null);
 
-    const onTaskDown = (task) => (e) => {
+    const onTaskDown = (task: AppTask) => (e: React.PointerEvent<HTMLDivElement>) => {
         if (e.button !== 0) return;
         e.preventDefault();
         const start = { x: e.clientX, y: e.clientY };
         let active = false;
-        const move = (ev) => {
+        const move = (ev: PointerEvent) => {
             if (
                 !active &&
                 Math.hypot(ev.clientX - start.x, ev.clientY - start.y) < 5
@@ -43,7 +37,7 @@ export function Kanban() {
                 overCol: colEl instanceof HTMLElement ? (colEl.dataset?.kanbanCol || null) : null,
             });
         };
-        const up = (ev) => {
+        const up = (ev: PointerEvent) => {
             window.removeEventListener("pointermove", move);
             window.removeEventListener("pointerup", up);
             if (active) {
@@ -53,7 +47,7 @@ export function Kanban() {
                     colEl instanceof HTMLElement &&
                     colEl.dataset.kanbanCol !== task.status
                 ) {
-                    setTasks((ts) =>
+                    setTasks((ts: AppTask[]) =>
                         ts.map((t) =>
                             t.id === task.id
                                 ? {
@@ -134,7 +128,7 @@ export function Kanban() {
     );
 }
 
-function KanbanCard({ task, onPointerDown, dragging }) {
+function KanbanCard({ task, onPointerDown, dragging }: { task: AppTask; onPointerDown: (e: React.PointerEvent<HTMLDivElement>) => void; dragging: boolean }) {
     return (
         <div
             className={`kanban-card ${dragging ? "is-dragging" : ""}`}
@@ -145,8 +139,8 @@ function KanbanCard({ task, onPointerDown, dragging }) {
                 <span className="kanban-card-title">{task.title}</span>
             </div>
             <div className="kanban-card-line2">
-                <span className="meta-est">{durationLabel(task.est)}</span>
-                {task.tags.length > 0 && (
+                <span className="meta-est">{durationLabel(task.est || 0)}</span>
+                {task.tags && task.tags.length > 0 && (
                     <>
                         <span className="meta-sep">·</span>
                         <span className="meta-tag">#{task.tags[0]}</span>
@@ -155,7 +149,7 @@ function KanbanCard({ task, onPointerDown, dragging }) {
                         )}
                     </>
                 )}
-                {task.subtasks.length > 0 && (
+                {task.subtasks && task.subtasks.length > 0 && (
                     <>
                         <span className="meta-sep">·</span>
                         <span className="meta-subtasks">

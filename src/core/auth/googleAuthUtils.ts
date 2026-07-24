@@ -20,6 +20,10 @@ export function loadGoogleIdentityScript(): Promise<void> {
 export function requestGoogleAuthCode(): Promise<string> {
     return new Promise((resolve, reject) => {
         try {
+            if (!window.google?.accounts?.oauth2) {
+                reject(new Error("Google Identity Services not loaded"));
+                return;
+            }
             const client = window.google.accounts.oauth2.initCodeClient({
                 client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
                 scope: "https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/tasks",

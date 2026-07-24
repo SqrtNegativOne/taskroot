@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { ClockStrategy } from "./ClockStrategy";
-import { StopwatchContext, StopwatchState } from "./types";
+import type { StopwatchContext, StopwatchState } from "./types";
 import { logWorkSession } from "./utils";
 import { PAD2 } from "../../../core/store/data";
 

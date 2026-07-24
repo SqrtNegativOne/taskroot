@@ -17,14 +17,14 @@ export interface PlanDragState {
     target: PlanDragTarget | null;
 }
 
-export function DragGhost({ task, event, x, y, style }: { task?: AppTask | null, event?: AppEvent | null, x: number, y: number, style: string }) {
+export function DragGhost({ task, event, x, y, ghostStyle }: { task?: AppTask | null, event?: AppEvent | null, x: number, y: number, ghostStyle: string }) {
     const title = task ? task.title : event ? event.title : "";
     const pri = task ? task.priority : null;
     const est = task ? task.est : event ? event.end - event.start : 60;
     
     return (
         <div
-            className={`drag-ghost is-${style}`}
+            className={`drag-ghost is-${ghostStyle}`}
             style={{ left: x + 14, top: y - 8 }}
         >
             <div className="drag-ghost-inner">

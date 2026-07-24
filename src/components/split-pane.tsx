@@ -39,6 +39,52 @@ function useSplitPane(direction: "horizontal" | "vertical", defaultSize: number,
     return { size, isDragging, containerRef, onPointerDown, onPointerMove, onPointerUp, isHoriz };
 }
 
+function getContainerStyle(isHoriz: boolean, isDragging: boolean): React.CSSProperties {
+    return {
+        display: "flex",
+        flexDirection: isHoriz ? "row" : "column",
+        width: "100%",
+        height: "100%",
+        overflow: "hidden",
+        pointerEvents: isDragging ? "none" : "auto",
+    };
+}
+
+function getFirstChildStyle(isHoriz: boolean, size: number, minSize: number): React.CSSProperties {
+    return {
+        [isHoriz ? "width" : "height"]: size,
+        [isHoriz ? "minWidth" : "minHeight"]: size > 0 ? minSize : 0,
+        display: size === 0 ? "none" : "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+        flexShrink: 0,
+    };
+}
+
+function getDividerStyle(isHoriz: boolean, isDragging: boolean): React.CSSProperties {
+    return {
+        [isHoriz ? "width" : "height"]: "6px",
+        [isHoriz ? "marginLeft" : "marginTop"]: "-3px",
+        [isHoriz ? "marginRight" : "marginBottom"]: "-3px",
+        cursor: isHoriz ? "col-resize" : "row-resize",
+        flexShrink: 0,
+        zIndex: 10,
+        position: "relative",
+        pointerEvents: "auto",
+        backgroundColor: isDragging ? "var(--accent)" : "transparent",
+        transition: "background-color 0.15s ease",
+    };
+}
+
+const secondChildStyle: React.CSSProperties = {
+    flex: 1,
+    minWidth: 0,
+    minHeight: 0,
+    display: "flex",
+    flexDirection: "column",
+    overflow: "hidden",
+};
+
 export function SplitPane({
     direction = "horizontal",
     defaultSize = 360,
@@ -59,28 +105,8 @@ export function SplitPane({
     const secondChild = childArray[1];
 
     return (
-        <div
-            ref={containerRef}
-            style={{
-                display: "flex",
-                flexDirection: isHoriz ? "row" : "column",
-                width: "100%",
-                height: "100%",
-                overflow: "hidden",
-                pointerEvents: isDragging ? "none" : "auto",
-            }}
-        >
-            <div
-                style={{
-                    [isHoriz ? "width" : "height"]: size,
-                    [isHoriz ? "minWidth" : "minHeight"]:
-                        size > 0 ? minSize : 0,
-                    display: size === 0 ? "none" : "flex",
-                    flexDirection: "column",
-                    overflow: "hidden",
-                    flexShrink: 0,
-                }}
-            >
+        <div ref={containerRef} style={getContainerStyle(isHoriz, isDragging)}>
+            <div style={getFirstChildStyle(isHoriz, size, minSize)}>
                 {firstChild}
             </div>
 
@@ -88,33 +114,11 @@ export function SplitPane({
                 onPointerDown={onPointerDown}
                 onPointerMove={onPointerMove}
                 onPointerUp={onPointerUp}
-                style={{
-                    [isHoriz ? "width" : "height"]: "6px",
-                    [isHoriz ? "marginLeft" : "marginTop"]: "-3px",
-                    [isHoriz ? "marginRight" : "marginBottom"]: "-3px",
-                    cursor: isHoriz ? "col-resize" : "row-resize",
-                    flexShrink: 0,
-                    zIndex: 10,
-                    position: "relative",
-                    pointerEvents: "auto",
-                    backgroundColor: isDragging
-                        ? "var(--accent)"
-                        : "transparent",
-                    transition: "background-color 0.15s ease",
-                }}
+                style={getDividerStyle(isHoriz, isDragging)}
                 className="split-pane-divider"
             />
 
-            <div
-                style={{
-                    flex: 1,
-                    minWidth: 0,
-                    minHeight: 0,
-                    display: "flex",
-                    flexDirection: "column",
-                    overflow: "hidden",
-                }}
-            >
+            <div style={secondChildStyle}>
                 {secondChild}
             </div>
         </div>

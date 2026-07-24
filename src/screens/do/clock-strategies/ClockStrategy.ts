@@ -1,5 +1,5 @@
 import React from "react";
-import { StopwatchContext } from "./types";
+import type { StopwatchContext } from "./types";
 
 export abstract class ClockStrategy {
     abstract renderDisplay(context: StopwatchContext): React.ReactNode;

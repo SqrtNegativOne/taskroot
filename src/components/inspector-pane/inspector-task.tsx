@@ -14,7 +14,7 @@ export function TaskInspector({ task, updateTask }: TaskInspectorProps) {
                 <div className="inspector-field">
                     <label htmlFor={`status-${task.id}`}>Status</label>
                     <TaskStatusSelect
-                        value={task.status}
+                        value={task.status || "todo"}
                         onChange={(e) =>
                             updateTask(task.id, {
                                 status: e.target.value as AppTask["status"],

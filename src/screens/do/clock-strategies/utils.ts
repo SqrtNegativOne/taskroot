@@ -1,6 +1,6 @@
 import React from "react";
 import { ymd, PAD2 } from "../../../core/store/data";
-import { AppEvent } from "../../../core/domain/models";
+import type { AppEvent } from "../../../core/domain/models";
 
 export function logWorkSession(
     setTimeLogs: React.Dispatch<React.SetStateAction<AppEvent[]>>,

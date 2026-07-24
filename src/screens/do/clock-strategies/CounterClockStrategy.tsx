@@ -1,6 +1,5 @@
-import React from "react";
 import { ClockStrategy } from "./ClockStrategy";
-import { StopwatchContext } from "./types";
+import type { StopwatchContext } from "./types";
 import { logWorkSession, splitTime } from "./utils";
 
 function CounterClockDisplay({ running, isPristine, currentMs, toggle }: any) {

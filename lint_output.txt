@@ -1,0 +1,1177 @@
+
+  ! eslint(complexity): method `toLocalTask` has a complexity of 20. Maximum allowed is 15.
+     ,-[src/core/sync/GoogleTasksAPI.ts:115:16]
+ 114 |     
+ 115 | ,->     toLocalTask(googleTask: gapi.client.tasks.Task, existingLocalTask: AppTask | null = null): AppTask | { id: string; _deleted: boolean; updatedAt: number; } {
+ 116 | |           if (googleTask.deleted) {
+ 117 | |               let id = googleTask.id || "";
+ 118 | |               if (existingLocalTask) id = existingLocalTask.id;
+ 119 | |               return {
+ 120 | |                   id,
+ 121 | |                   _deleted: true,
+ 122 | |                   updatedAt: new Date(googleTask.updated || 0).getTime(),
+ 123 | |               };
+ 124 | |           }
+ 125 | |           let localStatus = "todo";
+ 126 | |           if (googleTask.status === "completed") {
+ 127 | |               localStatus = "done";
+ 128 | |           }
+ 129 | |   
+ 130 | |           let id = googleTask.id || "";
+ 131 | |           const match = (googleTask.notes || "").match(
+ 132 | |               /Taskroot Task ID: (t[0-9a-zA-Z-]+)/,
+ 133 | |           );
+ 134 | |           if (match) {
+ 135 | |               id = match[1];
+ 136 | |           }
+ 137 | |   
+ 138 | |           if (existingLocalTask) {
+ 139 | |               id = existingLocalTask.id;
+ 140 | |           }
+ 141 | |   
+ 142 | |           const defaultTask: AppTask = {
+ 143 | |               id,
+ 144 | |               googleTaskId: googleTask.id,
+ 145 | |               title: googleTask.title || "",
+ 146 | |               status: localStatus,
+ 147 | |               priority: 1,
+ 148 | |               tags: [],
+ 149 | |               subtasks: [],
+ 150 | |               parent_task: null,
+ 151 | |               est: 0,
+ 152 | |               added: new Date().toISOString(),
+ 153 | |               isDraft: false,
+ 154 | |               notes: googleTask.notes || "",
+ 155 | |               due: googleTask.due ? googleTask.due.split("T")[0] : undefined,
+ 156 | |               updatedAt: googleTask.updated
+ 157 | |                   ? new Date(googleTask.updated).getTime()
+ 158 | |                   : Date.now(),
+ 159 | |           };
+ 160 | |   
+ 161 | |           if (existingLocalTask) {
+ 162 | |               return {
+ 163 | |                   ...existingLocalTask,
+ 164 | |                   googleTaskId: googleTask.id,
+ 165 | |                   title: googleTask.title || "",
+ 166 | |                   status: localStatus,
+ 167 | |                   notes: googleTask.notes || "",
+ 168 | |                   due: googleTask.due
+ 169 | |                       ? googleTask.due.split("T")[0]
+ 170 | |                       : existingLocalTask.due,
+ 171 | |                   updatedAt: googleTask.updated
+ 172 | |                       ? new Date(googleTask.updated).getTime()
+ 173 | |                       : Date.now(),
+ 174 | |               };
+ 175 | |           }
+ 176 | |   
+ 177 | |           return defaultTask;
+ 178 | `->     }
+ 179 |     
+     `----
+
+  ! eslint(complexity): function `FilterSortButtons` has a complexity of 16. Maximum allowed is 15.
+     ,-[src/screens/plan/shared-menus/FilterSortButtons.tsx:7:8]
+   6 |     
+   7 | ,-> export function FilterSortButtons({
+   8 | |       filters,
+   9 | |       setFilters,
+  10 | |       sort,
+  11 | |       setSort,
+  12 | |       columns,
+  13 | |       getValuesForColumn,
+  14 | |       sortOptions,
+  15 | |       align = "left",
+  16 | |   }: FilterSortButtonsProps) {
+  17 | |       const [showFilters, setShowFilters] = useState(false);
+  18 | |       const [closingFilters, setClosingFilters] = useState(false);
+  19 | |       const [showSort, setShowSort] = useState(false);
+  20 | |       const [closingSort, setClosingSort] = useState(false);
+  21 | |       const ref = useRef<HTMLDivElement>(null);
+  22 | |   
+  23 | |       const closeFilters = () => {
+  24 | |           setClosingFilters(true);
+  25 | |           setTimeout(() => {
+  26 | |               setShowFilters(false);
+  27 | |               setClosingFilters(false);
+  28 | |           }, 150);
+  29 | |       };
+  30 | |   
+  31 | |       const closeSort = () => {
+  32 | |           setClosingSort(true);
+  33 | |           setTimeout(() => {
+  34 | |               setShowSort(false);
+  35 | |               setClosingSort(false);
+  36 | |           }, 150);
+  37 | |       };
+  38 | |   
+  39 | |       useEffect(() => {
+  40 | |           function handleClickOutside(e: PointerEvent) {
+  41 | |               if (ref.current && !ref.current.contains(e.target as Node)) {
+  42 | |                   if (showFilters && !closingFilters) closeFilters();
+  43 | |                   if (showSort && !closingSort) closeSort();
+  44 | |               }
+  45 | |           }
+  46 | |           document.addEventListener("pointerdown", handleClickOutside);
+  47 | |           return () =>
+  48 | |               document.removeEventListener("pointerdown", handleClickOutside);
+  49 | |       }, [showFilters, showSort, closingFilters, closingSort]);
+  50 | |   
+  51 | |       const { addFilter, updateFilter, removeFilter } = useFilterActions(filters, setFilters, columns, getValuesForColumn);
+  52 | |   
+  53 | |       const toggleFilters = () => {
+  54 | |           if (showFilters) {
+  55 | |               closeFilters();
+  56 | |           } else {
+  57 | |               setShowFilters(true);
+  58 | |               if (showSort) closeSort();
+  59 | |           }
+  60 | |       };
+  61 | |   
+  62 | |       const toggleSort = () => {
+  63 | |           if (showSort) {
+  64 | |               closeSort();
+  65 | |           } else {
+  66 | |               setShowSort(true);
+  67 | |               if (showFilters) closeFilters();
+  68 | |           }
+  69 | |       };
+  70 | |   
+  71 | |       return (
+  72 | |           <div
+  73 | |               style={{
+  74 | |                   position: "relative",
+  75 | |                   display: "flex",
+  76 | |                   gap: "8px",
+  77 | |                   alignItems: "center",
+  78 | |               }}
+  79 | |               ref={ref}
+  80 | |           >
+  81 | |               <button
+  82 | |                   onClick={toggleFilters}
+  83 | |                   style={{
+  84 | |                       background:
+  85 | |                           showFilters || filters.length > 0
+  86 | |                               ? "var(--bg-surface)"
+  87 | |                               : "transparent",
+  88 | |                       border: "1px solid var(--border)",
+  89 | |                       color: "var(--fg)",
+  90 | |                       borderRadius: "4px",
+  91 | |                       padding: "4px 6px",
+  92 | |                       display: "flex",
+  93 | |                       alignItems: "center",
+  94 | |                       gap: "4px",
+  95 | |                       cursor: "pointer",
+  96 | |                   }}
+  97 | |                   title="Filter"
+  98 | |               >
+  99 | |                   <Icon name="filter_list" size={16} />
+ 100 | |                   {filters.length > 0 && (
+ 101 | |                       <span style={{ fontSize: "0.8em", fontWeight: "bold" }}>
+ 102 | |                           {filters.length}
+ 103 | |                       </span>
+ 104 | |                   )}
+ 105 | |               </button>
+ 106 | |   
+ 107 | |               {sortOptions && (
+ 108 | |                   <button
+ 109 | |                       onClick={toggleSort}
+ 110 | |                       style={{
+ 111 | |                           background: showSort
+ 112 | |                               ? "var(--bg-surface)"
+ 113 | |                               : "transparent",
+ 114 | |                           border: "1px solid var(--border)",
+ 115 | |                           color: "var(--fg)",
+ 116 | |                           borderRadius: "4px",
+ 117 | |                           padding: "4px 6px",
+ 118 | |                           display: "flex",
+ 119 | |                           alignItems: "center",
+ 120 | |                           gap: "4px",
+ 121 | |                           cursor: "pointer",
+ 122 | |                       }}
+ 123 | |                       title="Sort"
+ 124 | |                   >
+ 125 | |                       <Icon name="swap_vert" size={16} />
+ 126 | |                   </button>
+ 127 | |               )}
+ 128 | |   
+ 129 | |               {showFilters && (
+ 130 | |                   <div
+ 131 | |                       className={`floating-menu ${closingFilters ? "is-closing" : ""}`}
+ 132 | |                       style={{
+ 133 | |                           position: "absolute",
+ 134 | |                           top: "calc(100% + 8px)",
+ 135 | |                           left: align === "left" ? 0 : "auto",
+ 136 | |                           right: align === "right" ? 0 : "auto",
+ 137 | |                           zIndex: 1000,
+ 138 | |                           display: "flex",
+ 139 | |                           flexDirection: "column",
+ 140 | |                           gap: "8px",
+ 141 | |                           padding: "10px",
+ 142 | |                           background: "var(--bg-surface)",
+ 143 | |                           borderRadius: "6px",
+ 144 | |                           border: "1px solid var(--border)",
+ 145 | |                           boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+ 146 | |                           minWidth: "320px",
+ 147 | |                       }}
+ 148 | |                   >
+ 149 | |                       {filters.map((f) => (
+ 150 | |                           <div
+ 151 | |                               key={f.id}
+ 152 | |                               style={{
+ 153 | |                                   display: "flex",
+ 154 | |                                   gap: "6px",
+ 155 | |                                   alignItems: "center",
+ 156 | |                               }}
+ 157 | |                           >
+ 158 | |                               <SelectInput
+ 159 | |                                   value={f.column}
+ 160 | |                                   onChange={(val: string) =>
+ 161 | |                                       updateFilter(f.id!, { column: val })
+ 162 | |                                   }
+ 163 | |                                   options={columns.map(c => ({ label: c.label, value: c.id }))}
+ 164 | |                                   style={{ flex: 1 }}
+ 165 | |                               />
+ 166 | |                               <SelectInput
+ 167 | |                                   value={f.operator}
+ 168 | |                                   onChange={(val: string) =>
+ 169 | |                                       updateFilter(f.id!, { operator: val })
+ 170 | |                                   }
+ 171 | |                                   options={[
+ 172 | |                                       { label: "is", value: "is" },
+ 173 | |                                       { label: "is not", value: "is not" }
+ 174 | |                                   ]}
+ 175 | |                                   style={{ width: "75px" }}
+ 176 | |                               />
+ 177 | |                               <MultiSelect 
+ 178 | |                                   options={getValuesForColumn(f.column)}
+ 179 | |                                   values={Array.isArray(f.value) ? f.value.map(String) : [String(f.value)]}
+ 180 | |                                   onChange={(newValues) => updateFilter(f.id!, { value: newValues })}
+ 181 | |                               />
+ 182 | |                               <button
+ 183 | |                                   onClick={() => removeFilter(f.id!)}
+ 184 | |                                   style={{
+ 185 | |                                       background: "transparent",
+ 186 | |                                       border: "none",
+ 187 | |                                       cursor: "pointer",
+ 188 | |                                       padding: "4px",
+ 189 | |                                       color: "var(--fg)",
+ 190 | |                                       opacity: 0.6,
+ 191 | |                                   }}
+ 192 | |                               >
+ 193 | |                                   <Icon name="close" size={16} />
+ 194 | |                               </button>
+ 195 | |                           </div>
+ 196 | |                       ))}
+ 197 | |                       <button
+ 198 | |                           onClick={addFilter}
+ 199 | |                           style={{
+ 200 | |                               background: "transparent",
+ 201 | |                               border: "none",
+ 202 | |                               color: "var(--fg)",
+ 203 | |                               cursor: "pointer",
+ 204 | |                               display: "flex",
+ 205 | |                               alignItems: "center",
+ 206 | |                               gap: "4px",
+ 207 | |                               alignSelf: "flex-start",
+ 208 | |                               padding: "4px 4px",
+ 209 | |                               fontSize: "0.9em",
+ 210 | |                               opacity: 0.8,
+ 211 | |                           }}
+ 212 | |                       >
+ 213 | |                           <Icon name="add" size={14} /> Add filter
+ 214 | |                       </button>
+ 215 | |                   </div>
+ 216 | |               )}
+ 217 | |   
+ 218 | |               {showSort && sortOptions && (
+ 219 | |                   <div
+ 220 | |                       className={`floating-menu ${closingSort ? "is-closing" : ""}`}
+ 221 | |                       style={{
+ 222 | |                           position: "absolute",
+ 223 | |                           top: "calc(100% + 8px)",
+ 224 | |                           left: align === "left" ? 0 : "auto",
+ 225 | |                           right: align === "right" ? 0 : "auto",
+ 226 | |                           zIndex: 1000,
+ 227 | |                           display: "flex",
+ 228 | |                           flexDirection: "column",
+ 229 | |                           gap: "8px",
+ 230 | |                           padding: "10px",
+ 231 | |                           background: "var(--bg-surface)",
+ 232 | |                           borderRadius: "6px",
+ 233 | |                           border: "1px solid var(--border)",
+ 234 | |                           boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+ 235 | |                           minWidth: "200px",
+ 236 | |                       }}
+ 237 | |                   >
+ 238 | |                       <div
+ 239 | |                           style={{
+ 240 | |                               display: "flex",
+ 241 | |                               gap: "6px",
+ 242 | |                               alignItems: "center",
+ 243 | |                           }}
+ 244 | |                       >
+ 245 | |                           <span
+ 246 | |                               style={{
+ 247 | |                                   fontSize: "0.9em",
+ 248 | |                                   color: "var(--fg)",
+ 249 | |                                   opacity: 0.8,
+ 250 | |                               }}
+ 251 | |                           >
+ 252 | |                               Sort by
+ 253 | |                           </span>
+ 254 | |                           <SelectInput
+ 255 | |                               value={sort}
+ 256 | |                               onChange={(val: string) => setSort(val)}
+ 257 | |                               options={sortOptions.map(o => ({ label: o.label, value: o.id }))}
+ 258 | |                               style={{ flex: 1 }}
+ 259 | |                           />
+ 260 | |                       </div>
+ 261 | |                   </div>
+ 262 | |               )}
+ 263 | |           </div>
+ 264 | |       );
+ 265 | `-> }
+     `----
+
+  ! eslint(complexity): function `TaskRow` has a complexity of 31. Maximum allowed is 15.
+     ,-[src/components/tasklist.tsx:215:1]
+ 214 |     
+ 215 | ,-> function TaskRow({
+ 216 | |       task,
+ 217 | |       onDragStart,
+ 218 | |       dragging,
+ 219 | |       updateTask,
+ 220 | |       deleteTask,
+ 221 | |       filters,
+ 222 | |   }: TaskRowProps) {
+ 223 | |       const [isExiting, setIsExiting] = useState(false);
+ 224 | |       const [isChecking, setIsChecking] = useState(false);
+ 225 | |   
+ 226 | |       const willBeFilteredOut = (newStatus: string) => {
+ 227 | |           if (!filters || filters.length === 0) return false;
+ 228 | |           const mockTask = { ...task, status: newStatus };
+ 229 | |           for (const f of filters) {
+ 230 | |               if (!f.column || (!f.value && f.value !== 0)) continue;
+ 231 | |               let match = false;
+ 232 | |               const values = Array.isArray(f.value) ? f.value : [f.value];
+ 233 | |               if (values.length === 0) continue;
+ 234 | |               
+ 235 | |               if (f.column === "status") {
+ 236 | |                   match = values.includes(mockTask.status || "");
+ 237 | |               } else if (f.column === "priority") {
+ 238 | |                   match = values.includes(mockTask.priority || 0) || values.includes(String(mockTask.priority));
+ 239 | |               } else if (f.column === "tag") {
+ 240 | |                   match = values.some((v) => (mockTask.tags || []).includes(String(v)));
+ 241 | |               }
+ 242 | |               const passes = f.operator === "is not" ? !match : match;
+ 243 | |               if (!passes) return true;
+ 244 | |           }
+ 245 | |           return false;
+ 246 | |       };
+ 247 | |   
+ 248 | |       const handlePointerDown = (e: React.PointerEvent<HTMLDivElement> | React.MouseEvent<HTMLDivElement>) => {
+ 249 | |           if (e.button !== 0) return;
+ 250 | |           if (
+ 251 | |               (e.target as Element).closest(".task-row-subtask-toggle") ||
+ 252 | |               (e.target as Element).closest(".task-row-actions") ||
+ 253 | |               (e.target as Element).closest(".task-circle")
+ 254 | |           )
+ 255 | |               return;
+ 256 | |           onDragStart?.(e, task);
+ 257 | |       };
+ 258 | |   
+ 259 | |       const dueStr = task.due ? dueLabel(task.due, TODAY) : "";
+ 260 | |       const overdue =
+ 261 | |           task.due && parseYMD(task.due) < TODAY && task.status !== "done";
+ 262 | |   
+ 263 | |       return (
+ 264 | |           <div
+ 265 | |               className={`task-row ${dragging ? "is-dragging" : ""} ${task.status === "done" ? "is-done" : ""} ${isExiting ? "is-exiting" : ""}`}
+ 266 | |               onPointerDown={handlePointerDown}
+ 267 | |           >
+ 268 | |               <button
+ 269 | |                   type="button"
+ 270 | |                   className={`task-circle pri-bg-${task.priority}`}
+ 271 | |                   style={{ border: "none", padding: 0, font: "inherit", color: "inherit" }}
+ 272 | |                   onClick={(e) => {
+ 273 | |                       e.stopPropagation();
+ 274 | |                       const newStatus = task.status === "done" ? "todo" : "done";
+ 275 | |                       const isRemoving = willBeFilteredOut(newStatus);
+ 276 | |   
+ 277 | |                       if (newStatus === "done") {
+ 278 | |                           setIsChecking(true);
+ 279 | |                           play("success");
+ 280 | |                       } else {
+ 281 | |                           play("release");
+ 282 | |                       }
+ 283 | |   
+ 284 | |                       if (isRemoving) {
+ 285 | |                           setIsExiting(true);
+ 286 | |                           setTimeout(() => {
+ 287 | |                               updateTask(task.id, { status: newStatus });
+ 288 | |                               setIsChecking(false);
+ 289 | |                               setIsExiting(false);
+ 290 | |                           }, 400);
+ 291 | |                           return;
+ 292 | |                       }
+ 293 | |   
+ 294 | |                       updateTask(task.id, { status: newStatus });
+ 295 | |                       if (newStatus === "todo") {
+ 296 | |                           setIsChecking(false);
+ 297 | |                       }
+ 298 | |                   }}
+ 299 | |                   title="Toggle Done"
+ 300 | |                   aria-label={`Priority ${task.priority}`}
+ 301 | |               >
+ 302 | |                   {(task.status === "done" || isChecking) && (
+ 303 | |                       <svg
+ 304 | |                           className="task-circle-check"
+ 305 | |                           viewBox="0 0 24 24"
+ 306 | |                           fill="none"
+ 307 | |                           stroke="currentColor"
+ 308 | |                           strokeWidth="3"
+ 309 | |                           strokeLinecap="round"
+ 310 | |                           strokeLinejoin="round"
+ 311 | |                       >
+ 312 | |                           <polyline points="4 12 9 17 20 6"></polyline>
+ 313 | |                       </svg>
+ 314 | |                   )}
+ 315 | |               </button>
+ 316 | |               <div className="task-row-content">
+ 317 | |                   <div className="task-row-line1">
+ 318 | |                       <span className="task-row-title">{task.title}</span>
+ 319 | |                       {task.status === "doing" && (
+ 320 | |                           <span className="status-pill status-doing">doing</span>
+ 321 | |                       )}
+ 322 | |                       {task.status === "next-up" && (
+ 323 | |                           <span className="status-pill status-nextup">
+ 324 | |                               next up
+ 325 | |                           </span>
+ 326 | |                       )}
+ 327 | |   
+ 328 | |                       <div className="task-row-actions">
+ 329 | |                           <button
+ 330 | |                               onClick={(e) => {
+ 331 | |                                   e.stopPropagation();
+ 332 | |                                   if (e.shiftKey || confirm("Delete task?")) {
+ 333 | |                                       setIsExiting(true);
+ 334 | |                                       setTimeout(() => deleteTask(task.id), 400);
+ 335 | |                                   }
+ 336 | |                               }}
+ 337 | |                               title="Delete"
+ 338 | |                           >
+ 339 | |                               <span
+ 340 | |                                   className="material-symbols-outlined"
+ 341 | |                                   style={{
+ 342 | |                                       fontSize: "18px",
+ 343 | |                                       display: "flex",
+ 344 | |                                       alignItems: "center",
+ 345 | |                                       justifyContent: "center",
+ 346 | |                                   }}
+ 347 | |                               >
+ 348 | |                                   delete
+ 349 | |                               </span>
+ 350 | |                           </button>
+ 351 | |                       </div>
+ 352 | |                   </div>
+ 353 | |                   {((!!task.est && task.est > 0) ||
+ 354 | |                       (task.tags || []).length > 0 ||
+ 355 | |                       (task.subtasks || []).length > 0 ||
+ 356 | |                       !!dueStr) && (
+ 357 | |                       <div className="task-row-line2">
+ 358 | |                           {!!task.est && task.est > 0 && (
+ 359 | |                               <>
+ 360 | |                                   <span className="meta-est">
+ 361 | |                                       {durationLabel(task.est)}
+ 362 | |                                   </span>
+ 363 | |                                   {(task.tags || []).length > 0 && (
+ 364 | |                                       <span className="meta-sep">·</span>
+ 365 | |                                   )}
+ 366 | |                               </>
+ 367 | |                           )}
+ 368 | |                           {(task.tags || []).map((tag, i) => (
+ 369 | |                               <React.Fragment key={tag}>
+ 370 | |                                   <span className="meta-tag">#{tag}</span>
+ 371 | |                                   {i < (task.tags || []).length - 1 && (
+ 372 | |                                       <span className="meta-tag-sep">,</span>
+ 373 | |                                   )}
+ 374 | |                               </React.Fragment>
+ 375 | |                           ))}
+ 376 | |                           <span className="meta-spacer" />
+ 377 | |                           {(task.subtasks || []).length > 0 && (
+ 378 | |                               <span
+ 379 | |                                   className="meta-subtasks"
+ 380 | |                                   title={`${(task.subtasks || []).filter((s) => s.done).length}/${(task.subtasks || []).length} subtasks done`}
+ 381 | |                               >
+ 382 | |                                   ☐{(task.subtasks || []).filter((s) => s.done).length}/
+ 383 | |                                   {(task.subtasks || []).length}
+ 384 | |                               </span>
+ 385 | |                           )}
+ 386 | |                           {dueStr && (
+ 387 | |                               <span
+ 388 | |                                   className={`meta-due ${overdue ? "is-overdue" : ""}`}
+ 389 | |                               >
+ 390 | |                                   due {dueStr}
+ 391 | |                               </span>
+ 392 | |                           )}
+ 393 | |                       </div>
+ 394 | |                   )}
+ 395 | |               </div>
+ 396 | |           </div>
+ 397 | |       );
+ 398 | `-> }
+ 399 |     
+     `----
+
+  ! eslint(complexity): function has a complexity of 17. Maximum allowed is 15.
+     ,-[src/components/tasklist.tsx:226:31]
+ 225 |     
+ 226 | ,->     const willBeFilteredOut = (newStatus: string) => {
+ 227 | |           if (!filters || filters.length === 0) return false;
+ 228 | |           const mockTask = { ...task, status: newStatus };
+ 229 | |           for (const f of filters) {
+ 230 | |               if (!f.column || (!f.value && f.value !== 0)) continue;
+ 231 | |               let match = false;
+ 232 | |               const values = Array.isArray(f.value) ? f.value : [f.value];
+ 233 | |               if (values.length === 0) continue;
+ 234 | |               
+ 235 | |               if (f.column === "status") {
+ 236 | |                   match = values.includes(mockTask.status || "");
+ 237 | |               } else if (f.column === "priority") {
+ 238 | |                   match = values.includes(mockTask.priority || 0) || values.includes(String(mockTask.priority));
+ 239 | |               } else if (f.column === "tag") {
+ 240 | |                   match = values.some((v) => (mockTask.tags || []).includes(String(v)));
+ 241 | |               }
+ 242 | |               const passes = f.operator === "is not" ? !match : match;
+ 243 | |               if (!passes) return true;
+ 244 | |           }
+ 245 | |           return false;
+ 246 | `->     };
+ 247 |     
+     `----
+
+  ! eslint(complexity): function `InspectorPane` has a complexity of 20. Maximum allowed is 15.
+     ,-[src/components/inspector-pane/index.tsx:17:8]
+  16 |     
+  17 | ,-> export function InspectorPane({
+  18 | |       inspectorState,
+  19 | |       onClose,
+  20 | |       tasks,
+  21 | |       setTasks,
+  22 | |       events,
+  23 | |       setEvents,
+  24 | |   }: InspectorPaneProps) {
+  25 | |       const [activeState, setActiveState] = React.useState<{ type: string; id: string } | null>(null);
+  26 | |       const paneRef = React.useRef<HTMLDivElement>(null);
+  27 | |       const [calendars] = useCalendars() as unknown as [{ id: string, summary?: string | undefined }[], unknown, unknown];
+  28 | |   
+  29 | |       React.useEffect(() => {
+  30 | |           if (inspectorState) setActiveState(inspectorState);
+  31 | |       }, [inspectorState]);
+  32 | |   
+  33 | |       const currentState = inspectorState || activeState;
+  34 | |   
+  35 | |       const isCurrentTask = currentState?.type === "task";
+  36 | |       const currentItem = currentState
+  37 | |           ? isCurrentTask
+  38 | |               ? tasks.find((t: AppTask) => t.id === currentState.id)
+  39 | |               : events.find((e: AppEvent) => e.id === currentState.id) ||
+  40 | |                 events.find((e: AppEvent) => e.id === currentState.id.split("_")[0])
+  41 | |           : null;
+  42 | |   
+  43 | |   
+  44 | |   
+  45 | |       const isReadOnlyCalendar = React.useMemo(() => {
+  46 | |           if (isCurrentTask || !currentItem) return false;
+  47 | |           const calId = (currentItem as AppEvent).googleCalendarId || "primary";
+  48 | |           const cal = calendars.find((c: any) => c.id === calId) as any;
+  49 | |           return cal && (cal.accessRole === "reader" || cal.accessRole === "freeBusyReader");
+  50 | |       }, [isCurrentTask, currentItem, calendars]);
+  51 | |   
+  52 | |       const handleClose = React.useCallback(() => {
+  53 | |           if (!(inspectorState && currentItem && currentItem.isDraft)) {
+  54 | |               onClose();
+  55 | |               return;
+  56 | |           }
+  57 | |   
+  58 | |           if (isCurrentTask) {
+  59 | |               setTasks((ts: AppTask[]) => {
+  60 | |                   const t = ts.find((x: AppTask) => x.id === currentItem.id);
+  61 | |                   if (t && t.isDraft) {
+  62 | |                       setEvents((es: AppEvent[]) =>
+  63 | |                           es.filter((e: AppEvent) => e.taskId !== currentItem.id),
+  64 | |                       );
+  65 | |                       return ts.filter((x: AppTask) => x.id !== currentItem.id);
+  66 | |                   }
+  67 | |                   return ts;
+  68 | |               });
+  69 | |           } else {
+  70 | |               setEvents((es: AppEvent[]) => {
+  71 | |                   const e = es.find((x: AppEvent) => x.id === currentItem.id);
+  72 | |                   if (e && e.isDraft)
+  73 | |                       return es.filter((x: AppEvent) => x.id !== currentItem.id);
+  74 | |                   return es;
+  75 | |               });
+  76 | |           }
+  77 | |   
+  78 | |           onClose();
+  79 | |       }, [
+  80 | |           inspectorState,
+  81 | |           currentItem,
+  82 | |           isCurrentTask,
+  83 | |           setTasks,
+  84 | |           setEvents,
+  85 | |           onClose,
+  86 | |       ]);
+  87 | |   
+  88 | |       React.useEffect(() => {
+  89 | |           function handleClickOutside(e: PointerEvent) {
+  90 | |               if (
+  91 | |                   inspectorState &&
+  92 | |                   paneRef.current &&
+  93 | |                   !paneRef.current.contains(e.target as Node)
+  94 | |               ) {
+  95 | |                   handleClose();
+  96 | |               }
+  97 | |           }
+  98 | |           document.addEventListener("pointerdown", handleClickOutside);
+  99 | |           return () =>
+ 100 | |               document.removeEventListener("pointerdown", handleClickOutside);
+ 101 | |       }, [inspectorState, handleClose]);
+ 102 | |   
+ 103 | |       const isOpen = !!(inspectorState && currentItem);
+ 104 | |   
+ 105 | |       const title = currentItem
+ 106 | |           ? isCurrentTask
+ 107 | |               ? (currentItem as AppTask).title
+ 108 | |               : (currentItem as AppEvent).taskId
+ 109 | |                 ? tasks.find((t: AppTask) => t.id === (currentItem as AppEvent).taskId)?.title
+ 110 | |                 : (currentItem as AppEvent).title
+ 111 | |           : "";
+ 112 | |   
+ 113 | |       const updateTask = (id: string, updates: Partial<AppTask>) =>
+ 114 | |           setTasks((ts: AppTask[]) =>
+ 115 | |               ts.map((t: AppTask) =>
+ 116 | |                   t.id === id ? { ...t, ...updates, isDraft: false } : t,
+ 117 | |               ),
+ 118 | |           );
+ 119 | |       const deleteTask = (id: string) => setTasks((ts: AppTask[]) => ts.filter((t: AppTask) => t.id !== id));
+ 120 | |       const updateEvent = (id: string, updates: Partial<AppEvent>) =>
+ 121 | |           setEvents((es: AppEvent[]) =>
+ 122 | |               es.map((e: AppEvent) =>
+ 123 | |                   e.id === id ? { ...e, ...updates, isDraft: false } : e,
+ 124 | |               ),
+ 125 | |           );
+ 126 | |       const deleteEvent = (id: string) =>
+ 127 | |           setEvents((es: AppEvent[]) => es.filter((e: AppEvent) => e.id !== id));
+ 128 | |   
+ 129 | |       return (
+ 130 | |           <div
+ 131 | |               ref={paneRef}
+ 132 | |               className={`inspector-pane ${isOpen ? "is-open" : ""}`}
+ 133 | |           >
+ 134 | |               {currentItem && (
+ 135 | |                   <React.Fragment key={currentItem.id}>
+ 136 | |                       <div
+ 137 | |                           className="inspector-hd"
+ 138 | |                           style={{
+ 139 | |                               padding: "0 8px",
+ 140 | |                               borderBottom: "none",
+ 141 | |                               background: "transparent",
+ 142 | |                           }}
+ 143 | |                       >
+ 144 | |                           <button
+ 145 | |                               className="inspector-icon-btn"
+ 146 | |                               onClick={handleClose}
+ 147 | |                               title="Close Pane"
+ 148 | |                           >
+ 149 | |                               <span className="material-symbols-outlined">
+ 150 | |                                   keyboard_double_arrow_right
+ 151 | |                               </span>
+ 152 | |                           </button>
+ 153 | |                           <button
+ 154 | |                               className="inspector-icon-btn"
+ 155 | |                               onClick={() => {
+ 156 | |                                   if (isCurrentTask) {
+ 157 | |                                       deleteTask(currentItem.id);
+ 158 | |                                       setEvents((es: AppEvent[]) =>
+ 159 | |                                           es.filter(
+ 160 | |                                               (e) => e.taskId !== currentItem.id,
+ 161 | |                                           ),
+ 162 | |                                       );
+ 163 | |                                   } else {
+ 164 | |                                       deleteEvent(currentItem.id);
+ 165 | |                                   }
+ 166 | |                                   handleClose();
+ 167 | |                               }}
+ 168 | |                               title="Delete"
+ 169 | |                               disabled={isReadOnlyCalendar}
+ 170 | |                           >
+ 171 | |                               <span
+ 172 | |                                   className="material-symbols-outlined"
+ 173 | |                                   style={{ fontSize: "20px", opacity: isReadOnlyCalendar ? 0.3 : 1 }}
+ 174 | |                               >
+ 175 | |                                   delete
+ 176 | |                               </span>
+ 177 | |                           </button>
+ 178 | |                       </div>
+ 179 | |                       <div className="inspector-body" style={{ paddingTop: 0 }}>
+ 180 | |                           <div
+ 181 | |                               className="inspector-field"
+ 182 | |                               style={{ marginTop: "24px", marginBottom: "4px" }}
+ 183 | |                           >
+ 184 | |                               <TitleInput
+ 185 | |                                   value={title || ""}
+ 186 | |                                   onChange={(newTitle) => {
+ 187 | |                                       if (isCurrentTask)
+ 188 | |                                           updateTask(currentItem.id, {
+ 189 | |                                               title: newTitle,
+ 190 | |                                           });
+ 191 | |                                       else
+ 192 | |                                           updateEvent(currentItem.id, {
+ 193 | |                                               title: newTitle,
+ 194 | |                                           });
+ 195 | |                                   }}
+ 196 | |                                   disabled={Boolean(!isCurrentTask && (currentItem as AppEvent).taskId) || isReadOnlyCalendar}
+ 197 | |                                   onEnter={handleClose}
+ 198 | |                                   style={{
+ 199 | |                                       fontSize: "24px",
+ 200 | |                                       fontWeight: "normal",
+ 201 | |                                       border: "none",
+ 202 | |                                       background: "transparent",
+ 203 | |                                       padding: "0",
+ 204 | |                                       outline: "none",
+ 205 | |                                       width: "100%",
+ 206 | |                                       color: "var(--fg)",
+ 207 | |                                   }}
+ 208 | |                                   autoFocus={Boolean((currentItem as AppTask).isDraft)}
+ 209 | |                               />
+ 210 | |                           </div>
+ 211 | |                           <div
+ 212 | |                               className="inspector-field"
+ 213 | |                               style={{
+ 214 | |                                   flexDirection: "column",
+ 215 | |                                   alignItems: "flex-start",
+ 216 | |                               }}
+ 217 | |                           >
+ 218 | |                               <DescriptionInput
+ 219 | |                                   value={((currentItem as AppEvent).description as string) || ""}
+ 220 | |                                   onChange={(desc) => {
+ 221 | |                                       if (isReadOnlyCalendar) return;
+ 222 | |                                       if (isCurrentTask)
+ 223 | |                                           updateTask(currentItem.id, {
+ 224 | |                                               description: desc,
+ 225 | |                                           });
+ 226 | |                                       else
+ 227 | |                                           updateEvent(currentItem.id, {
+ 228 | |                                               description: desc,
+ 229 | |                                           });
+ 230 | |                                   }}
+ 231 | |                               />
+ 232 | |                           </div>
+ 233 | |   
+ 234 | |                           {isReadOnlyCalendar && (
+ 235 | |                               <div className="inspector-field" style={{color: "var(--tag-red)", fontSize: "0.85em", marginTop: "8px"}}>
+ 236 | |                                   This event belongs to a read-only calendar and cannot be modified.
+ 237 | |                               </div>
+ 238 | |                           )}
+ 239 | |   
+ 240 | |                           {isCurrentTask ? (
+ 241 | |                               <TaskInspector 
+ 242 | |                                   task={currentItem as AppTask} 
+ 243 | |                                   updateTask={updateTask} 
+ 244 | |                               />
+ 245 | |                           ) : (
+ 246 | |                               <EventInspector 
+ 247 | |                                   event={currentItem as AppEvent} 
+ 248 | |                                   tasks={tasks}
+ 249 | |                                   calendars={calendars}
+ 250 | |                                   updateEvent={updateEvent}
+ 251 | |                                   isReadOnlyCalendar={isReadOnlyCalendar}
+ 252 | |                               />
+ 253 | |                           )}
+ 254 | |                       </div>
+ 255 | |                   </React.Fragment>
+ 256 | |               )}
+ 257 | |           </div>
+ 258 | |       );
+ 259 | `-> }
+     `----
+
+  ! eslint(complexity): function `MiniTrackerScreen` has a complexity of 18. Maximum allowed is 15.
+     ,-[src/screens/minitracker/MiniTrackerScreen.tsx:107:8]
+ 106 |     
+ 107 | ,-> export function MiniTrackerScreen() {
+ 108 | |       const [state, setState] = useStopwatch();
+ 109 | |       const [tasks] = useTasks();
+ 110 | |       const [settings] = useStored<Partial<import('../../core/store/settingsSchema').AppSettings>>("settings", {});
+ 111 | |       const [now, setNow] = useState(Date.now());
+ 112 | |       const [isHovered, setIsHovered] = useState(false);
+ 113 | |       const [isDimmed, setIsDimmed] = useState(false);
+ 114 | |       const audioRef = React.useRef<HTMLAudioElement | null>(null);
+ 115 | |   
+ 116 | |       useEffect(() => {
+ 117 | |           document.documentElement.style.background = "transparent";
+ 118 | |           document.body.style.background = "transparent";
+ 119 | |   
+ 120 | |           if (!audioRef.current) {
+ 121 | |               audioRef.current = new Audio("/wine-glass-alarm.ogg");
+ 122 | |           }
+ 123 | |   
+ 124 | |           return () => {
+ 125 | |               document.documentElement.style.background = "";
+ 126 | |               document.body.style.background = "";
+ 127 | |           };
+ 128 | |       }, []);
+ 129 | |   
+ 130 | |       useEffect(() => {
+ 131 | |           let raf;
+ 132 | |           const loop = () => {
+ 133 | |               setNow(Date.now());
+ 134 | |               raf = requestAnimationFrame(loop);
+ 135 | |           };
+ 136 | |           raf = requestAnimationFrame(loop);
+ 137 | |           return () => cancelAnimationFrame(raf);
+ 138 | |       }, []);
+ 139 | |   
+ 140 | |       useEffect(() => {
+ 141 | |           if (state.isBreak && state.breakStartedAt && !state.breakSoundPlayed) {
+ 142 | |               if (Date.now() - state.breakStartedAt >= state.breakAllowedMs) {
+ 143 | |                   audioRef.current
+ 144 | |                       ?.play()
+ 145 | |                       .catch((e: React.SyntheticEvent | PointerEvent | Event | unknown) => console.error("Sound play failed", e));
+ 146 | |                   setState((s: import("../../core/domain/models").AppTask) => ({ ...s, breakSoundPlayed: true }));
+ 147 | |               }
+ 148 | |           }
+ 149 | |       }, [
+ 150 | |           now,
+ 151 | |           state.isBreak,
+ 152 | |           state.breakStartedAt,
+ 153 | |           state.breakAllowedMs,
+ 154 | |           state.breakSoundPlayed,
+ 155 | |           setState,
+ 156 | |       ]);
+ 157 | |   
+ 158 | |       const activeTask = tasks?.find((t: import('../../core/domain/models').AppTask) => t.status === "doing");
+ 159 | |       const clockStyle = settings.clockStyle || "counter";
+ 160 | |   
+ 161 | |       const running = state.runningSince != null;
+ 162 | |       const currentMs =
+ 163 | |           state.elapsed +
+ 164 | |           (running && !state.isBreak ? now - state.runningSince : 0);
+ 165 | |   
+ 166 | |       let content = null;
+ 167 | |   
+ 168 | |       if (!activeTask && !settings.allowStopwatchWithoutTask) {
+ 169 | |           content = <div style={{ color: "var(--fg-dim)" }}>No active task.</div>;
+ 170 | |       } else {
+ 171 | |           const taskName = activeTask ? activeTask.title : "Work session";
+ 172 | |   
+ 173 | |           if (clockStyle === "counter") {
+ 174 | |               content = <CounterClock currentMs={currentMs} taskName={taskName} />;
+ 175 | |           } else if (clockStyle === "flowtime") {
+ 176 | |               content = <FlowtimeClock isBreak={state.isBreak} breakStartedAt={state.breakStartedAt} breakAllowedMs={state.breakAllowedMs} now={now} currentMs={currentMs} taskName={taskName} />;
+ 177 | |           } else if (clockStyle === "guzey") {
+ 178 | |               content = <GuzeyClock now={now} running={running} taskName={taskName} />;
+ 179 | |           }
+ 180 | |       }
+ 181 | |   
+ 182 | |       const handleDoubleClick = () => {
+ 183 | |           if (window.electronAPI?.restoreMainWindow) {
+ 184 | |               window.electronAPI.restoreMainWindow();
+ 185 | |           }
+ 186 | |       };
+ 187 | |   
+ 188 | |       useEffect(() => {
+ 189 | |           const handleKeyDown = (e: KeyboardEvent) => {
+ 190 | |               const kb = settings.keybindingRestoreApp || "Ctrl+Alt+R";
+ 191 | |               const parts = kb.split("+");
+ 192 | |               const key = parts.pop();
+ 193 | |               const needsCtrl = parts.includes("Ctrl");
+ 194 | |               const needsAlt = parts.includes("Alt");
+ 195 | |               const needsShift = parts.includes("Shift");
+ 196 | |               const needsMeta = parts.includes("Meta");
+ 197 | |   
+ 198 | |               const keyMatch =
+ 199 | |                   e.key.toUpperCase() === key?.toUpperCase() ||
+ 200 | |                   (e.key === " " && key === "Space");
+ 201 | |               if (
+ 202 | |                   e.ctrlKey === needsCtrl &&
+ 203 | |                   e.altKey === needsAlt &&
+ 204 | |                   e.shiftKey === needsShift &&
+ 205 | |                   e.metaKey === needsMeta &&
+ 206 | |                   keyMatch
+ 207 | |               ) {
+ 208 | |                   e.preventDefault();
+ 209 | |                   handleDoubleClick();
+ 210 | |               }
+ 211 | |   
+ 212 | |               if (
+ 213 | |                   e.key.toLowerCase() === "h" &&
+ 214 | |                   !e.ctrlKey &&
+ 215 | |                   !e.altKey &&
+ 216 | |                   !e.metaKey &&
+ 217 | |                   !e.shiftKey
+ 218 | |               ) {
+ 219 | |                   setIsDimmed((prev) => !prev);
+ 220 | |               }
+ 221 | |           };
+ 222 | |           window.addEventListener("keydown", handleKeyDown);
+ 223 | |           return () => window.removeEventListener("keydown", handleKeyDown);
+ 224 | |       }, [settings.keybindingRestoreApp]);
+ 225 | |   
+ 226 | |       const baseOpacity =
+ 227 | |           settings.trackerOpacity !== undefined
+ 228 | |               ? settings.trackerOpacity / 100
+ 229 | |               : 0.8;
+ 230 | |       const hoverReduction =
+ 231 | |           settings.trackerHoverReduction !== undefined
+ 232 | |               ? settings.trackerHoverReduction / 100
+ 233 | |               : 0.2;
+ 234 | |       const dimmedOpacity =
+ 235 | |           settings.trackerDimmedOpacity !== undefined
+ 236 | |               ? settings.trackerDimmedOpacity / 100
+ 237 | |               : 0.2;
+ 238 | |   
+ 239 | |       let currentOpacity = baseOpacity;
+ 240 | |       if (isDimmed) {
+ 241 | |           currentOpacity = dimmedOpacity;
+ 242 | |       } else if (isHovered) {
+ 243 | |           currentOpacity = Math.max(0, baseOpacity - hoverReduction);
+ 244 | |       }
+ 245 | |   
+ 246 | |       return (
+ 247 | |           <div
+ 248 | |               onDoubleClick={handleDoubleClick}
+ 249 | |               onMouseEnter={() => setIsHovered(true)}
+ 250 | |               onMouseLeave={() => setIsHovered(false)}
+ 251 | |               style={
+ 252 | |                   {
+ 253 | |                       width: "100vw",
+ 254 | |                       height: "100vh",
+ 255 | |                       background: "rgb(24, 24, 24)",
+ 256 | |                       opacity: currentOpacity,
+ 257 | |                       border:
+ 258 | |                           (settings.trackerShowBorder ?? true)
+ 259 | |                               ? "1px solid rgba(255, 255, 255, 0.15)"
+ 260 | |                               : "none",
+ 261 | |                       transition: "opacity 0.2s ease",
+ 262 | |                       color: "var(--fg)",
+ 263 | |                       display: "flex",
+ 264 | |                       alignItems: "center",
+ 265 | |                       justifyContent: "center",
+ 266 | |                       fontFamily: "'Atkinson Hyperlegible Next', monospace",
+ 267 | |                       fontSize: "16px",
+ 268 | |                       userSelect: "none",
+ 269 | |                       WebkitAppRegion: "drag", // allows dragging the window
+ 270 | |                       cursor: "default",
+ 271 | |                       padding: "16px",
+ 272 | |                       boxSizing: "border-box",
+ 273 | |                       textAlign: "center",
+ 274 | |                   }
+ 275 | |               }
+ 276 | |               title="Double-click to restore main window"
+ 277 | |           >
+ 278 | |               {content}
+ 279 | |           </div>
+ 280 | |       );
+ 281 | `-> }
+     `----
+
+  x react(style-prop-object): `style` prop value must be an object.
+     ,-[src/screens/plan/PlanScreen.tsx:263:27]
+ 262 |                     y={dragState.pointerY}
+ 263 |                     style="bracket"
+     :                           ^^^^^^^^^
+ 264 |                 />
+     `----
+
+  ! eslint(complexity): function `SplitPane` has a complexity of 16. Maximum allowed is 15.
+     ,-[src/components/split-pane.tsx:42:8]
+  41 |     
+  42 | ,-> export function SplitPane({
+  43 | |       direction = "horizontal",
+  44 | |       defaultSize = 360,
+  45 | |       minSize = 100,
+  46 | |       snapThreshold = 50,
+  47 | |       children,
+  48 | |   }: {
+  49 | |       direction?: "horizontal" | "vertical";
+  50 | |       defaultSize?: number;
+  51 | |       minSize?: number;
+  52 | |       snapThreshold?: number;
+  53 | |       children: React.ReactNode;
+  54 | |   }) {
+  55 | |       const { size, isDragging, containerRef, onPointerDown, onPointerMove, onPointerUp, isHoriz } = useSplitPane(direction, defaultSize, snapThreshold);
+  56 | |   
+  57 | |       const childArray = React.Children.toArray(children);
+  58 | |       const firstChild = childArray[0];
+  59 | |       const secondChild = childArray[1];
+  60 | |   
+  61 | |       return (
+  62 | |           <div
+  63 | |               ref={containerRef}
+  64 | |               style={{
+  65 | |                   display: "flex",
+  66 | |                   flexDirection: isHoriz ? "row" : "column",
+  67 | |                   width: "100%",
+  68 | |                   height: "100%",
+  69 | |                   overflow: "hidden",
+  70 | |                   pointerEvents: isDragging ? "none" : "auto",
+  71 | |               }}
+  72 | |           >
+  73 | |               <div
+  74 | |                   style={{
+  75 | |                       [isHoriz ? "width" : "height"]: size,
+  76 | |                       [isHoriz ? "minWidth" : "minHeight"]:
+  77 | |                           size > 0 ? minSize : 0,
+  78 | |                       display: size === 0 ? "none" : "flex",
+  79 | |                       flexDirection: "column",
+  80 | |                       overflow: "hidden",
+  81 | |                       flexShrink: 0,
+  82 | |                   }}
+  83 | |               >
+  84 | |                   {firstChild}
+  85 | |               </div>
+  86 | |   
+  87 | |               <div
+  88 | |                   onPointerDown={onPointerDown}
+  89 | |                   onPointerMove={onPointerMove}
+  90 | |                   onPointerUp={onPointerUp}
+  91 | |                   style={{
+  92 | |                       [isHoriz ? "width" : "height"]: "6px",
+  93 | |                       [isHoriz ? "marginLeft" : "marginTop"]: "-3px",
+  94 | |                       [isHoriz ? "marginRight" : "marginBottom"]: "-3px",
+  95 | |                       cursor: isHoriz ? "col-resize" : "row-resize",
+  96 | |                       flexShrink: 0,
+  97 | |                       zIndex: 10,
+  98 | |                       position: "relative",
+  99 | |                       pointerEvents: "auto",
+ 100 | |                       backgroundColor: isDragging
+ 101 | |                           ? "var(--accent)"
+ 102 | |                           : "transparent",
+ 103 | |                       transition: "background-color 0.15s ease",
+ 104 | |                   }}
+ 105 | |                   className="split-pane-divider"
+ 106 | |               />
+ 107 | |   
+ 108 | |               <div
+ 109 | |                   style={{
+ 110 | |                       flex: 1,
+ 111 | |                       minWidth: 0,
+ 112 | |                       minHeight: 0,
+ 113 | |                       display: "flex",
+ 114 | |                       flexDirection: "column",
+ 115 | |                       overflow: "hidden",
+ 116 | |                   }}
+ 117 | |               >
+ 118 | |                   {secondChild}
+ 119 | |               </div>
+ 120 | |           </div>
+ 121 | |       );
+ 122 | `-> }
+     `----
+
+  ! eslint(complexity): function has a complexity of 18. Maximum allowed is 15.
+     ,-[src/components/day-timeline/EventBlock.tsx:90:25]
+  89 |     
+  90 | ,->     const renderBlock = (start: number, end: number, isGhost: boolean, isFloating: boolean) => {
+  91 | |           const top = start * PX_PER_MIN;
+  92 | |           const height = (end - start) * PX_PER_MIN;
+  93 | |           const compact = height < 40;
+  94 | |           const isDone = event.isDone;
+  95 | |   
+  96 | |           return (
+  97 | |               <div
+  98 | |                   className={`day-event ev-${event.type} ${pri ? `pri-bar-${pri}` : ""} ${compact ? "is-compact" : ""} ${isDone ? "is-done" : ""} ${isGhost ? "is-ghost" : ""} ${isFloating ? "is-floating" : ""}`}
+  99 | |                   style={{
+ 100 | |                       top: `${top}px`,
+ 101 | |                       height: `${Math.max(height, 18)}px`,
+ 102 | |                       left: `calc(56px + ((100% - 56px) / ${lanes}) * ${lane})`,
+ 103 | |                       width: `calc(((100% - 56px) / ${lanes}) - 2px)`,
+ 104 | |                   }}
+ 105 | |                   onPointerDown={isGhost ? undefined : onBodyDown}
+ 106 | |                   key={isGhost ? "ghost" : "main"}
+ 107 | |               >
+ 108 | |                   <div
+ 109 | |                       className="day-event-handle day-event-handle-top"
+ 110 | |                       onPointerDown={isGhost ? undefined : onResizeStart("top")}
+ 111 | |                   />
+ 112 | |                   <div className="day-event-inner">
+ 113 | |                       <div className="day-event-title">
+ 114 | |                           {pri !== null && pri !== undefined && (
+ 115 | |                               <span className={`pri pri-${pri}`}>●</span>
+ 116 | |                           )}
+ 117 | |                           {title}
+ 118 | |                       </div>
+ 119 | |                       <div className="day-event-time">
+ 120 | |                           {PAD2(Math.floor(start / 60))}:{PAD2(start % 60)} –{" "}
+ 121 | |                           {PAD2(Math.floor(end / 60))}:{PAD2(end % 60)}
+ 122 | |                       </div>
+ 123 | |                       {!compact &&
+ 124 | |                           event.type === "plan" &&
+ 125 | |                           task &&
+ 126 | |                           (task.tags || []).length > 0 && (
+ 127 | |                               <div className="day-event-tags">
+ 128 | |                                   {(task.tags || []).map((t) => (
+ 129 | |                                       <span key={t} className="day-event-tag">
+ 130 | |                                           #{t}
+ 131 | |                                       </span>
+ 132 | |                                   ))}
+ 133 | |                               </div>
+ 134 | |                           )}
+ 135 | |                   </div>
+ 136 | |                   <div
+ 137 | |                       className="day-event-handle day-event-handle-bottom"
+ 138 | |                       onPointerDown={
+ 139 | |                           isGhost ? undefined : onResizeStart("bottom")
+ 140 | |                       }
+ 141 | |                   >
+ 142 | |                       <span className="day-event-handle-grip">═</span>
+ 143 | |                   </div>
+ 144 | |               </div>
+ 145 | |           );
+ 146 | `->     };
+ 147 |     
+     `----
+
+  ! eslint(complexity): function has a complexity of 17. Maximum allowed is 15.
+    ,-[src/App.tsx:63:31]
+ 62 |     
+ 63 | ,-> const handleSettingsKeydown = (
+ 64 | |       e: KeyboardEvent,
+ 65 | |       settingsKb: string,
+ 66 | |       navigate: (path: string) => void,
+ 67 | |   ) => {
+ 68 | |       if (
+ 69 | |           e.target instanceof HTMLElement &&
+ 70 | |           (e.target.tagName === "INPUT" ||
+ 71 | |               e.target.tagName === "TEXTAREA" ||
+ 72 | |               e.target.isContentEditable)
+ 73 | |       ) {
+ 74 | |           if (!e.ctrlKey && !e.metaKey && !e.altKey) return;
+ 75 | |       }
+ 76 | |   
+ 77 | |       const { key, needsCtrl, needsAlt, needsShift, needsMeta } = parseKeybinding(
+ 78 | |           settingsKb || "Ctrl+,",
+ 79 | |       );
+ 80 | |   
+ 81 | |       const keyMatch =
+ 82 | |           e.key.toUpperCase() === key?.toUpperCase() ||
+ 83 | |           (e.key === " " && key === "Space");
+ 84 | |       if (
+ 85 | |           e.ctrlKey === needsCtrl &&
+ 86 | |           e.altKey === needsAlt &&
+ 87 | |           e.shiftKey === needsShift &&
+ 88 | |           e.metaKey === needsMeta &&
+ 89 | |           keyMatch
+ 90 | |       ) {
+ 91 | |           e.preventDefault();
+ 92 | |           navigate("/settings");
+ 93 | |       }
+ 94 | `-> };
+ 95 |     
+    `----
+
+Found 9 warnings and 1 error.
+Finished in 23ms on 114 files with 188 rules using 24 threads.

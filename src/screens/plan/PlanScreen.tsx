@@ -260,7 +260,7 @@ export function PlanScreen() {
                     event={dragState.event}
                     x={dragState.pointerX}
                     y={dragState.pointerY}
-                    variant="bracket"
+                    ghostStyle="bracket"
                 />
             )}
 

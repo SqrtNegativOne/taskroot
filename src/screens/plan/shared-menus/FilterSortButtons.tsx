@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Icon } from "../../../components/icon";
 import { useFilterActions } from "./useFilterActions";
 import { SelectInput, MultiSelect } from "../../../components/inputs";
-import type { FilterSortButtonsProps } from "./types";
+import type { FilterSortButtonsProps, Filter, Column, SortOption } from "./types";
 
 export function FilterSortButtons({
     filters,
@@ -127,139 +127,175 @@ export function FilterSortButtons({
             )}
 
             {showFilters && (
-                <div
-                    className={`floating-menu ${closingFilters ? "is-closing" : ""}`}
-                    style={{
-                        position: "absolute",
-                        top: "calc(100% + 8px)",
-                        left: align === "left" ? 0 : "auto",
-                        right: align === "right" ? 0 : "auto",
-                        zIndex: 1000,
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "8px",
-                        padding: "10px",
-                        background: "var(--bg-surface)",
-                        borderRadius: "6px",
-                        border: "1px solid var(--border)",
-                        boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
-                        minWidth: "320px",
-                    }}
-                >
-                    {filters.map((f) => (
-                        <div
-                            key={f.id}
-                            style={{
-                                display: "flex",
-                                gap: "6px",
-                                alignItems: "center",
-                            }}
-                        >
-                            <SelectInput
-                                value={f.column}
-                                onChange={(val: string) =>
-                                    updateFilter(f.id, { column: val })
-                                }
-                                options={columns.map(c => ({ label: c.label, value: c.id }))}
-                                style={{ flex: 1 }}
-                            />
-                            <SelectInput
-                                value={f.operator}
-                                onChange={(val: string) =>
-                                    updateFilter(f.id, { operator: val })
-                                }
-                                options={[
-                                    { label: "is", value: "is" },
-                                    { label: "is not", value: "is not" }
-                                ]}
-                                style={{ width: "75px" }}
-                            />
-                            <MultiSelect 
-                                options={getValuesForColumn(f.column)}
-                                values={Array.isArray(f.value) ? f.value.map(String) : [String(f.value)]}
-                                onChange={(newValues) => updateFilter(f.id, { value: newValues })}
-                            />
-                            <button
-                                onClick={() => removeFilter(f.id)}
-                                style={{
-                                    background: "transparent",
-                                    border: "none",
-                                    cursor: "pointer",
-                                    padding: "4px",
-                                    color: "var(--fg)",
-                                    opacity: 0.6,
-                                }}
-                            >
-                                <Icon name="close" size={16} />
-                            </button>
-                        </div>
-                    ))}
-                    <button
-                        onClick={addFilter}
-                        style={{
-                            background: "transparent",
-                            border: "none",
-                            color: "var(--fg)",
-                            cursor: "pointer",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "4px",
-                            alignSelf: "flex-start",
-                            padding: "4px 4px",
-                            fontSize: "0.9em",
-                            opacity: 0.8,
-                        }}
-                    >
-                        <Icon name="add" size={14} /> Add filter
-                    </button>
-                </div>
+                <FilterMenu
+                    filters={filters}
+                    columns={columns}
+                    getValuesForColumn={getValuesForColumn}
+                    updateFilter={updateFilter}
+                    removeFilter={removeFilter}
+                    addFilter={addFilter}
+                    closingFilters={closingFilters}
+                    align={align}
+                />
             )}
 
             {showSort && sortOptions && (
+                <SortMenu
+                    sort={sort}
+                    setSort={setSort}
+                    sortOptions={sortOptions}
+                    closingSort={closingSort}
+                    align={align}
+                />
+            )}
+        </div>
+    );
+}
+
+interface FilterMenuProps {
+    filters: Filter[];
+    columns: Column[];
+    getValuesForColumn: (columnId: string) => string[];
+    updateFilter: (id: string, updates: Partial<Filter>) => void;
+    removeFilter: (id: string) => void;
+    addFilter: () => void;
+    closingFilters: boolean;
+    align?: "left" | "right";
+}
+
+function FilterMenu({ filters, columns, getValuesForColumn, updateFilter, removeFilter, addFilter, closingFilters, align }: FilterMenuProps) {
+    return (
+        <div
+            className={`floating-menu ${closingFilters ? "is-closing" : ""}`}
+            style={{
+                position: "absolute",
+                top: "calc(100% + 8px)",
+                left: align === "left" ? 0 : "auto",
+                right: align === "right" ? 0 : "auto",
+                zIndex: 1000,
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px",
+                padding: "10px",
+                background: "var(--bg-surface)",
+                borderRadius: "6px",
+                border: "1px solid var(--border)",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+                minWidth: "320px",
+            }}
+        >
+            {filters.map((f: Filter) => (
                 <div
-                    className={`floating-menu ${closingSort ? "is-closing" : ""}`}
+                    key={f.id}
                     style={{
-                        position: "absolute",
-                        top: "calc(100% + 8px)",
-                        left: align === "left" ? 0 : "auto",
-                        right: align === "right" ? 0 : "auto",
-                        zIndex: 1000,
                         display: "flex",
-                        flexDirection: "column",
-                        gap: "8px",
-                        padding: "10px",
-                        background: "var(--bg-surface)",
-                        borderRadius: "6px",
-                        border: "1px solid var(--border)",
-                        boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
-                        minWidth: "200px",
+                        gap: "6px",
+                        alignItems: "center",
                     }}
                 >
-                    <div
+                    <SelectInput
+                        value={f.column}
+                        onChange={(val: string) => updateFilter(f.id!, { column: val })}
+                        options={columns.map((c: Column) => ({ label: c.label, value: c.id }))}
+                        style={{ flex: 1 }}
+                    />
+                    <SelectInput
+                        value={f.operator}
+                        onChange={(val: string) => updateFilter(f.id!, { operator: val })}
+                        options={[
+                            { label: "is", value: "is" },
+                            { label: "is not", value: "is not" }
+                        ]}
+                        style={{ width: "75px" }}
+                    />
+                    <MultiSelect 
+                        options={getValuesForColumn(f.column)}
+                        values={Array.isArray(f.value) ? f.value.map(String) : [String(f.value)]}
+                        onChange={(newValues) => updateFilter(f.id!, { value: newValues })}
+                    />
+                    <button
+                        onClick={() => removeFilter(f.id!)}
                         style={{
-                            display: "flex",
-                            gap: "6px",
-                            alignItems: "center",
+                            background: "transparent",
+                            border: "none",
+                            cursor: "pointer",
+                            padding: "4px",
+                            color: "var(--fg)",
+                            opacity: 0.6,
                         }}
                     >
-                        <span
-                            style={{
-                                fontSize: "0.9em",
-                                color: "var(--fg)",
-                                opacity: 0.8,
-                            }}
-                        >
-                            Sort by
-                        </span>
-                        <SelectInput
-                            value={sort}
-                            onChange={(val: string) => setSort(val)}
-                            options={sortOptions.map(o => ({ label: o.label, value: o.id }))}
-                            style={{ flex: 1 }}
-                        />
-                    </div>
+                        <Icon name="close" size={16} />
+                    </button>
                 </div>
-            )}
+            ))}
+            <button
+                onClick={addFilter}
+                style={{
+                    background: "transparent",
+                    border: "none",
+                    color: "var(--fg)",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    alignSelf: "flex-start",
+                    padding: "4px 4px",
+                    fontSize: "0.9em",
+                    opacity: 0.8,
+                }}
+            >
+                <Icon name="add" size={14} /> Add filter
+            </button>
+        </div>
+    );
+}
+
+interface SortMenuProps {
+    sort: string;
+    setSort: (sort: string) => void;
+    sortOptions: SortOption[];
+    closingSort: boolean;
+    align?: "left" | "right";
+}
+
+function SortMenu({ sort, setSort, sortOptions, closingSort, align }: SortMenuProps) {
+    return (
+        <div
+            className={`floating-menu ${closingSort ? "is-closing" : ""}`}
+            style={{
+                position: "absolute",
+                top: "calc(100% + 8px)",
+                left: align === "left" ? 0 : "auto",
+                right: align === "right" ? 0 : "auto",
+                zIndex: 1000,
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px",
+                padding: "10px",
+                background: "var(--bg-surface)",
+                borderRadius: "6px",
+                border: "1px solid var(--border)",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+                minWidth: "200px",
+            }}
+        >
+            <div
+                style={{
+                    display: "flex",
+                    gap: "6px",
+                    alignItems: "center",
+                }}
+            >
+                <span style={{ fontSize: "0.9em", color: "var(--fg)", opacity: 0.8 }}>
+                    Sort by
+                </span>
+                <SelectInput
+                    value={sort}
+                    onChange={(val: string) => setSort(val)}
+                    options={sortOptions.map((o: SortOption) => ({ label: o.label, value: o.id }))}
+                    style={{ flex: 1 }}
+                />
+            </div>
         </div>
     );
 }

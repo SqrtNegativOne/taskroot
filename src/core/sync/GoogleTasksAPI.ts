@@ -122,59 +122,8 @@ export class GoogleTasksAPI {
                 updatedAt: new Date(googleTask.updated || 0).getTime(),
             };
         }
-        let localStatus = "todo";
-        if (googleTask.status === "completed") {
-            localStatus = "done";
-        }
 
-        let id = googleTask.id || "";
-        const match = (googleTask.notes || "").match(
-            /Taskroot Task ID: (t[0-9a-zA-Z-]+)/,
-        );
-        if (match) {
-            id = match[1];
-        }
-
-        if (existingLocalTask) {
-            id = existingLocalTask.id;
-        }
-
-        const defaultTask: AppTask = {
-            id,
-            googleTaskId: googleTask.id,
-            title: googleTask.title || "",
-            status: localStatus,
-            priority: 1,
-            tags: [],
-            subtasks: [],
-            parent_task: null,
-            est: 0,
-            added: new Date().toISOString(),
-            isDraft: false,
-            notes: googleTask.notes || "",
-            due: googleTask.due ? googleTask.due.split("T")[0] : undefined,
-            updatedAt: googleTask.updated
-                ? new Date(googleTask.updated).getTime()
-                : Date.now(),
-        };
-
-        if (existingLocalTask) {
-            return {
-                ...existingLocalTask,
-                googleTaskId: googleTask.id,
-                title: googleTask.title || "",
-                status: localStatus,
-                notes: googleTask.notes || "",
-                due: googleTask.due
-                    ? googleTask.due.split("T")[0]
-                    : existingLocalTask.due,
-                updatedAt: googleTask.updated
-                    ? new Date(googleTask.updated).getTime()
-                    : Date.now(),
-            };
-        }
-
-        return defaultTask;
+        return createUpdatedLocalTask(googleTask, existingLocalTask);
     }
 
     toGoogleTask(localTask: AppTask): gapi.client.tasks.Task {
@@ -192,6 +141,50 @@ export class GoogleTasksAPI {
         }
         return result;
     }
+}
+
+function createUpdatedLocalTask(googleTask: gapi.client.tasks.Task, existingLocalTask: AppTask | null): AppTask {
+    const localStatus = googleTask.status === "completed" ? "done" : "todo";
+    let id = googleTask.id || "";
+    const match = (googleTask.notes || "").match(/Taskroot Task ID: (t[0-9a-zA-Z-]+)/);
+    if (match) {
+        id = match[1];
+    }
+    if (existingLocalTask) {
+        id = existingLocalTask.id;
+    }
+
+    const updatedAt = googleTask.updated ? new Date(googleTask.updated).getTime() : Date.now();
+    const due = googleTask.due ? googleTask.due.split("T")[0] : undefined;
+
+    if (existingLocalTask) {
+        return {
+            ...existingLocalTask,
+            googleTaskId: googleTask.id,
+            title: googleTask.title || "",
+            status: localStatus,
+            notes: googleTask.notes || "",
+            due: due || existingLocalTask.due,
+            updatedAt,
+        };
+    }
+
+    return {
+        id,
+        googleTaskId: googleTask.id,
+        title: googleTask.title || "",
+        status: localStatus,
+        priority: 1,
+        tags: [],
+        subtasks: [],
+        parent_task: null,
+        est: 0,
+        added: new Date().toISOString(),
+        isDraft: false,
+        notes: googleTask.notes || "",
+        due,
+        updatedAt,
+    };
 }
 
 export const googleTasksAPI = new GoogleTasksAPI();

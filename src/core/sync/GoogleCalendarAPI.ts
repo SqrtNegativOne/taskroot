@@ -186,56 +186,8 @@ export class GoogleCalendarAPI {
             };
         }
 
-        let date, start, end;
-
-        if (googleEvent.start?.dateTime) {
-            const startDt = new Date(googleEvent.start.dateTime);
-            const endDt = new Date(
-                googleEvent.end?.dateTime || googleEvent.start.dateTime,
-            );
-            const y = startDt.getFullYear();
-            const m = (startDt.getMonth() + 1).toString().padStart(2, "0");
-            const d = startDt.getDate().toString().padStart(2, "0");
-            date = `${y}-${m}-${d}`;
-            start = startDt.getHours() * 60 + startDt.getMinutes();
-
-            if (
-                endDt.getDate() !== startDt.getDate() &&
-                endDt.getTime() > startDt.getTime()
-            ) {
-                end = 24 * 60;
-            } else {
-                end = endDt.getHours() * 60 + endDt.getMinutes();
-            }
-        } else if (googleEvent.start?.date) {
-            date = googleEvent.start.date;
-            start = 0;
-            end = 24 * 60;
-        }
-
-        let taskId = null;
-        let id = googleEvent.id;
-        let type = googleEvent.start?.date ? "info" : "busy";
-
-        if (googleEvent.extendedProperties?.private?.taskrootEventId) {
-            const priv = googleEvent.extendedProperties.private;
-            if (priv.taskId) taskId = priv.taskId;
-            if (priv.taskrootEventId) id = priv.taskrootEventId;
-            if (priv.type) type = priv.type;
-        } else {
-            const desc = googleEvent.description || "";
-            const match = desc.match(/Task ID: (t\d+)/);
-            if (match) {
-                taskId = match[1];
-            }
-            const idMatch = desc.match(/Taskroot Event ID: (e[0-9a-zA-Z-]+)/);
-            if (idMatch) {
-                id = idMatch[1];
-            }
-            if (taskId) type = "plan";
-        }
-
-        let category = calendarSummary;
+        const time = extractEventTime(googleEvent);
+        const meta = extractEventMetadata(googleEvent);
 
         const rrule =
             googleEvent.recurrence && googleEvent.recurrence.length > 0
@@ -245,22 +197,73 @@ export class GoogleCalendarAPI {
                 : undefined;
 
         return {
-            id: id,
+            id: meta.id,
             googleEventId: googleEvent.id,
             googleCalendarId: calendarId,
-            taskId: taskId,
+            taskId: meta.taskId,
             title: googleEvent.summary || "Untitled Event",
-            date: date,
-            start: start,
-            end: end,
-            type: type,
-            category: category,
+            date: time.date,
+            start: time.start,
+            end: time.end,
+            type: meta.type,
+            category: calendarSummary,
             rrule: rrule,
             updatedAt: googleEvent.updated
                 ? new Date(googleEvent.updated).getTime()
                 : Date.now(),
         };
     }
+}
+
+function extractEventTime(googleEvent: gapi.client.calendar.Event) {
+    if (googleEvent.start?.dateTime) {
+        const startDt = new Date(googleEvent.start.dateTime);
+        const endDt = new Date(
+            googleEvent.end?.dateTime || googleEvent.start.dateTime,
+        );
+        const y = startDt.getFullYear();
+        const m = (startDt.getMonth() + 1).toString().padStart(2, "0");
+        const d = startDt.getDate().toString().padStart(2, "0");
+        const date = `${y}-${m}-${d}`;
+        const start = startDt.getHours() * 60 + startDt.getMinutes();
+        let end;
+        if (
+            endDt.getDate() !== startDt.getDate() &&
+            endDt.getTime() > startDt.getTime()
+        ) {
+            end = 24 * 60;
+        } else {
+            end = endDt.getHours() * 60 + endDt.getMinutes();
+        }
+        return { date, start, end };
+    }
+    if (googleEvent.start?.date) {
+        return { date: googleEvent.start.date, start: 0, end: 24 * 60 };
+    }
+    return { date: undefined, start: undefined, end: undefined };
+}
+
+function extractEventMetadata(googleEvent: gapi.client.calendar.Event) {
+    let taskId = null;
+    let id = googleEvent.id;
+    let type = googleEvent.start?.date ? "info" : "busy";
+
+    if (googleEvent.extendedProperties?.private?.taskrootEventId) {
+        const priv = googleEvent.extendedProperties.private;
+        if (priv.taskId) taskId = priv.taskId;
+        if (priv.taskrootEventId) id = priv.taskrootEventId;
+        if (priv.type) type = priv.type;
+    } else {
+        const desc = googleEvent.description || "";
+        const match = desc.match(/Task ID: (t\d+)/);
+        if (match) taskId = match[1];
+        
+        const idMatch = desc.match(/Taskroot Event ID: (e[0-9a-zA-Z-]+)/);
+        if (idMatch) id = idMatch[1];
+        
+        if (taskId) type = "plan";
+    }
+    return { taskId, id, type };
 }
 
 export const googleCalendarAPI = new GoogleCalendarAPI();

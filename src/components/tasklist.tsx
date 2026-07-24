@@ -1,7 +1,7 @@
 import React, {
     useState,
 } from "react";
-import { play } from "cuelume";
+
 import Fuse from "fuse.js";
 import { TODAY, parseYMD, durationLabel, dueLabel } from "../core/store/data";
 import { Icon } from "./icon";
@@ -9,6 +9,26 @@ import { SearchBar } from "./search-bar";
 import { FilterSortButtons } from "../screens/plan/shared-menus";
 import { computeFilterDefaults } from "../core/domain/filters";
 import type { AppTask, AppFilter } from "../core/domain/models";
+
+function matchesFilterValue(task: AppTask, column: string, values: (string | number)[]) {
+    if (column === "status") return values.includes(task.status || "");
+    if (column === "priority") return values.includes(task.priority || 0) || values.includes(String(task.priority));
+    if (column === "tag") return values.some((v) => (task.tags || []).includes(String(v)));
+    return false;
+}
+
+function checkTaskAgainstFilters(task: AppTask, filters?: AppFilter[]) {
+    if (!filters || filters.length === 0) return false;
+    for (const f of filters) {
+        if (!f.column || (!f.value && f.value !== 0)) continue;
+        const values = Array.isArray(f.value) ? f.value : [f.value];
+        if (values.length === 0) continue;
+        const match = matchesFilterValue(task, f.column, values);
+        const passes = f.operator === "is not" ? !match : match;
+        if (!passes) return true;
+    }
+    return false;
+}
 
 // Task list: left column. Filter, sort, draggable items.
 
@@ -116,8 +136,8 @@ export function TaskListPane({
                     }}
                 >
                     <FilterSortButtons
-                        filters={filters as (AppFilter & { id: string; value: string })[]}
-                        setFilters={setFilters as unknown as React.Dispatch<React.SetStateAction<(AppFilter & { id: string; value: string })[]>>}
+                        filters={filters}
+                        setFilters={setFilters}
                         sort={sort}
                         setSort={setSort}
                         columns={[
@@ -224,25 +244,7 @@ function TaskRow({
     const [isChecking, setIsChecking] = useState(false);
 
     const willBeFilteredOut = (newStatus: string) => {
-        if (!filters || filters.length === 0) return false;
-        const mockTask = { ...task, status: newStatus };
-        for (const f of filters) {
-            if (!f.column || (!f.value && f.value !== 0)) continue;
-            let match = false;
-            const values = Array.isArray(f.value) ? f.value : [f.value];
-            if (values.length === 0) continue;
-            
-            if (f.column === "status") {
-                match = values.includes(mockTask.status || "");
-            } else if (f.column === "priority") {
-                match = values.includes(mockTask.priority || 0) || values.includes(String(mockTask.priority));
-            } else if (f.column === "tag") {
-                match = values.some((v) => (mockTask.tags || []).includes(String(v)));
-            }
-            const passes = f.operator === "is not" ? !match : match;
-            if (!passes) return true;
-        }
-        return false;
+        return checkTaskAgainstFilters({ ...task, status: newStatus }, filters);
     };
 
     const handlePointerDown = (e: React.PointerEvent<HTMLDivElement> | React.MouseEvent<HTMLDivElement>) => {
@@ -276,9 +278,9 @@ function TaskRow({
 
                     if (newStatus === "done") {
                         setIsChecking(true);
-                        play("success");
+                        import("cuelume").then(({ play }) => play("success"));
                     } else {
-                        play("release");
+                        import("cuelume").then(({ play }) => play("release"));
                     }
 
                     if (isRemoving) {
@@ -350,49 +352,61 @@ function TaskRow({
                         </button>
                     </div>
                 </div>
-                {((!!task.est && task.est > 0) ||
-                    (task.tags || []).length > 0 ||
-                    (task.subtasks || []).length > 0 ||
-                    !!dueStr) && (
-                    <div className="task-row-line2">
-                        {!!task.est && task.est > 0 && (
-                            <>
-                                <span className="meta-est">
-                                    {durationLabel(task.est)}
-                                </span>
-                                {(task.tags || []).length > 0 && (
-                                    <span className="meta-sep">·</span>
-                                )}
-                            </>
-                        )}
-                        {(task.tags || []).map((tag, i) => (
-                            <React.Fragment key={tag}>
-                                <span className="meta-tag">#{tag}</span>
-                                {i < (task.tags || []).length - 1 && (
-                                    <span className="meta-tag-sep">,</span>
-                                )}
-                            </React.Fragment>
-                        ))}
-                        <span className="meta-spacer" />
-                        {(task.subtasks || []).length > 0 && (
-                            <span
-                                className="meta-subtasks"
-                                title={`${(task.subtasks || []).filter((s) => s.done).length}/${(task.subtasks || []).length} subtasks done`}
-                            >
-                                ☐{(task.subtasks || []).filter((s) => s.done).length}/
-                                {(task.subtasks || []).length}
-                            </span>
-                        )}
-                        {dueStr && (
-                            <span
-                                className={`meta-due ${overdue ? "is-overdue" : ""}`}
-                            >
-                                due {dueStr}
-                            </span>
-                        )}
-                    </div>
-                )}
+                    <TaskRowLine2 task={task} dueStr={dueStr} overdue={Boolean(overdue)} />
             </div>
+        </div>
+    );
+}
+
+function TaskRowLine2({ task, dueStr, overdue }: { task: AppTask; dueStr: string; overdue: boolean }) {
+    const tags = task.tags || [];
+    const subtasks = task.subtasks || [];
+    const est = task.est || 0;
+    const hasTags = tags.length > 0;
+    const hasSubtasks = subtasks.length > 0;
+    const hasEst = est > 0;
+
+    if (!hasEst && !hasTags && !hasSubtasks && !dueStr) {
+        return null;
+    }
+
+    const doneSubtasks = hasSubtasks ? subtasks.filter((s) => s.done).length : 0;
+    const totalSubtasks = subtasks.length;
+
+    return (
+        <div className="task-row-line2">
+            {hasEst && (
+                <>
+                    <span className="meta-est">
+                        {durationLabel(est)}
+                    </span>
+                    {hasTags && <span className="meta-sep">·</span>}
+                </>
+            )}
+            
+            {tags.map((tag, i) => (
+                <React.Fragment key={tag}>
+                    <span className="meta-tag">#{tag}</span>
+                    {i < tags.length - 1 && <span className="meta-tag-sep">,</span>}
+                </React.Fragment>
+            ))}
+            
+            <span className="meta-spacer" />
+            
+            {hasSubtasks && (
+                <span
+                    className="meta-subtasks"
+                    title={`${doneSubtasks}/${totalSubtasks} subtasks done`}
+                >
+                    ☐{doneSubtasks}/{totalSubtasks}
+                </span>
+            )}
+            
+            {dueStr && (
+                <span className={`meta-due ${overdue ? "is-overdue" : ""}`}>
+                    due {dueStr}
+                </span>
+            )}
         </div>
     );
 }

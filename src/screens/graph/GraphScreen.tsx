@@ -2,29 +2,20 @@
 import React from "react";
 import { TitleBar } from "../../components/shell";
 import { TODAY } from "../../core/store/data";
-import { useStored } from "../../core/store/hooks";
+import { useTasks, useTaskQuery, useTaskFilters, useTaskSort } from "../../core/store/hooks";
 import { TaskListPane } from "../../components/tasklist";
 import { SplitPane } from "../../components/split-pane";
 import { TaskCanvas } from "./TaskCanvas";
-import type { AppTask as Task } from "../../core/domain/models";
 
 export function GraphScreen() {
-    const [tasks, setTasks] = useStored<Task[]>(
-        "tasks",
-        [],
-    );
+    // 1. Get raw tasks from the store
+    const [tasks, setTasks] = useTasks();
 
-    // UI state — task list
-    const [query, setQuery] = useStored("taskQuery", "");
-    const [filters, setFilters] = useStored("taskFilters", [
-        {
-            id: "default-not-done",
-            column: "status",
-            operator: "is not",
-            value: "done",
-        },
-    ]);
-    const [sort, setSort] = useStored("taskSort", "priority");
+    // 2. Get active UI filters/sort/query
+    // (This ensures the graph respects whatever the user set on the Plan Screen)
+    const [query, setQuery] = useTaskQuery();
+    const [filters, setFilters] = useTaskFilters();
+    const [sort, setSort] = useTaskSort();
 
     const moveFilteredToCanvas = () => {
         let xs = tasks;

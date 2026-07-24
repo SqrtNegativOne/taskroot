@@ -1,5 +1,5 @@
-import { AppTask, AppEvent } from "../../../core/domain/models";
-import { AppSettings } from "../../../core/store/settingsSchema";
+import type { AppTask, AppEvent } from "../../../core/domain/models";
+import type { AppSettings } from "../../../core/store/settingsSchema";
 
 export interface StopwatchState {
     elapsed: number;

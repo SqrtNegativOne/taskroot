@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { AppTask } from "../../core/domain/models";
+import type { AppTask } from "../../core/domain/models";
 
 export function useStopwatchKeyboard(
     selectorOpen: boolean,

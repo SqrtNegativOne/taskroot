@@ -14,6 +14,16 @@ interface InspectorPaneProps {
     setEvents: React.Dispatch<React.SetStateAction<AppEvent[]>>;
 }
 
+function getInspectorTitle(currentItem: AppTask | AppEvent | null | undefined, isCurrentTask: boolean, tasks: AppTask[]): string {
+    if (!currentItem) return "";
+    if (isCurrentTask) return (currentItem as AppTask).title || "";
+    const event = currentItem as AppEvent;
+    if (event.taskId) {
+        return tasks.find((t: AppTask) => t.id === event.taskId)?.title || "";
+    }
+    return event.title || "";
+}
+
 export function InspectorPane({
     inspectorState,
     onClose,
@@ -102,29 +112,46 @@ export function InspectorPane({
 
     const isOpen = !!(inspectorState && currentItem);
 
-    const title = currentItem
-        ? isCurrentTask
-            ? (currentItem as AppTask).title
-            : (currentItem as AppEvent).taskId
-              ? tasks.find((t: AppTask) => t.id === (currentItem as AppEvent).taskId)?.title
-              : (currentItem as AppEvent).title
-        : "";
+    const title = getInspectorTitle(currentItem, isCurrentTask, tasks);
 
-    const updateTask = (id: string, updates: Partial<AppTask>) =>
+    const updateTask = React.useCallback((id: string, updates: Partial<AppTask>) =>
         setTasks((ts: AppTask[]) =>
             ts.map((t: AppTask) =>
                 t.id === id ? { ...t, ...updates, isDraft: false } : t,
             ),
-        );
-    const deleteTask = (id: string) => setTasks((ts: AppTask[]) => ts.filter((t: AppTask) => t.id !== id));
-    const updateEvent = (id: string, updates: Partial<AppEvent>) =>
+        ), [setTasks]);
+    const deleteTask = React.useCallback((id: string) => setTasks((ts: AppTask[]) => ts.filter((t: AppTask) => t.id !== id)), [setTasks]);
+    const updateEvent = React.useCallback((id: string, updates: Partial<AppEvent>) =>
         setEvents((es: AppEvent[]) =>
             es.map((e: AppEvent) =>
                 e.id === id ? { ...e, ...updates, isDraft: false } : e,
             ),
-        );
-    const deleteEvent = (id: string) =>
-        setEvents((es: AppEvent[]) => es.filter((e: AppEvent) => e.id !== id));
+        ), [setEvents]);
+    const deleteEvent = React.useCallback((id: string) =>
+        setEvents((es: AppEvent[]) => es.filter((e: AppEvent) => e.id !== id)), [setEvents]);
+
+    const handleTitleChange = React.useCallback((newTitle: string) => {
+        if (!currentItem) return;
+        if (isCurrentTask) updateTask(currentItem.id, { title: newTitle });
+        else updateEvent(currentItem.id, { title: newTitle });
+    }, [currentItem, isCurrentTask, updateTask, updateEvent]);
+
+    const handleDescChange = React.useCallback((desc: string) => {
+        if (!currentItem || isReadOnlyCalendar) return;
+        if (isCurrentTask) updateTask(currentItem.id, { description: desc });
+        else updateEvent(currentItem.id, { description: desc });
+    }, [currentItem, isCurrentTask, isReadOnlyCalendar, updateTask, updateEvent]);
+
+    const handleDelete = React.useCallback(() => {
+        if (!currentItem) return;
+        if (isCurrentTask) {
+            deleteTask(currentItem.id);
+            setEvents((es: AppEvent[]) => es.filter((e) => e.taskId !== currentItem.id));
+        } else {
+            deleteEvent(currentItem.id);
+        }
+        handleClose();
+    }, [currentItem, isCurrentTask, deleteTask, deleteEvent, setEvents, handleClose]);
 
     return (
         <div
@@ -133,49 +160,7 @@ export function InspectorPane({
         >
             {currentItem && (
                 <React.Fragment key={currentItem.id}>
-                    <div
-                        className="inspector-hd"
-                        style={{
-                            padding: "0 8px",
-                            borderBottom: "none",
-                            background: "transparent",
-                        }}
-                    >
-                        <button
-                            className="inspector-icon-btn"
-                            onClick={handleClose}
-                            title="Close Pane"
-                        >
-                            <span className="material-symbols-outlined">
-                                keyboard_double_arrow_right
-                            </span>
-                        </button>
-                        <button
-                            className="inspector-icon-btn"
-                            onClick={() => {
-                                if (isCurrentTask) {
-                                    deleteTask(currentItem.id);
-                                    setEvents((es: AppEvent[]) =>
-                                        es.filter(
-                                            (e) => e.taskId !== currentItem.id,
-                                        ),
-                                    );
-                                } else {
-                                    deleteEvent(currentItem.id);
-                                }
-                                handleClose();
-                            }}
-                            title="Delete"
-                            disabled={isReadOnlyCalendar}
-                        >
-                            <span
-                                className="material-symbols-outlined"
-                                style={{ fontSize: "20px", opacity: isReadOnlyCalendar ? 0.3 : 1 }}
-                            >
-                                delete
-                            </span>
-                        </button>
-                    </div>
+                    <InspectorPaneHeader handleClose={handleClose} handleDelete={handleDelete} isReadOnlyCalendar={isReadOnlyCalendar} />
                     <div className="inspector-body" style={{ paddingTop: 0 }}>
                         <div
                             className="inspector-field"
@@ -183,16 +168,7 @@ export function InspectorPane({
                         >
                             <TitleInput
                                 value={title || ""}
-                                onChange={(newTitle) => {
-                                    if (isCurrentTask)
-                                        updateTask(currentItem.id, {
-                                            title: newTitle,
-                                        });
-                                    else
-                                        updateEvent(currentItem.id, {
-                                            title: newTitle,
-                                        });
-                                }}
+                                onChange={handleTitleChange}
                                 disabled={Boolean(!isCurrentTask && (currentItem as AppEvent).taskId) || isReadOnlyCalendar}
                                 onEnter={handleClose}
                                 style={{
@@ -217,17 +193,7 @@ export function InspectorPane({
                         >
                             <DescriptionInput
                                 value={((currentItem as AppEvent).description as string) || ""}
-                                onChange={(desc) => {
-                                    if (isReadOnlyCalendar) return;
-                                    if (isCurrentTask)
-                                        updateTask(currentItem.id, {
-                                            description: desc,
-                                        });
-                                    else
-                                        updateEvent(currentItem.id, {
-                                            description: desc,
-                                        });
-                                }}
+                                onChange={handleDescChange}
                             />
                         </div>
 
@@ -254,6 +220,42 @@ export function InspectorPane({
                     </div>
                 </React.Fragment>
             )}
+        </div>
+    );
+}
+
+function InspectorPaneHeader({ handleClose, handleDelete, isReadOnlyCalendar }: { handleClose: () => void, handleDelete: () => void, isReadOnlyCalendar: boolean }) {
+    return (
+        <div
+            className="inspector-hd"
+            style={{
+                padding: "0 8px",
+                borderBottom: "none",
+                background: "transparent",
+            }}
+        >
+            <button
+                className="inspector-icon-btn"
+                onClick={handleClose}
+                title="Close Pane"
+            >
+                <span className="material-symbols-outlined">
+                    keyboard_double_arrow_right
+                </span>
+            </button>
+            <button
+                className="inspector-icon-btn"
+                onClick={handleDelete}
+                title="Delete"
+                disabled={isReadOnlyCalendar}
+            >
+                <span
+                    className="material-symbols-outlined"
+                    style={{ fontSize: "20px", opacity: isReadOnlyCalendar ? 0.3 : 1 }}
+                >
+                    delete
+                </span>
+            </button>
         </div>
     );
 }

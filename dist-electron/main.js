@@ -15,6 +15,7 @@ let win;
 let miniWin = null;
 let tray = null;
 let serverPort = 0;
+let isQuitting = false;
 const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
     app.quit();
@@ -124,11 +125,13 @@ function createMiniWindow() {
         ? `${VITE_DEV_SERVER_URL}?minitracker=true`
         : `http://localhost:${serverPort}?minitracker=true`;
     miniWin.loadURL(url);
+    miniWin.on("close", (e) => {
+        if (!isQuitting) {
+            e.preventDefault();
+        }
+    });
     miniWin.on("closed", () => {
         miniWin = null;
-        if (!win || win.isDestroyed() || !win.isVisible()) {
-            app.quit();
-        }
     });
     miniWin.on("maximize", () => {
         if (win && !win.isDestroyed()) {
@@ -159,6 +162,7 @@ function createWindow() {
     });
     if (VITE_DEV_SERVER_URL) {
         win.loadURL(VITE_DEV_SERVER_URL);
+        createMiniWindow();
     }
     else {
         localServer = createServer((req, res) => {
@@ -202,9 +206,13 @@ function createWindow() {
             const addr = localServer.address();
             serverPort = typeof addr === "string" ? 0 : addr?.port || 0;
             win?.loadURL(`http://localhost:${serverPort}`);
+            createMiniWindow();
         });
     }
 }
+app.on("before-quit", () => {
+    isQuitting = true;
+});
 app.on("will-quit", () => {
     if (localServer) {
         localServer.close();
@@ -273,4 +281,5 @@ app.whenReady().then(() => {
             });
         }
     }
-});
+    return undefined;
+}).catch(console.error);

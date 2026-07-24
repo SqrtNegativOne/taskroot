@@ -2,6 +2,19 @@ import React, { useState, Fragment } from "react";
 import { PAD2 } from "../../core/store/data";
 import { PX_PER_MIN, SNAP_MIN } from "./types";
 import type { EventBlockProps } from "./types";
+import type { AppEvent } from "../../core/domain/models";
+
+export const EV_WIDTH_PERCENT = 80;
+
+function getEventClassNames(event: AppEvent, pri: string | number | null | undefined, compact: boolean, isGhost: boolean, isFloating: boolean): string {
+    const classNames = ["day-event", `ev-${event.type}`];
+    if (pri) classNames.push(`pri-bar-${pri}`);
+    if (compact) classNames.push("is-compact");
+    if (event.isDone) classNames.push("is-done");
+    if (isGhost) classNames.push("is-ghost");
+    if (isFloating) classNames.push("is-floating");
+    return classNames.join(" ");
+}
 
 export function EventBlock({
     event,
@@ -91,17 +104,22 @@ export function EventBlock({
         const top = start * PX_PER_MIN;
         const height = (end - start) * PX_PER_MIN;
         const compact = height < 40;
-        const isDone = event.isDone;
+        
+        const classNames = getEventClassNames(event, pri, compact, isGhost, isFloating);
+
+        const style = {
+            top: `${top}px`,
+            height: `${Math.max(height, 18)}px`,
+            left: `calc(56px + ((100% - 56px) / ${lanes}) * ${lane})`,
+            width: `calc(((100% - 56px) / ${lanes}) - 2px)`,
+        };
+
+        const hasTags = !compact && event.type === "plan" && task && (task.tags || []).length > 0;
 
         return (
             <div
-                className={`day-event ev-${event.type} ${pri ? `pri-bar-${pri}` : ""} ${compact ? "is-compact" : ""} ${isDone ? "is-done" : ""} ${isGhost ? "is-ghost" : ""} ${isFloating ? "is-floating" : ""}`}
-                style={{
-                    top: `${top}px`,
-                    height: `${Math.max(height, 18)}px`,
-                    left: `calc(56px + ((100% - 56px) / ${lanes}) * ${lane})`,
-                    width: `calc(((100% - 56px) / ${lanes}) - 2px)`,
-                }}
+                className={classNames}
+                style={style}
                 onPointerDown={isGhost ? undefined : onBodyDown}
                 key={isGhost ? "ghost" : "main"}
             >
@@ -120,18 +138,15 @@ export function EventBlock({
                         {PAD2(Math.floor(start / 60))}:{PAD2(start % 60)} –{" "}
                         {PAD2(Math.floor(end / 60))}:{PAD2(end % 60)}
                     </div>
-                    {!compact &&
-                        event.type === "plan" &&
-                        task &&
-                        (task.tags || []).length > 0 && (
-                            <div className="day-event-tags">
-                                {(task.tags || []).map((t) => (
-                                    <span key={t} className="day-event-tag">
-                                        #{t}
-                                    </span>
-                                ))}
-                            </div>
-                        )}
+                    {hasTags && (
+                        <div className="day-event-tags">
+                            {(task!.tags || []).map((t) => (
+                                <span key={t} className="day-event-tag">
+                                    #{t}
+                                </span>
+                            ))}
+                        </div>
+                    )}
                 </div>
                 <div
                     className="day-event-handle day-event-handle-bottom"

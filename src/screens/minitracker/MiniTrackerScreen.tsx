@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState, useEffect } from "react";
 import "@fontsource/atkinson-hyperlegible-next";
-import { useTasks, useStopwatch, useStored } from "../../core/store/hooks";
+import { useTasks, useStopwatch, useSettings } from "../../core/store/hooks";
 import { PAD2 } from "../../core/store/data";
 
 function splitTime(ms: number) {
@@ -10,10 +10,129 @@ function splitTime(ms: number) {
     return { m: PAD2(totalMin), s: PAD2(totalSec % 60) };
 }
 
+function CounterClock({ currentMs, taskName }: { currentMs: number; taskName: string }) {
+    const { m } = splitTime(currentMs);
+    return (
+        <div>
+            <span style={{ fontWeight: "normal" }}>{m}</span> {taskName}
+        </div>
+    );
+}
+
+function FlowtimeClock({ isBreak, breakStartedAt, breakAllowedMs, now, currentMs, taskName }: { isBreak: boolean; breakStartedAt: number; breakAllowedMs: number; now: number; currentMs: number; taskName: string }) {
+    if (isBreak && breakStartedAt) {
+        const remSecs = Math.max(0, Math.ceil((breakAllowedMs - (now - breakStartedAt)) / 1000));
+        const remM = Math.floor(remSecs / 60);
+        const remS = remSecs % 60;
+        const color = remSecs === 0 ? "var(--red)" : "var(--tag-green)";
+        return (
+            <div style={{ color }}>
+                <span style={{ fontWeight: "normal" }}>
+                    {PAD2(remM)}:{PAD2(remS)}
+                </span>{" "}
+                break left
+            </div>
+        );
+    }
+    const { m } = splitTime(currentMs);
+    return (
+        <div>
+            <span style={{ fontWeight: "normal" }}>{m}</span>{" "}
+            {taskName}
+        </div>
+    );
+}
+
+function GuzeyClock({ now, running, taskName }: { now: number; running: boolean; taskName: string }) {
+    const d = new Date(now);
+    const h = d.getHours();
+    const min = d.getMinutes();
+    const isLongBreak = h % 3 === 0;
+    let breakState = "WORK";
+    let nextMin = 60;
+
+    if (isLongBreak && min < 35) {
+        breakState = "BREAK";
+        nextMin = 35;
+    } else if (min >= 0 && min < 5) {
+        breakState = "BREAK";
+        nextMin = 5;
+    } else if (min >= 5 && min < 30) {
+        breakState = "WORK";
+        nextMin = 30;
+    } else if (min >= 30 && min < 35) {
+        breakState = "BREAK";
+        nextMin = 35;
+    } else {
+        breakState = "WORK";
+        nextMin = 60;
+    }
+
+    let target = new Date(d);
+    target.setSeconds(0);
+    target.setMilliseconds(0);
+    if (nextMin === 60) {
+        target.setMinutes(0);
+        target.setHours(target.getHours() + 1);
+    } else {
+        target.setMinutes(nextMin);
+    }
+
+    const remainingMs = target.getTime() - d.getTime();
+    const remS = Math.floor(remainingMs / 1000);
+    const remM = Math.floor(remS / 60);
+    const finalS = remS % 60;
+
+    if (!running) {
+        return (
+            <div style={{ color: "var(--fg-dim)" }}>
+                TRACKING PAUSED
+            </div>
+        );
+    } else if (breakState === "BREAK") {
+        return (
+            <div style={{ color: "var(--tag-green)" }}>
+                {PAD2(remM)}:{PAD2(finalS)} left for break
+            </div>
+        );
+    } else {
+        return (
+            <div>
+                {PAD2(remM)}:{PAD2(finalS)} left working for {taskName}
+            </div>
+        );
+    }
+}
+
+function getMiniTrackerContainerStyle(currentOpacity: number, showBorder: boolean): React.CSSProperties {
+    return {
+        width: "100vw",
+        height: "100vh",
+        background: "rgb(24, 24, 24)",
+        opacity: currentOpacity,
+        border: showBorder
+            ? "1px solid rgba(255, 255, 255, 0.15)"
+            : "none",
+        transition: "opacity 0.2s ease",
+        color: "var(--fg)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontFamily: "'Atkinson Hyperlegible Next', monospace",
+        fontSize: "16px",
+        userSelect: "none",
+        WebkitAppRegion: "drag", // allows dragging the window
+        cursor: "default",
+        padding: "16px",
+        boxSizing: "border-box",
+        textAlign: "center",
+    };
+}
+
 export function MiniTrackerScreen() {
     const [state, setState] = useStopwatch();
     const [tasks] = useTasks();
-    const [settings] = useStored<Partial<import('../../core/store/settingsSchema').AppSettings>>("settings", {});
+    const [settings] = useSettings();
     const [now, setNow] = useState(Date.now());
     const [isHovered, setIsHovered] = useState(false);
     const [isDimmed, setIsDimmed] = useState(false);
@@ -77,100 +196,11 @@ export function MiniTrackerScreen() {
         const taskName = activeTask ? activeTask.title : "Work session";
 
         if (clockStyle === "counter") {
-            const { m } = splitTime(currentMs);
-            content = (
-                <div>
-                    <span style={{ fontWeight: "normal" }}>{m}</span> {taskName}
-                </div>
-            );
+            content = <CounterClock currentMs={currentMs} taskName={taskName} />;
         } else if (clockStyle === "flowtime") {
-            if (state.isBreak && state.breakStartedAt) {
-                const remSecs = Math.max(
-                    0,
-                    Math.ceil(
-                        (state.breakAllowedMs - (now - state.breakStartedAt)) /
-                            1000,
-                    ),
-                );
-                const remM = Math.floor(remSecs / 60);
-                const remS = remSecs % 60;
-                const color = remSecs === 0 ? "var(--red)" : "var(--tag-green)";
-                content = (
-                    <div style={{ color }}>
-                        <span style={{ fontWeight: "normal" }}>
-                            {PAD2(remM)}:{PAD2(remS)}
-                        </span>{" "}
-                        break left
-                    </div>
-                );
-            } else {
-                const { m } = splitTime(currentMs);
-                content = (
-                    <div>
-                        <span style={{ fontWeight: "normal" }}>{m}</span>{" "}
-                        {taskName}
-                    </div>
-                );
-            }
+            content = <FlowtimeClock isBreak={state.isBreak} breakStartedAt={state.breakStartedAt} breakAllowedMs={state.breakAllowedMs} now={now} currentMs={currentMs} taskName={taskName} />;
         } else if (clockStyle === "guzey") {
-            const d = new Date(now);
-            const h = d.getHours();
-            const min = d.getMinutes();
-            const isLongBreak = h % 3 === 0;
-            let breakState = "WORK";
-            let nextMin = 60;
-
-            if (isLongBreak && min < 35) {
-                breakState = "BREAK";
-                nextMin = 35;
-            } else if (min >= 0 && min < 5) {
-                breakState = "BREAK";
-                nextMin = 5;
-            } else if (min >= 5 && min < 30) {
-                breakState = "WORK";
-                nextMin = 30;
-            } else if (min >= 30 && min < 35) {
-                breakState = "BREAK";
-                nextMin = 35;
-            } else {
-                breakState = "WORK";
-                nextMin = 60;
-            }
-
-            let target = new Date(d);
-            target.setSeconds(0);
-            target.setMilliseconds(0);
-            if (nextMin === 60) {
-                target.setMinutes(0);
-                target.setHours(target.getHours() + 1);
-            } else {
-                target.setMinutes(nextMin);
-            }
-
-            const remainingMs = target.getTime() - d.getTime();
-            const remS = Math.floor(remainingMs / 1000);
-            const remM = Math.floor(remS / 60);
-            const finalS = remS % 60;
-
-            if (!running) {
-                content = (
-                    <div style={{ color: "var(--fg-dim)" }}>
-                        TRACKING PAUSED
-                    </div>
-                );
-            } else if (breakState === "BREAK") {
-                content = (
-                    <div style={{ color: "var(--tag-green)" }}>
-                        {PAD2(remM)}:{PAD2(finalS)} left for break
-                    </div>
-                );
-            } else {
-                content = (
-                    <div>
-                        {PAD2(remM)}:{PAD2(finalS)} left working for {taskName}
-                    </div>
-                );
-            }
+            content = <GuzeyClock now={now} running={running} taskName={taskName} />;
         }
     }
 
@@ -243,31 +273,7 @@ export function MiniTrackerScreen() {
             onDoubleClick={handleDoubleClick}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
-            style={
-                {
-                    width: "100vw",
-                    height: "100vh",
-                    background: "rgb(24, 24, 24)",
-                    opacity: currentOpacity,
-                    border:
-                        (settings.trackerShowBorder ?? true)
-                            ? "1px solid rgba(255, 255, 255, 0.15)"
-                            : "none",
-                    transition: "opacity 0.2s ease",
-                    color: "var(--fg)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontFamily: "'Atkinson Hyperlegible Next', monospace",
-                    fontSize: "16px",
-                    userSelect: "none",
-                    WebkitAppRegion: "drag", // allows dragging the window
-                    cursor: "default",
-                    padding: "16px",
-                    boxSizing: "border-box",
-                    textAlign: "center",
-                }
-            }
+            style={getMiniTrackerContainerStyle(currentOpacity, settings.trackerShowBorder ?? true)}
             title="Double-click to restore main window"
         >
             {content}

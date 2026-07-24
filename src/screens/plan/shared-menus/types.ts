@@ -1,11 +1,8 @@
 import * as React from "react";
 
-export interface Filter {
-    id: string;
-    column: string;
-    operator: string;
-    value: string | string[];
-}
+import type { AppFilter } from "../../../core/domain/models";
+
+export type Filter = AppFilter;
 
 export interface Column {
     id: string;

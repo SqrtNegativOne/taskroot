@@ -1,4 +1,3 @@
-import React from "react";
 import type { DistractionRow, DistractionColumn, DistractionStatus } from "../../../core/store/repositories";
 import type { EditingCell } from "./types";
 import { formatDateTime } from "./utils";

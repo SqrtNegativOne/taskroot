@@ -1,5 +1,3 @@
-import React from "react";
-
 export interface TimeInputProps {
     value: string;
     onChange: (val: string) => void;

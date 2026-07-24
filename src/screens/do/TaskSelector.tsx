@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { AppTask, AppEvent } from "../../core/domain/models";
+import type { AppTask, AppEvent } from "../../core/domain/models";
 import { ymd } from "../../core/store/data";
 
 interface TaskSelectorProps {

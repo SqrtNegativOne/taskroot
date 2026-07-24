@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import Fuse from "fuse.js";
 import { TitleBar } from "../../components/shell";
 import { SearchBar } from "../../components/search-bar";

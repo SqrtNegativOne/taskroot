@@ -22,70 +22,14 @@ export class TaskSynchronizer {
         const tasksMap = new Map<string, import('../../domain/models').AppTask>(tasks.map((t) => [t.id, t]));
 
         for (const remote of remoteTasks) {
-            let localId = null;
-            const match = (remote.notes || "").match(
-                /Taskroot Task ID: (t[0-9a-zA-Z-]+)/,
-            );
-            if (match) {
-                localId = match[1];
-            } else {
-                const existing = tasks.find(
-                    (t) => t.googleTaskId === remote.id,
-                );
-                if (existing) localId = existing.id;
-            }
-
-            const existingLocalTask = localId ? tasksMap.get(localId) : null;
-            const standardizedRemote = googleTasksAPI.toLocalTask(
-                remote,
-                existingLocalTask,
-            );
-
-            if (standardizedRemote._deleted) {
-                if (existingLocalTask) {
-                    const localUpdated = existingLocalTask.updatedAt || 0;
-                    if ((standardizedRemote.updatedAt || 0) > localUpdated) {
-                        tasksMap.delete(existingLocalTask.id);
-                        updated = true;
-                    }
-                }
-                continue;
-            }
-
-            if ("title" in standardizedRemote) {
-                if (existingLocalTask) {
-                    const localUpdated = existingLocalTask.updatedAt || 0;
-                    const remoteUpdated = standardizedRemote.updatedAt || 0;
-
-                    if (remoteUpdated > localUpdated) {
-                        tasksMap.set(existingLocalTask.id, standardizedRemote);
-                        updated = true;
-                    }
-                } else {
-                    tasksMap.set(standardizedRemote.id, standardizedRemote);
-                    updated = true;
-                }
+            if (this.processSingleRemoteTask(remote, tasks, tasksMap)) {
+                updated = true;
             }
         }
 
         // --- Optimistic Overlay ---
-        for (const q of this.context.pushQueue.getItems()) {
-            if (q.type === SyncType.Task) {
-                if (q.action === SyncAction.Delete) {
-                    if (q.item && q.item.id) tasksMap.delete(q.item.id);
-                    if (q.id) {
-                        for (const [key, task] of tasksMap.entries()) {
-                            if (task.googleTaskId === q.id) {
-                                tasksMap.delete(key);
-                            }
-                        }
-                    }
-                    updated = true;
-                } else if ((q.action === SyncAction.Update || q.action === SyncAction.Create) && q.item && q.item.id) {
-                    tasksMap.set(q.item.id, q.item);
-                    updated = true;
-                }
-            }
+        if (this.applyOptimisticOverlay(tasksMap)) {
+            updated = true;
         }
 
         if (updated) {
@@ -181,5 +125,89 @@ export class TaskSynchronizer {
         ) {
             await googleTasksAPI.deleteTask(taskOrEvent.id);
         }
+    }
+
+    private processSingleRemoteTask(
+        remote: any,
+        tasks: import('../../domain/models').AppTask[],
+        tasksMap: Map<string, import('../../domain/models').AppTask>
+    ): boolean {
+        let updated = false;
+        let localId = null;
+        const match = (remote.notes || "").match(
+            /Taskroot Task ID: (t[0-9a-zA-Z-]+)/,
+        );
+        if (match) {
+            localId = match[1];
+        } else {
+            const existing = tasks.find(
+                (t) => t.googleTaskId === remote.id,
+            );
+            if (existing) localId = existing.id;
+        }
+
+        const existingLocalTask = localId ? tasksMap.get(localId) : null;
+        const standardizedRemote = googleTasksAPI.toLocalTask(
+            remote,
+            existingLocalTask,
+        );
+
+        if (standardizedRemote._deleted) {
+            if (existingLocalTask) {
+                const localUpdated = existingLocalTask.updatedAt || 0;
+                if ((standardizedRemote.updatedAt || 0) > localUpdated) {
+                    tasksMap.delete(existingLocalTask.id);
+                    updated = true;
+                }
+            }
+            return updated;
+        }
+
+        if ("title" in standardizedRemote) {
+            if (existingLocalTask) {
+                const localUpdated = existingLocalTask.updatedAt || 0;
+                const remoteUpdated = standardizedRemote.updatedAt || 0;
+
+                if (remoteUpdated > localUpdated) {
+                    tasksMap.set(existingLocalTask.id, standardizedRemote);
+                    updated = true;
+                }
+            } else {
+                tasksMap.set(standardizedRemote.id, standardizedRemote);
+                updated = true;
+            }
+        }
+        return updated;
+    }
+
+    private processQueueItem(q: SyncQueueItem, tasksMap: Map<string, import('../../domain/models').AppTask>): boolean {
+        if (q.type !== SyncType.Task) return false;
+        let updated = false;
+
+        if (q.action === SyncAction.Delete) {
+            if (q.item && q.item.id) tasksMap.delete(q.item.id);
+            if (q.id) {
+                for (const [key, task] of Array.from(tasksMap.entries())) {
+                    if (task.googleTaskId === q.id) {
+                        tasksMap.delete(key);
+                    }
+                }
+            }
+            updated = true;
+        } else if ((q.action === SyncAction.Update || q.action === SyncAction.Create) && q.item && q.item.id) {
+            tasksMap.set(q.item.id, q.item);
+            updated = true;
+        }
+        return updated;
+    }
+
+    private applyOptimisticOverlay(tasksMap: Map<string, import('../../domain/models').AppTask>): boolean {
+        let updated = false;
+        for (const q of this.context.pushQueue.getItems()) {
+            if (this.processQueueItem(q, tasksMap)) {
+                updated = true;
+            }
+        }
+        return updated;
     }
 }

@@ -48,6 +48,51 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
 }
 
+const parseKeybinding = (kb: string) => {
+    const parts = kb.split("+");
+    const key = parts.pop();
+    return {
+        key,
+        needsCtrl: parts.includes("Ctrl"),
+        needsAlt: parts.includes("Alt"),
+        needsShift: parts.includes("Shift"),
+        needsMeta: parts.includes("Meta"),
+    };
+};
+
+const handleSettingsKeydown = (
+    e: KeyboardEvent,
+    settingsKb: string,
+    navigate: (path: string) => void,
+) => {
+    if (
+        e.target instanceof HTMLElement &&
+        (e.target.tagName === "INPUT" ||
+            e.target.tagName === "TEXTAREA" ||
+            e.target.isContentEditable)
+    ) {
+        if (!e.ctrlKey && !e.metaKey && !e.altKey) return;
+    }
+
+    const { key, needsCtrl, needsAlt, needsShift, needsMeta } = parseKeybinding(
+        settingsKb || "Ctrl+,",
+    );
+
+    const keyMatch =
+        e.key.toUpperCase() === key?.toUpperCase() ||
+        (e.key === " " && key === "Space");
+    if (
+        e.ctrlKey === needsCtrl &&
+        e.altKey === needsAlt &&
+        e.shiftKey === needsShift &&
+        e.metaKey === needsMeta &&
+        keyMatch
+    ) {
+        e.preventDefault();
+        navigate("/settings");
+    }
+};
+
 function AppRouter() {
     const navigate = useNavigate();
     const [settings] = useSettings();
@@ -62,40 +107,10 @@ function AppRouter() {
     }, [navigate]);
 
     React.useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (
-                e.target instanceof HTMLElement &&
-                (e.target.tagName === "INPUT" ||
-                    e.target.tagName === "TEXTAREA" ||
-                    e.target.isContentEditable)
-            ) {
-                if (!e.ctrlKey && !e.metaKey && !e.altKey) return;
-            }
-
-            const kb = settings.keybindingOpenSettings || "Ctrl+,";
-            const parts = kb.split("+");
-            const key = parts.pop();
-            const needsCtrl = parts.includes("Ctrl");
-            const needsAlt = parts.includes("Alt");
-            const needsShift = parts.includes("Shift");
-            const needsMeta = parts.includes("Meta");
-
-            const keyMatch =
-                e.key.toUpperCase() === key?.toUpperCase() ||
-                (e.key === " " && key === "Space");
-            if (
-                e.ctrlKey === needsCtrl &&
-                e.altKey === needsAlt &&
-                e.shiftKey === needsShift &&
-                e.metaKey === needsMeta &&
-                keyMatch
-            ) {
-                e.preventDefault();
-                navigate("/settings");
-            }
-        };
-        window.addEventListener("keydown", handleKeyDown);
-        return () => window.removeEventListener("keydown", handleKeyDown);
+        const handler = (e: KeyboardEvent) =>
+            handleSettingsKeydown(e, settings.keybindingOpenSettings, navigate);
+        window.addEventListener("keydown", handler);
+        return () => window.removeEventListener("keydown", handler);
     }, [navigate, settings.keybindingOpenSettings]);
 
     return (
@@ -109,6 +124,51 @@ function AppRouter() {
             <Route path="/recap" element={<RecapScreen />} />
             <Route path="*" element={<Navigate to="/plan" replace />} />
         </Routes>
+    );
+}
+
+function GlobalSyncLoading({ syncMessage }: { syncMessage: string | null }) {
+    if (window.location.search.includes("minitracker=true")) {
+        return null;
+    }
+    return (
+        <div
+            style={{
+                display: "flex",
+                height: "100vh",
+                justifyContent: "center",
+                alignItems: "center",
+                flexDirection: "column",
+                background: "var(--bg)",
+                color: "var(--fg)",
+                fontFamily: "var(--sans)",
+            }}
+        >
+            <div
+                style={{
+                    width: "40px",
+                    height: "40px",
+                    border: "3px solid var(--border)",
+                    borderTopColor: "var(--accent)",
+                    borderRadius: "50%",
+                    animation: "spin 1s linear infinite",
+                }}
+            />
+            <div
+                style={{
+                    marginTop: "16px",
+                    color: "var(--fg-dim)",
+                    fontSize: "0.9rem",
+                }}
+            >
+                {syncMessage || "Syncing data..."}
+            </div>
+            <style>{`
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
+        </div>
     );
 }
 
@@ -142,55 +202,13 @@ function GlobalSync({ children }: { children: React.ReactNode }) {
                 syncState.info = null;
             }
         };
-        // Check once on mount in case there are pending notifications
         checkNotifications();
         const unsub = syncState.subscribe(checkNotifications);
         return unsub;
     }, [notify]);
 
     if (!tasksLoaded || !eventsLoaded || !initialSyncDone) {
-        if (window.location.search.includes("minitracker=true")) {
-            return null;
-        }
-        return (
-            <div
-                style={{
-                    display: "flex",
-                    height: "100vh",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    flexDirection: "column",
-                    background: "var(--bg)",
-                    color: "var(--fg)",
-                    fontFamily: "var(--sans)",
-                }}
-            >
-                <div
-                    style={{
-                        width: "40px",
-                        height: "40px",
-                        border: "3px solid var(--border)",
-                        borderTopColor: "var(--accent)",
-                        borderRadius: "50%",
-                        animation: "spin 1s linear infinite",
-                    }}
-                />
-                <div
-                    style={{
-                        marginTop: "16px",
-                        color: "var(--fg-dim)",
-                        fontSize: "0.9rem",
-                    }}
-                >
-                    {syncMessage || "Syncing data..."}
-                </div>
-                <style>{`
-          @keyframes spin {
-            to { transform: rotate(360deg); }
-          }
-        `}</style>
-            </div>
-        );
+        return <GlobalSyncLoading syncMessage={syncMessage} />;
     }
 
     return <>{children}</>;

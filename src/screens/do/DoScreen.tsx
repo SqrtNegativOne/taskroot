@@ -1,6 +1,5 @@
 import {
     useState,
-    useEffect,
 } from "react";
 import { Collapsible } from "../../components/collapsible";
 import { DistractionLog } from "./distraction-log";

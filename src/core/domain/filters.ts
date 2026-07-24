@@ -1,9 +1,8 @@
 import type { AppFilter } from "./models";
 
-export function computeFilterDefaults(filters: AppFilter[] = []) {
+function processFilters(filters: AppFilter[]) {
     const req: Record<string, Set<string | number>> = {};
     const excl: Record<string, Set<string | number>> = {};
-
     for (const f of filters) {
         if (!f.column || (!f.value && f.value !== 0)) continue;
         const values = Array.isArray(f.value) ? f.value : [f.value];
@@ -17,13 +16,18 @@ export function computeFilterDefaults(filters: AppFilter[] = []) {
             values.forEach(v => req[f.column].add(v));
         }
     }
+    return { req, excl };
+}
 
-    const defaults: Record<string, unknown> = {};
+function processSingleValueCols(
+    req: Record<string, Set<string | number>>,
+    excl: Record<string, Set<string | number>>,
+    defaults: Record<string, unknown>
+) {
     const FALLBACKS: Record<string, (string | number)[]> = {
         status: ["todo", "next-up", "doing", "done"],
         priority: [1, 2, 3, 4, 0],
     };
-
     const singleValueCols = ["status", "priority"];
     for (const col of singleValueCols) {
         if (req[col]) {
@@ -42,6 +46,13 @@ export function computeFilterDefaults(filters: AppFilter[] = []) {
             }
         }
     }
+}
+
+export function computeFilterDefaults(filters: AppFilter[] = []) {
+    const { req, excl } = processFilters(filters);
+    const defaults: Record<string, unknown> = {};
+
+    processSingleValueCols(req, excl, defaults);
 
     if (req["tag"]) {
         const validTags = Array.from(req["tag"]).filter(

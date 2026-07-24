@@ -57,51 +57,14 @@ export class EventSynchronizer {
         );
 
         for (const remote of allRemoteEvents) {
-            const existingLocalEvent = eventsMap.get(remote.id);
-
-            if (remote._deleted) {
-                if (existingLocalEvent) {
-                    const localUpdated = existingLocalEvent.updatedAt || 0;
-                    if ((remote.updatedAt || 0) > localUpdated) {
-                        eventsMap.delete(existingLocalEvent.id);
-                        updated = true;
-                    }
-                }
-                continue;
-            }
-
-            if (existingLocalEvent) {
-                const localUpdated = existingLocalEvent.updatedAt || 0;
-                const remoteUpdated = remote.updatedAt || 0;
-
-                if (remoteUpdated > localUpdated) {
-                    eventsMap.set(existingLocalEvent.id, remote);
-                    updated = true;
-                }
-            } else {
-                eventsMap.set(remote.id, remote);
+            if (this.processSingleRemoteEvent(remote, eventsMap)) {
                 updated = true;
             }
         }
 
         // --- Optimistic Overlay ---
-        for (const q of this.context.pushQueue.getItems()) {
-            if (q.type === SyncType.Event) {
-                if (q.action === SyncAction.Delete) {
-                    if (q.item && q.item.id) eventsMap.delete(q.item.id);
-                    if (q.id) {
-                        for (const [key, event] of eventsMap.entries()) {
-                            if (event.googleEventId === q.id) {
-                                eventsMap.delete(key);
-                            }
-                        }
-                    }
-                    updated = true;
-                } else if ((q.action === SyncAction.Update || q.action === SyncAction.Create) && q.item && q.item.id) {
-                    eventsMap.set(q.item.id, q.item);
-                    updated = true;
-                }
-            }
+        if (this.applyOptimisticOverlay(eventsMap)) {
+            updated = true;
         }
 
         if (updated) {
@@ -115,66 +78,7 @@ export class EventSynchronizer {
         const newEventsMap = new Map(newEvents.map((e) => [e.id, e]));
 
         for (const event of newEvents) {
-            const prev = this.context.prevEventsMap.get(event.id);
-            if (!prev) {
-                if (!event.googleEventId) {
-                    this.context.pushQueue.push({
-                        type: SyncType.Event,
-                        action: SyncAction.Create,
-                        item: event,
-                    });
-                }
-                continue;
-            }
-
-            if (!(
-                event.updatedAt &&
-                prev.updatedAt &&
-                event.updatedAt > prev.updatedAt
-            )) {
-                continue;
-            }
-
-            const calendars = this.context.getLocalData<{id: string, summary: string}[]>("calendars");
-            let targetCalendarId = prev.googleCalendarId || "primary";
-            if (event.category) {
-                const cal = calendars.find((c) => c.summary === event.category);
-                if (cal) targetCalendarId = cal.id;
-            }
-
-            if (
-                prev.googleCalendarId &&
-                prev.googleCalendarId !== targetCalendarId
-            ) {
-                if (prev.googleEventId) {
-                    this.context.pushQueue.push({
-                        type: SyncType.Event,
-                        action: SyncAction.Delete,
-                        item: prev,
-                        id: prev.googleEventId,
-                        calendarId: prev.googleCalendarId,
-                    });
-                }
-                this.context.pushQueue.push({
-                    type: SyncType.Event,
-                    action: SyncAction.Create,
-                    item: event,
-                });
-            } else if (event.googleEventId) {
-                this.context.pushQueue.push({
-                    type: SyncType.Event,
-                    action: SyncAction.Update,
-                    item: event,
-                    id: event.googleEventId,
-                    calendarId: targetCalendarId,
-                });
-            } else {
-                this.context.pushQueue.push({
-                    type: SyncType.Event,
-                    action: SyncAction.Create,
-                    item: event,
-                });
-            }
+            this.handleComputeEventDelta(event, newEventsMap);
         }
 
         for (const [id, prev] of this.context.prevEventsMap.entries()) {
@@ -237,6 +141,133 @@ export class EventSynchronizer {
                 taskOrEvent.id,
                 taskOrEvent.calendarId,
             );
+        }
+    }
+
+    private processSingleRemoteEvent(
+        remote: import('../../domain/models').AppEvent & { _deleted?: boolean },
+        eventsMap: Map<string, import('../../domain/models').AppEvent>
+    ): boolean {
+        let updated = false;
+        const existingLocalEvent = eventsMap.get(remote.id);
+
+        if (remote._deleted) {
+            if (existingLocalEvent) {
+                const localUpdated = existingLocalEvent.updatedAt || 0;
+                if ((remote.updatedAt || 0) > localUpdated) {
+                    eventsMap.delete(existingLocalEvent.id);
+                    updated = true;
+                }
+            }
+            return updated;
+        }
+
+        if (existingLocalEvent) {
+            const localUpdated = existingLocalEvent.updatedAt || 0;
+            const remoteUpdated = remote.updatedAt || 0;
+
+            if (remoteUpdated > localUpdated) {
+                eventsMap.set(existingLocalEvent.id, remote);
+                updated = true;
+            }
+        } else {
+            eventsMap.set(remote.id, remote);
+            updated = true;
+        }
+        return updated;
+    }
+
+    private processQueueItem(q: SyncQueueItem, eventsMap: Map<string, import('../../domain/models').AppEvent>): boolean {
+        if (q.type !== SyncType.Event) return false;
+        let updated = false;
+
+        if (q.action === SyncAction.Delete) {
+            if (q.item && q.item.id) eventsMap.delete(q.item.id);
+            if (q.id) {
+                for (const [key, event] of Array.from(eventsMap.entries())) {
+                    if (event.googleEventId === q.id) {
+                        eventsMap.delete(key);
+                    }
+                }
+            }
+            updated = true;
+        } else if ((q.action === SyncAction.Update || q.action === SyncAction.Create) && q.item && q.item.id) {
+            eventsMap.set(q.item.id, q.item);
+            updated = true;
+        }
+        return updated;
+    }
+
+    private applyOptimisticOverlay(eventsMap: Map<string, import('../../domain/models').AppEvent>): boolean {
+        let updated = false;
+        for (const q of this.context.pushQueue.getItems()) {
+            if (this.processQueueItem(q, eventsMap)) {
+                updated = true;
+            }
+        }
+        return updated;
+    }
+
+    private handleComputeEventDelta(event: import('../../domain/models').AppEvent, _newEventsMap: Map<string, import('../../domain/models').AppEvent>) {
+        const prev = this.context.prevEventsMap.get(event.id);
+        if (!prev) {
+            if (!event.googleEventId) {
+                this.context.pushQueue.push({
+                    type: SyncType.Event,
+                    action: SyncAction.Create,
+                    item: event,
+                });
+            }
+            return;
+        }
+
+        if (!(
+            event.updatedAt &&
+            prev.updatedAt &&
+            event.updatedAt > prev.updatedAt
+        )) {
+            return;
+        }
+
+        const calendars = this.context.getLocalData<{id: string, summary: string}[]>("calendars");
+        let targetCalendarId = prev.googleCalendarId || "primary";
+        if (event.category) {
+            const cal = calendars.find((c) => c.summary === event.category);
+            if (cal) targetCalendarId = cal.id;
+        }
+
+        if (
+            prev.googleCalendarId &&
+            prev.googleCalendarId !== targetCalendarId
+        ) {
+            if (prev.googleEventId) {
+                this.context.pushQueue.push({
+                    type: SyncType.Event,
+                    action: SyncAction.Delete,
+                    item: prev,
+                    id: prev.googleEventId,
+                    calendarId: prev.googleCalendarId,
+                });
+            }
+            this.context.pushQueue.push({
+                type: SyncType.Event,
+                action: SyncAction.Create,
+                item: event,
+            });
+        } else if (event.googleEventId) {
+            this.context.pushQueue.push({
+                type: SyncType.Event,
+                action: SyncAction.Update,
+                item: event,
+                id: event.googleEventId,
+                calendarId: targetCalendarId,
+            });
+        } else {
+            this.context.pushQueue.push({
+                type: SyncType.Event,
+                action: SyncAction.Create,
+                item: event,
+            });
         }
     }
 }

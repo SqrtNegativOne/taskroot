@@ -1,18 +1,6 @@
 import React, { useState, useRef } from "react";
 
-export function SplitPane({
-    direction = "horizontal",
-    defaultSize = 360,
-    minSize = 100,
-    snapThreshold = 50,
-    children,
-}: {
-    direction?: "horizontal" | "vertical";
-    defaultSize?: number;
-    minSize?: number;
-    snapThreshold?: number;
-    children: React.ReactNode;
-}) {
+function useSplitPane(direction: "horizontal" | "vertical", defaultSize: number, snapThreshold: number) {
     const [size, setSize] = useState(defaultSize);
     const [isDragging, setIsDragging] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -37,7 +25,6 @@ export function SplitPane({
 
         if (newSize < snapThreshold) newSize = 0;
 
-        // Cap at max size
         const maxSize = isHoriz ? rect.width : rect.height;
         if (newSize > maxSize - snapThreshold) newSize = maxSize;
 
@@ -48,6 +35,24 @@ export function SplitPane({
         setIsDragging(false);
         (e.target as Element).releasePointerCapture(e.pointerId);
     };
+
+    return { size, isDragging, containerRef, onPointerDown, onPointerMove, onPointerUp, isHoriz };
+}
+
+export function SplitPane({
+    direction = "horizontal",
+    defaultSize = 360,
+    minSize = 100,
+    snapThreshold = 50,
+    children,
+}: {
+    direction?: "horizontal" | "vertical";
+    defaultSize?: number;
+    minSize?: number;
+    snapThreshold?: number;
+    children: React.ReactNode;
+}) {
+    const { size, isDragging, containerRef, onPointerDown, onPointerMove, onPointerUp, isHoriz } = useSplitPane(direction, defaultSize, snapThreshold);
 
     const childArray = React.Children.toArray(children);
     const firstChild = childArray[0];

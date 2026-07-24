@@ -88,6 +88,41 @@ export interface FilterSortButtonsProps {
     align?: "left" | "right";
 }
 
+function useFilterActions(filters: Filter[], setFilters: React.Dispatch<React.SetStateAction<Filter[]>>, columns: Column[], getValuesForColumn: (c: string) => string[]) {
+    const addFilter = () => {
+        const firstCol = columns[0].id;
+        const firstVal = [getValuesForColumn(firstCol)[0] || ""];
+        setFilters([
+            ...filters,
+            {
+                id: Date.now().toString(),
+                column: firstCol,
+                operator: "is",
+                value: firstVal,
+            },
+        ]);
+    };
+
+    const updateFilter = (id: string, updates: Partial<Filter>) => {
+        setFilters((fs) =>
+            fs.map((f) => {
+                if (f.id !== id) return f;
+                const nf = { ...f, ...updates };
+                if (updates.column && updates.column !== f.column) {
+                    nf.value = [getValuesForColumn(updates.column)[0] || ""];
+                }
+                return nf;
+            }),
+        );
+    };
+
+    const removeFilter = (id: string) => {
+        setFilters((fs) => fs.filter((f) => f.id !== id));
+    };
+
+    return { addFilter, updateFilter, removeFilter };
+}
+
 export function FilterSortButtons({
     filters,
     setFilters,
@@ -132,36 +167,7 @@ export function FilterSortButtons({
             document.removeEventListener("pointerdown", handleClickOutside);
     }, [showFilters, showSort, closingFilters, closingSort]);
 
-    const addFilter = () => {
-        const firstCol = columns[0].id;
-        const firstVal = [getValuesForColumn(firstCol)[0] || ""];
-        setFilters([
-            ...filters,
-            {
-                id: Date.now().toString(),
-                column: firstCol,
-                operator: "is",
-                value: firstVal,
-            },
-        ]);
-    };
-
-    const updateFilter = (id: string, updates: Partial<Filter>) => {
-        setFilters((fs) =>
-            fs.map((f) => {
-                if (f.id !== id) return f;
-                const nf = { ...f, ...updates };
-                if (updates.column && updates.column !== f.column) {
-                    nf.value = [getValuesForColumn(updates.column)[0] || ""];
-                }
-                return nf;
-            }),
-        );
-    };
-
-    const removeFilter = (id: string) => {
-        setFilters((fs) => fs.filter((f) => f.id !== id));
-    };
+    const { addFilter, updateFilter, removeFilter } = useFilterActions(filters, setFilters, columns, getValuesForColumn);
 
     const toggleFilters = () => {
         if (showFilters) {

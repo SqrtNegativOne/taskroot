@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useState } from "react";
 
 interface User {
     uid: string;
@@ -36,7 +36,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         const token = localStorage.getItem("google_access_token");
         return token ? { uid: "local-user", email: "user@example.com", displayName: "Local User", photoURL: null } : null;
     });
-    const [loading, setLoading] = useState(false);
+    const [loading] = useState(false);
     const { notify } = useNotification();
 
     const loginWithGoogle = async () => {

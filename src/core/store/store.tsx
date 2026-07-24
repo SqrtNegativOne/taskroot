@@ -116,11 +116,9 @@ export function useStored<T>(
 
     const setValWrapper = (newValOrUpdater: T | ((prev: T) => T)) => {
         let result: T;
-        if (typeof newValOrUpdater === "function") {
+        if (newValOrUpdater instanceof Function) {
             setVal((prev: T) => {
-                // We must use 'as' here because typeof cannot distinguish between T being a function and newValOrUpdater being an updater function.
-                const updater = newValOrUpdater as (prev: T) => T;
-                result = updater(prev);
+                result = newValOrUpdater(prev);
 
                 if (interceptor) {
                     result = interceptor(result, prev);
@@ -187,7 +185,7 @@ function injectUpdatedAt<T extends { id?: string; updatedAt?: number }>(result: 
                 if (!prev) {
                     if (!newItem.updatedAt) {
                         mutated = true;
-                        return { ...newItem, updatedAt: Date.now() } as unknown as T;
+                        return Object.assign({}, newItem, { updatedAt: Date.now() });
                     }
                     return newItem;
                 }
@@ -196,7 +194,7 @@ function injectUpdatedAt<T extends { id?: string; updatedAt?: number }>(result: 
                 const { updatedAt: _n, ...newRest } = newItem;
                 if (!oldItem || JSON.stringify(oldRest) !== JSON.stringify(newRest)) {
                     mutated = true;
-                    return { ...newItem, updatedAt: Date.now() } as unknown as T;
+                    return Object.assign({}, newItem, { updatedAt: Date.now() });
                 }
             }
             return newItem;

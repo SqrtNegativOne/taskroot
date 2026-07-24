@@ -1,17 +1,16 @@
 // A simple registry to let Sync modules update the local store (React state + localStorage)
-const updaters = new Map<string, Set<(data: unknown) => void>>();
+type BivariantUpdater = { bivariantHack(data: unknown): void }["bivariantHack"];
+const updaters = new Map<string, Set<BivariantUpdater>>();
 
 export const storeRegistry = {
     registerUpdater<T>(key: string, updater: (val: T) => void) {
         if (!updaters.has(key)) {
             updaters.set(key, new Set());
         }
-        // We must use 'as' here because the Set holds heterogeneous callbacks that accept various types (T).
-        updaters.get(key)!.add(updater as (data: unknown) => void);
+        updaters.get(key)!.add(updater);
         return () => {
             const set = updaters.get(key);
-            // We must use 'as' here to identify the heterogeneous callback to delete it.
-            if (set) set.delete(updater as (data: unknown) => void);
+            if (set) set.delete(updater);
         };
     },
     

@@ -48,6 +48,7 @@ Taskroot is a web-based and desktop task management app focusing on planning, ex
 ## Style (Important)
 - Prefer inline exports over bottom exports.
 - Remember that you may not need a useEffect. useEffect is an escape hatch for when you need to imperatively run code after a render. If you can do it declaratively, do it declaratively.
+- Keep all React components pure and functional.
 - Do not use `any` or `Function` type ever.
 - Never use `as` type assertions unless absolutely necessary. If you find yourself needing to use `as`, consider refactoring the code to avoid it. If you must use `as`, you must include a comment in the code before it explaining why it is necessary. `as const` is fine obviously.
 - Never use `// @ts-ignore` on any file or line.

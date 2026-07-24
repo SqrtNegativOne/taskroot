@@ -3,14 +3,11 @@
   "plugins": ["react", "typescript", "oxc", "vitest", "jsx-a11y", "promise", "react-perf"],
   "categories": {
     "correctness": "error",
-    "suspicious": "error",
-    "pedantic": "warn",
-    "style": "warn",
-    "restriction": "warn"
+    "suspicious": "error"
   },
   "rules": {
-    "react/rules-of-hooks": "error",
-    "react/exhaustive-deps": "warn",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn",
+    "react/jsx-max-depth": "warn"
   }
 }

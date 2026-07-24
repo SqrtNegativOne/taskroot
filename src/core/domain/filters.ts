@@ -5,13 +5,16 @@ export function computeFilterDefaults(filters: AppFilter[] = []) {
     const excl: Record<string, Set<string | number>> = {};
 
     for (const f of filters) {
-        if (!f.column || !f.value) continue;
+        if (!f.column || (!f.value && f.value !== 0)) continue;
+        const values = Array.isArray(f.value) ? f.value : [f.value];
+        if (values.length === 0) continue;
+        
         if (f.operator === "is not") {
             if (!excl[f.column]) excl[f.column] = new Set();
-            excl[f.column].add(f.value);
+            values.forEach(v => excl[f.column].add(v));
         } else {
             if (!req[f.column]) req[f.column] = new Set();
-            req[f.column].add(f.value);
+            values.forEach(v => req[f.column].add(v));
         }
     }
 

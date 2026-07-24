@@ -10,7 +10,7 @@ import { FilterSortButtons } from "../screens/plan/shared-menus";
 import { computeFilterDefaults } from "../core/domain/filters";
 import type { AppTask, AppFilter } from "../core/domain/models";
 
-// Task list — left column. Filter, sort, draggable items.
+// Task list: left column. Filter, sort, draggable items.
 
 export interface TaskListPaneProps {
     tasks: AppTask[];
@@ -64,15 +64,18 @@ export function TaskListPane({
     const filtered = React.useMemo(() => {
         let xs = tasks;
         for (const f of filters) {
-            if (!f.column || !f.value) continue;
+            if (!f.column || (!f.value && f.value !== 0)) continue;
             xs = xs.filter((t) => {
                 let match = false;
+                const values = Array.isArray(f.value) ? f.value : [f.value];
+                if (values.length === 0) return true;
+                
                 if (f.column === "status") {
-                    match = t.status === f.value;
+                    match = values.includes(t.status || "");
                 } else if (f.column === "priority") {
-                    match = t.priority === f.value;
+                    match = values.includes(t.priority || 0) || values.includes(String(t.priority));
                 } else if (f.column === "tag") {
-                    match = (t.tags || []).includes(String(f.value));
+                    match = values.some((v) => (t.tags || []).includes(String(v)));
                 }
                 return f.operator === "is not" ? !match : match;
             });
@@ -224,14 +227,17 @@ function TaskRow({
         if (!filters || filters.length === 0) return false;
         const mockTask = { ...task, status: newStatus };
         for (const f of filters) {
-            if (!f.column || !f.value) continue;
+            if (!f.column || (!f.value && f.value !== 0)) continue;
             let match = false;
+            const values = Array.isArray(f.value) ? f.value : [f.value];
+            if (values.length === 0) continue;
+            
             if (f.column === "status") {
-                match = mockTask.status === f.value;
+                match = values.includes(mockTask.status || "");
             } else if (f.column === "priority") {
-                match = mockTask.priority === f.value;
+                match = values.includes(mockTask.priority || 0) || values.includes(String(mockTask.priority));
             } else if (f.column === "tag") {
-                match = (mockTask.tags || []).includes(String(f.value));
+                match = values.some((v) => (mockTask.tags || []).includes(String(v)));
             }
             const passes = f.operator === "is not" ? !match : match;
             if (!passes) return true;

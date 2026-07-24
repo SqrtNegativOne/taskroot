@@ -63,4 +63,55 @@ describe("computeFilterDefaults", () => {
         // "bug" is excluded, so only "feature" should be included
         expect(computeFilterDefaults(filters)).toEqual({ tags: ["feature"] });
     });
+
+    it("handles array values for 'is' status filtering correctly", () => {
+        const filters = [
+            { column: "status", operator: "is", value: ["todo", "next-up"] },
+        ];
+        // When multiple statuses are requested, computeFilterDefaults doesn't apply a single status
+        // since a single task can't have multiple statuses simultaneously.
+        expect(computeFilterDefaults(filters)).toEqual({});
+    });
+
+    it("handles array values for 'is not' status filtering", () => {
+        const filters = [
+            { column: "status", operator: "is not", value: ["todo", "next-up", "doing"] },
+        ];
+        // Excludes everything before "done"
+        expect(computeFilterDefaults(filters)).toEqual({ status: "done" });
+    });
+
+    it("handles array values for tag filtering", () => {
+        const filters = [
+            { column: "tag", operator: "is", value: ["bug", "urgent"] },
+        ];
+        // "bug" and "urgent" are both added to defaults
+        expect(computeFilterDefaults(filters)).toEqual({ tags: ["bug", "urgent"] });
+    });
+
+    it("handles array values for tag exclusion", () => {
+        const filters = [
+            { column: "tag", operator: "is", value: ["bug", "feature", "ui"] },
+            { column: "tag", operator: "is not", value: ["bug", "ui"] },
+        ];
+        // "bug" and "ui" are excluded, leaving only "feature"
+        expect(computeFilterDefaults(filters)).toEqual({ tags: ["feature"] });
+    });
+
+    it("handles mixed single and array values for exclusion", () => {
+        const filters = [
+            { column: "status", operator: "is not", value: ["todo"] },
+            { column: "status", operator: "is not", value: "next-up" },
+        ];
+        // "todo" and "next-up" are excluded, so fallback is "doing"
+        expect(computeFilterDefaults(filters)).toEqual({ status: "doing" });
+    });
+
+    it("ignores empty array values", () => {
+        const filters = [
+            { column: "status", operator: "is", value: [] },
+            { column: "priority", operator: "is not", value: [] },
+        ];
+        expect(computeFilterDefaults(filters)).toEqual({});
+    });
 });

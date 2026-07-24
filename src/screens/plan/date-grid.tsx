@@ -52,32 +52,30 @@ export function DateGrid({
 
         if (filter && Array.isArray(filter) && filter.length > 0) {
             for (const f of filter) {
-                if (!f.column || !f.value) continue;
+                if (!f.column || (!f.value && f.value !== 0)) continue;
                 evs = evs.filter((e) => {
                     let match = false;
+                    const values = Array.isArray(f.value) ? f.value : [f.value];
+                    if (values.length === 0) return true;
+
                     if (f.column === "type") {
-                        match = e.type === f.value;
+                        match = values.includes(e.type);
                     } else if (f.column === "tag") {
                         const eventTags = e.tags || [];
                         const taskTags = e.task && e.task.tags ? e.task.tags : [];
                         const allTags = [...eventTags, ...taskTags].map((t) =>
                             typeof t === "string" ? t.toLowerCase() : "",
                         );
-                        match = allTags.includes(f.value.toLowerCase());
+                        match = values.some(v => allTags.includes(String(v).toLowerCase()));
                     } else if (f.column === "taskStatus") {
-                        if (f.value === "none") {
-                            match = !e.task;
-                        } else if (f.value === "done") {
-                            match = e.task
-                                ? e.task.status === "done"
-                                : e.isDone;
-                        } else if (f.value === "todo") {
-                            match = e.task
-                                ? e.task.status !== "done"
-                                : !e.isDone;
-                        }
+                        match = values.some(v => {
+                            if (v === "none") return !e.task;
+                            if (v === "done") return e.task ? e.task.status === "done" : e.isDone;
+                            if (v === "todo") return e.task ? e.task.status !== "done" : !e.isDone;
+                            return false;
+                        });
                     } else if (f.column === "category") {
-                        match = (e.category || "") === f.value;
+                        match = values.includes(e.category || "");
                     }
                     return f.operator === "is not" ? !match : match;
                 });

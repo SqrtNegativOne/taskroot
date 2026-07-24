@@ -25,7 +25,7 @@ export interface AppFilter {
     id?: string;
     column: string;
     operator: string;
-    value: string | number;
+    value: string | number | (string | number)[];
 }
 
 export interface AppEvent {

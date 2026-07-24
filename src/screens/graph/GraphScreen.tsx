@@ -29,14 +29,17 @@ export function GraphScreen() {
     const moveFilteredToCanvas = () => {
         let xs = tasks;
         for (const f of filters) {
-            if (!f.column || !f.value) continue;
+            if (!f.column || (!f.value && f.value !== 0)) continue;
             xs = xs.filter((t: import("../../core/domain/models").AppTask) => {
                 let match = false;
-                if (f.column === "status") match = t.status === f.value;
+                const values = Array.isArray(f.value) ? f.value : [f.value];
+                if (values.length === 0) return true;
+                
+                if (f.column === "status") match = values.includes(t.status || "");
                 else if (f.column === "priority")
-                    match = t.priority === Number(f.value);
+                    match = values.includes(t.priority || 0) || values.includes(String(t.priority));
                 else if (f.column === "tag")
-                    match = (t.tags || []).includes(f.value);
+                    match = values.some(v => (t.tags || []).includes(String(v)));
                 return f.operator === "is not" ? !match : match;
             });
         }

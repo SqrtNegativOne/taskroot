@@ -7,6 +7,12 @@ export interface StopwatchActions {
     startBreak: () => void;
 }
 
+const isInputTarget = (target: EventTarget | null) => {
+    return target instanceof Element && target.matches(
+        "input:not(.task-search-input), textarea, [contenteditable]",
+    );
+};
+
 export function useStopwatchKeyboard(
     selectorOpen: boolean,
     setSelectorOpen: (val: boolean | ((prev: boolean) => boolean)) => void,
@@ -16,40 +22,41 @@ export function useStopwatchKeyboard(
 ) {
     useEffect(() => {
         const onKey = (e: KeyboardEvent) => {
-            const target = e.target;
-            if (
-                target instanceof Element && target.matches(
-                    "input:not(.task-search-input), textarea, [contenteditable]",
-                )
-            )
-                return;
+            if (isInputTarget(e.target)) return;
 
-            if (e.code === "Space" && !selectorOpen) {
-                e.preventDefault();
-                actionsRef.current?.toggle();
-            } else if (e.code === "KeyR" && (e.metaKey || e.ctrlKey)) {
-                e.preventDefault();
-                actionsRef.current?.reset();
-            } else if (e.code === "Enter" && (e.metaKey || e.ctrlKey)) {
-                e.preventDefault();
-                setSelectorOpen((prev: boolean) => !prev);
-            } else if (e.code === "Escape" && selectorOpen) {
-                if (activeTask || allowNoTask) {
-                    e.preventDefault();
-                    setSelectorOpen(false);
-                }
+            const isModifier = e.metaKey || e.ctrlKey;
+
+            switch (e.code) {
+                case "Space":
+                    if (!selectorOpen) {
+                        e.preventDefault();
+                        actionsRef.current?.toggle();
+                    }
+                    break;
+                case "KeyR":
+                    if (isModifier) {
+                        e.preventDefault();
+                        actionsRef.current?.reset();
+                    }
+                    break;
+                case "Enter":
+                    if (isModifier) {
+                        e.preventDefault();
+                        setSelectorOpen((prev: boolean) => !prev);
+                    }
+                    break;
+                case "Escape":
+                    if (selectorOpen && (activeTask || allowNoTask)) {
+                        e.preventDefault();
+                        setSelectorOpen(false);
+                    }
+                    break;
             }
         };
 
         const pressed = new Set<string>();
         const handleDown = (e: KeyboardEvent) => {
-            const target = e.target;
-            if (
-                target instanceof Element && target.matches(
-                    "input:not(.task-search-input), textarea, [contenteditable]",
-                )
-            )
-                return;
+            if (isInputTarget(e.target)) return;
             pressed.add(e.code);
             if (pressed.has("ShiftLeft") && pressed.has("ShiftRight")) {
                 e.preventDefault();

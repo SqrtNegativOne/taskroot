@@ -26,17 +26,15 @@ function getInspectorTitle(currentTask: AppTask | undefined, currentEvent: AppEv
     return "";
 }
 
-export function InspectorPane({
-    inspectorState,
-    onClose,
-    tasks,
-    setTasks,
-    events,
-    setEvents,
-}: InspectorPaneProps) {
+function useInspectorData(
+    inspectorState: { type: string; id: string } | null,
+    tasks: AppTask[],
+    setTasks: React.Dispatch<React.SetStateAction<AppTask[]>>,
+    events: AppEvent[],
+    setEvents: React.Dispatch<React.SetStateAction<AppEvent[]>>,
+    calendars: { id: string; accessRole?: string }[]
+) {
     const [activeState, setActiveState] = React.useState<{ type: string; id: string } | null>(null);
-    const paneRef = React.useRef<HTMLDivElement>(null);
-    const [calendars] = useCalendars();
 
     React.useEffect(() => {
         if (inspectorState) setActiveState(inspectorState);
@@ -44,88 +42,31 @@ export function InspectorPane({
 
     const currentState = inspectorState || activeState;
 
-    const currentTask: AppTask | undefined = currentState?.type === "task" ? tasks.find((t: AppTask) => t.id === currentState.id) : undefined;
-    const currentEvent: AppEvent | undefined = currentState?.type === "event" ? (events.find((e: AppEvent) => e.id === currentState.id) || events.find((e: AppEvent) => e.id === currentState.id.split("_")[0])) : undefined;
+    const currentTask = currentState?.type === "task" ? tasks.find((t) => t.id === currentState.id) : undefined;
+    const currentEvent = currentState?.type === "event" ? (events.find((e) => e.id === currentState.id) || events.find((e) => e.id === currentState.id.split("_")[0])) : undefined;
     const currentItem = currentTask || currentEvent || null;
     const isCurrentTask = !!currentTask;
 
     const isReadOnlyCalendar = React.useMemo(() => {
         if (!currentEvent) return false;
         const calId = currentEvent.googleCalendarId || "primary";
-        const cal = calendars.find((c: { id: string, accessRole?: string }) => c.id === calId);
+        const cal = calendars.find((c) => c.id === calId);
         return cal && (cal.accessRole === "reader" || cal.accessRole === "freeBusyReader");
     }, [currentEvent, calendars]);
 
-    const handleClose = React.useCallback(() => {
-        if (!(inspectorState && currentItem && currentItem.isDraft)) {
-            onClose();
-            return;
-        }
-
-        if (isCurrentTask) {
-            setTasks((ts: AppTask[]) => {
-                const t = ts.find((x: AppTask) => x.id === currentItem.id);
-                if (t && t.isDraft) {
-                    setEvents((es: AppEvent[]) =>
-                        es.filter((e: AppEvent) => e.taskId !== currentItem.id),
-                    );
-                    return ts.filter((x: AppTask) => x.id !== currentItem.id);
-                }
-                return ts;
-            });
-        } else {
-            setEvents((es: AppEvent[]) => {
-                const e = es.find((x: AppEvent) => x.id === currentItem.id);
-                if (e && e.isDraft)
-                    return es.filter((x: AppEvent) => x.id !== currentItem.id);
-                return es;
-            });
-        }
-
-        onClose();
-    }, [
-        inspectorState,
-        currentItem,
-        isCurrentTask,
-        setTasks,
-        setEvents,
-        onClose,
-    ]);
-
-    React.useEffect(() => {
-        function handleClickOutside(e: PointerEvent) {
-            if (
-                inspectorState &&
-                paneRef.current &&
-                !paneRef.current.contains(e.target instanceof Node ? e.target : null)
-            ) {
-                handleClose();
-            }
-        }
-        document.addEventListener("pointerdown", handleClickOutside);
-        return () =>
-            document.removeEventListener("pointerdown", handleClickOutside);
-    }, [inspectorState, handleClose]);
-
+    const title = getInspectorTitle(currentTask, currentEvent, tasks);
     const isOpen = !!(inspectorState && currentItem);
 
-    const title = getInspectorTitle(currentTask, currentEvent, tasks);
-
     const updateTask = React.useCallback((id: string, updates: Partial<AppTask>) =>
-        setTasks((ts: AppTask[]) =>
-            ts.map((t: AppTask) =>
-                t.id === id ? { ...t, ...updates, isDraft: false } : t,
-            ),
-        ), [setTasks]);
-    const deleteTask = React.useCallback((id: string) => setTasks((ts: AppTask[]) => ts.filter((t: AppTask) => t.id !== id)), [setTasks]);
+        setTasks((ts) => ts.map((t) => t.id === id ? { ...t, ...updates, isDraft: false } : t)), [setTasks]);
+
+    const deleteTask = React.useCallback((id: string) => setTasks((ts) => ts.filter((t) => t.id !== id)), [setTasks]);
+
     const updateEvent = React.useCallback((id: string, updates: Partial<AppEvent>) =>
-        setEvents((es: AppEvent[]) =>
-            es.map((e: AppEvent) =>
-                e.id === id ? { ...e, ...updates, isDraft: false } : e,
-            ),
-        ), [setEvents]);
+        setEvents((es) => es.map((e) => e.id === id ? { ...e, ...updates, isDraft: false } : e)), [setEvents]);
+
     const deleteEvent = React.useCallback((id: string) =>
-        setEvents((es: AppEvent[]) => es.filter((e: AppEvent) => e.id !== id)), [setEvents]);
+        setEvents((es) => es.filter((e) => e.id !== id)), [setEvents]);
 
     const handleTitleChange = React.useCallback((newTitle: string) => {
         if (!currentItem) return;
@@ -139,16 +80,101 @@ export function InspectorPane({
         else if (currentEvent) updateEvent(currentEvent.id, { description: desc });
     }, [currentTask, currentEvent, isReadOnlyCalendar, updateTask, updateEvent]);
 
-    const handleDelete = React.useCallback(() => {
+    const handleDelete = React.useCallback((onClose: () => void) => {
         if (!currentItem) return;
         if (isCurrentTask) {
             deleteTask(currentItem.id);
-            setEvents((es: AppEvent[]) => es.filter((e) => e.taskId !== currentItem.id));
+            setEvents((es) => es.filter((e) => e.taskId !== currentItem.id));
         } else {
             deleteEvent(currentItem.id);
         }
-        handleClose();
-    }, [currentItem, isCurrentTask, deleteTask, deleteEvent, setEvents, handleClose]);
+        onClose();
+    }, [currentItem, isCurrentTask, deleteTask, deleteEvent, setEvents]);
+
+    const handleClose = React.useCallback((onClose: () => void) => {
+        if (!(inspectorState && currentItem && currentItem.isDraft)) {
+            onClose();
+            return;
+        }
+
+        if (isCurrentTask) {
+            setTasks((ts) => {
+                const t = ts.find((x) => x.id === currentItem.id);
+                if (t && t.isDraft) {
+                    setEvents((es) => es.filter((e) => e.taskId !== currentItem.id));
+                    return ts.filter((x) => x.id !== currentItem.id);
+                }
+                return ts;
+            });
+        } else {
+            setEvents((es) => {
+                const e = es.find((x) => x.id === currentItem.id);
+                if (e && e.isDraft) return es.filter((x) => x.id !== currentItem.id);
+                return es;
+            });
+        }
+
+        onClose();
+    }, [inspectorState, currentItem, isCurrentTask, setTasks, setEvents]);
+
+    return {
+        currentItem,
+        currentTask,
+        currentEvent,
+        isReadOnlyCalendar,
+        title,
+        isOpen,
+        updateTask,
+        updateEvent,
+        handleTitleChange,
+        handleDescChange,
+        handleDelete,
+        handleClose,
+    };
+}
+
+export function InspectorPane({
+    inspectorState,
+    onClose,
+    tasks,
+    setTasks,
+    events,
+    setEvents,
+}: InspectorPaneProps) {
+    const paneRef = React.useRef<HTMLDivElement>(null);
+    const [calendars] = useCalendars();
+
+    const {
+        currentItem,
+        currentTask,
+        currentEvent,
+        isReadOnlyCalendar,
+        title,
+        isOpen,
+        updateTask,
+        updateEvent,
+        handleTitleChange,
+        handleDescChange,
+        handleDelete,
+        handleClose,
+    } = useInspectorData(inspectorState, tasks, setTasks, events, setEvents, calendars);
+
+    const onPaneClose = React.useCallback(() => handleClose(onClose), [handleClose, onClose]);
+    const onPaneDelete = React.useCallback(() => handleDelete(onClose), [handleDelete, onClose]);
+
+    React.useEffect(() => {
+        function handleClickOutside(e: PointerEvent) {
+            if (
+                inspectorState &&
+                paneRef.current &&
+                !paneRef.current.contains(e.target instanceof Node ? e.target : null)
+            ) {
+                onPaneClose();
+            }
+        }
+        document.addEventListener("pointerdown", handleClickOutside);
+        return () => document.removeEventListener("pointerdown", handleClickOutside);
+    }, [inspectorState, onPaneClose]);
 
     return (
         <div
@@ -157,7 +183,7 @@ export function InspectorPane({
         >
             {currentItem && (
                 <React.Fragment key={currentItem.id}>
-                    <InspectorPaneHeader handleClose={handleClose} handleDelete={handleDelete} isReadOnlyCalendar={isReadOnlyCalendar ?? false} />
+                    <InspectorPaneHeader handleClose={onPaneClose} handleDelete={onPaneDelete} isReadOnlyCalendar={isReadOnlyCalendar ?? false} />
                     <div className="inspector-body" style={{ paddingTop: 0 }}>
                         <div
                             className="inspector-field"
@@ -167,7 +193,7 @@ export function InspectorPane({
                                 value={title || ""}
                                 onChange={handleTitleChange}
                                 disabled={Boolean(currentEvent?.taskId) || isReadOnlyCalendar}
-                                onEnter={handleClose}
+                                onEnter={onPaneClose}
                                 style={{
                                     fontSize: "24px",
                                     fontWeight: "normal",

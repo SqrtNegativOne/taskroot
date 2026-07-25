@@ -143,43 +143,43 @@ export class GoogleTasksAPI {
     }
 }
 
-function createUpdatedLocalTask(googleTask: gapi.client.tasks.Task, existingLocalTask: AppTask | null): AppTask {
-    const localStatus = googleTask.status === "completed" ? "done" : "todo";
-    let id = googleTask.id || "";
-    const match = (googleTask.notes || "").match(/Taskroot Task ID: (t[0-9a-zA-Z-]+)/);
-    if (match) {
-        id = match[1];
-    }
-    if (existingLocalTask) {
-        id = existingLocalTask.id;
-    }
+const extractTaskId = (gTask: gapi.client.tasks.Task, existing: AppTask | null): string => {
+    if (existing) return existing.id;
+    const match = (gTask.notes || "").match(/Taskroot Task ID: (t[0-9a-zA-Z-]+)/);
+    return match ? match[1] : (gTask.id || "");
+};
 
+const parseDueDate = (dueStr?: string): import("../domain/models").DateString | undefined => {
+    if (!dueStr) return undefined;
+    const parts = dueStr.split("T")[0].split("-");
+    return parts.length === 3 ? `${Number(parts[0])}-${Number(parts[1])}-${Number(parts[2])}` : undefined;
+};
+
+function createUpdatedLocalTask(googleTask: gapi.client.tasks.Task, existingLocalTask: AppTask | null): AppTask {
+    const id = extractTaskId(googleTask, existingLocalTask);
+    const due = parseDueDate(googleTask.due);
     const updatedAt = googleTask.updated ? new Date(googleTask.updated).getTime() : Date.now();
-    const dueStr = googleTask.due ? googleTask.due.split("T")[0] : undefined;
-    
-    let due: import("../domain/models").DateString | undefined;
-    if (dueStr) {
-        const p = dueStr.split("-");
-        if (p.length === 3) due = `${Number(p[0])}-${Number(p[1])}-${Number(p[2])}`;
-    }
+    const status = googleTask.status === "completed" ? "done" : "todo";
+
+    const baseTaskData = {
+        googleTaskId: googleTask.id,
+        title: googleTask.title || "",
+        notes: googleTask.notes || "",
+        status,
+        updatedAt,
+    };
 
     if (existingLocalTask) {
         return {
             ...existingLocalTask,
-            googleTaskId: googleTask.id,
-            title: googleTask.title || "",
-            status: localStatus,
-            notes: googleTask.notes || "",
+            ...baseTaskData,
             due: due || existingLocalTask.due,
-            updatedAt,
         };
     }
 
     return {
         id,
-        googleTaskId: googleTask.id,
-        title: googleTask.title || "",
-        status: localStatus,
+        ...baseTaskData,
         priority: 1,
         tags: [],
         subtasks: [],
@@ -187,9 +187,7 @@ function createUpdatedLocalTask(googleTask: gapi.client.tasks.Task, existingLoca
         est: 0,
         added: new Date().toISOString(),
         isDraft: false,
-        notes: googleTask.notes || "",
         due,
-        updatedAt,
     };
 }
 

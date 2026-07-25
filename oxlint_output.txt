@@ -1,0 +1,425 @@
+
+  ! eslint(complexity): function has a complexity of 17. Maximum allowed is 15.
+    ,-[src/screens/do/useStopwatchKeyboard.ts:18:23]
+ 17 |         useEffect(() => {
+ 18 | ,->         const onKey = (e: KeyboardEvent) => {
+ 19 | |               const target = e.target;
+ 20 | |               if (
+ 21 | |                   target instanceof Element && target.matches(
+ 22 | |                       "input:not(.task-search-input), textarea, [contenteditable]",
+ 23 | |                   )
+ 24 | |               )
+ 25 | |                   return;
+ 26 | |   
+ 27 | |               if (e.code === "Space" && !selectorOpen) {
+ 28 | |                   e.preventDefault();
+ 29 | |                   actionsRef.current?.toggle();
+ 30 | |               } else if (e.code === "KeyR" && (e.metaKey || e.ctrlKey)) {
+ 31 | |                   e.preventDefault();
+ 32 | |                   actionsRef.current?.reset();
+ 33 | |               } else if (e.code === "Enter" && (e.metaKey || e.ctrlKey)) {
+ 34 | |                   e.preventDefault();
+ 35 | |                   setSelectorOpen((prev: boolean) => !prev);
+ 36 | |               } else if (e.code === "Escape" && selectorOpen) {
+ 37 | |                   if (activeTask || allowNoTask) {
+ 38 | |                       e.preventDefault();
+ 39 | |                       setSelectorOpen(false);
+ 40 | |                   }
+ 41 | |               }
+ 42 | `->         };
+ 43 |     
+    `----
+
+  ! eslint(max-lines): File has too many lines (312).
+     ,-[src/components/inspector-pane/inspector-event.tsx:312:2]
+ 311 |     );
+ 312 | }
+     :   ^
+     `----
+  help: Maximum allowed is 250.
+
+  ! eslint(max-lines): File has too many lines (321).
+     ,-[src/components/day-timeline/DayTimeline.tsx:321:2]
+ 320 |     );
+ 321 | }
+     :  ^
+     `----
+  help: Maximum allowed is 250.
+
+  ! eslint(max-lines): File has too many lines (259).
+     ,-[src/components/inspector-pane/inspector-shared.tsx:259:2]
+ 258 |     );
+ 259 | }
+     :  ^
+     `----
+  help: Maximum allowed is 250.
+
+  ! eslint(max-lines): File has too many lines (273).
+     ,-[src/core/sync/engine/EventSynchronizer.ts:273:2]
+ 272 |     }
+ 273 | }
+     :   ^
+     `----
+  help: Maximum allowed is 250.
+
+  ! eslint(max-lines): File has too many lines (258).
+     ,-[src/components/inspector-pane/index.tsx:258:2]
+ 257 |     );
+ 258 | }
+     :  ^
+     `----
+  help: Maximum allowed is 250.
+
+  ! eslint(complexity): function `InspectorPane` has a complexity of 23. Maximum allowed is 15.
+     ,-[src/components/inspector-pane/index.tsx:29:8]
+  28 |     
+  29 | ,-> export function InspectorPane({
+  30 | |       inspectorState,
+  31 | |       onClose,
+  32 | |       tasks,
+  33 | |       setTasks,
+  34 | |       events,
+  35 | |       setEvents,
+  36 | |   }: InspectorPaneProps) {
+  37 | |       const [activeState, setActiveState] = React.useState<{ type: string; id: string } | null>(null);
+  38 | |       const paneRef = React.useRef<HTMLDivElement>(null);
+  39 | |       const [calendars] = useCalendars();
+  40 | |   
+  41 | |       React.useEffect(() => {
+  42 | |           if (inspectorState) setActiveState(inspectorState);
+  43 | |       }, [inspectorState]);
+  44 | |   
+  45 | |       const currentState = inspectorState || activeState;
+  46 | |   
+  47 | |       const currentTask: AppTask | undefined = currentState?.type === "task" ? tasks.find((t: AppTask) => t.id === currentState.id) : undefined;
+  48 | |       const currentEvent: AppEvent | undefined = currentState?.type === "event" ? (events.find((e: AppEvent) => e.id === currentState.id) || events.find((e: AppEvent) => e.id === currentState.id.split("_")[0])) : undefined;
+  49 | |       const currentItem = currentTask || currentEvent || null;
+  50 | |       const isCurrentTask = !!currentTask;
+  51 | |   
+  52 | |       const isReadOnlyCalendar = React.useMemo(() => {
+  53 | |           if (!currentEvent) return false;
+  54 | |           const calId = currentEvent.googleCalendarId || "primary";
+  55 | |           const cal = calendars.find((c: { id: string, accessRole?: string }) => c.id === calId);
+  56 | |           return cal && (cal.accessRole === "reader" || cal.accessRole === "freeBusyReader");
+  57 | |       }, [currentEvent, calendars]);
+  58 | |   
+  59 | |       const handleClose = React.useCallback(() => {
+  60 | |           if (!(inspectorState && currentItem && currentItem.isDraft)) {
+  61 | |               onClose();
+  62 | |               return;
+  63 | |           }
+  64 | |   
+  65 | |           if (isCurrentTask) {
+  66 | |               setTasks((ts: AppTask[]) => {
+  67 | |                   const t = ts.find((x: AppTask) => x.id === currentItem.id);
+  68 | |                   if (t && t.isDraft) {
+  69 | |                       setEvents((es: AppEvent[]) =>
+  70 | |                           es.filter((e: AppEvent) => e.taskId !== currentItem.id),
+  71 | |                       );
+  72 | |                       return ts.filter((x: AppTask) => x.id !== currentItem.id);
+  73 | |                   }
+  74 | |                   return ts;
+  75 | |               });
+  76 | |           } else {
+  77 | |               setEvents((es: AppEvent[]) => {
+  78 | |                   const e = es.find((x: AppEvent) => x.id === currentItem.id);
+  79 | |                   if (e && e.isDraft)
+  80 | |                       return es.filter((x: AppEvent) => x.id !== currentItem.id);
+  81 | |                   return es;
+  82 | |               });
+  83 | |           }
+  84 | |   
+  85 | |           onClose();
+  86 | |       }, [
+  87 | |           inspectorState,
+  88 | |           currentItem,
+  89 | |           isCurrentTask,
+  90 | |           setTasks,
+  91 | |           setEvents,
+  92 | |           onClose,
+  93 | |       ]);
+  94 | |   
+  95 | |       React.useEffect(() => {
+  96 | |           function handleClickOutside(e: PointerEvent) {
+  97 | |               if (
+  98 | |                   inspectorState &&
+  99 | |                   paneRef.current &&
+ 100 | |                   !paneRef.current.contains(e.target instanceof Node ? e.target : null)
+ 101 | |               ) {
+ 102 | |                   handleClose();
+ 103 | |               }
+ 104 | |           }
+ 105 | |           document.addEventListener("pointerdown", handleClickOutside);
+ 106 | |           return () =>
+ 107 | |               document.removeEventListener("pointerdown", handleClickOutside);
+ 108 | |       }, [inspectorState, handleClose]);
+ 109 | |   
+ 110 | |       const isOpen = !!(inspectorState && currentItem);
+ 111 | |   
+ 112 | |       const title = getInspectorTitle(currentTask, currentEvent, tasks);
+ 113 | |   
+ 114 | |       const updateTask = React.useCallback((id: string, updates: Partial<AppTask>) =>
+ 115 | |           setTasks((ts: AppTask[]) =>
+ 116 | |               ts.map((t: AppTask) =>
+ 117 | |                   t.id === id ? { ...t, ...updates, isDraft: false } : t,
+ 118 | |               ),
+ 119 | |           ), [setTasks]);
+ 120 | |       const deleteTask = React.useCallback((id: string) => setTasks((ts: AppTask[]) => ts.filter((t: AppTask) => t.id !== id)), [setTasks]);
+ 121 | |       const updateEvent = React.useCallback((id: string, updates: Partial<AppEvent>) =>
+ 122 | |           setEvents((es: AppEvent[]) =>
+ 123 | |               es.map((e: AppEvent) =>
+ 124 | |                   e.id === id ? { ...e, ...updates, isDraft: false } : e,
+ 125 | |               ),
+ 126 | |           ), [setEvents]);
+ 127 | |       const deleteEvent = React.useCallback((id: string) =>
+ 128 | |           setEvents((es: AppEvent[]) => es.filter((e: AppEvent) => e.id !== id)), [setEvents]);
+ 129 | |   
+ 130 | |       const handleTitleChange = React.useCallback((newTitle: string) => {
+ 131 | |           if (!currentItem) return;
+ 132 | |           if (isCurrentTask) updateTask(currentItem.id, { title: newTitle });
+ 133 | |           else updateEvent(currentItem.id, { title: newTitle });
+ 134 | |       }, [currentItem, isCurrentTask, updateTask, updateEvent]);
+ 135 | |   
+ 136 | |       const handleDescChange = React.useCallback((desc: string) => {
+ 137 | |           if (isReadOnlyCalendar) return;
+ 138 | |           if (currentTask) updateTask(currentTask.id, { description: desc });
+ 139 | |           else if (currentEvent) updateEvent(currentEvent.id, { description: desc });
+ 140 | |       }, [currentTask, currentEvent, isReadOnlyCalendar, updateTask, updateEvent]);
+ 141 | |   
+ 142 | |       const handleDelete = React.useCallback(() => {
+ 143 | |           if (!currentItem) return;
+ 144 | |           if (isCurrentTask) {
+ 145 | |               deleteTask(currentItem.id);
+ 146 | |               setEvents((es: AppEvent[]) => es.filter((e) => e.taskId !== currentItem.id));
+ 147 | |           } else {
+ 148 | |               deleteEvent(currentItem.id);
+ 149 | |           }
+ 150 | |           handleClose();
+ 151 | |       }, [currentItem, isCurrentTask, deleteTask, deleteEvent, setEvents, handleClose]);
+ 152 | |   
+ 153 | |       return (
+ 154 | |           <div
+ 155 | |               ref={paneRef}
+ 156 | |               className={`inspector-pane ${isOpen ? "is-open" : ""}`}
+ 157 | |           >
+ 158 | |               {currentItem && (
+ 159 | |                   <React.Fragment key={currentItem.id}>
+ 160 | |                       <InspectorPaneHeader handleClose={handleClose} handleDelete={handleDelete} isReadOnlyCalendar={isReadOnlyCalendar ?? false} />
+ 161 | |                       <div className="inspector-body" style={{ paddingTop: 0 }}>
+ 162 | |                           <div
+ 163 | |                               className="inspector-field"
+ 164 | |                               style={{ marginTop: "24px", marginBottom: "4px" }}
+ 165 | |                           >
+ 166 | |                               <TitleInput
+ 167 | |                                   value={title || ""}
+ 168 | |                                   onChange={handleTitleChange}
+ 169 | |                                   disabled={Boolean(currentEvent?.taskId) || isReadOnlyCalendar}
+ 170 | |                                   onEnter={handleClose}
+ 171 | |                                   style={{
+ 172 | |                                       fontSize: "24px",
+ 173 | |                                       fontWeight: "normal",
+ 174 | |                                       border: "none",
+ 175 | |                                       background: "transparent",
+ 176 | |                                       padding: "0",
+ 177 | |                                       outline: "none",
+ 178 | |                                       width: "100%",
+ 179 | |                                       color: "var(--fg)",
+ 180 | |                                   }}
+ 181 | |                                   autoFocus={Boolean(currentTask?.isDraft)}
+ 182 | |                               />
+ 183 | |                           </div>
+ 184 | |                           <div
+ 185 | |                               className="inspector-field"
+ 186 | |                               style={{
+ 187 | |                                   flexDirection: "column",
+ 188 | |                                   alignItems: "flex-start",
+ 189 | |                               }}
+ 190 | |                           >
+ 191 | |                               <DescriptionInput
+ 192 | |                                   value={(currentEvent?.description) || ""}
+ 193 | |                                   onChange={handleDescChange}
+ 194 | |                               />
+ 195 | |                           </div>
+ 196 | |   
+ 197 | |                           {isReadOnlyCalendar && (
+ 198 | |                               <div className="inspector-field" style={{color: "var(--tag-red)", fontSize: "0.85em", marginTop: "8px"}}>
+ 199 | |                                   This event belongs to a read-only calendar and cannot be modified.
+ 200 | |                               </div>
+ 201 | |                           )}
+ 202 | |   
+ 203 | |                           {currentTask ? (
+ 204 | |                               <TaskInspector 
+ 205 | |                                   task={currentTask} 
+ 206 | |                                   updateTask={updateTask} 
+ 207 | |                               />
+ 208 | |                           ) : currentEvent ? (
+ 209 | |                               <EventInspector 
+ 210 | |                                   event={currentEvent} 
+ 211 | |                                   tasks={tasks}
+ 212 | |                                   calendars={calendars}
+ 213 | |                                   updateEvent={updateEvent}
+ 214 | |                                   isReadOnlyCalendar={isReadOnlyCalendar ?? false}
+ 215 | |                               />
+ 216 | |                           ) : null}
+ 217 | |                       </div>
+ 218 | |                   </React.Fragment>
+ 219 | |               )}
+ 220 | |           </div>
+ 221 | |       );
+ 222 | `-> }
+ 223 |     
+     `----
+
+  ! eslint(max-lines): File has too many lines (318).
+     ,-[src/screens/minitracker/MiniTrackerScreen.tsx:318:2]
+ 317 |     );
+ 318 | }
+     :   ^
+     `----
+  help: Maximum allowed is 250.
+
+  ! eslint(max-lines): File has too many lines (339).
+     ,-[src/core/store/settingsSchema.tsx:339:3]
+ 338 |     trackerDimmedOpacity: 20,
+ 339 | };
+     :    ^
+     `----
+  help: Maximum allowed is 250.
+
+  ! eslint(max-lines): File has too many lines (301).
+     ,-[src/screens/plan/shared-menus/FilterSortButtons.tsx:301:2]
+ 300 |     );
+ 301 | }
+     :  ^
+     `----
+  help: Maximum allowed is 250.
+
+  ! eslint(complexity): function `createUpdatedLocalTask` has a complexity of 16. Maximum allowed is 15.
+     ,-[src/core/sync/GoogleTasksAPI.ts:146:1]
+ 145 |     
+ 146 | ,-> function createUpdatedLocalTask(googleTask: gapi.client.tasks.Task, existingLocalTask: AppTask | null): AppTask {
+ 147 | |       const localStatus = googleTask.status === "completed" ? "done" : "todo";
+ 148 | |       let id = googleTask.id || "";
+ 149 | |       const match = (googleTask.notes || "").match(/Taskroot Task ID: (t[0-9a-zA-Z-]+)/);
+ 150 | |       if (match) {
+ 151 | |           id = match[1];
+ 152 | |       }
+ 153 | |       if (existingLocalTask) {
+ 154 | |           id = existingLocalTask.id;
+ 155 | |       }
+ 156 | |   
+ 157 | |       const updatedAt = googleTask.updated ? new Date(googleTask.updated).getTime() : Date.now();
+ 158 | |       const dueStr = googleTask.due ? googleTask.due.split("T")[0] : undefined;
+ 159 | |       
+ 160 | |       let due: import("../domain/models").DateString | undefined;
+ 161 | |       if (dueStr) {
+ 162 | |           const p = dueStr.split("-");
+ 163 | |           if (p.length === 3) due = `${Number(p[0])}-${Number(p[1])}-${Number(p[2])}`;
+ 164 | |       }
+ 165 | |   
+ 166 | |       if (existingLocalTask) {
+ 167 | |           return {
+ 168 | |               ...existingLocalTask,
+ 169 | |               googleTaskId: googleTask.id,
+ 170 | |               title: googleTask.title || "",
+ 171 | |               status: localStatus,
+ 172 | |               notes: googleTask.notes || "",
+ 173 | |               due: due || existingLocalTask.due,
+ 174 | |               updatedAt,
+ 175 | |           };
+ 176 | |       }
+ 177 | |   
+ 178 | |       return {
+ 179 | |           id,
+ 180 | |           googleTaskId: googleTask.id,
+ 181 | |           title: googleTask.title || "",
+ 182 | |           status: localStatus,
+ 183 | |           priority: 1,
+ 184 | |           tags: [],
+ 185 | |           subtasks: [],
+ 186 | |           parent_task: null,
+ 187 | |           est: 0,
+ 188 | |           added: new Date().toISOString(),
+ 189 | |           isDraft: false,
+ 190 | |           notes: googleTask.notes || "",
+ 191 | |           due,
+ 192 | |           updatedAt,
+ 193 | |       };
+ 194 | `-> }
+ 195 |     
+     `----
+
+  ! eslint(max-lines): File has too many lines (269).
+     ,-[src/core/sync/GoogleCalendarAPI.ts:269:58]
+ 268 | 
+ 269 | export const googleCalendarAPI = new GoogleCalendarAPI();
+     :                                                           ^
+     `----
+  help: Maximum allowed is 250.
+
+  ! eslint(max-lines): File has too many lines (382).
+     ,-[src/screens/do/TaskSelector.tsx:382:2]
+ 381 |     );
+ 382 | }
+     :  ^
+     `----
+  help: Maximum allowed is 250.
+
+  ! eslint(max-lines): File has too many lines (347).
+     ,-[src/screens/wrap/WrapScreen.tsx:347:2]
+ 346 |     );
+ 347 | }
+     :   ^
+     `----
+  help: Maximum allowed is 250.
+
+  ! eslint(max-lines): File has too many lines (299).
+     ,-[src/screens/graph/TaskCanvas.tsx:299:2]
+ 298 |     );
+ 299 | }
+     :   ^
+     `----
+  help: Maximum allowed is 250.
+
+  ! eslint(max-lines): File has too many lines (269).
+     ,-[src/screens/do/stopwatch.tsx:269:2]
+ 268 |     );
+ 269 | }
+     :  ^
+     `----
+  help: Maximum allowed is 250.
+
+  ! eslint(max-lines): File has too many lines (306).
+     ,-[src/components/shell.tsx:306:2]
+ 305 |     );
+ 306 | }
+     :   ^
+     `----
+  help: Maximum allowed is 250.
+
+  ! eslint(max-lines): File has too many lines (271).
+     ,-[src/screens/plan/PlanScreen.tsx:271:1]
+ 270 | }
+ 271 | 
+     :  ^
+     `----
+  help: Maximum allowed is 250.
+
+  ! eslint(max-lines): File has too many lines (396).
+     ,-[src/screens/plan/date-grid.tsx:396:2]
+ 395 |     return `${prefix}${MONTHS[a.getMonth()]} ${a.getDate()} – ${MONTHS[b.getMonth()]} ${b.getDate()}, ${b.getFullYear()}`;
+ 396 | }
+     :   ^
+     `----
+  help: Maximum allowed is 250.
+
+  ! eslint(max-lines): File has too many lines (305).
+     ,-[electron/main.ts:305:25]
+ 304 |     return undefined;
+ 305 | }).catch(console.error);
+     :                         ^
+     `----
+  help: Maximum allowed is 250.
+
+Found 20 warnings and 0 errors.
+Finished in 100ms on 116 files with 222 rules using 24 threads.

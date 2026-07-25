@@ -1,7 +1,7 @@
 import { MONTHS } from "../../../core/store/data";
 
 export function colIcon(type: string) {
-    return ({ text: "A", status: "◐", datetime: "◷" } as Record<string, string>)[type] || "·";
+    return ({ text: "A", status: "◐", datetime: "◷" })[type] || "·";
 }
 
 export function formatDateTime(s?: string) {

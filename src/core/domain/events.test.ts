@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { hydrateEvents } from "./events";
-import type { AppEvent } from "./events";
+import type { AppEvent } from "./models";
 import type { AppTask } from "./models";
 
 describe("hydrateEvents", () => {
@@ -25,6 +25,7 @@ describe("hydrateEvents", () => {
         const events: AppEvent[] = [
             {
                 id: "e1",
+                title: "Dummy",
                 type: "plan",
                 date: "2026-05-20",
                 start: 600,
@@ -65,12 +66,13 @@ describe("hydrateEvents", () => {
         const events: AppEvent[] = [
             {
                 id: "e1",
+                title: "Fake title",
                 type: "plan",
-                date: "2026-05-20",
-                start: 600,
-                end: 660,
+                date: "2026-07-23",
+                start: 540,
+                end: 600,
                 taskId: "t1",
-            }
+            },
         ];
 
         // Initial state

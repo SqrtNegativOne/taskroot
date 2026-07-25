@@ -9,7 +9,7 @@ import {
 import { InspectorPane } from "../../components/inspector-pane";
 import type { AppTask, AppEvent } from "../../core/domain/models";
 
-import { DragGhost } from "./drag-helpers";
+import { DragGhost, type PlanDragState } from "./drag-helpers";
 import { usePlanActions } from "./use-plan-actions";
 import { useDragAndDrop } from "./use-drag-and-drop";
 import { DateGrid } from "./date-grid";
@@ -76,7 +76,7 @@ export function PlanScreen() {
         start.setMonth(start.getMonth() - 2);
         const end = new Date(anchor);
         end.setMonth(end.getMonth() + 2);
-        return expandEventsForView(events as unknown as import("../../core/domain/events").AppEvent[], start, end);
+        return expandEventsForView(events, start, end);
     }, [events, anchor]);
 
     const getEventFilterValues = React.useCallback(
@@ -119,8 +119,8 @@ export function PlanScreen() {
                     <TaskListPane
                         tasks={tasks}
                         setTasks={setTasks}
-                        filters={filters as unknown as import("../../core/domain/models").AppFilter[]}
-                        setFilters={setFilters as unknown as React.Dispatch<React.SetStateAction<import("../../core/domain/models").AppFilter[]>>}
+                        filters={filters}
+                        setFilters={setFilters}
                         sort={sort}
                         setSort={setSort}
                         query={query}
@@ -143,18 +143,18 @@ export function PlanScreen() {
                             snapThreshold={60}
                         >
                             <DateGrid
-                                view={view as unknown as string}
-                                setView={setView as unknown as (v: string) => void}
+                                view={view}
+                                setView={setView}
                                 anchor={anchor}
                                 setAnchor={setAnchor}
-                                events={visibleEvents as unknown as import("../../core/domain/models").AppEvent[]}
+                                events={visibleEvents}
                                 tasks={tasks}
-                                filter={calFilter as unknown as import("../../core/domain/models").AppFilter[]}
+                                filter={calFilter}
                                 sort={calSort}
                                 filterMenu={
                                     <FilterSortButtons
-                                        filters={calFilter as unknown as import("./shared-menus").Filter[]}
-                                        setFilters={setCalFilter as unknown as React.Dispatch<React.SetStateAction<import("./shared-menus").Filter[]>>}
+                                        filters={calFilter}
+                                        setFilters={setCalFilter}
                                         sort={calSort}
                                         setSort={setCalSort}
                                         columns={[
@@ -183,20 +183,20 @@ export function PlanScreen() {
                                     />
                                 }
                                 today={TODAY}
-                                dragState={dragState as unknown as any}
+                                dragState={dragState}
                                 onEventDragStart={onEventDragStart}
                                 onAddEvent={onAddEvent}
                                 onDropToDate={() => {}}
                             />
-                            <DayTimeline
-                                events={visibleEvents as unknown as import("../../core/domain/events").AppEvent[]}
+                            <DayTimeline<PlanDragState>
+                                events={visibleEvents}
                                 tasks={tasks}
-                                filter={timeFilter as unknown as import("../../core/domain/models").AppFilter[]}
+                                filter={timeFilter}
                                 sort={timeSort}
                                 filterMenu={
                                     <FilterSortButtons
-                                        filters={timeFilter as unknown as import("./shared-menus").Filter[]}
-                                        setFilters={setTimeFilter as unknown as React.Dispatch<React.SetStateAction<import("./shared-menus").Filter[]>>}
+                                        filters={timeFilter}
+                                        setFilters={setTimeFilter}
                                         sort={timeSort}
                                         setSort={setTimeSort}
                                         columns={[
@@ -227,8 +227,8 @@ export function PlanScreen() {
                                 today={TODAY}
                                 timelineDate={timelineDate}
                                 setTimelineDate={setTimelineDate}
-                                dragState={dragState as unknown as import("../../components/day-timeline").DragState}
-                                setDragState={setDragState as unknown as React.Dispatch<React.SetStateAction<import("../../components/day-timeline").DragState | null>>}
+                                dragState={dragState}
+                                setDragState={setDragState}
                                 onResizeEvent={onResizeEvent}
                                 onMoveEvent={onMoveEvent}
                                 onEventClick={(ev: AppEvent) =>

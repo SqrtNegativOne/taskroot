@@ -28,7 +28,7 @@ export function StatusCell({
     React.useEffect(() => {
         if (!open) return;
         const onDoc = (e: PointerEvent) => {
-            if (popRef.current && !popRef.current.contains(e.target as Node)) onClose();
+            if (popRef.current && !popRef.current.contains(e.target instanceof Node ? e.target : null)) onClose();
         };
         setTimeout(() => document.addEventListener("pointerdown", onDoc), 0);
         return () => document.removeEventListener("pointerdown", onDoc);

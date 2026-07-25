@@ -1,5 +1,6 @@
 import React from "react";
 import type { AppEvent, AppTask } from "../../core/domain/models";
+import { isDateString } from "../../core/domain/models";
 import { RepeatSelect, Toggle, minToTime, timeToMin } from "./inspector-shared";
 
 interface EventInspectorProps {
@@ -103,7 +104,7 @@ export function EventInspector({
                         });
                     }}
                 >
-                    {calendars.map((c: any) => (
+                    {calendars.map((c: { id: string; summary?: string; accessRole?: string }) => (
                         <option 
                             key={c.id} 
                             value={c.id}
@@ -216,11 +217,13 @@ export function EventInspector({
                         className="inspector-date-input"
                         value={String(event.date)}
                         disabled={isReadOnlyCalendar}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                            updateEvent(event.id, {
-                                date: e.target.value,
-                            })
-                        }
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            if (isDateString(e.target.value)) {
+                                updateEvent(event.id, {
+                                    date: e.target.value,
+                                });
+                            }
+                        }}
                     />
                     {!event.isAllDay && (
                         <input
@@ -272,15 +275,13 @@ export function EventInspector({
                             value={String(event.endDate || event.date)}
                             min={String(event.date)}
                             disabled={isReadOnlyCalendar}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                                updateEvent(
-                                    event.id,
-                                    {
-                                        endDate:
-                                            e.target.value,
-                                    },
-                                )
-                            }
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                if (isDateString(e.target.value)) {
+                                    updateEvent(event.id, {
+                                        endDate: e.target.value,
+                                    });
+                                }
+                            }}
                         />
                         {!event.isAllDay && (
                             <input

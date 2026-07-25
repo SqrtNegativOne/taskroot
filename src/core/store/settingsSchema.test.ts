@@ -12,6 +12,16 @@ describe("settingsSchema.tsx", () => {
         expect(ids.length).toBe(uniqueIds.size);
     });
 
+    it("should have valid min/max for number settings", () => {
+        SETTINGS_SCHEMA.forEach((s) => {
+            if (s.type === "number") {
+                if (s.min !== undefined && s.max !== undefined) {
+                    expect(s.max).toBeGreaterThanOrEqual(s.min);
+                }
+            }
+        });
+    });
+
     it("should compile DEFAULT_SETTINGS correctly from schema", () => {
         expect(DEFAULT_SETTINGS).toBeDefined();
 
@@ -28,6 +38,6 @@ describe("settingsSchema.tsx", () => {
 
     it("should ensure bounded settings have valid min/max", () => {
         const boundedSettings = SETTINGS_SCHEMA.filter(s => s.min !== undefined && s.max !== undefined);
-        expect(boundedSettings.every(s => s.max! >= s.min!)).toBe(true);
+        expect(boundedSettings.every(s => (s.max !== undefined && s.min !== undefined) ? s.max >= s.min : false)).toBe(true);
     });
 });

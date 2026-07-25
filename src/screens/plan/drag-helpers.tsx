@@ -6,7 +6,7 @@ export interface PlanDragTarget {
     kind: string;
     minute?: number;
     duration?: number;
-    date?: string;
+    date?: import("../../core/domain/models").DateString;
 }
 
 export interface PlanDragState {
@@ -43,10 +43,14 @@ export function DragGhost({ task, event, x, y, ghostStyle }: { task?: AppTask | 
     );
 }
 
+function isDateString(s: string | undefined): s is import("../../core/domain/models").DateString {
+    return typeof s === "string" && /^\d+-\d+-\d+$/.test(s);
+}
+
 export function resolveDropTarget(el: Element | null, _x: number, y: number, task?: AppTask | null, event?: AppEvent | null): PlanDragTarget | null {
     if (!el) return null;
     // Day calendar grid
-    const grid = el.closest('[data-drop-kind="day-time"]') as HTMLElement | null;
+    const grid = el.closest('[data-drop-kind="day-time"]');
     if (grid) {
         const rect = grid.getBoundingClientRect();
         const offsetY = y - rect.top;
@@ -65,9 +69,12 @@ export function resolveDropTarget(el: Element | null, _x: number, y: number, tas
         };
     }
     // Date grid day cell
-    const day = el.closest('[data-drop-kind="grid-day"]') as HTMLElement | null;
-    if (day) {
-        return { kind: "grid-day", date: day.dataset.dropDate };
+    const day = el.closest('[data-drop-kind="grid-day"]');
+    if (day instanceof HTMLElement) {
+        const dropDate = day.dataset.dropDate;
+        if (isDateString(dropDate)) {
+            return { kind: "grid-day", date: dropDate };
+        }
     }
     return null;
 }

@@ -128,7 +128,7 @@ export class TaskSynchronizer {
     }
 
     private processSingleRemoteTask(
-        remote: any,
+        remote: gapi.client.tasks.Task,
         tasks: import('../../domain/models').AppTask[],
         tasksMap: Map<string, import('../../domain/models').AppTask>
     ): boolean {

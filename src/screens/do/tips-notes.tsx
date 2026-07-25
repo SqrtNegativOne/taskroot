@@ -3,7 +3,7 @@ import React from "react";
 import { useNotes, useTips } from "../../core/store/hooks";
 
 
-export interface AppNote {
+export type AppNote = {
     id: string;
     title: string;
     vault: string;
@@ -77,9 +77,7 @@ export function TipsList() {
 }
 
 export function NotesList() {
-    const [notesRaw, setNotesRaw] = useNotes();
-    const notes = notesRaw as unknown as AppNote[];
-    const setNotes = setNotesRaw as unknown as React.Dispatch<React.SetStateAction<AppNote[]>>;
+    const [notes, setNotes] = useNotes();
     const [toast, setToast] = React.useState<string | null>(null);
     const [adding, setAdding] = React.useState(false);
     const [draft, setDraft] = React.useState("");

@@ -156,11 +156,11 @@ function isDimShortcut(e: KeyboardEvent) {
 }
 
 function getClockContent(
-    activeTask: any,
+    activeTask: unknown,
     allowStopwatchWithoutTask: boolean,
     clockStyle: string,
     currentMs: number,
-    state: any,
+    state: unknown,
     now: number,
     running: boolean
 ) {

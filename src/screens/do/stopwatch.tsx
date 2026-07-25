@@ -39,7 +39,7 @@ export function Stopwatch({ onBreakStatusChange }: { onBreakStatusChange?: (stat
             setTick((t) => t + 1);
             raf = requestAnimationFrame(loop);
         };
-        if (strategy.requiresAnimationLoop({ state } as any)) {
+        if (strategy.requiresAnimationLoop({ state })) {
             raf = requestAnimationFrame(loop);
         }
         return () => {
@@ -87,7 +87,7 @@ export function Stopwatch({ onBreakStatusChange }: { onBreakStatusChange?: (stat
             activeTask,
             allowNoTask,
             settings,
-        } as any);
+        });
 
     const reset = () =>
         strategy.onReset({
@@ -103,7 +103,7 @@ export function Stopwatch({ onBreakStatusChange }: { onBreakStatusChange?: (stat
             activeTask,
             allowNoTask,
             settings,
-        } as any);
+        });
 
     const startWithTask = (taskId: string) => {
         setTasks((ts: AppTask[]) =>
@@ -126,7 +126,7 @@ export function Stopwatch({ onBreakStatusChange }: { onBreakStatusChange?: (stat
             activeTask,
             allowNoTask,
             settings,
-        } as any);
+        });
     };
 
     const startBreak = () => {
@@ -185,7 +185,7 @@ export function Stopwatch({ onBreakStatusChange }: { onBreakStatusChange?: (stat
                     toggle,
                     onBreakStatus: onBreakStatusChange,
                     state,
-                } as any)}
+                })}
 
                 {(() => {
                     const isGuzey = settings.clockStyle === "guzey";

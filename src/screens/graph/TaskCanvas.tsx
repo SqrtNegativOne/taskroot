@@ -161,12 +161,13 @@ function TaskCanvasInner({ tasks, setTasks }: TaskCanvasProps) {
                 let updated = [...prev];
                 for (const change of changes) {
                     if (change.type === "position" && change.position) {
+                        const pos = change.position;
                         updated = updated.map((t) =>
                             t.id === change.id
                                 ? {
                                       ...t,
-                                      canvasX: change.position!.x,
-                                      canvasY: change.position!.y,
+                                      canvasX: pos.x,
+                                      canvasY: pos.y,
                                   }
                                 : t,
                         );

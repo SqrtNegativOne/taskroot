@@ -13,8 +13,8 @@ import {
 vi.mock("../../core/store/api", () => ({
     api: {
         clearAllData: vi.fn<(...args: never[]) => unknown>(),
-        subscribeToStore: vi.fn<any>()
-            .mockImplementation((_key: any, _init: any, _onData: any, onReady: any) => {
+        subscribeToStore: vi.fn<unknown>()
+            .mockImplementation((_key: unknown, _init: unknown, _onData: unknown, onReady: unknown) => {
                 onReady();
                 return () => {};
             }),

@@ -14,15 +14,15 @@ export function logWorkSession(
     setTimeLogs((logs) => [
         ...(logs || []),
         {
-            id: `log-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
-            title: `Worked on ${taskId || "Task"}`,
-            type: "time_log" as const,
-            start: startMs,
-            end: endMs,
-            taskId: taskId || "",
-            clockStyle,
-            date: ymd(new Date(startMs)),
-        } as AppEvent,
+                    id: `log-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+                    title: `Worked on ${taskId || "Task"}`,
+                    type: "time_log" as const,
+                    start: startMs,
+                    end: endMs,
+                    taskId: taskId || "",
+                    clockStyle,
+                    date: ymd(new Date(startMs)),
+                },
     ]);
 }
 

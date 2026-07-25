@@ -12,7 +12,7 @@ export function usePlanActions(
     const [settings] = useSettings();
     const [calendars] = useCalendars();
 
-    const createEvent = (task: AppTask, date: string, start: number, duration: number, isAllDay = false) => {
+    const createEvent = (task: AppTask, date: import("../../core/domain/models").DateString, start: number, duration: number, isAllDay = false) => {
         const id = `e${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
         const newEvent = {
             id,
@@ -81,7 +81,7 @@ export function usePlanActions(
         const ev = events.find((e: AppEvent) => e.id === id);
         if (ev) {
             const calId = ev.googleCalendarId || "primary";
-            const cal = calendars.find((c: any) => c.id === calId) as any;
+            const cal = calendars.find((c: { id: string; accessRole?: string }) => c.id === calId);
             if (cal && (cal.accessRole === "reader" || cal.accessRole === "freeBusyReader")) return;
         }
         setEvents((prev: AppEvent[]) =>
@@ -93,7 +93,7 @@ export function usePlanActions(
         const ev = events.find((e: AppEvent) => e.id === id);
         if (ev) {
             const calId = ev.googleCalendarId || "primary";
-            const cal = calendars.find((c: any) => c.id === calId) as any;
+            const cal = calendars.find((c: { id: string; accessRole?: string }) => c.id === calId);
             if (cal && (cal.accessRole === "reader" || cal.accessRole === "freeBusyReader")) return;
         }
         setEvents((prev: AppEvent[]) =>

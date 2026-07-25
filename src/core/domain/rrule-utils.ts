@@ -1,5 +1,5 @@
 import { RRule } from "rrule";
-import type { AppEvent } from "./events";
+import type { AppEvent } from "./models";
 
 export function expandEventsForView(
     baseEvents: AppEvent[],

@@ -3,6 +3,7 @@ import { taskSync, eventSync, pusher } from "../sync";
 import { SETTINGS_SCHEMA, DEFAULT_SETTINGS } from "./settingsSchema";
 import type { AppSettings } from "./settingsSchema";
 import type { AppTask, AppEvent } from "../domain/models";
+import type { AppNote } from "../../screens/do/tips-notes";
 import { DEFAULT_STATUSES, DEFAULT_DISTRACTION_COLUMNS, REST_CHECKLIST_DEFAULTS } from "./data";
 
 export interface DistractionRow { id: string; [key: string]: unknown; }
@@ -49,7 +50,8 @@ export class Repository<T> {
 
     set(newValOrUpdater: T | ((prev: T) => T)): T {
         const prev = this.get();
-        const next = typeof newValOrUpdater === "function" ? (newValOrUpdater as Function)(prev) : newValOrUpdater;
+        const isUpdater = (v: T | ((prev: T) => T)): v is ((prev: T) => T) => typeof v === "function";
+        const next = isUpdater(newValOrUpdater) ? newValOrUpdater(prev) : newValOrUpdater;
         const mutated = this.interceptor ? this.interceptor(next, prev) : next;
         
         storeRegistry.setLocalData(this.key, mutated);
@@ -89,17 +91,22 @@ function injectUpdatedAt<T extends { id?: string; updatedAt?: number }>(result: 
     return mutated ? mapped : result;
 }
 
-function parseSettings(parsed: any): AppSettings {
+function isRecord(obj: unknown): obj is Record<string, unknown> {
+    return typeof obj === "object" && obj !== null;
+}
+
+function parseSettings(parsed: unknown): AppSettings {
     const result: AppSettings = { ...DEFAULT_SETTINGS };
-    if (!parsed || typeof parsed !== "object") return result;
+    if (!isRecord(parsed)) return result;
 
     for (const s of SETTINGS_SCHEMA) {
         if (!(s.id in parsed)) continue;
-        let val = (parsed as any)[s.id];
+        let val = parsed[s.id];
         if (s.type === "number") {
-            val = Number(val);
-            if (s.min !== undefined && val < s.min) val = s.min;
-            if (s.max !== undefined && val > s.max) val = s.max;
+            let numVal = Number(val);
+            if (s.min !== undefined && numVal < s.min) numVal = s.min;
+            if (s.max !== undefined && numVal > s.max) numVal = s.max;
+            val = numVal;
         } else if (s.type === "checkbox") {
             val = Boolean(val);
         }
@@ -123,8 +130,8 @@ export const repos = {
     tasks: new Repository<AppTask[]>("tasks", [], undefined, injectUpdatedAt, onTasksDelta),
     events: new Repository<AppEvent[]>("events", [], undefined, injectUpdatedAt, onEventsDelta),
     distractions: new Repository<DistractionRow[]>("distractions", []),
-    distractionStatuses: new Repository<DistractionStatus[]>("distractionStatuses", DEFAULT_STATUSES as DistractionStatus[]),
-    distractionColumns: new Repository<DistractionColumn[]>("distractionColumns", DEFAULT_DISTRACTION_COLUMNS as DistractionColumn[]),
+    distractionStatuses: new Repository<DistractionStatus[]>("distractionStatuses", DEFAULT_STATUSES),
+    distractionColumns: new Repository<DistractionColumn[]>("distractionColumns", DEFAULT_DISTRACTION_COLUMNS),
     stopwatch: new Repository<StopwatchState>("stopwatch", {
         elapsed: 0,
         runningSince: null,
@@ -135,11 +142,11 @@ export const repos = {
     }),
     time_logs: new Repository<TimeLog[]>("time_logs", []),
     tips: new Repository<string[]>("tips", []),
-    notes: new Repository<string[]>("notes", []),
+    notes: new Repository<AppNote[]>("notes", []),
     taskQuery: new Repository<string>("taskQuery", ""),
     taskFilters: new Repository<import('../domain/models').AppFilter[]>("taskFilters", [{ id: "default-not-done", column: "status", operator: "is not", value: "done" }]),
     taskSort: new Repository<string>("taskSort", "priority"),
-    restItems: new Repository<RestItem[]>("restItems", REST_CHECKLIST_DEFAULTS as RestItem[]),
+    restItems: new Repository<RestItem[]>("restItems", REST_CHECKLIST_DEFAULTS),
     test_key: new Repository<TestKeyData>("test_key", { count: 0 }),
     calFilters: new Repository<import('../domain/models').AppFilter[]>("calFilters", []),
     calSort: new Repository<string>("calSort", "time"),

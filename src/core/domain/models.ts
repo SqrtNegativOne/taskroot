@@ -1,3 +1,9 @@
+export type DateString = string; // Format: YYYY-MM-DD
+
+export function isDateString(s: unknown): s is DateString {
+    return typeof s === "string";
+}
+
 export interface AppTask {
     id: string;
     title: string;
@@ -15,7 +21,7 @@ export interface AppTask {
     onCanvas?: boolean;
     googleTaskId?: string;
     notes?: string;
-    due?: string;
+    due?: DateString;
     _deleted?: boolean;
     updatedAt?: number;
     [key: string]: unknown;
@@ -34,7 +40,7 @@ export interface AppEvent {
     googleCalendarId?: string;
     taskId?: string | null;
     title: string;
-    date: string;
+    date: DateString;
     start: number;
     end: number;
     type: string;
@@ -45,6 +51,6 @@ export interface AppEvent {
     _deleted?: boolean;
     isInstance?: boolean;
     baseEventId?: string;
-    endDate?: string | Date;
+    endDate?: DateString;
     [key: string]: unknown;
 }

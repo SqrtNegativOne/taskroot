@@ -133,7 +133,7 @@ export class GoogleCalendarAPI {
         const startM = localEvent.start % 60;
         let endH = Math.floor(localEvent.end / 60);
         const endM = localEvent.end % 60;
-        let endYMD = dateStr;
+        let endYMD: string = dateStr;
 
         if (endH >= 24) {
             endH = 0;

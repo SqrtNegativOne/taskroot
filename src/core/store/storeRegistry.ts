@@ -7,7 +7,7 @@ export const storeRegistry = {
         if (!updaters.has(key)) {
             updaters.set(key, new Set());
         }
-        updaters.get(key)!.add(updater);
+        updaters.get(key)?.add(updater);
         return () => {
             const set = updaters.get(key);
             if (set) set.delete(updater);

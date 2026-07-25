@@ -38,7 +38,7 @@ describe("api.ts", () => {
 
             const err = await p;
             expect(err).toBeInstanceOf(Error);
-            expect((err as Error).message).toBe("Request timed out");
+            expect((err).message).toBe("Request timed out");
             expect(global.fetch).toHaveBeenCalledOnce();
         });
     });

@@ -10,12 +10,12 @@ import {
 } from "../../core/store/data";
 import { hydrateEvents } from "../../core/domain/events";
 import { PX_PER_MIN, SNAP_MIN } from "./types";
-import type { DayTimelineProps } from "./types";
+import type { DayTimelineProps, DragState } from "./types";
 import { EventBlock } from "./EventBlock";
 import { layoutEvents } from "./layout";
 import { filterAndSortEvents } from "./filters";
 
-export function DayTimeline({
+export function DayTimeline<T extends DragState = DragState>({
     events,
     tasks,
     filter,
@@ -30,9 +30,9 @@ export function DayTimeline({
     onMoveEvent,
     onEventClick,
     onAddEvent,
-}: DayTimelineProps) {
-    const containerRef = React.useRef(null);
-    const scrollRef = React.useRef(null);
+}: DayTimelineProps<T>) {
+    const containerRef = React.useRef<HTMLDivElement>(null);
+    const scrollRef = React.useRef<HTMLDivElement>(null);
 
     const viewDate = timelineDate || today;
     const isToday = sameDay(viewDate, today);
@@ -50,7 +50,7 @@ export function DayTimeline({
         const tick = () => {
             if (scrollRef.current) {
                 const currentMin = new Date().getHours() * 60 + new Date().getMinutes();
-                (scrollRef.current as HTMLDivElement).scrollTop = Math.max(
+                (scrollRef.current instanceof HTMLElement ? scrollRef.current : {scrollTop: 0}).scrollTop = Math.max(
                     0,
                     (currentMin - 60) * PX_PER_MIN - 12,
                 );
@@ -90,12 +90,13 @@ export function DayTimeline({
         dragState?.target?.kind === "day-time" ? dragState.target : null;
 
     const onGridPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-        if ((e.target as Element).closest(".day-event") || (e.target as Element).closest(".day-now"))
+        if (!(e.target instanceof Element)) return;
+        if (e.target.closest(".day-event") || e.target.closest(".day-now"))
             return;
         if (e.button !== 0) return;
         e.preventDefault();
 
-        const grid = containerRef.current as HTMLDivElement | null;
+        const grid = containerRef.current;
         if (!grid) return;
         const rect = grid.getBoundingClientRect();
         const startY = e.clientY - rect.top;
@@ -296,7 +297,7 @@ export function DayTimeline({
                     )}
 
                     {/* Drop preview */}
-                    {dropPreview && (
+                    {dropPreview && dropPreview.minute !== undefined && (
                         <div
                             className="day-drop-preview"
                             style={{

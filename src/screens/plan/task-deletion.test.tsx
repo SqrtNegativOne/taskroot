@@ -9,7 +9,7 @@ import { PlanScreen } from "./PlanScreen";
 
 vi.mock("../../core/store/api", () => ({
     api: {
-        subscribeToStore: (key: string, fallback: any, onUpdate: any, onReady: any) => {
+        subscribeToStore: (key: string, fallback: unknown, onUpdate: unknown, onReady: unknown) => {
             onReady();
             return () => {};
         },
@@ -21,7 +21,7 @@ beforeAll(() => {
     // Mock matchMedia
     Object.defineProperty(window, 'matchMedia', {
         writable: true,
-        value: vi.fn<(...args: never[]) => unknown>().mockImplementation((query: any) => ({
+        value: vi.fn<(...args: never[]) => unknown>().mockImplementation((query: unknown) => ({
             matches: false,
             media: query,
             onchange: null,
@@ -111,7 +111,7 @@ test("deleting a task also deletes its associated events", async () => {
     const deleteButton = document.querySelector(
         '.task-row-actions button[title="Delete"]',
     );
-    fireEvent.click(deleteButton!);
+    fireEvent.click(deleteButton);
 
     // Wait for task to disappear
     await waitFor(() => {

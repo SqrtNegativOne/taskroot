@@ -66,25 +66,25 @@ export function TaskSelector({
 
         const safeEvents = events || [];
 
-        return filtered.toSorted((a: any, b: any) => {
+        return filtered.toSorted((a: AppTask, b: AppTask) => {
             const aEvents = safeEvents.filter(
-                (e: any) =>
+                (e: AppEvent) =>
                     e.taskId === a.id &&
                     (e.date === todayStr || e.endDate === todayStr),
             );
             const bEvents = safeEvents.filter(
-                (e: any) =>
+                (e: AppEvent) =>
                     e.taskId === b.id &&
                     (e.date === todayStr || e.endDate === todayStr),
             );
 
             const aThisHour = aEvents.some(
-                (e: any) =>
+                (e: AppEvent) =>
                     (e.start || 0) <= nowMin &&
                     ((e.end || 0) >= nowMin || (e.start || 0) + 60 >= nowMin),
             );
             const bThisHour = bEvents.some(
-                (e: any) =>
+                (e: AppEvent) =>
                     (e.start || 0) <= nowMin &&
                     ((e.end || 0) >= nowMin || (e.start || 0) + 60 >= nowMin),
             );

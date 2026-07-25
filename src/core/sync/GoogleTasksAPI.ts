@@ -155,7 +155,13 @@ function createUpdatedLocalTask(googleTask: gapi.client.tasks.Task, existingLoca
     }
 
     const updatedAt = googleTask.updated ? new Date(googleTask.updated).getTime() : Date.now();
-    const due = googleTask.due ? googleTask.due.split("T")[0] : undefined;
+    const dueStr = googleTask.due ? googleTask.due.split("T")[0] : undefined;
+    
+    let due: import("../domain/models").DateString | undefined;
+    if (dueStr) {
+        const p = dueStr.split("-");
+        if (p.length === 3) due = `${Number(p[0])}-${Number(p[1])}-${Number(p[2])}`;
+    }
 
     if (existingLocalTask) {
         return {

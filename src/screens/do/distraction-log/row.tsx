@@ -34,7 +34,7 @@ export function DLogRow({
                 const isEditing =
                     editingCell?.rowId === row.id &&
                     editingCell?.colId === col.id;
-                const val = typeof row[col.id] === "string" ? (row[col.id] as string) : undefined;
+                const val = typeof row[col.id] === "string" ? row[col.id] : undefined;
                 return (
                     <button
                         type="button"
@@ -56,7 +56,7 @@ export function DLogRow({
                                 <input
                                     ref={(r) => { if (r && isEditing) r.focus(); }}
                                     className="dlog-cell-input"
-                                    defaultValue={val || ""}
+                                    defaultValue={typeof val === 'string' ? val : ""}
                                     onBlur={(e) => {
                                         updateRow(row.id, {
                                             [col.id]: e.target.value,
@@ -74,13 +74,13 @@ export function DLogRow({
                                     }}
                                 />
                             ) : (
-                                val || (
+                                typeof val === 'string' && val ? val : (
                                     <span className="dim">click to edit</span>
                                 )
                             ))}
                         {col.type === "status" && (
                             <StatusCell
-                                value={val}
+                                value={typeof val === 'string' ? val : undefined}
                                 statuses={statuses}
                                 open={statusEditor === row.id}
                                 onClose={() => setStatusEditor(null)}
@@ -97,7 +97,7 @@ export function DLogRow({
                         )}
                         {col.type === "datetime" && (
                             <span className="dlog-datetime">
-                                {formatDateTime(val)}
+                                {formatDateTime(typeof val === 'string' ? val : undefined)}
                             </span>
                         )}
                     </button>

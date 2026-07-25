@@ -16,7 +16,7 @@ function getEventClassNames(event: AppEvent, pri: string | number | null | undef
     return classNames.join(" ");
 }
 
-export function EventBlock({
+export function EventBlock<T extends import("./types").DragState = import("./types").DragState>({
     event,
     task,
     lane,
@@ -24,7 +24,7 @@ export function EventBlock({
     onResize,
     onMove,
     onEventClick,
-}: EventBlockProps) {
+}: EventBlockProps<T>) {
     const [dragOffset, setDragOffset] = useState<number | null>(null);
 
     const title = event.title;
@@ -62,7 +62,8 @@ export function EventBlock({
     };
 
     const onBodyDown = (e: React.PointerEvent<HTMLDivElement>) => {
-        if ((e.target as Element).closest(".day-event-handle")) return;
+        if (!(e.target instanceof Element)) return;
+        if (e.target.closest(".day-event-handle")) return;
         if (e.button !== 0) return;
         e.preventDefault();
         const startY = e.clientY;
@@ -140,7 +141,7 @@ export function EventBlock({
                     </div>
                     {hasTags && (
                         <div className="day-event-tags">
-                            {(task!.tags || []).map((t) => (
+                            {(task.tags || []).map((t) => (
                                 <span key={t} className="day-event-tag">
                                     #{t}
                                 </span>

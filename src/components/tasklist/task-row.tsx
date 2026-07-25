@@ -29,11 +29,11 @@ export function TaskRow({
 
     const handlePointerDown = (e: React.PointerEvent<HTMLDivElement> | React.MouseEvent<HTMLDivElement>) => {
         if (e.button !== 0) return;
-        if (
-            (e.target as Element).closest(".task-row-subtask-toggle") ||
-            (e.target as Element).closest(".task-row-actions") ||
-            (e.target as Element).closest(".task-circle")
-        )
+        if (e.target instanceof Element && (
+            e.target.closest(".task-row-subtask-toggle") ||
+            e.target.closest(".task-row-actions") ||
+            e.target.closest(".task-circle")
+        ))
             return;
         onDragStart?.(e, task);
     };

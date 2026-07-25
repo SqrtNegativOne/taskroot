@@ -2,7 +2,14 @@ import { ClockStrategy } from "./ClockStrategy";
 import type { StopwatchContext } from "./types";
 import { logWorkSession, splitTime } from "./utils";
 
-function CounterClockDisplay({ running, isPristine, currentMs, toggle }: any) {
+interface CounterClockDisplayProps {
+    running?: boolean;
+    isPristine?: boolean;
+    currentMs?: number;
+    toggle?: () => void;
+}
+
+function CounterClockDisplay({ running, isPristine, currentMs = 0, toggle }: CounterClockDisplayProps) {
     const { m } = splitTime(currentMs);
     return (
         <button

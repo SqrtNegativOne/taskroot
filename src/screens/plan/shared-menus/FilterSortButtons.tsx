@@ -38,7 +38,7 @@ export function FilterSortButtons({
 
     useEffect(() => {
         function handleClickOutside(e: PointerEvent) {
-            if (ref.current && !ref.current.contains(e.target as Node)) {
+            if (ref.current && !ref.current.contains(e.target instanceof Node ? e.target : null)) {
                 if (showFilters && !closingFilters) closeFilters();
                 if (showSort && !closingSort) closeSort();
             }
@@ -195,13 +195,13 @@ function FilterMenu({ filters, columns, getValuesForColumn, updateFilter, remove
                 >
                     <SelectInput
                         value={f.column}
-                        onChange={(val: string) => updateFilter(f.id!, { column: val })}
+                        onChange={(val: string) => updateFilter(f.id || "", { column: val })}
                         options={columns.map((c: Column) => ({ label: c.label, value: c.id }))}
                         style={{ flex: 1 }}
                     />
                     <SelectInput
                         value={f.operator}
-                        onChange={(val: string) => updateFilter(f.id!, { operator: val })}
+                        onChange={(val: string) => updateFilter(f.id || "", { operator: val })}
                         options={[
                             { label: "is", value: "is" },
                             { label: "is not", value: "is not" }
@@ -211,10 +211,10 @@ function FilterMenu({ filters, columns, getValuesForColumn, updateFilter, remove
                     <MultiSelect 
                         options={getValuesForColumn(f.column)}
                         values={Array.isArray(f.value) ? f.value.map(String) : [String(f.value)]}
-                        onChange={(newValues) => updateFilter(f.id!, { value: newValues })}
+                        onChange={(newValues) => updateFilter(f.id || "", { value: newValues })}
                     />
                     <button
-                        onClick={() => removeFilter(f.id!)}
+                        onClick={() => removeFilter(f.id || "")}
                         style={{
                             background: "transparent",
                             border: "none",

@@ -4,7 +4,13 @@ import type { StopwatchContext, StopwatchState } from "./types";
 import { logWorkSession } from "./utils";
 import { PAD2 } from "../../../core/store/data";
 
-function GuzeyClockDisplay({ toggleSelector, onBreakStatus, isPaused }: any) {
+interface GuzeyClockDisplayProps {
+    toggleSelector?: () => void;
+    onBreakStatus?: (isBreak: boolean) => void;
+    isPaused: boolean;
+}
+
+function GuzeyClockDisplay({ toggleSelector, onBreakStatus, isPaused }: GuzeyClockDisplayProps) {
     const [now, setNow] = useState(new Date());
 
     useEffect(() => {

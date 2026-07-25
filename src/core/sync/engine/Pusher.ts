@@ -36,7 +36,11 @@ export class Pusher {
         const settings = this.getSettings();
 
         while (this.pushQueue.length > 0) {
-            const taskOrEvent = this.pushQueue.peek()!;
+            const taskOrEvent = this.pushQueue.peek();
+            if (!taskOrEvent) {
+                this.pushQueue.shift();
+                continue;
+            }
             try {
                 if (taskOrEvent.type === SyncType.Task && settings.enableTasksSync === false) {
                     this.pushQueue.shift();

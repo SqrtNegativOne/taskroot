@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { expandEventsForView } from "./rrule-utils";
-import type { AppEvent } from "./events";
+import type { AppEvent } from "./models";
 
 describe("rrule-utils", () => {
     it("does not touch non-recurring events", () => {

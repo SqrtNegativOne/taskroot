@@ -3,14 +3,23 @@ import type { StopwatchContext } from "./types";
 import { logWorkSession, splitTime } from "./utils";
 import { PAD2 } from "../../../core/store/data";
 
+interface FlowtimeClockDisplayProps {
+    running?: boolean;
+    isPristine?: boolean;
+    currentMs?: number;
+    isBreak: boolean;
+    breakRemainingMs: number;
+    toggle?: () => void;
+}
+
 function FlowtimeClockDisplay({
     running,
     isPristine,
-    currentMs,
+    currentMs = 0,
     isBreak,
     breakRemainingMs,
     toggle,
-}: any) {
+}: FlowtimeClockDisplayProps) {
     const { m } = splitTime(currentMs);
     let displayNode;
 

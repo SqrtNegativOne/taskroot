@@ -10,7 +10,7 @@ function useSplitPane(direction: "horizontal" | "vertical", defaultSize: number,
     const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
         e.preventDefault();
         setIsDragging(true);
-        (e.target as Element).setPointerCapture(e.pointerId);
+        if (e.target instanceof Element) e.target.setPointerCapture(e.pointerId);
     };
 
     const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -33,7 +33,7 @@ function useSplitPane(direction: "horizontal" | "vertical", defaultSize: number,
 
     const onPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
         setIsDragging(false);
-        (e.target as Element).releasePointerCapture(e.pointerId);
+        if (e.target instanceof Element) e.target.releasePointerCapture(e.pointerId);
     };
 
     return { size, isDragging, containerRef, onPointerDown, onPointerMove, onPointerUp, isHoriz };

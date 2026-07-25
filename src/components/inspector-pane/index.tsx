@@ -15,14 +15,15 @@ interface InspectorPaneProps {
     setEvents: React.Dispatch<React.SetStateAction<AppEvent[]>>;
 }
 
-function getInspectorTitle(currentItem: AppTask | AppEvent | null | undefined, isCurrentTask: boolean, tasks: AppTask[]): string {
-    if (!currentItem) return "";
-    if (isCurrentTask) return (currentItem as AppTask).title || "";
-    const event = currentItem as AppEvent;
-    if (event.taskId) {
-        return tasks.find((t: AppTask) => t.id === event.taskId)?.title || "";
+function getInspectorTitle(currentTask: AppTask | undefined, currentEvent: AppEvent | undefined, tasks: AppTask[]): string {
+    if (currentTask) return currentTask.title || "";
+    if (currentEvent) {
+        if (currentEvent.taskId) {
+            return tasks.find((t: AppTask) => t.id === currentEvent.taskId)?.title || "";
+        }
+        return currentEvent.title || "";
     }
-    return event.title || "";
+    return "";
 }
 
 export function InspectorPane({
@@ -35,7 +36,7 @@ export function InspectorPane({
 }: InspectorPaneProps) {
     const [activeState, setActiveState] = React.useState<{ type: string; id: string } | null>(null);
     const paneRef = React.useRef<HTMLDivElement>(null);
-    const [calendars] = useCalendars() as unknown as [{ id: string, summary?: string | undefined }[], unknown, unknown];
+    const [calendars] = useCalendars();
 
     React.useEffect(() => {
         if (inspectorState) setActiveState(inspectorState);
@@ -43,22 +44,17 @@ export function InspectorPane({
 
     const currentState = inspectorState || activeState;
 
-    const isCurrentTask = currentState?.type === "task";
-    const currentItem = currentState
-        ? isCurrentTask
-            ? tasks.find((t: AppTask) => t.id === currentState.id)
-            : events.find((e: AppEvent) => e.id === currentState.id) ||
-              events.find((e: AppEvent) => e.id === currentState.id.split("_")[0])
-        : null;
-
-
+    const currentTask: AppTask | undefined = currentState?.type === "task" ? tasks.find((t: AppTask) => t.id === currentState.id) : undefined;
+    const currentEvent: AppEvent | undefined = currentState?.type === "event" ? (events.find((e: AppEvent) => e.id === currentState.id) || events.find((e: AppEvent) => e.id === currentState.id.split("_")[0])) : undefined;
+    const currentItem = currentTask || currentEvent || null;
+    const isCurrentTask = !!currentTask;
 
     const isReadOnlyCalendar = React.useMemo(() => {
-        if (isCurrentTask || !currentItem) return false;
-        const calId = (currentItem as AppEvent).googleCalendarId || "primary";
-        const cal = calendars.find((c: any) => c.id === calId) as any;
+        if (!currentEvent) return false;
+        const calId = currentEvent.googleCalendarId || "primary";
+        const cal = calendars.find((c: { id: string, accessRole?: string }) => c.id === calId);
         return cal && (cal.accessRole === "reader" || cal.accessRole === "freeBusyReader");
-    }, [isCurrentTask, currentItem, calendars]);
+    }, [currentEvent, calendars]);
 
     const handleClose = React.useCallback(() => {
         if (!(inspectorState && currentItem && currentItem.isDraft)) {
@@ -101,7 +97,7 @@ export function InspectorPane({
             if (
                 inspectorState &&
                 paneRef.current &&
-                !paneRef.current.contains(e.target as Node)
+                !paneRef.current.contains(e.target instanceof Node ? e.target : null)
             ) {
                 handleClose();
             }
@@ -113,7 +109,7 @@ export function InspectorPane({
 
     const isOpen = !!(inspectorState && currentItem);
 
-    const title = getInspectorTitle(currentItem, isCurrentTask, tasks);
+    const title = getInspectorTitle(currentTask, currentEvent, tasks);
 
     const updateTask = React.useCallback((id: string, updates: Partial<AppTask>) =>
         setTasks((ts: AppTask[]) =>
@@ -138,10 +134,10 @@ export function InspectorPane({
     }, [currentItem, isCurrentTask, updateTask, updateEvent]);
 
     const handleDescChange = React.useCallback((desc: string) => {
-        if (!currentItem || isReadOnlyCalendar) return;
-        if (isCurrentTask) updateTask(currentItem.id, { description: desc });
-        else updateEvent(currentItem.id, { description: desc });
-    }, [currentItem, isCurrentTask, isReadOnlyCalendar, updateTask, updateEvent]);
+        if (isReadOnlyCalendar) return;
+        if (currentTask) updateTask(currentTask.id, { description: desc });
+        else if (currentEvent) updateEvent(currentEvent.id, { description: desc });
+    }, [currentTask, currentEvent, isReadOnlyCalendar, updateTask, updateEvent]);
 
     const handleDelete = React.useCallback(() => {
         if (!currentItem) return;
@@ -161,7 +157,7 @@ export function InspectorPane({
         >
             {currentItem && (
                 <React.Fragment key={currentItem.id}>
-                    <InspectorPaneHeader handleClose={handleClose} handleDelete={handleDelete} isReadOnlyCalendar={isReadOnlyCalendar} />
+                    <InspectorPaneHeader handleClose={handleClose} handleDelete={handleDelete} isReadOnlyCalendar={isReadOnlyCalendar ?? false} />
                     <div className="inspector-body" style={{ paddingTop: 0 }}>
                         <div
                             className="inspector-field"
@@ -170,7 +166,7 @@ export function InspectorPane({
                             <TitleInput
                                 value={title || ""}
                                 onChange={handleTitleChange}
-                                disabled={Boolean(!isCurrentTask && (currentItem as AppEvent).taskId) || isReadOnlyCalendar}
+                                disabled={Boolean(currentEvent?.taskId) || isReadOnlyCalendar}
                                 onEnter={handleClose}
                                 style={{
                                     fontSize: "24px",
@@ -182,7 +178,7 @@ export function InspectorPane({
                                     width: "100%",
                                     color: "var(--fg)",
                                 }}
-                                autoFocus={Boolean((currentItem as AppTask).isDraft)}
+                                autoFocus={Boolean(currentTask?.isDraft)}
                             />
                         </div>
                         <div
@@ -193,7 +189,7 @@ export function InspectorPane({
                             }}
                         >
                             <DescriptionInput
-                                value={((currentItem as AppEvent).description as string) || ""}
+                                value={(currentEvent?.description) || ""}
                                 onChange={handleDescChange}
                             />
                         </div>
@@ -204,20 +200,20 @@ export function InspectorPane({
                             </div>
                         )}
 
-                        {isCurrentTask ? (
+                        {currentTask ? (
                             <TaskInspector 
-                                task={currentItem as AppTask} 
+                                task={currentTask} 
                                 updateTask={updateTask} 
                             />
-                        ) : (
+                        ) : currentEvent ? (
                             <EventInspector 
-                                event={currentItem as AppEvent} 
+                                event={currentEvent} 
                                 tasks={tasks}
                                 calendars={calendars}
                                 updateEvent={updateEvent}
-                                isReadOnlyCalendar={isReadOnlyCalendar}
+                                isReadOnlyCalendar={isReadOnlyCalendar ?? false}
                             />
-                        )}
+                        ) : null}
                     </div>
                 </React.Fragment>
             )}

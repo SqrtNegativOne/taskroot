@@ -5,7 +5,7 @@ import { render, screen } from "@testing-library/react";
 import { expect, test } from "vitest";
 import { DayTimeline } from "./day-timeline";
 import { createMockAppEvent } from "../core/utils/testUtils";
-import type { AppEvent as DomainAppEvent } from "../core/domain/events";
+
 import type { AppTask } from "../core/domain/models";
 import { ymd } from "../core/store/data";
 
@@ -51,7 +51,7 @@ test("filters events by category correctly", () => {
 
     render(
         <DayTimeline
-            events={events as unknown as DomainAppEvent[]}
+            events={events}
             tasks={tasks}
             filter={filter}
             sort="time"
@@ -109,7 +109,7 @@ test("filters out events by category correctly using 'is not'", () => {
 
     render(
         <DayTimeline
-            events={events as unknown as DomainAppEvent[]}
+            events={events}
             tasks={tasks}
             filter={filter}
             sort="time"

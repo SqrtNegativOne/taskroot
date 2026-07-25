@@ -13,7 +13,7 @@ export function SelectInput({ value, onChange, options, style }: SelectInputProp
 
     useEffect(() => {
         function handleClickOutside(e: PointerEvent) {
-            if (ref.current && !ref.current.contains(e.target as Node)) {
+            if (ref.current && !ref.current.contains(e.target instanceof Node ? e.target : null)) {
                 setOpen(false);
             }
         }

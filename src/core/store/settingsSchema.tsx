@@ -53,7 +53,7 @@ export interface SettingSchema {
     placeholder?: string;
     beta?: boolean;
     danger?: boolean;
-    render?: (props: { settings: Partial<AppSettings>; setSettings: React.Dispatch<React.SetStateAction<Partial<AppSettings>>> }) => ReactNode;
+    render?: (props: { settings: AppSettings; setSettings: React.Dispatch<React.SetStateAction<AppSettings>> }) => ReactNode;
     showIf?: (settings: Record<string, unknown>) => boolean;
 }
 

@@ -25,7 +25,7 @@ export interface SettingRendererProps {
     setting: SettingSchema;
     val: unknown;
     settings: AppSettings;
-    setSettings: (val: AppSettings | ((prev: AppSettings) => AppSettings)) => void;
+    setSettings: React.Dispatch<React.SetStateAction<AppSettings>>;
 }
 
 const SelectSetting = ({ setting, val, settings, setSettings }: SettingRendererProps) => (
@@ -38,7 +38,7 @@ const SelectSetting = ({ setting, val, settings, setSettings }: SettingRendererP
                     [setting.id]: typeof val === "number" ? Number(v) : v,
                 })
             }
-            options={setting.options || []}
+            options={setting.options?.map((o) => ({ ...o, value: String(o.value) })) || []}
         />
     </div>
 );

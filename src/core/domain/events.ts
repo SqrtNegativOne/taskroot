@@ -1,12 +1,12 @@
-import type { AppTask } from "./models";
+import type { AppEvent, AppTask } from "./models";
 
 type BaseEvent = {
     id: string;
     title?: string;
-    date: string; // YYYY-MM-DD
+    date: import("./models").DateString; // YYYY-MM-DD
     start: number; // minutes from midnight
     end: number;
-    endDate?: string;
+    endDate?: import("./models").DateString;
     isAllDay?: boolean;
     rrule?: string;
     recurringEventId?: string;
@@ -16,39 +16,10 @@ type BaseEvent = {
     baseEventId?: string;
 };
 
-// Task plans: when you schedule a task for a certain time.
-type TaskEvent = BaseEvent & {
-    type: "plan";
-    taskId: string;
-};
-
-// Informational: Deadlines, holidays, reminders. Can be full-day or time-bound.
-type InfoEvent = BaseEvent & {
-    type: "info";
-    title: string;
-};
-
-// Busy: Meetings, group projects. Can be time-bound only.
-type BusyEvent = BaseEvent & {
-    type: "busy";
-    title: string;
-    isAllDay?: false;
-};
-
-// Log: What you actually did. (Unimplemented features for now)
-type LogEvent = Omit<BaseEvent, "isAllDay" | "endDate"> & {
-    type: "log";
-    title: string;
-    isAllDay: false;
-    endDate?: never;
-};
-
-export type AppEvent = TaskEvent | InfoEvent | BusyEvent | LogEvent;
-
 // The populated output type for the UI
 export type HydratedEvent = BaseEvent & {
-    type: "plan" | "info" | "busy" | "log";
-    taskId?: string; // only if it's a plan
+    type: string;
+    taskId?: string | null; // only if it's a plan
     title: string;
     category?: string;
     priority?: string | number | null;

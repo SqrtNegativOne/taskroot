@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { storeRegistry } from "./storeRegistry";
 import { Repository, repos } from "./repositories";
 
+
 export function useRepository<T>(repo: Repository<T>): [T, (val: T | ((prev: T) => T)) => void, boolean] {
     const [val, setVal] = useState<T>(() => repo.get());
     const [isLoaded, setIsLoaded] = useState(false);
@@ -11,7 +12,7 @@ export function useRepository<T>(repo: Repository<T>): [T, (val: T | ((prev: T) 
         const unregister = storeRegistry.registerUpdater(repo.key, updater);
         setIsLoaded(true);
         return unregister;
-    }, [repo.key]);
+    }, [repo, repo.key]);
 
     return [val, (newVal) => repo.set(newVal), isLoaded];
 }

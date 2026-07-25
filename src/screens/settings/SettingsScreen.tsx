@@ -61,12 +61,12 @@ export function SettingsScreen() {
                 key={setting.id}
                 onClick={(e) => {
                     if (setting.type === "checkbox") {
-                        const target = e.target as HTMLElement;
-                        if (target.closest && (target.closest('button') || target.closest('.toggle-switch'))) {
+                        const target = e.target;
+                        if (target instanceof Element && (target.closest('button') || target.closest('.toggle-switch'))) {
                             return;
                         }
-                        setSettings((prev: any) => {
-                            const currentVal = prev[setting.id] !== undefined ? prev[setting.id] : setting.defaultValue;
+                        setSettings((prev: import('../../core/store/settingsSchema').AppSettings) => {
+                            const currentVal = Reflect.get(prev, setting.id) !== undefined ? Reflect.get(prev, setting.id) : setting.defaultValue;
                             return { ...prev, [setting.id]: !currentVal };
                         });
                     }
@@ -75,8 +75,8 @@ export function SettingsScreen() {
                     if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
                         if (setting.type === "checkbox") {
-                            setSettings((prev: any) => {
-                                const currentVal = prev[setting.id] !== undefined ? prev[setting.id] : setting.defaultValue;
+                            setSettings((prev: import('../../core/store/settingsSchema').AppSettings) => {
+                                const currentVal = Reflect.get(prev, setting.id) !== undefined ? Reflect.get(prev, setting.id) : setting.defaultValue;
                                 return { ...prev, [setting.id]: !currentVal };
                             });
                         }

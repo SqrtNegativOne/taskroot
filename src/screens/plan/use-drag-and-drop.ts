@@ -8,7 +8,7 @@ import type { PlanDragState } from "./drag-helpers";
 export function useDragAndDrop(
     timelineDate: Date,
     setInspectorState: React.Dispatch<React.SetStateAction<{ type: string, id: string } | null>>,
-    createEvent: (task: AppTask, date: string, start: number, duration: number, isAllDay?: boolean) => void
+    createEvent: (task: AppTask, date: import("../../core/domain/models").DateString, start: number, duration: number, isAllDay?: boolean) => void
 ) {
     const [, setEvents] = useEvents();
     const [calendars] = useCalendars();
@@ -24,23 +24,23 @@ export function useDragAndDrop(
 
         const move = (ev: PointerEvent | MouseEvent) => {
             if (!active) {
-                const dx = (ev as MouseEvent).clientX - start.x;
-                const dy = (ev as MouseEvent).clientY - start.y;
+                const dx = ev.clientX - start.x;
+                const dy = ev.clientY - start.y;
                 if (Math.hypot(dx, dy) < 5) return;
                 active = true;
             }
-            const el = document.elementFromPoint((ev as MouseEvent).clientX, (ev as MouseEvent).clientY);
+            const el = document.elementFromPoint(ev.clientX, ev.clientY);
             const target = resolveDropTarget(
                 el,
-                (ev as MouseEvent).clientX,
-                (ev as MouseEvent).clientY,
+                ev.clientX,
+                ev.clientY,
                 task,
                 undefined,
             );
             setDragState({
                 task,
-                pointerX: (ev as MouseEvent).clientX,
-                pointerY: (ev as MouseEvent).clientY,
+                pointerX: ev.clientX,
+                pointerY: ev.clientY,
                 target,
             });
         };
@@ -53,19 +53,19 @@ export function useDragAndDrop(
             } else {
                 const ds = dragRef.current;
                 if (ds && ds.target) {
-                    if (ds.target.kind === "grid-day") {
+                    if (ds.target.kind === "grid-day" && ds.target.date) {
                         createEvent(
                             task,
-                            ds.target!.date!,
+                            ds.target.date,
                             9 * 60,
                             task.est || 60,
                             true,
                         );
-                    } else if (ds.target.kind === "day-time") {
+                    } else if (ds.target.kind === "day-time" && ds.target.minute !== undefined) {
                         createEvent(
                             task,
                             ymd(timelineDate),
-                            ds.target!.minute!,
+                            ds.target.minute,
                             task.est || 60,
                             false,
                         );
@@ -78,10 +78,9 @@ export function useDragAndDrop(
         window.addEventListener("pointerup", up);
     };
 
-    const onEventDragStart = (e: React.PointerEvent<Element> | React.MouseEvent<Element, MouseEvent>, _eventToMoveAny: unknown, task?: AppTask | null) => {
-        const eventToMove = _eventToMoveAny as AppEvent;
+    const onEventDragStart = (e: React.PointerEvent<Element> | React.MouseEvent<Element, MouseEvent>, eventToMove: AppEvent, task?: AppTask | null) => {
         const calId = eventToMove.googleCalendarId || "primary";
-        const cal = calendars.find((c: any) => c.id === calId) as any;
+        const cal = calendars.find((c) => c.id === calId);
         if (cal && (cal.accessRole === "reader" || cal.accessRole === "freeBusyReader")) {
             setInspectorState({ type: "event", id: eventToMove.id });
             return;
@@ -94,24 +93,24 @@ export function useDragAndDrop(
 
         const move = (ev: PointerEvent | MouseEvent) => {
             if (!active) {
-                const dx = (ev as MouseEvent).clientX - start.x;
-                const dy = (ev as MouseEvent).clientY - start.y;
+                const dx = ev.clientX - start.x;
+                const dy = ev.clientY - start.y;
                 if (Math.hypot(dx, dy) < 5) return;
                 active = true;
             }
-            const el = document.elementFromPoint((ev as MouseEvent).clientX, (ev as MouseEvent).clientY);
+            const el = document.elementFromPoint(ev.clientX, ev.clientY);
             const target = resolveDropTarget(
                 el,
-                (ev as MouseEvent).clientX,
-                (ev as MouseEvent).clientY,
+                ev.clientX,
+                ev.clientY,
                 task,
                 eventToMove,
             );
             setDragState({
                 event: eventToMove,
                 task,
-                pointerX: (ev as MouseEvent).clientX,
-                pointerY: (ev as MouseEvent).clientY,
+                pointerX: ev.clientX,
+                pointerY: ev.clientY,
                 target,
             });
         };
@@ -124,19 +123,19 @@ export function useDragAndDrop(
             } else {
                 const ds = dragRef.current;
                 if (ds && ds.target) {
-                    if (ds.target.kind === "grid-day") {
+                    if (ds.target.kind === "grid-day" && ds.target.date) {
                         setEvents((prev: AppEvent[]) =>
                             prev.map((evnt: AppEvent) =>
                                 evnt.id === eventToMove.id
                                     ? {
                                           ...evnt,
-                                          date: ds.target!.date!,
-                                          endDate: ds.target!.date!,
+                                          date: ds.target?.date ?? evnt.date,
+                                          endDate: ds.target?.date ?? evnt.endDate,
                                       }
                                     : evnt,
                             ),
                         );
-                    } else if (ds.target.kind === "day-time") {
+                    } else if (ds.target.kind === "day-time" && ds.target.minute !== undefined) {
                         const duration = eventToMove.end - eventToMove.start;
                         setEvents((prev: AppEvent[]) =>
                             prev.map((evnt: AppEvent) =>
@@ -145,8 +144,8 @@ export function useDragAndDrop(
                                           ...evnt,
                                           date: ymd(timelineDate),
                                           endDate: ymd(timelineDate),
-                                          start: ds.target!.minute!,
-                                          end: ds.target!.minute! + duration,
+                                          start: ds.target?.minute ?? evnt.start,
+                                          end: (ds.target?.minute ?? evnt.start) + duration,
                                           isAllDay: false,
                                       }
                                     : evnt,

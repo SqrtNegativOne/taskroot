@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { TitleBar } from "../../components/shell";
 import { TODAY, minutesToHHMM } from "../../core/store/data";
+import type { AppEvent } from "../../core/domain/models";
 import { useEvents, useSettings, useTasks } from "../../core/store/hooks";
 import { DayTimeline } from "../../components/day-timeline";
 
@@ -17,7 +18,7 @@ export function WrapScreen() {
         try: "",
     });
 
-    const logEvents: import("../../core/domain/events").AppEvent[] = events
+    const logEvents: AppEvent[] = events
         .filter((e) => e.type === "log")
         .map((e) => ({
             id: e.id,

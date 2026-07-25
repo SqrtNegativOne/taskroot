@@ -11,34 +11,34 @@ type MockStopwatchContext = Parameters<typeof CLOCK_STRATEGIES.counter.onToggle>
 // We use `as` here to easily create mock contexts for testing without implementing every method.
 function createMockContext(overrides: Partial<MockStopwatchContext>): MockStopwatchContext {
     return {
-        currentMs: 0,
-        running: false,
-        isPristine: true,
-        toggle: vi.fn<(...args: never[]) => unknown>(),
-        state: { runningSince: null, elapsed: 0, isBreak: false, breakAllowedMs: 0, breakStartedAt: null, breakSoundPlayed: false },
-        setState: vi.fn<(...args: never[]) => unknown>(),
-        timeLogs: [],
-        setTimeLogs: vi.fn<(...args: never[]) => unknown>(),
-        setSelectorOpen: vi.fn<(...args: never[]) => unknown>(),
-        selectorOpen: false,
-        activeTask: null,
-        allowNoTask: false,
-        settings: {},
-        onBreakStatus: undefined,
-        ...overrides
-    } as unknown as MockStopwatchContext;
+                currentMs: 0,
+                running: false,
+                isPristine: true,
+                toggle: vi.fn<(...args: never[]) => unknown>(),
+                state: { runningSince: null, elapsed: 0, isBreak: false, breakAllowedMs: 0, breakStartedAt: null, breakSoundPlayed: false },
+                setState: vi.fn<(...args: never[]) => unknown>(),
+                timeLogs: [],
+                setTimeLogs: vi.fn<(...args: never[]) => unknown>(),
+                setSelectorOpen: vi.fn<(...args: never[]) => unknown>(),
+                selectorOpen: false,
+                activeTask: null,
+                allowNoTask: false,
+                settings: {},
+                onBreakStatus: undefined,
+                ...overrides
+            };
 }
 
 describe("logWorkSession", () => {
     test("ignores sessions less than 1 minute", () => {
         const setTimeLogs = vi.fn<(...args: never[]) => unknown>();
-        logWorkSession(setTimeLogs as unknown as Dispatch<SetStateAction<TimeLog[]>>, 1000, 2000, "task1", "counter");
+        logWorkSession(setTimeLogs, 1000, 2000, "task1", "counter");
         expect(setTimeLogs).not.toHaveBeenCalled();
     });
 
     test("logs sessions 1 minute or longer", () => {
         const setTimeLogs = vi.fn<(...args: never[]) => unknown>((updater: unknown) => updater([]));
-        logWorkSession(setTimeLogs as unknown as Dispatch<SetStateAction<TimeLog[]>>, 1000, 62000, "task1", "counter");
+        logWorkSession(setTimeLogs, 1000, 62000, "task1", "counter");
         expect(setTimeLogs).toHaveBeenCalled();
         const result = setTimeLogs.mock.results[0].value;
         expect(result.length).toBe(1);
@@ -70,7 +70,7 @@ describe("CounterClockStrategy", () => {
             isPristine: true,
             setSelectorOpen,
             setState,
-            activeTask: { id: "t1", title: "Task" } as AppTask,
+            activeTask: { id: "t1", title: "Task" },
         }));
 
         expect(setState).toHaveBeenCalled();
@@ -87,7 +87,7 @@ describe("CounterClockStrategy", () => {
             setSelectorOpen,
             setState: setState2,
             setTimeLogs,
-            activeTask: { id: "t1", title: "Task" } as AppTask,
+            activeTask: { id: "t1", title: "Task" },
         }));
 
         const stateResult2 = setState2.mock.results[0].value;

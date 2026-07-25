@@ -1,26 +1,12 @@
-import { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage } from "electron";
-import { fileURLToPath } from "node:url";
+import { app } from "electron";
 import path from "node:path";
-import fs from "node:fs";
-import { createServer } from "node:http";
+import { VITE_DEV_SERVER_URL } from "./constants.js";
+import { windowManager } from "./windowManager.js";
+import { setupIpcHandlers } from "./ipc.js";
+import { createSystemTray } from "./tray.js";
+import { startLocalServer } from "./server.js";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-process.env.APP_ROOT = path.join(__dirname, "..");
-
-export const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
-export const MAIN_DIST = path.join(process.env.APP_ROOT, "dist-electron");
-export const RENDERER_DIST = path.join(process.env.APP_ROOT, "dist");
-
-process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL
-    ? path.join(process.env.APP_ROOT, "public")
-    : RENDERER_DIST;
-
-let win: BrowserWindow | null;
-let miniWin: BrowserWindow | null = null;
-let tray: Tray | null = null;
-let serverPort = 0;
-let isQuitting = false;
+let localServer: import("http").Server | null = null;
 
 const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
@@ -41,17 +27,14 @@ if (process.defaultApp) {
 function handleDeepLink(url: string) {
     if (!url.startsWith("taskroot://")) return;
     const route = url.replace("taskroot://", "").replace(/\/$/, "");
+    const win = windowManager.win;
     if (win && !win.isDestroyed() && route) {
         win.webContents.send("deep-link", route);
     }
 }
 
 app.on("second-instance", (event, commandLine) => {
-    if (win && !win.isDestroyed()) {
-        if (win.isMinimized()) win.restore();
-        win.show();
-        win.focus();
-    }
+    windowManager.restoreOrCreateMainWindow();
     const url = commandLine.find((arg) => arg.startsWith("taskroot://"));
     if (url) {
         handleDeepLink(url);
@@ -64,169 +47,45 @@ app.on("open-url", (event, url) => {
     handleDeepLink(url);
 });
 
-// Handle file logging from renderer
-ipcMain.on("log-to-file", (event, level, message) => {
-    const logPath = path.join(String(process.env.APP_ROOT), "taskroot.log");
-    const timestamp = new Date().toISOString();
-    const logLine = `[${timestamp}] [${level.toUpperCase()}] ${message}\n`;
-    try {
-        fs.appendFileSync(logPath, logLine);
-    } catch (err) {
-        console.error("Failed to write to log file:", err);
-    }
-});
+function initializeApp() {
+    setupIpcHandlers();
+    createSystemTray();
 
-// Window controls
-ipcMain.on("window-minimize", (event) => {
-    const window = BrowserWindow.fromWebContents(event.sender);
-    if (window === win) {
-        win?.minimize();
-        createMiniWindow();
-    } else {
-        window?.minimize();
-    }
-});
-ipcMain.on("window-maximize", (event) => {
-    const window = BrowserWindow.fromWebContents(event.sender);
-    if (window?.isMaximized()) {
-        window?.unmaximize();
-    } else {
-        window?.maximize();
-    }
-});
-ipcMain.on("window-close", (event) => {
-    const window = BrowserWindow.fromWebContents(event.sender);
-    if (window === win) {
-        win?.hide();
-        createMiniWindow();
-    } else {
-        window?.close();
-    }
-});
-ipcMain.on("window-restore-main", () => {
-    if (win && !win.isDestroyed()) {
-        if (win.isMinimized()) win.restore();
-        win.show();
-    }
-});
-
-function createMiniWindow() {
-    if (miniWin) return;
-    miniWin = new BrowserWindow({
-        width: 300,
-        height: 100,
-        frame: false,
-        transparent: true,
-        alwaysOnTop: true,
-        skipTaskbar: true,
-        webPreferences: {
-            preload: path.join(__dirname, "preload.cjs"),
-            nodeIntegration: false,
-            contextIsolation: true,
-        },
-    });
-
-    const url = VITE_DEV_SERVER_URL
-        ? `${VITE_DEV_SERVER_URL}?minitracker=true`
-        : `http://localhost:${serverPort}?minitracker=true`;
-    miniWin.loadURL(url);
-
-    miniWin.on("close", (e) => {
-        if (!isQuitting) {
-            e.preventDefault();
-        }
-    });
-
-    miniWin.on("closed", () => {
-        miniWin = null;
-    });
-
-    miniWin.on("maximize", () => {
-        if (win && !win.isDestroyed()) {
-            if (win.isMinimized()) win.restore();
-            win.show();
-        }
-    });
-}
-
-let localServer: import("http").Server | null = null;
-
-function createWindow() {
-    win = new BrowserWindow({
-        width: 1200,
-        height: 800,
-        frame: false,
-        show: false,
-        backgroundColor: "#2c2d2d",
-        icon: path.join(String(process.env.VITE_PUBLIC), "icon.png"),
-        webPreferences: {
-            preload: path.join(__dirname, "preload.cjs"),
-            nodeIntegration: false,
-            contextIsolation: true,
-        },
-        autoHideMenuBar: true,
-    });
-
-    win.once("ready-to-show", () => {
-        win?.show();
-    });
+    const win = windowManager.createMainWindow();
 
     if (VITE_DEV_SERVER_URL) {
+        windowManager.setMainUrl(VITE_DEV_SERVER_URL);
+        windowManager.setMiniWindowUrl(`${VITE_DEV_SERVER_URL}?minitracker=true`);
         win.loadURL(VITE_DEV_SERVER_URL);
-        createMiniWindow();
+        windowManager.createMiniWindow();
     } else {
-        localServer = createServer((req: import("http").IncomingMessage, res: import("http").ServerResponse) => {
-            let pathname = new URL(req.url || "", `http://${req.headers.host}`)
-                .pathname;
-            if (pathname === "/") pathname = "/index.html";
-            let filePath = path.join(RENDERER_DIST, pathname);
-
-            if (!filePath.startsWith(RENDERER_DIST)) {
-                res.writeHead(403);
-                res.end("Forbidden");
-                return;
-            }
-
-            if (!fs.existsSync(filePath)) {
-                filePath = path.join(RENDERER_DIST, "index.html");
-            }
-
-            const ext = path.extname(filePath);
-            const mimeTypes: Record<string, string> = {
-                ".html": "text/html",
-                ".js": "text/javascript",
-                ".css": "text/css",
-                ".json": "application/json",
-                ".png": "image/png",
-                ".jpg": "image/jpg",
-                ".svg": "image/svg+xml",
-                ".ico": "image/x-icon",
-            };
-
-            const contentType = mimeTypes[ext] || "application/octet-stream";
-
-            fs.readFile(filePath, (err, content) => {
-                if (err) {
-                    res.writeHead(500);
-                    res.end("Internal Server Error");
-                } else {
-                    res.writeHead(200, { "Content-Type": contentType });
-                    res.end(content, "utf-8");
-                }
-            });
-        });
-
-        localServer.listen(0, "127.0.0.1", () => {
-            const addr = localServer?.address();
-            serverPort = typeof addr === "string" ? 0 : addr?.port || 0;
-            win?.loadURL(`http://localhost:${serverPort}`);
-            createMiniWindow();
+        localServer = startLocalServer((port: number) => {
+            const mainUrl = `http://localhost:${port}`;
+            windowManager.setMainUrl(mainUrl);
+            windowManager.setMiniWindowUrl(`${mainUrl}?minitracker=true`);
+            win.loadURL(mainUrl);
+            windowManager.createMiniWindow();
         });
     }
 }
 
+app.whenReady().then(() => {
+    initializeApp();
+
+    const url = process.argv.find((arg) => arg.startsWith("taskroot://"));
+    if (url) {
+        const win = windowManager.win;
+        if (win && !win.isDestroyed()) {
+            win.webContents.once("did-finish-load", () => {
+                handleDeepLink(url);
+            });
+        }
+    }
+    return undefined;
+}).catch(console.error);
+
 app.on("before-quit", () => {
-    isQuitting = true;
+    windowManager.setQuitting(true);
 });
 
 app.on("will-quit", () => {
@@ -238,68 +97,15 @@ app.on("will-quit", () => {
 app.on("window-all-closed", () => {
     if (process.platform !== "darwin") {
         app.quit();
-        win = null;
+        windowManager.win = null;
     }
 });
 
 app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-        createWindow();
-    }
+    import("electron").then((e) => {
+        if (e.BrowserWindow.getAllWindows().length === 0) {
+            windowManager.restoreOrCreateMainWindow();
+        }
+        return undefined;
+    }).catch(console.error);
 });
-
-function createTray() {
-    if (tray) return;
-    const iconPath = path.join(String(process.env.VITE_PUBLIC), "icon.png");
-    const icon = nativeImage.createFromPath(iconPath);
-
-    tray = new Tray(icon);
-    tray.setToolTip("Taskroot");
-
-    const contextMenu = Menu.buildFromTemplate([
-        {
-            label: "Open Taskroot",
-            click: () => {
-                if (win && !win.isDestroyed()) {
-                    if (win.isMinimized()) win.restore();
-                    win.show();
-                } else {
-                    createWindow();
-                }
-            },
-        },
-        { type: "separator" },
-        {
-            label: "Exit",
-            click: () => {
-                app.exit(0);
-            },
-        },
-    ]);
-
-    tray.setContextMenu(contextMenu);
-
-    tray.on("click", () => {
-        if (win && !win.isDestroyed()) {
-            if (win.isMinimized()) win.restore();
-            win.show();
-        } else {
-            createWindow();
-        }
-    });
-}
-
-app.whenReady().then(() => {
-    createWindow();
-    createTray();
-
-    const url = process.argv.find((arg) => arg.startsWith("taskroot://"));
-    if (url) {
-        if (win && !win.isDestroyed()) {
-            win.webContents.once("did-finish-load", () => {
-                handleDeepLink(url);
-            });
-        }
-    }
-    return undefined;
-}).catch(console.error);

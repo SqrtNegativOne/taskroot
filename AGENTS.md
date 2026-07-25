@@ -57,9 +57,12 @@ Taskroot is a web-based and desktop task management app focusing on planning, ex
   - Prefer compile-time type inference over runtime type assertions or checks (e.g., `typeof`).
   - Use TypeScript Template Literal Types instead of string unions where possible.
   - Use optional chaining operators (`?.`) over non-null assertions (`!.`).
-- Refactor files if they exceed 250 LOC.
-- Refactor classes if they exceed 10 methods.
-- Refactor any bit of code if it exceeds 4 levels of indentation.
-- The ideal number of arguments for a function is zero (niladic). Next comes one (monadic), followed closely by two (dyadic). Three arguments (triadic) should be avoided where possible. More than three (polyadic) requires very special justification—and then shouldn’t be used anyway.
+- Write small, nice code. For example:
+  - Refactor files if they exceed 250 LOC.
+    - If a test file exceeds 250 LOC, obviously don't split it up into multiple files. Instead, refactor the code under test to be smaller and more modular, and then write smaller test files for each module.
+  - Refactor classes if they exceed 10 methods.
+  - Refactor any bit of code if it exceeds 4 levels of indentation.
+  - The ideal number of arguments for a function is zero (niladic). Next comes one (monadic), followed closely by two (dyadic). Three arguments (triadic) should be avoided where possible. More than three (polyadic) requires very special justification—and then shouldn’t be used anyway.
+- Don't name files or folders with generic names like `utils` or `helpers`. That could literally mean anything!
 - After implementing any changes, run `bun oxlint`, and fix all errors and warnings. If you are unsure about a warning, ask for clarification in the code review.
-- If `bun run build` gives you a warning, fix it. Never be silent about warnings.
+- If `bun run build` gives you a warning, fix it. Never be silent about warnings; always inform the user about them.

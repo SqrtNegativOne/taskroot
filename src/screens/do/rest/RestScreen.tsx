@@ -1,10 +1,11 @@
 import React from "react";
+import "./RestScreen.css";
 import {
     TODAY,
     MONTHS,
     DOW_SHORT,
-} from "../../core/store/data";
-import { useRestItems } from "../../core/store/hooks";
+} from "../../../core/store/data";
+import { useRestItems } from "../../../core/store/hooks";
 
 
 // Rest screen — large checklist, editable, resets on each visit.

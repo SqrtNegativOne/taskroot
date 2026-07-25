@@ -6,7 +6,7 @@
 @import './screens/do/kanban.css';
 @import './screens/do/tips.css';
 @import './screens/do/notes.css';
-@import './screens/do/rest.css';
+
 :root {
     color-scheme: dark;
     --shadow-btn-hover: 0 4px 12px rgba(0, 0, 0, 0.2);

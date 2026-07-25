@@ -9,7 +9,7 @@ import { Stopwatch } from "./stopwatch";
 import { useDistractions, useTasks, useNotes, useTips } from "../../core/store/hooks";
 
 import { TipsList, NotesList } from "./tips-notes";
-import { RestScreen } from "./RestScreen";
+import { RestScreen } from "./rest";
 import "./do-screen.css";
 
 // Do screen — hero stopwatch + collapsible sections.

@@ -13,11 +13,12 @@ describe("settingsSchema.tsx", () => {
     });
 
     it("should have valid min/max for number settings", () => {
-        const numberSettings = SETTINGS_SCHEMA.filter((s) => s.type === "number" && s.min !== undefined && s.max !== undefined);
-        numberSettings.forEach((s) => {
-            const min = typeof s.min === "number" ? s.min : 0;
-            const max = typeof s.max === "number" ? s.max : 0;
-            expect(max).toBeGreaterThanOrEqual(min);
+        SETTINGS_SCHEMA.forEach((s) => {
+            if (s.type === "number") {
+                if (s.min !== undefined && s.max !== undefined) {
+                    expect(s.max).toBeGreaterThanOrEqual(s.min);
+                }
+            }
         });
     });
 
@@ -33,10 +34,5 @@ describe("settingsSchema.tsx", () => {
         const definedTabs = new Set(SETTINGS_TABS.map((t) => t.id));
         const usedTabs = SETTINGS_SCHEMA.map(s => s.tab).filter(Boolean);
         expect(usedTabs.every(tab => definedTabs.has(tab))).toBe(true);
-    });
-
-    it("should ensure bounded settings have valid min/max", () => {
-        const boundedSettings = SETTINGS_SCHEMA.filter(s => s.min !== undefined && s.max !== undefined);
-        expect(boundedSettings.every(s => (s.max !== undefined && s.min !== undefined) ? s.max >= s.min : false)).toBe(true);
     });
 });

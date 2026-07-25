@@ -4,64 +4,15 @@ import {
     ImportTasksButton,
     LogoutButton,
     ClearAllDataButton,
-} from "../../screens/settings/SettingActions";
-
-export interface AppSettings {
-    defaultCalendarView: "month" | "week";
-
-    defaultTaskDuration: number;
-    earliest_wake_time: number;
-    last_sleep_time: number;
-    recapDay: string;
-    clockStyle: "counter" | "flowtime" | "guzey";
-    allowStopwatchWithoutTask: boolean;
-    flowtimeBreakDivisor: number;
-    enableCalendarSync: boolean;
-    enableTasksSync: boolean;
-    syncInterval: number;
-    keybindingOpenSettings: string;
-    keybindingRestoreApp: string;
-    trackerOpacity?: number;
-    trackerHoverReduction?: number;
-    trackerDimmedOpacity?: number;
-    trackerShowBorder?: boolean;
-    [key: string]: unknown; // Allow custom actions/etc if needed, though they shouldn't store values.
-}
-
-export type SettingType =
-    | "select"
-    | "time"
-    | "number"
-    | "checkbox"
-    | "action"
-    | "textarea"
-    | "keybinding"
-    | "custom";
-export interface SettingSchema {
-    id: string;
-    section: string;
-    tab: string;
-    label: string;
-    description?: string;
-    keywords?: string[];
-    type: SettingType;
-    defaultValue?: unknown;
-    options?: { label: string; value: string | number }[];
-    min?: number;
-    max?: number;
-    action?: string;
-    placeholder?: string;
-    beta?: boolean;
-    danger?: boolean;
-    render?: (props: { settings: AppSettings; setSettings: React.Dispatch<React.SetStateAction<AppSettings>> }) => ReactNode;
-    showIf?: (settings: Record<string, unknown>) => boolean;
-}
+} from "../../../screens/settings/SettingActions";
+import type { SettingSchema, AppSettings } from "./settingsTypes";
+export type * from "./settingsTypes";
 
 export const SETTINGS_SCHEMA: SettingSchema[] = [
     {
         id: "defaultCalendarView",
         section: "Calendar",
-        tab: "general",
+        tab: "plan_screen",
         label: "Default View",
         keywords: ["calendar", "view", "month", "week"],
         type: "select",
@@ -75,7 +26,7 @@ export const SETTINGS_SCHEMA: SettingSchema[] = [
     {
         id: "defaultTaskDuration",
         section: "Tasks",
-        tab: "general",
+        tab: "plan_screen",
         label: "Default Duration",
         keywords: ["task", "duration", "estimate", "time"],
         type: "select",
@@ -309,13 +260,13 @@ export const SETTINGS_SCHEMA: SettingSchema[] = [
 ];
 
 export const SETTINGS_TABS = [
-    { id: "general", label: "Plan screen" },
+    { id: "plan_screen", label: "Plan screen" },
     { id: "do_screen", label: "Do screen" },
     { id: "wrap_screen", label: "Wrap screen" },
     { id: "recap_screen", label: "Recap screen" },
+    { id: "tracker_window", label: "Tracker window" },
     { id: "sync", label: "Sync and Backup" },
     { id: "keybindings", label: "Keybindings" },
-    { id: "tracker_window", label: "Tracker window" },
 ];
 
 export const DEFAULT_SETTINGS: AppSettings = {

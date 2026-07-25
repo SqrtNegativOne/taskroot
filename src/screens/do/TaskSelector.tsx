@@ -364,7 +364,7 @@ function TaskSearchResults({
             {sortedTasks.map((t) => (
                 <button
                     type="button"
-                    style={{ border: "none", background: "none", font: "inherit", color: "inherit", padding: 0, textAlign: "left", width: "100%", cursor: "pointer" }}
+                    style={{ border: "none", background: "none", width: "100%", cursor: "pointer", display: "block" }}
                     key={t.id}
                     className="modern-task-item"
                     onClick={() => {

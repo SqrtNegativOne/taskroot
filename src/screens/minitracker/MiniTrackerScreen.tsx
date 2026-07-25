@@ -110,9 +110,8 @@ function getMiniTrackerContainerStyle(currentOpacity: number, showBorder: boolea
         height: "100vh",
         background: "rgb(24, 24, 24)",
         opacity: currentOpacity,
-        border: showBorder
-            ? "1px solid rgba(255, 255, 255, 0.15)"
-            : "none",
+        boxShadow: showBorder ? "inset 0 0 0 2px rgba(255, 255, 255, 0.3)" : "none",
+        border: showBorder ? "1px solid rgba(255, 255, 255, 0.15)" : "none",
         transition: "opacity 0.2s ease",
         color: "var(--fg)",
         display: "flex",

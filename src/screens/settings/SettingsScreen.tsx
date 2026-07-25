@@ -55,9 +55,33 @@ export function SettingsScreen() {
         const Renderer = SETTING_RENDERERS[setting.type];
 
         return (
-            <div
+            <button
+                type="button"
                 className="settings-section"
                 key={setting.id}
+                onClick={(e) => {
+                    if (setting.type === "checkbox") {
+                        const target = e.target as HTMLElement;
+                        if (target.closest && (target.closest('button') || target.closest('.toggle-switch'))) {
+                            return;
+                        }
+                        setSettings((prev: any) => {
+                            const currentVal = prev[setting.id] !== undefined ? prev[setting.id] : setting.defaultValue;
+                            return { ...prev, [setting.id]: !currentVal };
+                        });
+                    }
+                }}
+                onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        if (setting.type === "checkbox") {
+                            setSettings((prev: any) => {
+                                const currentVal = prev[setting.id] !== undefined ? prev[setting.id] : setting.defaultValue;
+                                return { ...prev, [setting.id]: !currentVal };
+                            });
+                        }
+                    }
+                }}
                 style={{
                     marginBottom: setting.danger ? "32px" : "12px",
                     display: "flex",
@@ -65,6 +89,14 @@ export function SettingsScreen() {
                     justifyContent: "space-between",
                     alignItems: isComplex ? "flex-start" : "center",
                     gap: isComplex ? "8px" : "16px",
+                    cursor: setting.type === "checkbox" ? "pointer" : "default",
+                    background: "none",
+                    border: "none",
+                    padding: 0,
+                    font: "inherit",
+                    color: "inherit",
+                    textAlign: "left",
+                    width: "100%",
                 }}
             >
                 <div style={{ display: "flex", flexDirection: "column", gap: "4px", flex: 1 }}>
@@ -88,7 +120,7 @@ export function SettingsScreen() {
                 >
                     {Renderer && <Renderer setting={setting} val={val} settings={settings} setSettings={setSettings} />}
                 </div>
-            </div>
+            </button>
         );
     };
 
@@ -110,18 +142,26 @@ export function SettingsScreen() {
                     {!searchQuery && (
                         <div className="task-list">
                             {SETTINGS_TABS.map((tab) => (
-                                <button type="button"
+                                <div
                                     key={tab.id}
+                                    role="tab"
+                                    tabIndex={0}
                                     className={`task-row ${activeTab === tab.id ? "is-active" : ""}`}
                                     onClick={() => setActiveTab(tab.id)}
-                                    style={{ background: "none", border: "none", font: "inherit", color: "inherit", textAlign: "left", width: "100%", padding: 0 }}
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter" || e.key === " ") {
+                                            e.preventDefault();
+                                            setActiveTab(tab.id);
+                                        }
+                                    }}
+                                    style={{ cursor: "pointer" }}
                                     data-cuelume-hover="tick"
                                     data-cuelume-toggle
                                 >
                                     <div className="task-row-title">
                                         {tab.label}
                                     </div>
-                                </button>
+                                </div>
                             ))}
                         </div>
                     )}

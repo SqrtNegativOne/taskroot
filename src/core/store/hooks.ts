@@ -7,7 +7,8 @@ export function useRepository<T>(repo: Repository<T>): [T, (val: T | ((prev: T) 
     const [isLoaded, setIsLoaded] = useState(false);
 
     useEffect(() => {
-        const unregister = storeRegistry.registerUpdater(repo.key, setVal);
+        const updater = () => setVal(repo.get());
+        const unregister = storeRegistry.registerUpdater(repo.key, updater);
         setIsLoaded(true);
         return unregister;
     }, [repo.key]);

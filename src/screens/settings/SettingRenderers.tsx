@@ -1,3 +1,4 @@
+import type { SettingSchema, AppSettings } from "../../core/store/settingsSchema";
 import React from "react";
 import {
     SegmentedControl,
@@ -20,22 +21,29 @@ function timeToMin(t: string) {
     return parseInt(hh, 10) * 60 + parseInt(mm, 10);
 }
 
-const SelectSetting = ({ setting, val, settings, setSettings }: any) => (
+export interface SettingRendererProps {
+    setting: SettingSchema;
+    val: unknown;
+    settings: AppSettings;
+    setSettings: (val: AppSettings | ((prev: AppSettings) => AppSettings)) => void;
+}
+
+const SelectSetting = ({ setting, val, settings, setSettings }: SettingRendererProps) => (
     <div style={{ display: "flex", gap: "12px", alignItems: "center", color: "var(--fg)" }}>
         <SegmentedControl
-            value={val}
-            onChange={(v: unknown) =>
+            value={typeof val === "string" || typeof val === "number" ? String(val) : ""}
+            onChange={(v: string) =>
                 setSettings({
                     ...settings,
                     [setting.id]: typeof val === "number" ? Number(v) : v,
                 })
             }
-            options={setting.options}
+            options={setting.options || []}
         />
     </div>
 );
 
-const TimeSetting = ({ setting, val, settings, setSettings }: any) => (
+const TimeSetting = ({ setting, val, settings, setSettings }: SettingRendererProps) => (
     <div style={{ display: "flex", gap: "12px", alignItems: "center", color: "var(--fg)" }}>
         <TimeInput
             value={typeof val === "number" ? minToTime(val) : "00:00"}
@@ -44,7 +52,7 @@ const TimeSetting = ({ setting, val, settings, setSettings }: any) => (
     </div>
 );
 
-const NumberSetting = ({ setting, val, settings, setSettings }: any) => (
+const NumberSetting = ({ setting, val, settings, setSettings }: SettingRendererProps) => (
     <div style={{ display: "flex", gap: "12px", alignItems: "center", color: "var(--fg)" }}>
         <NumberInput
             min={setting.min}
@@ -55,25 +63,25 @@ const NumberSetting = ({ setting, val, settings, setSettings }: any) => (
     </div>
 );
 
-const CheckboxSetting = ({ setting, val, settings, setSettings }: any) => (
+const CheckboxSetting = ({ setting, val, setSettings }: SettingRendererProps) => (
     <ToggleSwitch
-        checked={val}
-        onChange={(checked) => setSettings({ ...settings, [setting.id]: checked })}
+        checked={Boolean(val)}
+        onChange={(checked) => setSettings((prev: AppSettings) => ({ ...prev, [setting.id]: checked }))}
     />
 );
 
-const KeybindingSetting = ({ setting, val, settings, setSettings }: any) => (
+const KeybindingSetting = ({ setting, val, settings, setSettings }: SettingRendererProps) => (
     <KeybindingInput
-        value={typeof val === "string" || typeof val === "number" ? val : ""}
+        value={typeof val === "string" || typeof val === "number" ? String(val) : ""}
         onChange={(v) => setSettings({ ...settings, [setting.id]: v })}
     />
 );
 
-const CustomSetting = ({ setting, settings, setSettings }: any) => {
+const CustomSetting = ({ setting, settings, setSettings }: SettingRendererProps) => {
     return setting.render?.({ settings, setSettings }) || null;
 };
 
-export const SETTING_RENDERERS: Record<string, React.FC<any>> = {
+export const SETTING_RENDERERS: Record<string, React.FC<SettingRendererProps>> = {
     select: SelectSetting,
     time: TimeSetting,
     number: NumberSetting,

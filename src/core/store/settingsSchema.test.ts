@@ -13,12 +13,11 @@ describe("settingsSchema.tsx", () => {
     });
 
     it("should have valid min/max for number settings", () => {
-        SETTINGS_SCHEMA.forEach((s) => {
-            if (s.type === "number") {
-                if (s.min !== undefined && s.max !== undefined) {
-                    expect(s.max).toBeGreaterThanOrEqual(s.min);
-                }
-            }
+        const numberSettings = SETTINGS_SCHEMA.filter((s) => s.type === "number" && s.min !== undefined && s.max !== undefined);
+        numberSettings.forEach((s) => {
+            const min = typeof s.min === "number" ? s.min : 0;
+            const max = typeof s.max === "number" ? s.max : 0;
+            expect(max).toBeGreaterThanOrEqual(min);
         });
     });
 

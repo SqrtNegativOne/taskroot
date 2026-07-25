@@ -15,6 +15,8 @@ export interface RestItem { id: string; title: string; type: string; checked?: b
 export interface CalendarData { id: string; summary: string; active: boolean; accessRole?: string; }
 export interface TestKeyData { count: number; }
 
+const isUpdater = <T>(v: T | ((prev: T) => T)): v is ((prev: T) => T) => typeof v === "function";
+
 export class Repository<T> {
     public key: string;
     private initial: T;
@@ -50,7 +52,6 @@ export class Repository<T> {
 
     set(newValOrUpdater: T | ((prev: T) => T)): T {
         const prev = this.get();
-        const isUpdater = (v: T | ((prev: T) => T)): v is ((prev: T) => T) => typeof v === "function";
         const next = isUpdater(newValOrUpdater) ? newValOrUpdater(prev) : newValOrUpdater;
         const mutated = this.interceptor ? this.interceptor(next, prev) : next;
         

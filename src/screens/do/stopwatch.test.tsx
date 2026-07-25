@@ -2,9 +2,6 @@
 import { expect, test, describe, vi } from "vitest";
 import { CLOCK_STRATEGIES } from "./clock-strategies";
 import { logWorkSession } from "./clock-strategies/utils";
-import type { AppTask } from "../../core/domain/models";
-import type { TimeLog } from "../../core/store/repositories";
-import type { Dispatch, SetStateAction } from "react";
 
 type MockStopwatchContext = Parameters<typeof CLOCK_STRATEGIES.counter.onToggle>[0];
 

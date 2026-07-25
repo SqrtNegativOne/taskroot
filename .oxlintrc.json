@@ -10,6 +10,7 @@
     "react/exhaustive-deps": "warn",
     "react/jsx-max-depth": ["warn", { "max": 6 }],
     "react/react-in-jsx-scope": "off",
+    "import/no-unassigned-import": "off",
     "no-underscore-dangle": "off",
     "jsx-a11y/no-autofocus": "off",
     "max-depth": ["warn", 4],

@@ -58,7 +58,7 @@ app.on("open-url", (event, url) => {
 });
 // Handle file logging from renderer
 ipcMain.on("log-to-file", (event, level, message) => {
-    const logPath = path.join(process.env.APP_ROOT, "taskroot.log");
+    const logPath = path.join(String(process.env.APP_ROOT), "taskroot.log");
     const timestamp = new Date().toISOString();
     const logLine = `[${timestamp}] [${level.toUpperCase()}] ${message}\n`;
     try {
@@ -149,7 +149,7 @@ function createWindow() {
         frame: false,
         show: false,
         backgroundColor: "#2c2d2d",
-        icon: path.join(process.env.VITE_PUBLIC, "icon.png"),
+        icon: path.join(String(process.env.VITE_PUBLIC), "icon.png"),
         webPreferences: {
             preload: path.join(__dirname, "preload.cjs"),
             nodeIntegration: false,
@@ -203,7 +203,7 @@ function createWindow() {
             });
         });
         localServer.listen(0, "127.0.0.1", () => {
-            const addr = localServer.address();
+            const addr = localServer?.address();
             serverPort = typeof addr === "string" ? 0 : addr?.port || 0;
             win?.loadURL(`http://localhost:${serverPort}`);
             createMiniWindow();
@@ -232,7 +232,7 @@ app.on("activate", () => {
 function createTray() {
     if (tray)
         return;
-    const iconPath = path.join(process.env.VITE_PUBLIC, "icon.png");
+    const iconPath = path.join(String(process.env.VITE_PUBLIC), "icon.png");
     const icon = nativeImage.createFromPath(iconPath);
     tray = new Tray(icon);
     tray.setToolTip("Taskroot");

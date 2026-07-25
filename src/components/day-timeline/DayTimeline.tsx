@@ -8,16 +8,15 @@ import {
     addDays,
     sameDay,
 } from "../../core/store/data";
-import { hydrateEvents } from "../../core/domain/events";
+import type { HydratedEvent } from "../../core/domain/events";
 import { PX_PER_MIN, SNAP_MIN } from "./types";
 import type { DayTimelineProps, DragState } from "./types";
 import { EventBlock } from "./EventBlock";
 import { layoutEvents } from "./layout";
-import { filterAndSortEvents } from "./filters";
+import { filterEvents, sortEvents } from "../../core/domain/filters";
 
 export function DayTimeline<T extends DragState = DragState>({
     events,
-    tasks,
     filter,
     sort,
     filterMenu,
@@ -69,18 +68,16 @@ export function DayTimeline<T extends DragState = DragState>({
         return () => clearInterval(interval);
     }, []);
 
-    let todayEvents = hydrateEvents(
-        events.filter((e) => {
-            const cellDate = ymd(viewDate);
-            const inRange = e.endDate
-                ? cellDate >= e.date && cellDate <= e.endDate
-                : e.date === cellDate;
-            return inRange && !e.isAllDay;
-        }),
-        tasks,
-    );
+    let todayEvents = events.filter((e: HydratedEvent) => {
+        const cellDate = ymd(viewDate);
+        const inRange = e.endDate
+            ? cellDate >= e.date && cellDate <= e.endDate
+            : e.date === cellDate;
+        return inRange && !e.isAllDay;
+    });
 
-    todayEvents = filterAndSortEvents(todayEvents, filter, sort);
+    todayEvents = filterEvents(todayEvents, filter);
+    todayEvents = sortEvents(todayEvents, sort);
 
     // Compute lanes for overlapping events
     const laid = layoutEvents(todayEvents);

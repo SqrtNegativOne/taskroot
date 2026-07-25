@@ -4,6 +4,7 @@ import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import { expect, test } from "vitest";
 import { DayTimeline } from "./day-timeline";
+import { hydrateEvents } from "../core/domain/events";
 import { createMockAppEvent } from "../core/utils/testUtils";
 
 import type { AppTask } from "../core/domain/models";
@@ -51,8 +52,7 @@ test("filters events by category correctly", () => {
 
     render(
         <DayTimeline
-            events={events}
-            tasks={tasks}
+            events={hydrateEvents(events, tasks)}
             filter={filter}
             sort="time"
             filterMenu={null}
@@ -109,8 +109,7 @@ test("filters out events by category correctly using 'is not'", () => {
 
     render(
         <DayTimeline
-            events={events}
-            tasks={tasks}
+            events={hydrateEvents(events, tasks)}
             filter={filter}
             sort="time"
             filterMenu={null}

@@ -13,6 +13,7 @@ import { DragGhost, type PlanDragState } from "./drag-helpers";
 import { usePlanActions } from "./use-plan-actions";
 import { useDragAndDrop } from "./use-drag-and-drop";
 import { DateGrid } from "./date-grid";
+import { hydrateEvents } from "../../core/domain/events";
 import { TitleBar } from "../../components/shell";
 import { useTasks, useEvents, useSettings, useTaskQuery, useTaskFilters, useTaskSort, useCalFilters, useCalSort, useTimeFilters, useTimeSort } from "../../core/store/hooks";
 
@@ -78,6 +79,10 @@ export function PlanScreen() {
         end.setMonth(end.getMonth() + 2);
         return expandEventsForView(events, start, end);
     }, [events, anchor]);
+
+    const hydratedEvents = React.useMemo(() => {
+        return hydrateEvents(visibleEvents, tasks);
+    }, [visibleEvents, tasks]);
 
     const getEventFilterValues = React.useCallback(
         (col: string) => {
@@ -147,8 +152,7 @@ export function PlanScreen() {
                                 setView={setView}
                                 anchor={anchor}
                                 setAnchor={setAnchor}
-                                events={visibleEvents}
-                                tasks={tasks}
+                                events={hydratedEvents}
                                 filter={calFilter}
                                 sort={calSort}
                                 filterMenu={
@@ -189,8 +193,7 @@ export function PlanScreen() {
                                 onDropToDate={() => {}}
                             />
                             <DayTimeline<PlanDragState>
-                                events={visibleEvents}
-                                tasks={tasks}
+                                events={hydratedEvents}
                                 filter={timeFilter}
                                 sort={timeSort}
                                 filterMenu={

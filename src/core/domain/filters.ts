@@ -1,3 +1,4 @@
+import type { HydratedEvent } from "./events";
 import type { AppFilter } from "./models";
 
 function processFilters(filters: AppFilter[]) {
@@ -64,4 +65,69 @@ export function computeFilterDefaults(filters: AppFilter[] = []) {
     }
 
     return defaults;
+}
+
+export function filterEvents(
+    evs: HydratedEvent[],
+    filter?: AppFilter[]
+): HydratedEvent[] {
+    if (!filter || !Array.isArray(filter) || filter.length === 0) return evs;
+    
+    let filtered = evs;
+    for (const f of filter) {
+        if (!f.column || (!f.value && f.value !== 0)) continue;
+        filtered = filtered.filter((e) => {
+            let match = false;
+            const values = Array.isArray(f.value) ? f.value : [f.value];
+            if (values.length === 0) return true;
+
+            if (f.column === "type") {
+                match = values.includes(e.type);
+            } else if (f.column === "tag") {
+                const eventTags = e.tags || [];
+                const taskTags = e.task && e.task.tags ? e.task.tags : [];
+                const allTags = [...eventTags, ...taskTags].map((t) =>
+                    typeof t === "string" ? t.toLowerCase() : "",
+                );
+                match = values.some(v => allTags.includes(String(v).toLowerCase()));
+            } else if (f.column === "taskStatus") {
+                match = values.some(v => {
+                    if (v === "none") return !e.task;
+                    if (v === "done") return e.task ? e.task.status === "done" : e.isDone;
+                    if (v === "todo") return e.task ? e.task.status !== "done" : !e.isDone;
+                    return false;
+                });
+            } else if (f.column === "category") {
+                match = values.includes(e.category || "");
+            }
+            return f.operator === "is not" ? !match : match;
+        });
+    }
+    return filtered;
+}
+
+export function sortEvents(evs: HydratedEvent[], sort?: string): HydratedEvent[] {
+    if (!sort) return evs;
+    const sorted = [...evs];
+    sorted.sort((a, b) => {
+        if (sort === "taskStatus") {
+            const aDone = a.task
+                ? a.task.status === "done"
+                    ? 1
+                    : 0
+                : a.isDone
+                  ? 1
+                  : 0;
+            const bDone = b.task
+                ? b.task.status === "done"
+                    ? 1
+                    : 0
+                : b.isDone
+                  ? 1
+                  : 0;
+            if (aDone !== bDone) return aDone - bDone;
+        }
+        return (a.start || 0) - (b.start || 0);
+    });
+    return sorted;
 }

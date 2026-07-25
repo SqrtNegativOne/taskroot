@@ -4,7 +4,7 @@ export const TODAY = new Date();
 
 export const PAD2 = (n: number | string): string => String(n).padStart(2, "0");
 export const ymd = (d: Date): import("../domain/models").DateString =>
-    `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+    `${d.getFullYear()}-${PAD2(d.getMonth() + 1)}-${PAD2(d.getDate())}`;
 export const parseYMD = (s: string): Date => {
     const [y, m, d] = s.split("-").map(Number);
     return new Date(y, m - 1, d);

@@ -1,14 +1,13 @@
 import { useState } from "react";
 import { TitleBar } from "../../components/shell";
 import { TODAY, minutesToHHMM } from "../../core/store/data";
-import type { AppEvent } from "../../core/domain/models";
-import { useEvents, useSettings, useTasks } from "../../core/store/hooks";
+import { useEvents, useSettings } from "../../core/store/hooks";
 import { DayTimeline } from "../../components/day-timeline";
+import type { HydratedEvent } from "../../core/domain/events";
 
 export function WrapScreen() {
     const [settings] = useSettings();
     const [events] = useEvents();
-    const [tasks] = useTasks();
 
     const [step, setStep] = useState(1);
     const [answers, setAnswers] = useState({
@@ -18,16 +17,17 @@ export function WrapScreen() {
         try: "",
     });
 
-    const logEvents: AppEvent[] = events
+    const logEvents: HydratedEvent[] = events
         .filter((e) => e.type === "log")
         .map((e) => ({
             id: e.id,
-            title: e.title,
+            title: e.title || "Untitled",
             date: e.date,
             start: e.start,
             end: e.end,
-            type: "log" as const,
-            isAllDay: false as const,
+            type: "log",
+            isAllDay: false,
+            isDone: false,
         }));
 
     // Calculate untracked time
@@ -89,7 +89,6 @@ export function WrapScreen() {
                             >
                                 <DayTimeline
                                     events={logEvents}
-                                    tasks={tasks}
                                     today={TODAY}
                                     timelineDate={TODAY}
                                     setTimelineDate={() => {}}

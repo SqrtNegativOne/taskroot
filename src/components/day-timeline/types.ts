@@ -1,5 +1,5 @@
 import type { HydratedEvent } from "../../core/domain/events";
-import type { AppTask, AppEvent, AppFilter } from "../../core/domain/models";
+import type { AppTask, AppFilter } from "../../core/domain/models";
 
 export const PX_PER_MIN = 56 / 60; // 56 px per hour
 export const SNAP_MIN = 15;
@@ -15,8 +15,7 @@ export interface DragState {
 }
 
 export interface DayTimelineProps<T extends DragState = DragState> {
-    events: AppEvent[];
-    tasks: AppTask[];
+    events: HydratedEvent[];
     filter?: AppFilter[];
     sort?: string;
     filterMenu?: React.ReactNode;

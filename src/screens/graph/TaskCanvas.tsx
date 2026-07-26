@@ -18,84 +18,7 @@ type TaskCanvasProps = {
     setTasks: (updater: (prev: Task[]) => Task[]) => void;
 };
 
-// Custom Node Component
-interface TaskNodeProps {
-    data: { task: Task; [key: string]: unknown };
-    id: string;
-}
-const TaskNodeComponent = ({ data }: TaskNodeProps) => {
-    const task = data.task;
-
-    return (
-        <div
-            className={`task-canvas-node ${task.status === "done" ? "is-done" : ""}`}
-            style={{
-                background: "var(--bg-surface)",
-                border: "1px solid var(--border)",
-                borderRadius: "8px",
-                padding: "12px",
-                minWidth: "200px",
-                boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-                position: "relative",
-                opacity: task.status === "done" ? 0.6 : 1,
-            }}
-        >
-            {/* Top Target Handle: Parent connection */}
-            <Handle
-                type="target"
-                position={Position.Top}
-                id="parent"
-                style={{ background: "var(--accent)" }}
-            />
-
-            {/* Left Target Handle: Dependency connection (This task requires the source task) */}
-            <Handle
-                type="target"
-                position={Position.Left}
-                id="dependency"
-                style={{ background: "#d9866b" }}
-            />
-
-            <div
-                style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    marginBottom: "8px",
-                }}
-            >
-                <span className={`pri pri-${task.priority}`}>●</span>
-                <strong style={{ color: "var(--fg)" }}>{task.title}</strong>
-            </div>
-
-            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                {task.status && (
-                    <span
-                        className={`status-pill status-${task.status.replace("-", "")}`}
-                    >
-                        {task.status}
-                    </span>
-                )}
-            </div>
-
-            {/* Bottom Source Handle: Subtask connection (Connects to a child task's Top) */}
-            <Handle
-                type="source"
-                position={Position.Bottom}
-                id="child"
-                style={{ background: "var(--accent)" }}
-            />
-
-            {/* Right Source Handle: Dependent connection (Connects to a dependent task's Left) */}
-            <Handle
-                type="source"
-                position={Position.Right}
-                id="dependent"
-                style={{ background: "#d9866b" }}
-            />
-        </div>
-    );
-};
+import { TaskNodeComponent } from "./TaskNode";
 
 const nodeTypes = {
     taskNode: TaskNodeComponent,
@@ -228,6 +151,49 @@ function TaskCanvasInner({ tasks, setTasks }: TaskCanvasProps) {
         [setTasks, isValidConnection],
     );
 
+    const onNodesDelete = useCallback(
+        (deletedNodes: Node[]) => {
+            const deletedNodeIds = new Set(deletedNodes.map((n) => n.id));
+            setTasks((prev) =>
+                prev.map((t) =>
+                    deletedNodeIds.has(t.id) ? { ...t, onCanvas: false } : t
+                )
+            );
+        },
+        [setTasks]
+    );
+
+    const onEdgesDelete = useCallback(
+        (deletedEdges: Edge[]) => {
+            setTasks((prev) => {
+                let updated = [...prev];
+                for (const edge of deletedEdges) {
+                    if (edge.targetHandle === "parent" && edge.sourceHandle === "child") {
+                        // The connection from parent to this child was removed
+                        updated = updated.map((t) =>
+                            t.id === edge.target ? { ...t, parent_task: null } : t
+                        );
+                    }
+                    if (edge.targetHandle === "dependency" && edge.sourceHandle === "dependent") {
+                        // The dependency was removed
+                        updated = updated.map((t) =>
+                            t.id === edge.target
+                                ? {
+                                      ...t,
+                                      dependencies: (t.dependencies || []).filter(
+                                          (dep) => dep !== edge.source
+                                      ),
+                                  }
+                                : t
+                        );
+                    }
+                }
+                return updated;
+            });
+        },
+        [setTasks]
+    );
+
     const onDoubleClick = useCallback(
         (e: React.MouseEvent) => {
             if (!(e.target instanceof HTMLElement)) return;
@@ -276,6 +242,8 @@ function TaskCanvasInner({ tasks, setTasks }: TaskCanvasProps) {
                 nodes={nodes}
                 edges={edges}
                 onNodesChange={onNodesChange}
+                onNodesDelete={onNodesDelete}
+                onEdgesDelete={onEdgesDelete}
                 onConnect={onConnect}
                 isValidConnection={isValidConnection}
                 nodeTypes={nodeTypes}

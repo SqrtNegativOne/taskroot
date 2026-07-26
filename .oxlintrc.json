@@ -15,7 +15,7 @@
     "jsx-a11y/no-autofocus": "off",
     "max-depth": ["warn", 4],
     "max-params": ["warn", 4],
-    "max-lines-per-function": ["warn", 50],
+    "max-lines-per-function": ["warn", 50], // TODO: Change to 100 after refactoring
     "max-classes-per-file": ["warn", 1],
     "max-statements": ["warn", 20],
     "complexity": ["warn", 15],

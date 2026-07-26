@@ -1,4 +1,3 @@
-import React from "react";
 import { MONTHS, DOW_SHORT, addDays } from "../../../core/store/data";
 
 interface TimelineHeaderProps {

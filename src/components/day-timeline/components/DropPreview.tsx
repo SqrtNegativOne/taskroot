@@ -1,4 +1,3 @@
-import React from "react";
 import { PX_PER_MIN } from "../types";
 import { hhmmShort } from "../../../core/store/data";
 import type { DragStateTarget } from "../types";

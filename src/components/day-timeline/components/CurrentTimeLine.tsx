@@ -1,4 +1,3 @@
-import React from "react";
 import { PX_PER_MIN } from "../types";
 import { PAD2 } from "../../../core/store/data";
 import { useCurrentTime } from "../hooks/useCurrentTime";

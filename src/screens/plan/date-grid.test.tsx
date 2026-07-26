@@ -1,3 +1,4 @@
+import type { HydratedEvent } from "../../core/domain/events";
 import "../../../vitest-setup.ts";
 
 import "@testing-library/jest-dom";
@@ -5,7 +6,6 @@ import { render, screen } from "@testing-library/react";
 import { expect, test } from "vitest";
 import { DateGrid } from "./date-grid";
 import { createMockAppEvent } from "../../core/utils/testUtils";
-import type { AppTask } from "../../core/domain/models";
 import { ymd } from "../../core/store/data";
 
 test("filters events by category correctly", () => {
@@ -13,7 +13,6 @@ test("filters events by category correctly", () => {
     const todayStr = ymd(today);
 
     // Fakes
-    const tasks: AppTask[] = [];
     const events = [
         createMockAppEvent({
             id: "e1",
@@ -54,14 +53,12 @@ test("filters events by category correctly", () => {
             setView={() => {}}
             anchor={today}
             setAnchor={() => {}}
-            events={events}
-            tasks={tasks}
+            events={events as unknown as HydratedEvent[]}
             filter={filter}
             sort="time"
             filterMenu={null}
             today={today}
             dragState={null}
-            onDropToDate={() => {}}
             onEventDragStart={() => {}}
             onAddEvent={() => {}}
         />
@@ -79,7 +76,6 @@ test("filters out events by category correctly using 'is not'", () => {
     const todayStr = ymd(today);
 
     // Fakes
-    const tasks: AppTask[] = [];
     const events = [
         createMockAppEvent({
             id: "e1",
@@ -111,14 +107,12 @@ test("filters out events by category correctly using 'is not'", () => {
             setView={() => {}}
             anchor={today}
             setAnchor={() => {}}
-            events={events}
-            tasks={tasks}
+            events={events as unknown as HydratedEvent[]}
             filter={filter}
             sort="time"
             filterMenu={null}
             today={today}
             dragState={null}
-            onDropToDate={() => {}}
             onEventDragStart={() => {}}
             onAddEvent={() => {}}
         />

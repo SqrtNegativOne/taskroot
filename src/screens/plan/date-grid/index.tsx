@@ -1,3 +1,4 @@
+import React from "react";
 import { useMemo } from "react";
 import {
     ymd,
@@ -13,6 +14,7 @@ import { CalendarHeader } from "./calendar-header";
 import { DayCell } from "./day-cell";
 import { filterEvents, sortEvents } from "../../../core/domain/filters";
 import type { HydratedEvent } from "../../../core/domain/events";
+import type { AppFilter } from "../../../core/domain/models";
 
 export function DateGrid({
     view,
@@ -25,7 +27,7 @@ export function DateGrid({
     filterMenu,
     today,
     dragState,
-    onDropToDate,
+
     onEventDragStart,
     onAddEvent,
 }: {
@@ -34,14 +36,13 @@ export function DateGrid({
     anchor: Date;
     setAnchor: (d: Date) => void;
     events: HydratedEvent[];
-    filter: unknown;
-    sort: unknown;
-    filterMenu: unknown;
+    filter: AppFilter[];
+    sort: string;
+    filterMenu: React.ReactNode;
     today: Date;
-    dragState: unknown;
-    onDropToDate: unknown;
-    onEventDragStart: unknown;
-    onAddEvent: unknown;
+    dragState: { target?: { kind: string; date: string }; event?: { id: string } } | null;
+    onEventDragStart?: (e: React.PointerEvent<HTMLDivElement>, ev: HydratedEvent, task: unknown) => void;
+    onAddEvent?: (date: Date) => void;
 }) {
     const isWeek = view === "week" || view === "1 week";
     const is3Weeks = view === "3 weeks";
@@ -104,7 +105,6 @@ export function DateGrid({
                             })}
                             isWeek={isStrip}
                             dragState={dragState}
-                            onDropToDate={onDropToDate}
                             onEventDragStart={onEventDragStart}
                             onAddEvent={onAddEvent}
                         />

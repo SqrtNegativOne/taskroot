@@ -22,7 +22,8 @@ function getMiniTrackerContainerStyle(currentOpacity: number, showBorder: boolea
         fontFamily: "'Atkinson Hyperlegible Next', monospace",
         fontSize: "16px",
         userSelect: "none",
-        WebkitAppRegion: "drag" as any, // allows dragging the window
+        // @ts-expect-error valid electron property
+        WebkitAppRegion: "drag", // allows dragging the window
         cursor: "default",
         padding: "16px",
         boxSizing: "border-box",

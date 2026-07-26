@@ -1,7 +1,8 @@
 import React from "react";
+
 import type { AppEvent, AppTask } from "../../core/domain/models";
 import { useCalendars } from "../../core/store/hooks";
-import { TitleInput, DescriptionInput } from "./inspector-shared";
+import { TitleInput, DescriptionInput } from "../inputs";
 import { TaskInspector } from "./inspector-task";
 import { EventInspector } from "./inspector-event";
 import "./inspector.css";

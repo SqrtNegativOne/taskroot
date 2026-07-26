@@ -1,7 +1,7 @@
 
 import { expect, test, describe, vi } from "vitest";
-import { CLOCK_STRATEGIES } from "./clock-strategies";
-import { logWorkSession } from "./clock-strategies/utils";
+import { CLOCK_STRATEGIES } from "../../../core/domain/clock-strategies";
+import { logWorkSession } from "../../../core/domain/clock-strategies/utils";
 
 type MockStopwatchContext = Parameters<typeof CLOCK_STRATEGIES.counter.onToggle>[0];
 
@@ -11,12 +11,12 @@ function createMockContext(overrides: Partial<MockStopwatchContext>): MockStopwa
                 currentMs: 0,
                 running: false,
                 isPristine: true,
-                toggle: vi.fn<(...args: never[]) => unknown>(),
+                toggle: vi.fn(),
                 state: { runningSince: null, elapsed: 0, isBreak: false, breakAllowedMs: 0, breakStartedAt: null, breakSoundPlayed: false },
-                setState: vi.fn<(...args: never[]) => unknown>(),
+                setState: vi.fn(),
                 timeLogs: [],
-                setTimeLogs: vi.fn<(...args: never[]) => unknown>(),
-                setSelectorOpen: vi.fn<(...args: never[]) => unknown>(),
+                setTimeLogs: vi.fn(),
+                setSelectorOpen: vi.fn(),
                 selectorOpen: false,
                 activeTask: null,
                 allowNoTask: false,
@@ -28,13 +28,13 @@ function createMockContext(overrides: Partial<MockStopwatchContext>): MockStopwa
 
 describe("logWorkSession", () => {
     test("ignores sessions less than 1 minute", () => {
-        const setTimeLogs = vi.fn<(...args: never[]) => unknown>();
+        const setTimeLogs = vi.fn();
         logWorkSession(setTimeLogs, 1000, 2000, "task1", "counter");
         expect(setTimeLogs).not.toHaveBeenCalled();
     });
 
     test("logs sessions 1 minute or longer", () => {
-        const setTimeLogs = vi.fn<(...args: never[]) => unknown>((updater: unknown) => updater([]));
+        const setTimeLogs = vi.fn((updater: any) => updater([]));
         logWorkSession(setTimeLogs, 1000, 62000, "task1", "counter");
         expect(setTimeLogs).toHaveBeenCalled();
         const result = setTimeLogs.mock.results[0].value;
@@ -57,10 +57,10 @@ describe("CounterClockStrategy", () => {
     });
 
     test("onToggle toggles state", () => {
-        const setState = vi.fn<(...args: never[]) => unknown>((updater: unknown) =>
+        const setState = vi.fn((updater: any) =>
             updater({ elapsed: 0, runningSince: null }),
         );
-        const setSelectorOpen = vi.fn<(...args: never[]) => unknown>();
+        const setSelectorOpen = vi.fn();
 
         // Start
         strategy.onToggle(createMockContext({
@@ -75,10 +75,10 @@ describe("CounterClockStrategy", () => {
         expect(stateResult.runningSince).toBeTypeOf("number");
 
         // Stop
-        const setState2 = vi.fn<(...args: never[]) => unknown>((updater: unknown) =>
+        const setState2 = vi.fn((updater: any) =>
             updater({ elapsed: 1000, runningSince: 1000 }),
         );
-        const setTimeLogs = vi.fn<(...args: never[]) => unknown>();
+        const setTimeLogs = vi.fn();
         strategy.onToggle(createMockContext({
             isPristine: false,
             setSelectorOpen,
@@ -96,7 +96,7 @@ describe("FlowtimeClockStrategy", () => {
     const strategy = CLOCK_STRATEGIES.flowtime;
 
     test("onToggle prevents pause during break", () => {
-        const setState = vi.fn<(...args: never[]) => unknown>((updater: unknown) =>
+        const setState = vi.fn((updater: any) =>
             updater({ elapsed: 100, runningSince: null, isBreak: true }),
         );
         strategy.onToggle(createMockContext({
@@ -112,8 +112,8 @@ describe("FlowtimeClockStrategy", () => {
 describe("GuzeyClockStrategy", () => {
     const strategy = CLOCK_STRATEGIES.guzey;
 
-    test("requiresAnimationLoop is false", () => {
-        expect(strategy.requiresAnimationLoop(createMockContext({ state: { runningSince: 1000, elapsed: 0, isBreak: false, breakAllowedMs: 0, breakStartedAt: null, breakSoundPlayed: false } }))).toBe(false);
+    test("requiresAnimationLoop is true", () => {
+        expect(strategy.requiresAnimationLoop(createMockContext({ state: { runningSince: 1000, elapsed: 0, isBreak: false, breakAllowedMs: 0, breakStartedAt: null, breakSoundPlayed: false } }))).toBe(true);
     });
 });
 

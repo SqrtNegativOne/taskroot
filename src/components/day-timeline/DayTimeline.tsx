@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import { ymd, sameDay } from "../../core/store/data";
 import type { HydratedEvent } from "../../core/domain/events";
 import { PX_PER_MIN } from "./types";

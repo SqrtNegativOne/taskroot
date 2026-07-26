@@ -4,8 +4,6 @@ import {
     MiniMap,
     Controls,
     Background,
-    Handle,
-    Position,
     useReactFlow,
     ReactFlowProvider,
 } from "@xyflow/react";

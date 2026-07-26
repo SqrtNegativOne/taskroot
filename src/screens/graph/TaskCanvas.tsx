@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import {
     ReactFlow,
     MiniMap,
@@ -58,18 +58,18 @@ function TaskCanvasInner({ tasks, setTasks }: TaskCanvasProps) {
                 });
             }
 
-            if (t.dependencies) {
-                for (const depId of t.dependencies) {
-                    if (canvasTasks.some((ct) => ct.id === depId)) {
-                        newEdges.push({
-                            id: `e-${depId}-dependent-${t.id}`,
-                            source: depId,
-                            sourceHandle: "dependent",
-                            target: t.id,
-                            targetHandle: "dependency",
-                            style: { stroke: "#d9866b" },
-                        });
-                    }
+            if (!t.dependencies) continue;
+
+            for (const depId of t.dependencies) {
+                if (canvasTasks.some((ct) => ct.id === depId)) {
+                    newEdges.push({
+                        id: `e-${depId}-dependent-${t.id}`,
+                        source: depId,
+                        sourceHandle: "dependent",
+                        target: t.id,
+                        targetHandle: "dependency",
+                        style: { stroke: "#d9866b" },
+                    });
                 }
             }
         }

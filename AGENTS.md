@@ -55,13 +55,14 @@ Taskroot is a web-based and desktop task management app focusing on planning, ex
   - Never use `as` type assertions unless absolutely necessary. If you find yourself needing to use `as`, consider refactoring the code to avoid it. If you must use `as`, you must include a comment in the code before it explaining why it is necessary. `as const` is fine obviously.
   - Never use `// @ts-ignore` or `// @ts-expect-error` or similar on any file or line.
   - Prefer compile-time type inference over runtime type assertions or checks (e.g., `typeof`).
-  - Use TypeScript Template Literal Types instead of string unions where possible.
+  - Use TypeScript Template Literal Types instead of string unions wherever possible.
   - Use optional chaining operators (`?.`) over non-null assertions (`!.`).
 - Write small, nice code. For example:
   - Refactor files if they exceed 250 LOC.
     - If a test file exceeds 250 LOC, obviously don't split it up into multiple files. Instead, refactor the code under test to be smaller and more modular, and then write smaller test files for each module.
   - Refactor classes if they exceed 10 methods.
   - Refactor any bit of code if it exceeds 4 levels of indentation.
+    - Use extraction (creating new, smaller functions) and inversion of control (early returns).
   - The ideal number of arguments for a function is zero (niladic). Next comes one (monadic), followed closely by two (dyadic). Three arguments (triadic) should be avoided where possible. More than three (polyadic) requires very special justification—and then shouldn’t be used anyway.
 - Don't name files or folders with generic names like `utils` or `helpers`. That could literally mean anything!
 - After implementing any changes, run `bun oxlint`, and fix all errors and warnings. If you are unsure about a warning, ask for clarification in the code review.

@@ -1,16 +1,13 @@
 import { TitleBar } from "../../components/shell";
-import { TODAY } from "../../core/store/data";
 import { useTasks, useTaskQuery, useTaskFilters, useTaskSort } from "../../core/store/hooks";
 import { TaskListPane } from "../../components/tasklist";
 import { SplitPane } from "../../components/split-pane";
 import { TaskCanvas } from "./TaskCanvas";
+import type { AppTask } from "../../core/domain/models";
 
 export function GraphScreen() {
-    // 1. Get raw tasks from the store
     const [tasks, setTasks] = useTasks();
 
-    // 2. Get active UI filters/sort/query
-    // (This ensures the graph respects whatever the user set on the Plan Screen)
     const [query, setQuery] = useTaskQuery();
     const [filters, setFilters] = useTaskFilters();
     const [sort, setSort] = useTaskSort();
@@ -19,7 +16,7 @@ export function GraphScreen() {
         let xs = tasks;
         for (const f of filters) {
             if (!f.column || (!f.value && f.value !== 0)) continue;
-            xs = xs.filter((t: import("../../core/domain/models").AppTask) => {
+            xs = xs.filter((t: AppTask) => {
                 let match = false;
                 const values = Array.isArray(f.value) ? f.value : [f.value];
                 if (values.length === 0) return true;
@@ -35,28 +32,28 @@ export function GraphScreen() {
         if (query.trim()) {
             const q = query.toLowerCase();
             xs = xs.filter(
-                (t: import("../../core/domain/models").AppTask) =>
+                (t: AppTask) =>
                     t.title.toLowerCase().includes(q) ||
                     (t.tags || []).some((tag) => tag.toLowerCase().includes(q)),
             );
         }
 
-        const idsToMove = new Set(xs.map((t: import("../../core/domain/models").AppTask) => t.id));
+        const idsToMove = new Set(xs.map((t: AppTask) => t.id));
 
-        setTasks((prev: unknown) => {
+        setTasks((prev: AppTask[]) => {
             let layoutIndex = 0;
-            return prev.map((t: import("../../core/domain/models").AppTask) => {
-                if (idsToMove.has(t.id) && !t.onCanvas) {
-                    const newT = {
-                        ...t,
-                        onCanvas: true,
-                        canvasX: (layoutIndex % 4) * 250,
-                        canvasY: Math.floor(layoutIndex / 4) * 150,
-                    };
-                    layoutIndex++;
-                    return newT;
-                }
-                return t;
+            return prev.map((t: AppTask) => {
+                if (!idsToMove.has(t.id) || t.onCanvas)
+                    return t;
+
+                const newT = {
+                    ...t,
+                    onCanvas: true,
+                    canvasX: (layoutIndex % 4) * 250,
+                    canvasY: Math.floor(layoutIndex / 4) * 150,
+                };
+                layoutIndex++;
+                return newT;
             });
         });
     };
@@ -89,7 +86,7 @@ export function GraphScreen() {
 
     return (
         <div className="app">
-            <TitleBar current="graph" today={TODAY} />
+            <TitleBar current="graph" />
             <main className="main">
                 <SplitPane
                     direction="horizontal"
@@ -107,9 +104,9 @@ export function GraphScreen() {
                         query={query}
                         setQuery={setQuery}
                         onDragStart={() => {}}
-                        onAddTask={(defaults: Partial<import('../../core/domain/models').AppTask> = {}) => {
+                        onAddTask={(defaults: Partial<AppTask> = {}) => {
                             const id = `t${Date.now()}`;
-                            setTasks((ts: import("../../core/domain/models").AppTask[]) => [
+                            setTasks((ts: AppTask[]) => [
                                 {
                                     id,
                                     title: "New Task",
@@ -127,7 +124,7 @@ export function GraphScreen() {
                             ]);
                         }}
                         onDeleteTask={(id: string) =>
-                            setTasks((ts: import("../../core/domain/models").AppTask[]) => ts.filter((t) => t.id !== id))
+                            setTasks((ts: AppTask[]) => ts.filter((t) => t.id !== id))
                         }
                         footer={footer}
                     />

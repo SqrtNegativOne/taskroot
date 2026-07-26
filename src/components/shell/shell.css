@@ -1,0 +1,75 @@
+/* Sync Icon Animation */
+@keyframes icon-spin {
+    to { transform: translateY(1px) rotate(360deg); }
+}
+
+.sync-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sync-icon {
+    display: block;
+    transform: translateY(1px);
+}
+
+.sync-icon.is-syncing {
+    animation: icon-spin 1s linear infinite;
+}
+
+/* Dropdown Menu */
+.more-screens-dropdown {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.dropdown-btn {
+    padding: 0 4px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    display: flex;
+}
+
+@keyframes dropdownFadeIn {
+    from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 0;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    min-width: 120px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    animation: dropdownFadeIn 150ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    transform-origin: top left;
+}
+
+.dd-item {
+    background: transparent;
+    border: none;
+    padding: 8px 16px;
+    text-align: left;
+    cursor: pointer;
+    color: var(--fg-dim);
+    transition: color 80ms, background-color 100ms;
+}
+
+.dd-item:hover {
+    background-color: var(--bg-app);
+    color: var(--fg);
+}
+
+.dd-item .stage-name {
+    text-transform: lowercase;
+}

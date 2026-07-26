@@ -5,3 +5,6 @@ export * from "./ToggleSwitch";
 export * from "./KeybindingInput";
 export * from "./SelectInput";
 export * from "./MultiSelect";
+export * from "./TitleInput";
+export * from "./TagsInput";
+export * from "./DescriptionInput";

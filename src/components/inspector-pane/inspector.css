@@ -136,3 +136,59 @@
 .inspector-actions button:hover {
   background: var(--p0-hover);
 }
+
+.inspector-field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.inspector-field-row {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    padding: 8px 0;
+}
+
+.inspector-toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    color: inherit;
+    padding: 0;
+    font: inherit;
+}
+
+.inspector-toggle-label:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.inspector-toggle-text {
+    font-size: 0.9em;
+}
+
+.inspector-time-controls {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.inspector-time-column {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+}
+
+.inspector-time-arrow {
+    color: var(--fg-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

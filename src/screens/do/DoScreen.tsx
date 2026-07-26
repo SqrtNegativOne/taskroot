@@ -5,7 +5,7 @@ import { Collapsible } from "../../components/collapsible";
 import { DistractionLog } from "./distraction-log";
 import { Kanban } from "./kanban";
 import { TitleBar } from "../../components/shell";
-import { Stopwatch } from "./stopwatch";
+import { Stopwatch } from "./stopwatch/Stopwatch";
 import { useDistractions, useTasks, useNotes, useTips } from "../../core/store/hooks";
 
 import { TipsList, NotesList } from "./tips-notes";

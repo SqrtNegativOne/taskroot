@@ -1,8 +1,7 @@
-import React from "react";
-import type { StopwatchContext } from "./types";
+import type { StopwatchContext, ClockDisplayData } from "./types";
 
 export abstract class ClockStrategy {
-    abstract renderDisplay(context: StopwatchContext): React.ReactNode;
+    abstract getDisplayData(context: StopwatchContext): ClockDisplayData;
     abstract requiresAnimationLoop(context: StopwatchContext): boolean;
     abstract onToggle(context: StopwatchContext): void;
     abstract onTaskSelected(context: StopwatchContext): void;

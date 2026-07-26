@@ -1,6 +1,14 @@
 import type { AppTask, AppEvent } from "../../../core/domain/models";
 import type { AppSettings } from "../../../core/store/settingsSchema";
 
+export interface ClockDisplayData {
+    primaryText: string;
+    secondaryText?: string;
+    color?: string;
+    showPlayIcon?: boolean;
+    isBreak?: boolean;
+}
+
 export interface StopwatchState {
     elapsed: number;
     runningSince: number | null;

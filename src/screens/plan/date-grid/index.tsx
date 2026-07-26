@@ -28,7 +28,21 @@ export function DateGrid({
     onDropToDate,
     onEventDragStart,
     onAddEvent,
-}: any) {
+}: {
+    view: string;
+    setView: (v: string) => void;
+    anchor: Date;
+    setAnchor: (d: Date) => void;
+    events: HydratedEvent[];
+    filter: unknown;
+    sort: unknown;
+    filterMenu: unknown;
+    today: Date;
+    dragState: unknown;
+    onDropToDate: unknown;
+    onEventDragStart: unknown;
+    onAddEvent: unknown;
+}) {
     const isWeek = view === "week" || view === "1 week";
     const is3Weeks = view === "3 weeks";
     const isStrip = isWeek || is3Weeks;
@@ -101,7 +115,7 @@ export function DateGrid({
     );
 }
 
-function buildMonthOrWeekCells(anchor: any, view: any) {
+function buildMonthOrWeekCells(anchor: Date, view: string) {
     if (view === "1 week" || view === "week") {
         const start = startOfWeek(anchor);
         return Array.from({ length: 7 }, (_, i) => ({
@@ -126,7 +140,7 @@ function buildMonthOrWeekCells(anchor: any, view: any) {
     return cells;
 }
 
-function weekRangeLabel(a: any, b: any) {
+function weekRangeLabel(a: Date, b: Date) {
     const prefix = `Week #${getWeekNumber(a)}/52 `;
     if (a.getMonth() === b.getMonth()) {
         return `${prefix}${MONTHS_LONG[a.getMonth()]} ${a.getDate()}–${b.getDate()}, ${a.getFullYear()}`;

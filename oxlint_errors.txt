@@ -1,0 +1,138 @@
+
+  x vitest(no-conditional-expect): Unexpected conditional expect
+    ,-[src/core/store/settingsSchema/settingsSchema.test.ts:19:21]
+ 18 |                 if (s.min !== undefined && s.max !== undefined) {
+ 19 |                     expect(s.max).toBeGreaterThanOrEqual(s.min);
+    :                     ^^^^^^
+ 20 |                 }
+    `----
+  help: Avoid calling `expect` conditionally
+
+  x eslint(no-unused-vars): Type 'ReactNode' is imported but never used.
+   ,-[src/core/store/settingsSchema/settingsSchema.tsx:1:15]
+ 1 | import type { ReactNode } from "react";
+   :               ^^^^|^^^^
+   :                   `-- 'ReactNode' is imported here
+ 2 | import {
+   `----
+  help: Consider removing this import.
+
+  x typescript(no-explicit-any): Unexpected `any`. Specify a different type.
+    ,-[src/screens/plan/date-grid/calendar-header.tsx:12:4]
+ 11 |     filterMenu
+ 12 | }: any) {
+    :    ^^^
+ 13 |     const [showViewMenu, setShowViewMenu] = useState(false);
+    `----
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  x typescript(no-explicit-any): Unexpected `any`. Specify a different type.
+    ,-[src/screens/plan/date-grid/calendar-header.tsx:26:40]
+ 25 |     useEffect(() => {
+ 26 |         function handleClickOutside(e: any) {
+    :                                        ^^^
+ 27 |             if (viewMenuRef.current && !(viewMenuRef.current as any).contains(e.target)) {
+    `----
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  x typescript(consistent-type-assertions): Do not use any type assertions.
+    ,-[src/screens/plan/date-grid/calendar-header.tsx:27:42]
+ 26 |         function handleClickOutside(e: any) {
+ 27 |             if (viewMenuRef.current && !(viewMenuRef.current as any).contains(e.target)) {
+    :                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 28 |                 if (showViewMenu && !closingViewMenu) closeViewMenu();
+    `----
+  help: Remove the type assertion and use a type annotation instead. For example, change `const x = value as Type` to `const x: Type = value`. Alternatively, use the `satisfies` operator: `const x = value satisfies Type`.
+  note: Type assertions bypass TypeScript's type checking and can hide type errors. Using type annotations or the `satisfies` operator provides better type safety while still allowing TypeScript to infer types where appropriate.
+
+  x typescript(no-explicit-any): Unexpected `any`. Specify a different type.
+    ,-[src/screens/plan/date-grid/calendar-header.tsx:27:65]
+ 26 |         function handleClickOutside(e: any) {
+ 27 |             if (viewMenuRef.current && !(viewMenuRef.current as any).contains(e.target)) {
+    :                                                                 ^^^
+ 28 |                 if (showViewMenu && !closingViewMenu) closeViewMenu();
+    `----
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  x typescript(no-explicit-any): Unexpected `any`. Specify a different type.
+    ,-[src/screens/plan/date-grid/day-cell.tsx:13:4]
+ 12 |     onAddEvent,
+ 13 | }: any) {
+    :    ^^^
+ 14 |     const ref = React.useRef(null);
+    `----
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  x typescript(no-explicit-any): Unexpected `any`. Specify a different type.
+    ,-[src/screens/plan/date-grid/day-cell.tsx:61:57]
+ 60 | 
+ 61 | function EventItem({ ev, dragState, onEventDragStart }: any) {
+    :                                                         ^^^
+ 62 |     const title = ev.title;
+    `----
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  x typescript(no-explicit-any): Unexpected `any`. Specify a different type.
+    ,-[src/screens/plan/date-grid/index.tsx:31:4]
+ 30 |     onAddEvent,
+ 31 | }: any) {
+    :    ^^^
+ 32 |     const isWeek = view === "week" || view === "1 week";
+    `----
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  x typescript(no-explicit-any): Unexpected `any`. Specify a different type.
+     ,-[src/screens/plan/date-grid/index.tsx:104:40]
+ 103 | 
+ 104 | function buildMonthOrWeekCells(anchor: any, view: any) {
+     :                                        ^^^
+ 105 |     if (view === "1 week" || view === "week") {
+     `----
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  x typescript(no-explicit-any): Unexpected `any`. Specify a different type.
+     ,-[src/screens/plan/date-grid/index.tsx:104:51]
+ 103 | 
+ 104 | function buildMonthOrWeekCells(anchor: any, view: any) {
+     :                                                   ^^^
+ 105 |     if (view === "1 week" || view === "week") {
+     `----
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  x typescript(no-explicit-any): Unexpected `any`. Specify a different type.
+     ,-[src/screens/plan/date-grid/index.tsx:129:28]
+ 128 | 
+ 129 | function weekRangeLabel(a: any, b: any) {
+     :                            ^^^
+ 130 |     const prefix = `Week #${getWeekNumber(a)}/52 `;
+     `----
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  x typescript(no-explicit-any): Unexpected `any`. Specify a different type.
+     ,-[src/screens/plan/date-grid/index.tsx:129:36]
+ 128 | 
+ 129 | function weekRangeLabel(a: any, b: any) {
+     :                                    ^^^
+ 130 |     const prefix = `Week #${getWeekNumber(a)}/52 `;
+     `----
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  x unicorn(consistent-function-scoping): Function `handleSleep` does not capture any variables from its parent scope
+    ,-[src/screens/wrap/WrapScreen.tsx:24:17]
+ 23 | 
+ 24 | export function WrapScreen() {
+    :                 ^^^^^|^^^^
+    :                      `-- Outer scope where this function is defined
+ 25 |     const [settings] = useSettings();
+    `----
+    ,-[src/screens/wrap/WrapScreen.tsx:53:11]
+ 52 | 
+ 53 |     const handleSleep = () => {
+    :           ^^^^^|^^^^^
+    :                `-- This function does not use any variables from the parent function
+ 54 |         if (window.electronAPI && window.electronAPI.shutdownPC) {
+    `----
+  help: Move `handleSleep` to the outer scope to avoid recreating it on every call.
+
+Found 109 warnings and 14 errors.
+Finished in 88ms on 137 files with 226 rules using 24 threads.

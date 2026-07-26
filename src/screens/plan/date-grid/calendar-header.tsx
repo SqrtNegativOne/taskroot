@@ -9,10 +9,18 @@ export function CalendarHeader({
     setAnchor,
     shift,
     filterMenu
-}: any) {
+}: {
+    titleLabel: string;
+    today: Date | number | string;
+    view: string;
+    setView: (view: string) => void;
+    setAnchor: (date: Date) => void;
+    shift: (n: number) => void;
+    filterMenu: unknown;
+}) {
     const [showViewMenu, setShowViewMenu] = useState(false);
     const [closingViewMenu, setClosingViewMenu] = useState(false);
-    const viewMenuRef = useRef(null);
+    const viewMenuRef = useRef<HTMLDivElement>(null);
 
     const closeViewMenu = () => {
         setClosingViewMenu(true);
@@ -23,8 +31,12 @@ export function CalendarHeader({
     };
 
     useEffect(() => {
-        function handleClickOutside(e: any) {
-            if (viewMenuRef.current && !(viewMenuRef.current as any).contains(e.target)) {
+        function handleClickOutside(e: PointerEvent) {
+            if (
+                e.target instanceof Node &&
+                viewMenuRef.current &&
+                !viewMenuRef.current.contains(e.target)
+            ) {
                 if (showViewMenu && !closingViewMenu) closeViewMenu();
             }
         }

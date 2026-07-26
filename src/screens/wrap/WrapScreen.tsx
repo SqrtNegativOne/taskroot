@@ -21,6 +21,14 @@ function calculateUntrackedTime(logEvents: HydratedEvent[], wake: number, sleep:
     return Math.max(0, totalDayTime - trackedTime);
 }
 
+const handleSleep = () => {
+    if (window.electronAPI && window.electronAPI.shutdownPC) {
+        window.electronAPI.shutdownPC();
+    } else {
+        alert("PC would shutdown now!");
+    }
+};
+
 export function WrapScreen() {
     const [settings] = useSettings();
     const [events] = useEvents();
@@ -49,14 +57,6 @@ export function WrapScreen() {
     const wake = settings.earliest_wake_time || 480;
     const sleep = settings.last_sleep_time || 1320;
     const untrackedTime = calculateUntrackedTime(logEvents, wake, sleep);
-
-    const handleSleep = () => {
-        if (window.electronAPI && window.electronAPI.shutdownPC) {
-            window.electronAPI.shutdownPC();
-        } else {
-            alert("PC would shutdown now!");
-        }
-    };
 
     return (
         <div className="app">

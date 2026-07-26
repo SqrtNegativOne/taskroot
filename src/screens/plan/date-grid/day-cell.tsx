@@ -10,7 +10,15 @@ export function DayCell({
     dragState,
     onEventDragStart,
     onAddEvent,
-}: any) {
+}: {
+    cell: { date: Date; outOfMonth: boolean };
+    today: Date;
+    events: HydratedEvent[];
+    isWeek: boolean;
+    dragState: { target?: { kind: string; date: string }; event?: { id: string } } | null;
+    onEventDragStart?: (e: React.PointerEvent<HTMLDivElement>, ev: HydratedEvent, task: unknown) => void;
+    onAddEvent?: (date: Date) => void;
+}) {
     const ref = React.useRef(null);
     const isToday = sameDay(cell.date, today);
     const isPast = cell.date < today && !isToday;
@@ -58,7 +66,15 @@ export function DayCell({
     );
 }
 
-function EventItem({ ev, dragState, onEventDragStart }: any) {
+function EventItem({
+    ev,
+    dragState,
+    onEventDragStart,
+}: {
+    ev: HydratedEvent;
+    dragState: { event?: { id: string } } | null;
+    onEventDragStart?: (e: React.PointerEvent<HTMLDivElement>, ev: HydratedEvent, task: unknown) => void;
+}) {
     const title = ev.title;
     const pri = ev.priority;
     const isDone = ev.isDone;

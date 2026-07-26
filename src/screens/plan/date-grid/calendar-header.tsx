@@ -1,3 +1,4 @@
+import React from "react";
 import { useState, useEffect, useRef } from "react";
 import { Icon } from "../../../components/icon";
 
@@ -16,7 +17,7 @@ export function CalendarHeader({
     setView: (view: string) => void;
     setAnchor: (date: Date) => void;
     shift: (n: number) => void;
-    filterMenu: unknown;
+    filterMenu: React.ReactNode;
 }) {
     const [showViewMenu, setShowViewMenu] = useState(false);
     const [closingViewMenu, setClosingViewMenu] = useState(false);

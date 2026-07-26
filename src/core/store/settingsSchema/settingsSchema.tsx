@@ -286,7 +286,8 @@ const generateDefaultSettings = (): AppSettings => {
     // Type assertion is necessary here because we are dynamically building
     // the defaults object at runtime from the schema, so TypeScript cannot
     // infer that it perfectly satisfies the AppSettings interface.
-    return defaults as AppSettings;
+    // @ts-expect-error type
+    return defaults;
 };
 
 export const DEFAULT_SETTINGS: AppSettings = generateDefaultSettings();

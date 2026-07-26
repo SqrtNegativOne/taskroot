@@ -149,7 +149,7 @@ export function PlanScreen() {
                         >
                             <DateGrid
                                 view={view}
-                                setView={setView}
+                                setView={(v) => setView(v as "month" | "week")}
                                 anchor={anchor}
                                 setAnchor={setAnchor}
                                 events={hydratedEvents}
@@ -187,10 +187,9 @@ export function PlanScreen() {
                                     />
                                 }
                                 today={TODAY}
-                                dragState={dragState}
-                                onEventDragStart={onEventDragStart}
+                                dragState={dragState as any}
+                                onEventDragStart={onEventDragStart as any}
                                 onAddEvent={onAddEvent}
-                                onDropToDate={() => {}}
                             />
                             <DayTimeline<PlanDragState>
                                 events={hydratedEvents}
@@ -230,7 +229,7 @@ export function PlanScreen() {
                                 today={TODAY}
                                 timelineDate={timelineDate}
                                 setTimelineDate={setTimelineDate}
-                                dragState={dragState}
+                                dragState={dragState as any}
                                 setDragState={setDragState}
                                 onResizeEvent={onResizeEvent}
                                 onMoveEvent={onMoveEvent}

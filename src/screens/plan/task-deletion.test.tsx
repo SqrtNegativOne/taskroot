@@ -1,6 +1,6 @@
 
 import "../../../vitest-setup.ts";
-import React from "react";
+
 import "@testing-library/jest-dom";
 import { MemoryRouter } from "react-router-dom";
 import { render, fireEvent, waitFor } from "@testing-library/react";
@@ -47,7 +47,7 @@ beforeAll(() => {
 beforeEach(() => {
     localStorage.clear();
     // clear jsdom prompt/confirm
-    window.confirm = vi.fn<any>(() => true);
+    window.confirm = vi.fn<(...args: any[]) => any>(() => true);
 });
 
 test("deleting a task also deletes its associated events", async () => {

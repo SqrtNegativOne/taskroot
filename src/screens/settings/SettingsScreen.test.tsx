@@ -12,8 +12,8 @@ import {
 // Mock dependencies
 vi.mock("../../core/store/api", () => ({
     api: {
-        clearAllData: vi.fn<any>(),
-        subscribeToStore: vi.fn<any>()
+        clearAllData: vi.fn<(...args: any[]) => any>(),
+        subscribeToStore: vi.fn<(...args: any[]) => any>()
             .mockImplementation((_key: unknown, _init: unknown, _onData: unknown, onReady: () => void) => {
                 onReady();
                 return () => {};

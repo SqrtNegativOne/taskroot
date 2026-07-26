@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTasks, useStopwatch, useTimeLogs, useEvents, useSettings } from "../../../core/store/hooks";
 import type { AppTask } from "../../../core/domain/models";
 import { CLOCK_STRATEGIES } from "../../../core/domain/clock-strategies";
@@ -105,7 +105,7 @@ export function Stopwatch({ onBreakStatusChange }: { onBreakStatusChange?: (stat
             setTick((t) => t + 1);
             raf = requestAnimationFrame(loop);
         };
-        if (strategy.requiresAnimationLoop({ state })) {
+        if (strategy.requiresAnimationLoop({ state } as any)) {
             raf = requestAnimationFrame(loop);
         }
         return () => {
@@ -134,7 +134,7 @@ export function Stopwatch({ onBreakStatusChange }: { onBreakStatusChange?: (stat
     const running = state.runningSince != null;
     const currentMs =
         state.elapsed +
-        (running && !state.isBreak ? Date.now() - state.runningSince : 0);
+        (running && !state.isBreak ? Date.now() - (state.runningSince || 0) : 0);
     const isPristine = currentMs === 0 && !running && !state.isBreak;
     const activeTask = tasks?.find((t: AppTask) => t.status === "doing");
     const allowNoTask = !!settings.allowStopwatchWithoutTask;
@@ -147,8 +147,8 @@ export function Stopwatch({ onBreakStatusChange }: { onBreakStatusChange?: (stat
         running,
         isPristine,
         currentMs,
-        timeLogs,
-        setTimeLogs,
+        timeLogs: timeLogs as any,
+        setTimeLogs: setTimeLogs as any,
         activeTask,
         allowNoTask,
         settings,
@@ -161,7 +161,7 @@ export function Stopwatch({ onBreakStatusChange }: { onBreakStatusChange?: (stat
         actionsRef.current = { toggle, reset, startBreak };
     });
 
-    const displayData = strategy.getDisplayData({ currentMs, running, isPristine, toggle, state });
+    const displayData = strategy.getDisplayData({ currentMs, running, isPristine, toggle, state } as any);
     useEffect(() => {
         if (onBreakStatusChange && displayData.isBreak !== undefined) {
             onBreakStatusChange(displayData.isBreak);
@@ -180,7 +180,7 @@ export function Stopwatch({ onBreakStatusChange }: { onBreakStatusChange?: (stat
                         isPristine,
                         toggle,
                         state,
-                    });
+                    } as any);
 
                     return (
                         <button

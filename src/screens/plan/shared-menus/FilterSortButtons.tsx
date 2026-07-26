@@ -1,8 +1,11 @@
-import { useState, useEffect, useRef } from "react";
-import { Icon } from "../../../components/icon";
+import { useEffect, useRef } from "react";
 import { useFilterActions } from "./useFilterActions";
-import { SelectInput, MultiSelect } from "../../../components/inputs";
-import type { FilterSortButtonsProps, Filter, Column, SortOption } from "./types";
+import { FilterMenu } from "./FilterMenu";
+import { SortMenu } from "./SortMenu";
+import { MenuTriggerButton } from "./MenuTriggerButton";
+import { useAnimatedMenu } from "./useAnimatedMenu";
+import type { FilterSortButtonsProps } from "./types";
+import "./shared-menus.css";
 
 export function FilterSortButtons({
     filters,
@@ -14,119 +17,73 @@ export function FilterSortButtons({
     sortOptions,
     align = "left",
 }: FilterSortButtonsProps) {
-    const [showFilters, setShowFilters] = useState(false);
-    const [closingFilters, setClosingFilters] = useState(false);
-    const [showSort, setShowSort] = useState(false);
-    const [closingSort, setClosingSort] = useState(false);
+    const filterMenu = useAnimatedMenu();
+    const sortMenu = useAnimatedMenu();
     const ref = useRef<HTMLDivElement>(null);
-
-    const closeFilters = () => {
-        setClosingFilters(true);
-        setTimeout(() => {
-            setShowFilters(false);
-            setClosingFilters(false);
-        }, 150);
-    };
-
-    const closeSort = () => {
-        setClosingSort(true);
-        setTimeout(() => {
-            setShowSort(false);
-            setClosingSort(false);
-        }, 150);
-    };
 
     useEffect(() => {
         function handleClickOutside(e: PointerEvent) {
             if (ref.current && !ref.current.contains(e.target instanceof Node ? e.target : null)) {
-                if (showFilters && !closingFilters) closeFilters();
-                if (showSort && !closingSort) closeSort();
+                if (filterMenu.isOpen && !filterMenu.isClosing) filterMenu.close();
+                if (sortMenu.isOpen && !sortMenu.isClosing) sortMenu.close();
             }
         }
         document.addEventListener("pointerdown", handleClickOutside);
-        return () =>
-            document.removeEventListener("pointerdown", handleClickOutside);
-    }, [showFilters, showSort, closingFilters, closingSort]);
+        return () => document.removeEventListener("pointerdown", handleClickOutside);
+    }, [
+        filterMenu.isOpen,
+        filterMenu.isClosing,
+        filterMenu.close,
+        sortMenu.isOpen,
+        sortMenu.isClosing,
+        sortMenu.close,
+    ]);
 
-    const { addFilter, updateFilter, removeFilter } = useFilterActions(filters, setFilters, columns, getValuesForColumn);
+    const { addFilter, updateFilter, removeFilter } = useFilterActions(
+        filters,
+        setFilters,
+        columns,
+        getValuesForColumn
+    );
 
-    const toggleFilters = () => {
-        if (showFilters) {
-            closeFilters();
+    const handleToggleFilters = () => {
+        if (filterMenu.isOpen) {
+            filterMenu.close();
         } else {
-            setShowFilters(true);
-            if (showSort) closeSort();
+            filterMenu.open();
+            if (sortMenu.isOpen) sortMenu.close();
         }
     };
 
-    const toggleSort = () => {
-        if (showSort) {
-            closeSort();
+    const handleToggleSort = () => {
+        if (sortMenu.isOpen) {
+            sortMenu.close();
         } else {
-            setShowSort(true);
-            if (showFilters) closeFilters();
+            sortMenu.open();
+            if (filterMenu.isOpen) filterMenu.close();
         }
     };
 
     return (
-        <div
-            style={{
-                position: "relative",
-                display: "flex",
-                gap: "8px",
-                alignItems: "center",
-            }}
-            ref={ref}
-        >
-            <button
-                onClick={toggleFilters}
-                style={{
-                    background:
-                        showFilters || filters.length > 0
-                            ? "var(--bg-surface)"
-                            : "transparent",
-                    border: "1px solid var(--border)",
-                    color: "var(--fg)",
-                    borderRadius: "4px",
-                    padding: "4px 6px",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "4px",
-                    cursor: "pointer",
-                }}
+        <div className="filter-sort-container" ref={ref}>
+            <MenuTriggerButton
+                isActive={filterMenu.isOpen || filters.length > 0}
+                onClick={handleToggleFilters}
+                icon="filter_list"
                 title="Filter"
-            >
-                <Icon name="filter_list" size={16} />
-                {filters.length > 0 && (
-                    <span style={{ fontSize: "0.8em", fontWeight: "bold" }}>
-                        {filters.length}
-                    </span>
-                )}
-            </button>
+                badgeCount={filters.length}
+            />
 
             {sortOptions && (
-                <button
-                    onClick={toggleSort}
-                    style={{
-                        background: showSort
-                            ? "var(--bg-surface)"
-                            : "transparent",
-                        border: "1px solid var(--border)",
-                        color: "var(--fg)",
-                        borderRadius: "4px",
-                        padding: "4px 6px",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "4px",
-                        cursor: "pointer",
-                    }}
+                <MenuTriggerButton
+                    isActive={sortMenu.isOpen}
+                    onClick={handleToggleSort}
+                    icon="swap_vert"
                     title="Sort"
-                >
-                    <Icon name="swap_vert" size={16} />
-                </button>
+                />
             )}
 
-            {showFilters && (
+            {filterMenu.isOpen && (
                 <FilterMenu
                     filters={filters}
                     columns={columns}
@@ -134,168 +91,20 @@ export function FilterSortButtons({
                     updateFilter={updateFilter}
                     removeFilter={removeFilter}
                     addFilter={addFilter}
-                    closingFilters={closingFilters}
+                    closingFilters={filterMenu.isClosing}
                     align={align}
                 />
             )}
 
-            {showSort && sortOptions && (
+            {sortMenu.isOpen && sortOptions && (
                 <SortMenu
                     sort={sort}
                     setSort={setSort}
                     sortOptions={sortOptions}
-                    closingSort={closingSort}
+                    closingSort={sortMenu.isClosing}
                     align={align}
                 />
             )}
-        </div>
-    );
-}
-
-interface FilterMenuProps {
-    filters: Filter[];
-    columns: Column[];
-    getValuesForColumn: (columnId: string) => string[];
-    updateFilter: (id: string, updates: Partial<Filter>) => void;
-    removeFilter: (id: string) => void;
-    addFilter: () => void;
-    closingFilters: boolean;
-    align?: "left" | "right";
-}
-
-function FilterMenu({ filters, columns, getValuesForColumn, updateFilter, removeFilter, addFilter, closingFilters, align }: FilterMenuProps) {
-    return (
-        <div
-            className={`floating-menu ${closingFilters ? "is-closing" : ""}`}
-            style={{
-                position: "absolute",
-                top: "calc(100% + 8px)",
-                left: align === "left" ? 0 : "auto",
-                right: align === "right" ? 0 : "auto",
-                zIndex: 1000,
-                display: "flex",
-                flexDirection: "column",
-                gap: "8px",
-                padding: "10px",
-                background: "var(--bg-surface)",
-                borderRadius: "6px",
-                border: "1px solid var(--border)",
-                boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
-                minWidth: "320px",
-            }}
-        >
-            {filters.map((f: Filter) => (
-                <div
-                    key={f.id}
-                    style={{
-                        display: "flex",
-                        gap: "6px",
-                        alignItems: "center",
-                    }}
-                >
-                    <SelectInput
-                        value={f.column}
-                        onChange={(val: string) => updateFilter(f.id || "", { column: val })}
-                        options={columns.map((c: Column) => ({ label: c.label, value: c.id }))}
-                        style={{ flex: 1 }}
-                    />
-                    <SelectInput
-                        value={f.operator}
-                        onChange={(val: string) => updateFilter(f.id || "", { operator: val })}
-                        options={[
-                            { label: "is", value: "is" },
-                            { label: "is not", value: "is not" }
-                        ]}
-                        style={{ width: "75px" }}
-                    />
-                    <MultiSelect 
-                        options={getValuesForColumn(f.column)}
-                        values={Array.isArray(f.value) ? f.value.map(String) : [String(f.value)]}
-                        onChange={(newValues) => updateFilter(f.id || "", { value: newValues })}
-                    />
-                    <button
-                        onClick={() => removeFilter(f.id || "")}
-                        style={{
-                            background: "transparent",
-                            border: "none",
-                            cursor: "pointer",
-                            padding: "4px",
-                            color: "var(--fg)",
-                            opacity: 0.6,
-                        }}
-                    >
-                        <Icon name="close" size={16} />
-                    </button>
-                </div>
-            ))}
-            <button
-                onClick={addFilter}
-                style={{
-                    background: "transparent",
-                    border: "none",
-                    color: "var(--fg)",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "4px",
-                    alignSelf: "flex-start",
-                    padding: "4px 4px",
-                    fontSize: "0.9em",
-                    opacity: 0.8,
-                }}
-            >
-                <Icon name="add" size={14} /> Add filter
-            </button>
-        </div>
-    );
-}
-
-interface SortMenuProps {
-    sort: string;
-    setSort: (sort: string) => void;
-    sortOptions: SortOption[];
-    closingSort: boolean;
-    align?: "left" | "right";
-}
-
-function SortMenu({ sort, setSort, sortOptions, closingSort, align }: SortMenuProps) {
-    return (
-        <div
-            className={`floating-menu ${closingSort ? "is-closing" : ""}`}
-            style={{
-                position: "absolute",
-                top: "calc(100% + 8px)",
-                left: align === "left" ? 0 : "auto",
-                right: align === "right" ? 0 : "auto",
-                zIndex: 1000,
-                display: "flex",
-                flexDirection: "column",
-                gap: "8px",
-                padding: "10px",
-                background: "var(--bg-surface)",
-                borderRadius: "6px",
-                border: "1px solid var(--border)",
-                boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
-                minWidth: "200px",
-            }}
-        >
-            <div
-                style={{
-                    display: "flex",
-                    gap: "6px",
-                    alignItems: "center",
-                }}
-            >
-                <span style={{ fontSize: "0.9em", color: "var(--fg)", opacity: 0.8 }}>
-                    Sort by
-                </span>
-                <SelectInput
-                    value={sort}
-                    onChange={(val: string) => setSort(val)}
-                    options={sortOptions.map((o: SortOption) => ({ label: o.label, value: o.id }))}
-                    style={{ flex: 1 }}
-                />
-            </div>
         </div>
     );
 }

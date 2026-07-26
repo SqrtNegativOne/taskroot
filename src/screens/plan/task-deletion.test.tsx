@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 import "../../../vitest-setup.ts";
 import React from "react";
 import "@testing-library/jest-dom";
@@ -9,7 +9,7 @@ import { PlanScreen } from "./PlanScreen";
 
 vi.mock("../../core/store/api", () => ({
     api: {
-        subscribeToStore: (key: string, fallback: unknown, onUpdate: unknown, onReady: unknown) => {
+        subscribeToStore: (_key: string, _fallback: unknown, _onUpdate: unknown, onReady: () => void) => {
             onReady();
             return () => {};
         },
@@ -47,7 +47,7 @@ beforeAll(() => {
 beforeEach(() => {
     localStorage.clear();
     // clear jsdom prompt/confirm
-    window.confirm = vi.fn<(...args: never[]) => unknown>(() => true);
+    window.confirm = vi.fn<any>(() => true);
 });
 
 test("deleting a task also deletes its associated events", async () => {
@@ -111,7 +111,7 @@ test("deleting a task also deletes its associated events", async () => {
     const deleteButton = document.querySelector(
         '.task-row-actions button[title="Delete"]',
     );
-    fireEvent.click(deleteButton);
+    fireEvent.click(deleteButton!);
 
     // Wait for task to disappear
     await waitFor(() => {
@@ -124,10 +124,10 @@ test("deleting a task also deletes its associated events", async () => {
     const postDeleteEvents = JSON.parse(postDeleteEventsStr);
 
     // e1 should be deleted (fix is already in place), e2 should remain
-    expect(postDeleteEvents.some((e: React.SyntheticEvent | PointerEvent | Event | unknown) => e.id === "e2")).toBe(true);
+    expect(postDeleteEvents.some((e: any) => e.id === "e2")).toBe(true);
     // Wait, since we are doing `setEvents(es => es.filter...)` it will use what was in `events` state.
     // Did `events` state have e1 and e2?
     // It should, because useStored initialized it from localStorage!
     // But previously it failed because `api` mock was weird. Let's see if this passes now.
-    expect(postDeleteEvents.some((e: React.SyntheticEvent | PointerEvent | Event | unknown) => e.id === "e1")).toBe(false);
+    expect(postDeleteEvents.some((e: any) => e.id === "e1")).toBe(false);
 });

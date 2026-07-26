@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 import React, { useState, useEffect } from "react";
 import "@fontsource/atkinson-hyperlegible-next";
 import { useTasks, useStopwatch, useSettings } from "../../core/store/hooks";
@@ -22,7 +22,7 @@ function getMiniTrackerContainerStyle(currentOpacity: number, showBorder: boolea
         fontFamily: "'Atkinson Hyperlegible Next', monospace",
         fontSize: "16px",
         userSelect: "none",
-        WebkitAppRegion: "drag", // allows dragging the window
+        WebkitAppRegion: "drag" as any, // allows dragging the window
         cursor: "default",
         padding: "16px",
         boxSizing: "border-box",
@@ -77,7 +77,10 @@ function getClockContent(
         running,
         state,
         isPristine: false,
-    });
+        setState: () => {},
+        setTimeLogs: () => {},
+        setSelectorOpen: () => {},
+    } as any);
 
     if (data.secondaryText === "TRACKING PAUSED") {
         return <div style={{ color: data.color }}>TRACKING PAUSED</div>;
@@ -152,7 +155,7 @@ export function MiniTrackerScreen() {
     }, []);
 
     useEffect(() => {
-        let raf;
+        let raf: number;
         const loop = () => {
             setNow(Date.now());
             raf = requestAnimationFrame(loop);
@@ -166,8 +169,8 @@ export function MiniTrackerScreen() {
             if (Date.now() - state.breakStartedAt >= state.breakAllowedMs) {
                 audioRef.current
                     ?.play()
-                    .catch((e: React.SyntheticEvent | PointerEvent | Event | unknown) => console.error("Sound play failed", e));
-                setState((s: import("../../core/domain/models").AppTask) => ({ ...s, breakSoundPlayed: true }));
+                    .catch((e: any) => console.error("Sound play failed", e));
+                setState((s: any) => ({ ...s, breakSoundPlayed: true }));
             }
         }
     }, [
@@ -185,7 +188,7 @@ export function MiniTrackerScreen() {
     const running = state.runningSince != null;
     const currentMs =
         state.elapsed +
-        (running && !state.isBreak ? now - state.runningSince : 0);
+        (running && !state.isBreak && state.runningSince ? now - state.runningSince : 0);
 
     const content = getClockContent(
         activeTask,

@@ -1,5 +1,3 @@
-// @ts-nocheck
-import React from "react";
 import { TitleBar } from "../../components/shell";
 import { TODAY } from "../../core/store/data";
 import { useTasks, useTaskQuery, useTaskFilters, useTaskSort } from "../../core/store/hooks";

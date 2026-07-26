@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 import React, { useState, useEffect, useRef } from "react";
 import { useTasks, useStopwatch, useTimeLogs, useEvents, useSettings } from "../../../core/store/hooks";
 import type { AppTask } from "../../../core/domain/models";

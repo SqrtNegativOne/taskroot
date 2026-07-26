@@ -28,20 +28,23 @@ export interface SettingRendererProps {
     setSettings: React.Dispatch<React.SetStateAction<AppSettings>>;
 }
 
-const SelectSetting = ({ setting, val, settings, setSettings }: SettingRendererProps) => (
-    <div style={{ display: "flex", gap: "12px", alignItems: "center", color: "var(--fg)" }}>
-        <SegmentedControl
-            value={typeof val === "string" || typeof val === "number" ? String(val) : ""}
-            onChange={(v: string) =>
-                setSettings({
-                    ...settings,
-                    [setting.id]: typeof val === "number" ? Number(v) : v,
-                })
-            }
-            options={setting.options?.map((o) => ({ ...o, value: String(o.value) })) || []}
-        />
-    </div>
-);
+const SelectSetting = ({ setting, val, settings, setSettings }: SettingRendererProps) => {
+    const s = setting as import("../../core/store/settingsSchema").SelectSettingSchema;
+    return (
+        <div style={{ display: "flex", gap: "12px", alignItems: "center", color: "var(--fg)" }}>
+            <SegmentedControl
+                value={typeof val === "string" || typeof val === "number" ? String(val) : ""}
+                onChange={(v: string) =>
+                    setSettings({
+                        ...settings,
+                        [setting.id]: typeof val === "number" ? Number(v) : v,
+                    })
+                }
+                options={s.options?.map((o: any) => ({ ...o, value: String(o.value) })) || []}
+            />
+        </div>
+    );
+};
 
 const TimeSetting = ({ setting, val, settings, setSettings }: SettingRendererProps) => (
     <div style={{ display: "flex", gap: "12px", alignItems: "center", color: "var(--fg)" }}>
@@ -52,16 +55,19 @@ const TimeSetting = ({ setting, val, settings, setSettings }: SettingRendererPro
     </div>
 );
 
-const NumberSetting = ({ setting, val, settings, setSettings }: SettingRendererProps) => (
-    <div style={{ display: "flex", gap: "12px", alignItems: "center", color: "var(--fg)" }}>
-        <NumberInput
-            min={setting.min}
-            max={setting.max}
-            value={typeof val === "number" || typeof val === "string" ? val : ""}
-            onChange={(v) => setSettings({ ...settings, [setting.id]: v })}
-        />
-    </div>
-);
+const NumberSetting = ({ setting, val, settings, setSettings }: SettingRendererProps) => {
+    const s = setting as import("../../core/store/settingsSchema").NumberSettingSchema;
+    return (
+        <div style={{ display: "flex", gap: "12px", alignItems: "center", color: "var(--fg)" }}>
+            <NumberInput
+                min={s.min}
+                max={s.max}
+                value={typeof val === "number" || typeof val === "string" ? val : ""}
+                onChange={(v) => setSettings({ ...settings, [setting.id]: v })}
+            />
+        </div>
+    );
+};
 
 const CheckboxSetting = ({ setting, val, setSettings }: SettingRendererProps) => (
     <ToggleSwitch
@@ -78,7 +84,8 @@ const KeybindingSetting = ({ setting, val, settings, setSettings }: SettingRende
 );
 
 const CustomSetting = ({ setting, settings, setSettings }: SettingRendererProps) => {
-    return setting.render?.({ settings, setSettings }) || null;
+    const s = setting as import("../../core/store/settingsSchema").CustomSettingSchema;
+    return s.render?.({ settings, setSettings }) || null;
 };
 
 export const SETTING_RENDERERS: Record<string, React.FC<SettingRendererProps>> = {

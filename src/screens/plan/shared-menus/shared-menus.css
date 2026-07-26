@@ -1,0 +1,120 @@
+.filter-sort-container {
+    position: relative;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.shared-floating-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px;
+    background: var(--bg-surface);
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    animation: sharedFloatingMenuOpen 0.15s ease-out forwards;
+    transform-origin: top center;
+}
+
+.shared-floating-menu.is-closing {
+    animation: sharedFloatingMenuClose 0.15s ease-in forwards;
+}
+
+@keyframes sharedFloatingMenuOpen {
+    from { opacity: 0; transform: scaleY(0.95); }
+    to { opacity: 1; transform: scaleY(1); }
+}
+
+@keyframes sharedFloatingMenuClose {
+    from { opacity: 1; transform: scaleY(1); }
+    to { opacity: 0; transform: scaleY(0.95); }
+}
+
+.shared-floating-menu.align-left {
+    left: 0;
+    right: auto;
+}
+
+.shared-floating-menu.align-right {
+    left: auto;
+    right: 0;
+}
+
+.menu-trigger-button {
+    border: 1px solid var(--border);
+    color: var(--fg);
+    border-radius: 4px;
+    padding: 4px 6px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    background: transparent;
+    transition: background 0.1s ease;
+}
+
+.menu-trigger-button.is-active,
+.menu-trigger-button:hover {
+    background: var(--bg-surface);
+}
+
+.menu-trigger-badge {
+    font-size: 0.8em;
+    font-weight: bold;
+}
+
+.filter-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.filter-remove-button {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    color: var(--fg);
+    opacity: 0.6;
+    transition: opacity 0.1s ease;
+}
+
+.filter-remove-button:hover {
+    opacity: 1;
+}
+
+.filter-add-button {
+    background: transparent;
+    border: none;
+    color: var(--fg);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    align-self: flex-start;
+    padding: 4px 4px;
+    font-size: 0.9em;
+    opacity: 0.8;
+    transition: opacity 0.1s ease;
+}
+
+.filter-add-button:hover {
+    opacity: 1;
+}
+
+.sort-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.sort-label {
+    font-size: 0.9em;
+    color: var(--fg);
+    opacity: 0.8;
+}

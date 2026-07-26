@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 import { expect, test, describe, vi } from "vitest";
 import { CLOCK_STRATEGIES } from "./clock-strategies";
 import { logWorkSession } from "./clock-strategies/utils";

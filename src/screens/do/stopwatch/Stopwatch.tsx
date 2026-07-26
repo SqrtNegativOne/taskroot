@@ -1,8 +1,8 @@
 // @ts-nocheck
 import React, { useState, useEffect, useRef } from "react";
-import { useTasks, useStopwatch, useTimeLogs, useEvents, useSettings } from "../../core/store/hooks";
-import type { AppTask } from "../../core/domain/models";
-import { CLOCK_STRATEGIES } from "../../core/domain/clock-strategies";
+import { useTasks, useStopwatch, useTimeLogs, useEvents, useSettings } from "../../../core/store/hooks";
+import type { AppTask } from "../../../core/domain/models";
+import { CLOCK_STRATEGIES } from "../../../core/domain/clock-strategies";
 import { TaskSelector } from "./TaskSelector";
 import { useStopwatchKeyboard } from "./useStopwatchKeyboard";
 import { useStopwatchActions } from "./useStopwatchActions";

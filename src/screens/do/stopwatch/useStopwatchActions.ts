@@ -1,8 +1,8 @@
 import React from "react";
-import { logWorkSession } from "../../core/domain/clock-strategies/utils";
-import type { AppTask, AppEvent } from "../../core/domain/models";
-import type { StopwatchState } from "../../core/domain/clock-strategies/types";
-import type { ClockStrategy } from "../../core/domain/clock-strategies/ClockStrategy";
+import { logWorkSession } from "../../../core/domain/clock-strategies/utils";
+import type { AppTask, AppEvent } from "../../../core/domain/models";
+import type { StopwatchState } from "../../../core/domain/clock-strategies/types";
+import type { ClockStrategy } from "../../../core/domain/clock-strategies/ClockStrategy";
 
 interface UseStopwatchActionsProps {
     state: StopwatchState;
@@ -95,7 +95,7 @@ export function useStopwatchActions({
 
     const startBreak = () => {
         if (settings.clockStyle === "flowtime") {
-            setState((s) => {
+            setState((s: StopwatchState) => {
                 if (s.isBreak) {
                     return {
                         ...s,

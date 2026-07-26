@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import type { AppTask, AppEvent } from "../../../core/domain/models";
+import type { AppTask, AppEvent } from "../../../../core/domain/models";
 import { sortTasksForSelection } from "./sortTasksForSelection";
 import "./TaskSelector.css";
 

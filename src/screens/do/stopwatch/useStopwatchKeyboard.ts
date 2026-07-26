@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import type { AppTask } from "../../core/domain/models";
+import type { AppTask } from "../../../core/domain/models";
 
 export interface StopwatchActions {
     toggle: () => void;

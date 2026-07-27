@@ -77,25 +77,27 @@ function TaskCanvasInner({ tasks, setTasks }: TaskCanvasProps) {
 
     const onNodesChange = useCallback(
         (changes: NodeChange[]) => {
-            // We only care about position changes to persist them
-            setTasks((prev) => {
-                let updated = [...prev];
-                for (const change of changes) {
-                    if (change.type === "position" && change.position) {
-                        const pos = change.position;
-                        updated = updated.map((t) =>
-                            t.id === change.id
-                                ? {
-                                      ...t,
-                                      canvasX: pos.x,
-                                      canvasY: pos.y,
-                                  }
-                                : t,
-                        );
-                    }
-                }
-                return updated;
-            });
+            const positionUpdates = new Map();
+
+            for (const change of changes) {
+                if (change.type === "position" && change.position)
+                    positionUpdates.set(change.id, change.position);
+            }
+            
+            if (positionUpdates.size === 0) return;
+
+            setTasks((prev) =>
+                prev.map((t) => {
+                    const newPos = positionUpdates.get(t.id);
+                    if (!newPos) return t;
+
+                    return {
+                        ...t,
+                        canvasX: newPos.x,
+                        canvasY: newPos.y,
+                    };
+                })
+            );
         },
         [setTasks],
     );

@@ -1,9 +1,7 @@
-
 import React, { useState, useEffect } from "react";
-import "@fontsource/atkinson-hyperlegible-next";
+import "@fontsource-variable/roboto-mono";
 import { useTasks, useStopwatch, useSettings } from "../../core/store/hooks";
 import { CLOCK_STRATEGIES } from "../../core/domain/clock-strategies";
-
 
 
 function getMiniTrackerContainerStyle(currentOpacity: number, showBorder: boolean): React.CSSProperties {
@@ -19,8 +17,8 @@ function getMiniTrackerContainerStyle(currentOpacity: number, showBorder: boolea
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        fontFamily: "'Atkinson Hyperlegible Next', monospace",
-        fontSize: "16px",
+        fontFamily: "'Roboto Mono', monospace",
+        fontSize: "15px",
         userSelect: "none",
         // @ts-expect-error valid electron property
         WebkitAppRegion: "drag", // allows dragging the window
@@ -66,9 +64,8 @@ function getClockContent(
     state: any,
     running: boolean
 ) {
-    if (!activeTask && !allowStopwatchWithoutTask) {
+    if (!activeTask && !allowStopwatchWithoutTask)
         return <div style={{ color: "var(--fg-dim)" }}>No active task.</div>;
-    }
     
     const taskName = activeTask ? activeTask.title : "Work session";
     const strategy = CLOCK_STRATEGIES[clockStyle] || CLOCK_STRATEGIES.counter;
@@ -83,15 +80,14 @@ function getClockContent(
         setSelectorOpen: () => {},
     } as any);
 
-    if (data.secondaryText === "TRACKING PAUSED") {
+    if (data.secondaryText === "TRACKING PAUSED")
         return <div style={{ color: data.color }}>TRACKING PAUSED</div>;
-    }
 
     let suffix = taskName;
     if (data.secondaryText === "BREAK" || data.secondaryText === "LONG_BREAK") {
-        suffix = "left for break";
+        suffix = "left in break";
     } else if (data.secondaryText === "WORK") {
-        suffix = `left working for ${taskName}`;
+        suffix = `left for ${taskName}`;
     }
 
     return (
@@ -116,9 +112,8 @@ function useMiniTrackerKeybindings(
                 }
             }
 
-            if (isDimShortcut(e)) {
+            if (isDimShortcut(e))
                 setIsDimmed((prev) => !prev);
-            }
         };
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
@@ -127,9 +122,8 @@ function useMiniTrackerKeybindings(
 
 
 const handleDoubleClick = () => {
-    if (window.electronAPI?.restoreMainWindow) {
+    if (window.electronAPI?.restoreMainWindow)
         window.electronAPI.restoreMainWindow();
-    }
 };
 
 export function MiniTrackerScreen() {
@@ -166,14 +160,11 @@ export function MiniTrackerScreen() {
     }, []);
 
     useEffect(() => {
-        if (state.isBreak && state.breakStartedAt && !state.breakSoundPlayed) {
-            if (Date.now() - state.breakStartedAt >= state.breakAllowedMs) {
-                audioRef.current
-                    ?.play()
-                    .catch((e: any) => console.error("Sound play failed", e));
-                setState((s: any) => ({ ...s, breakSoundPlayed: true }));
-            }
-        }
+        if (!state.isBreak || !state.breakStartedAt || state.breakSoundPlayed) return;
+        if (Date.now() - state.breakStartedAt < state.breakAllowedMs) return;
+
+        audioRef.current?.play().catch((e: any) => console.error("Sound play failed", e));
+        setState((s: any) => ({ ...s, breakSoundPlayed: true }));
     }, [
         now,
         state.isBreak,

@@ -1,11 +1,11 @@
 import { MINUTES_IN_HOUR, MS_PER_SECOND } from "../../utils/constants";
 import { ClockStrategy } from "./ClockStrategy";
-import type { StopwatchContext, ClockDisplayData } from "./types";
-import { logWorkSession, splitTime } from "./utils";
+import type { ReadonlyStopwatchContext, ClockDisplayData, ClockActionEffect } from "./types";
+import { splitTime } from "./utils";
 import { PAD2 } from "../../../core/store/data";
 
 export class FlowtimeClockStrategy extends ClockStrategy {
-    getDisplayData({ currentMs = 0, isPristine, state }: StopwatchContext): ClockDisplayData {
+    getDisplayData({ currentMs = 0, isPristine, state }: ReadonlyStopwatchContext): ClockDisplayData {
         if (state.isBreak && state.breakStartedAt) {
             const breakRemainingMs = state.breakAllowedMs - (Date.now() - state.breakStartedAt);
             const remSecs = Math.max(0, Math.ceil(breakRemainingMs / MS_PER_SECOND));
@@ -27,68 +27,49 @@ export class FlowtimeClockStrategy extends ClockStrategy {
         };
     }
 
-    requiresAnimationLoop({ state }: StopwatchContext) {
+    requiresAnimationLoop({ state }: ReadonlyStopwatchContext) {
         return state.runningSince != null || state.isBreak;
     }
 
-    onToggle({
-        isPristine,
-        setSelectorOpen,
-        setState,
-        setTimeLogs,
-        activeTask,
-        allowNoTask,
-    }: StopwatchContext) {
+    calculateToggle({ isPristine, activeTask, allowNoTask, state }: ReadonlyStopwatchContext): ClockActionEffect {
         if (isPristine && !activeTask && !allowNoTask) {
-            setSelectorOpen(true);
-            return;
+            return { selectorOpen: true };
         }
-        setState((s) => {
-            if (s.isBreak) return s; // can't pause in break (feature not a bug)
+        if (state.isBreak) return {};
 
-            if (s.runningSince) {
-                logWorkSession(
-                    setTimeLogs,
-                    s.runningSince,
-                    Date.now(),
-                    activeTask?.id,
-                    "flowtime",
-                );
-                return {
-                    ...s,
-                    elapsed: s.elapsed + (Date.now() - s.runningSince),
+        if (state.runningSince) {
+            return {
+                shouldLogSession: true,
+                newState: {
+                    elapsed: state.elapsed + (Date.now() - state.runningSince),
                     runningSince: null,
-                };
-            }
-            return { ...s, runningSince: Date.now() };
-        });
+                }
+            };
+        }
+        return { newState: { runningSince: Date.now() } };
     }
 
-    onTaskSelected({ running, setState, setSelectorOpen, state }: StopwatchContext) {
-        setSelectorOpen(false);
+    calculateTaskSelected({ running, state }: ReadonlyStopwatchContext): ClockActionEffect {
         if (!running && !state.isBreak) {
-            setState((s) => ({ ...s, runningSince: Date.now() }));
+            return { selectorOpen: false, newState: { runningSince: Date.now() } };
         }
+        return { selectorOpen: false };
     }
 
-    onReset({ state, setState, setSelectorOpen, setTimeLogs, activeTask }: StopwatchContext) {
+    calculateReset({ state }: ReadonlyStopwatchContext): ClockActionEffect {
+        const effect: ClockActionEffect = {
+            selectorOpen: false,
+            newState: {
+                elapsed: 0,
+                runningSince: null,
+                isBreak: false,
+                breakAllowedMs: 0,
+                breakStartedAt: null,
+            }
+        };
         if (state.runningSince && !state.isBreak) {
-            logWorkSession(
-                setTimeLogs,
-                state.runningSince,
-                Date.now(),
-                activeTask?.id,
-                "flowtime",
-            );
+            effect.shouldLogSession = true;
         }
-        setState((s) => ({
-            ...s,
-            elapsed: 0,
-            runningSince: null,
-            isBreak: false,
-            breakAllowedMs: 0,
-            breakStartedAt: null,
-        }));
-        setSelectorOpen(false);
+        return effect;
     }
 }

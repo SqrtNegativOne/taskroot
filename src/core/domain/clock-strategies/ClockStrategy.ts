@@ -1,9 +1,9 @@
-import type { StopwatchContext, ClockDisplayData } from "./types";
+import type { ReadonlyStopwatchContext, ClockActionEffect, ClockDisplayData } from "./types";
 
 export abstract class ClockStrategy {
-    abstract getDisplayData(context: StopwatchContext): ClockDisplayData;
-    abstract requiresAnimationLoop(context: StopwatchContext): boolean;
-    abstract onToggle(context: StopwatchContext): void;
-    abstract onTaskSelected(context: StopwatchContext): void;
-    abstract onReset(context: StopwatchContext): void;
+    abstract getDisplayData(context: ReadonlyStopwatchContext): ClockDisplayData;
+    abstract requiresAnimationLoop(context: ReadonlyStopwatchContext): boolean;
+    abstract calculateToggle(context: ReadonlyStopwatchContext): ClockActionEffect;
+    abstract calculateTaskSelected(context: ReadonlyStopwatchContext): ClockActionEffect;
+    abstract calculateReset(context: ReadonlyStopwatchContext): ClockActionEffect;
 }

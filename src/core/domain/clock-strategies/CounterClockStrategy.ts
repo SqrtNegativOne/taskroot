@@ -1,9 +1,9 @@
 import { ClockStrategy } from "./ClockStrategy";
-import type { StopwatchContext, ClockDisplayData } from "./types";
-import { logWorkSession, splitTime } from "./utils";
+import type { ReadonlyStopwatchContext, ClockDisplayData, ClockActionEffect } from "./types";
+import { splitTime } from "./utils";
 
 export class CounterClockStrategy extends ClockStrategy {
-    getDisplayData({ currentMs = 0, isPristine }: StopwatchContext): ClockDisplayData {
+    getDisplayData({ currentMs = 0, isPristine }: ReadonlyStopwatchContext): ClockDisplayData {
         const { m } = splitTime(currentMs);
         return {
             primaryText: m,
@@ -11,59 +11,41 @@ export class CounterClockStrategy extends ClockStrategy {
         };
     }
 
-    requiresAnimationLoop({ state }: StopwatchContext) {
+    requiresAnimationLoop({ state }: ReadonlyStopwatchContext) {
         return state.runningSince != null;
     }
 
-    onToggle({
-        isPristine,
-        setSelectorOpen,
-        setState,
-        setTimeLogs,
-        activeTask,
-        allowNoTask,
-    }: StopwatchContext) {
+    calculateToggle({ isPristine, activeTask, allowNoTask, state }: ReadonlyStopwatchContext): ClockActionEffect {
         if (isPristine && !activeTask && !allowNoTask) {
-            setSelectorOpen(true);
-            return;
+            return { selectorOpen: true };
         }
-        setState((s) => {
-            if (s.runningSince) {
-                logWorkSession(
-                    setTimeLogs,
-                    s.runningSince,
-                    Date.now(),
-                    activeTask?.id,
-                    "counter",
-                );
-                return {
-                    ...s,
-                    elapsed: s.elapsed + (Date.now() - s.runningSince),
-                    runningSince: null,
-                };
-            }
-            return { ...s, runningSince: Date.now() };
-        });
-    }
-
-    onTaskSelected({ running, setState, setSelectorOpen }: StopwatchContext) {
-        setSelectorOpen(false);
-        if (!running) {
-            setState((s) => ({ ...s, runningSince: Date.now() }));
-        }
-    }
-
-    onReset({ state, setState, setSelectorOpen, setTimeLogs, activeTask }: StopwatchContext) {
         if (state.runningSince) {
-            logWorkSession(
-                setTimeLogs,
-                state.runningSince,
-                Date.now(),
-                activeTask?.id,
-                "counter",
-            );
+            return {
+                shouldLogSession: true,
+                newState: {
+                    elapsed: state.elapsed + (Date.now() - state.runningSince),
+                    runningSince: null,
+                }
+            };
         }
-        setState((s) => ({ ...s, elapsed: 0, runningSince: null }));
-        setSelectorOpen(false);
+        return { newState: { runningSince: Date.now() } };
+    }
+
+    calculateTaskSelected({ running }: ReadonlyStopwatchContext): ClockActionEffect {
+        if (!running) {
+            return { selectorOpen: false, newState: { runningSince: Date.now() } };
+        }
+        return { selectorOpen: false };
+    }
+
+    calculateReset({ state }: ReadonlyStopwatchContext): ClockActionEffect {
+        const effect: ClockActionEffect = {
+            selectorOpen: false,
+            newState: { elapsed: 0, runningSince: null }
+        };
+        if (state.runningSince) {
+            effect.shouldLogSession = true;
+        }
+        return effect;
     }
 }

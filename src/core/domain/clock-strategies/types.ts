@@ -1,4 +1,4 @@
-import type { AppTask, AppEvent } from "../../../core/domain/models";
+import type { AppTask } from "../../../core/domain/models";
 import type { AppSettings } from "../../../core/store/settingsSchema";
 
 export interface ClockDisplayData {
@@ -18,24 +18,18 @@ export interface StopwatchState {
     breakSoundPlayed: boolean;
 }
 
-export interface StopwatchContext {
-    currentMs?: number;
-    running?: boolean;
-    isPristine?: boolean;
-    toggle?: () => void;
-    startSession?: () => void;
-    stopSession?: () => void;
-    reset?: () => void;
-    currentTask?: AppTask | null;
+export interface ClockActionEffect {
+    newState?: Partial<StopwatchState>;
+    shouldLogSession?: boolean;
+    selectorOpen?: boolean;
+}
+
+export interface ReadonlyStopwatchContext {
     state: StopwatchState;
-    setState?: React.Dispatch<React.SetStateAction<StopwatchState>>;
-    timeLogs?: AppEvent[] | null;
-    setTimeLogs?: React.Dispatch<React.SetStateAction<AppEvent[] | null>> | React.Dispatch<React.SetStateAction<AppEvent[]>>;
-    setSelectorOpen?: React.Dispatch<React.SetStateAction<boolean>>;
+    currentMs: number;
+    isPristine: boolean;
+    running: boolean;
     activeTask?: AppTask | null;
-    onBreakStatus?: (status: boolean) => void;
     allowNoTask?: boolean;
     settings?: Partial<AppSettings>;
-    selectorOpen?: boolean;
-    [key: string]: unknown;
 }

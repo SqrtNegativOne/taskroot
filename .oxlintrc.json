@@ -40,5 +40,14 @@
       "ignoreReadonlyClassProperties": true,
       "ignoreTypeIndexes": true
     }]
-  }
+  },
+  "overrides": [
+    {
+      "files": ["*.test.ts", "*.test.tsx"],
+      "rules": {
+        "max-lines": "off",
+        "max-lines-per-function": "off"
+      }
+    }
+  ]
 }

@@ -1,7 +1,6 @@
 import { MINUTES_IN_HOUR, MS_PER_SECOND } from "../../utils/constants";
 import { ClockStrategy } from "./ClockStrategy";
-import type { StopwatchContext, StopwatchState, ClockDisplayData } from "./types";
-import { logWorkSession } from "./utils";
+import type { ReadonlyStopwatchContext, ClockDisplayData, ClockActionEffect } from "./types";
 import { PAD2 } from "../../../core/store/data";
 
 export const POMODORO_LONG_BREAK_THRESHOLD = 35;
@@ -9,9 +8,8 @@ export const POMODORO_BREAK_THRESHOLD = 30;
 export const MIN_POLL_INTERVAL_MINUTES = 5;
 export const MAX_RETRIES = 3;
 
-
 export class GuzeyClockStrategy extends ClockStrategy {
-    getDisplayData({ state }: StopwatchContext): ClockDisplayData {
+    getDisplayData({ state }: ReadonlyStopwatchContext): ClockDisplayData {
         const now = new Date();
         const h = now.getHours();
         const min = now.getMinutes();
@@ -75,39 +73,28 @@ export class GuzeyClockStrategy extends ClockStrategy {
         return true;
     }
 
-    onToggle({ setState, setTimeLogs, activeTask }: StopwatchContext) {
-        setState((s): StopwatchState => {
-            if (s.runningSince) {
-                logWorkSession(
-                    setTimeLogs,
-                    s.runningSince,
-                    Date.now(),
-                    activeTask?.id,
-                    "guzey",
-                );
-                return { ...s, runningSince: null };
-            } else {
-                return { ...s, runningSince: Date.now() };
-            }
-        });
-    }
-
-    onTaskSelected({ setSelectorOpen, setState }: StopwatchContext) {
-        setSelectorOpen(false);
-        setState((s) => ({ ...s, runningSince: Date.now() }));
-    }
-
-    onReset({ setSelectorOpen, setState, setTimeLogs, activeTask, state }: StopwatchContext) {
+    calculateToggle({ state }: ReadonlyStopwatchContext): ClockActionEffect {
         if (state.runningSince) {
-            logWorkSession(
-                setTimeLogs,
-                state.runningSince,
-                Date.now(),
-                activeTask?.id,
-                "guzey",
-            );
+            return {
+                shouldLogSession: true,
+                newState: { runningSince: null }
+            };
         }
-        setState((s) => ({ ...s, runningSince: null }));
-        setSelectorOpen(false);
+        return { newState: { runningSince: Date.now() } };
+    }
+
+    calculateTaskSelected(): ClockActionEffect {
+        return { selectorOpen: false, newState: { runningSince: Date.now() } };
+    }
+
+    calculateReset({ state }: ReadonlyStopwatchContext): ClockActionEffect {
+        const effect: ClockActionEffect = {
+            selectorOpen: false,
+            newState: { runningSince: null }
+        };
+        if (state.runningSince) {
+            effect.shouldLogSession = true;
+        }
+        return effect;
     }
 }

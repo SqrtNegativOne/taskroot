@@ -67,3 +67,4 @@ Taskroot is a web-based and desktop task management app focusing on planning, ex
 - Don't name files or folders with generic names like `utils` or `helpers`. That could literally mean anything!
 - After implementing any changes, run `bun oxlint`, and fix all errors and warnings. If you are unsure about a warning, ask for clarification in the code review.
 - If `bun run build` gives you a warning, fix it. Never be silent about warnings; always inform the user about them.
+- When you have too much inter-dependent state (e.g., toggling the stopwatch needs to know about selectorOpen, running, currentMs, timeLogs, etc.), consider useReducer.

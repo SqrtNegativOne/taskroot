@@ -13,13 +13,16 @@ const isInputTarget = (target: EventTarget | null) => {
     );
 };
 
-export function useStopwatchKeyboard(
-    selectorOpen: boolean,
-    setSelectorOpen: (val: boolean | ((prev: boolean) => boolean)) => void,
-    actionsRef: React.MutableRefObject<StopwatchActions | null>,
-    activeTask: AppTask | null | undefined,
-    allowNoTask: boolean
-) {
+export interface StopwatchKeyboardOptions {
+    selectorOpen: boolean;
+    setSelectorOpen: (val: boolean | ((prev: boolean) => boolean)) => void;
+    actions: StopwatchActions;
+    activeTask: AppTask | null | undefined;
+    allowNoTask: boolean;
+}
+
+export function useStopwatchKeyboard(options: StopwatchKeyboardOptions) {
+    const { selectorOpen, setSelectorOpen, actions, activeTask, allowNoTask } = options;
     useEffect(() => {
         const onKey = (e: KeyboardEvent) => {
             if (isInputTarget(e.target)) return;
@@ -30,13 +33,13 @@ export function useStopwatchKeyboard(
                 case "Space":
                     if (!selectorOpen) {
                         e.preventDefault();
-                        actionsRef.current?.toggle();
+                        actions.toggle();
                     }
                     break;
                 case "KeyR":
                     if (isModifier) {
                         e.preventDefault();
-                        actionsRef.current?.reset();
+                        actions.reset();
                     }
                     break;
                 case "Enter":
@@ -60,7 +63,7 @@ export function useStopwatchKeyboard(
             pressed.add(e.code);
             if (pressed.has("ShiftLeft") && pressed.has("ShiftRight")) {
                 e.preventDefault();
-                actionsRef.current?.startBreak();
+                actions.startBreak();
             }
         };
         const handleUp = (e: KeyboardEvent) => {
@@ -75,5 +78,5 @@ export function useStopwatchKeyboard(
             window.removeEventListener("keyup", handleUp);
             window.removeEventListener("keydown", onKey);
         };
-    }, [selectorOpen, activeTask, allowNoTask, actionsRef, setSelectorOpen]);
+    }, [selectorOpen, activeTask, allowNoTask, actions, setSelectorOpen]);
 }

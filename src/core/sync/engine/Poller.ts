@@ -28,9 +28,8 @@ export class Poller {
     start() {
         const offline = import.meta.env && import.meta.env.VITE_OFFLINE_MODE === "true";
         const settings = this.getSettings();
-        if (offline || (settings.enableCalendarSync === false && settings.enableTasksSync === false)) {
+        if (offline || (settings.enableCalendarSync === false && settings.enableTasksSync === false))
             syncState.initialSyncComplete = true;
-        }
 
         if (this.pollInterval) return;
 
@@ -47,9 +46,8 @@ export class Poller {
 
         syncState.nextSyncTime = Date.now() + (settings.syncInterval || 5) * 60 * 1000;
         this.pollInterval = setInterval(() => {
-            if (Date.now() >= syncState.nextSyncTime) {
+            if (Date.now() >= syncState.nextSyncTime)
                 this.poll();
-            }
         }, 1000);
 
         window.addEventListener("online", () => {
@@ -60,16 +58,14 @@ export class Poller {
     }
 
     forceSync() {
-        if (this.pollInterval) {
+        if (this.pollInterval)
             clearInterval(this.pollInterval);
-        }
         this.poll();
         const settings = this.getSettings();
         syncState.nextSyncTime = Date.now() + (settings.syncInterval || 5) * 60 * 1000;
         this.pollInterval = setInterval(() => {
-            if (Date.now() >= syncState.nextSyncTime) {
+            if (Date.now() >= syncState.nextSyncTime)
                 this.poll();
-            }
         }, 1000);
     }
 

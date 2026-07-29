@@ -1,30 +1,32 @@
 import { fetchWithTimeout } from "../store/api";
-import { tokenBouncer } from "../auth/TokenBouncer";
 import type { AppTask } from "../domain/models";
+import type { IAuthManager, ITasksAPI } from "./api-interfaces";
 /// <reference types="gapi.client.tasks" />
 
-export class GoogleTasksAPI {
-    private token: string | null = null;
+export class GoogleTasksAPI implements ITasksAPI {
+    private authManager: IAuthManager;
 
-    setToken(token: string | null) {
-        this.token = token;
+    constructor(authManager: IAuthManager) {
+        this.authManager = authManager;
     }
 
     private async fetchWithAuth(url: string, options: RequestInit = {}) {
-        if (!this.token) throw new Error("Unauthorized");
-        const getOptions = () => ({
+        const token = this.authManager.getToken();
+        if (!token) throw new Error("Unauthorized");
+        const getOptions = (t: string) => ({
             ...options,
             headers: {
                 ...options.headers,
-                Authorization: `Bearer ${this.token}`,
+                Authorization: `Bearer ${t}`,
             }
         });
 
-        let res = await fetchWithTimeout(url, getOptions());
+        let res = await fetchWithTimeout(url, getOptions(token));
         if (res.status === 401) {
-            const refreshed = await tokenBouncer.refreshAccessToken();
+            const refreshed = await this.authManager.refreshAccessToken();
             if (refreshed) {
-                res = await fetchWithTimeout(url, getOptions());
+                const newToken = this.authManager.getToken();
+                res = await fetchWithTimeout(url, getOptions(newToken || ""));
             } else {
                 throw new Error("Unauthorized");
             }
@@ -191,4 +193,4 @@ function createUpdatedLocalTask(googleTask: gapi.client.tasks.Task, existingLoca
     };
 }
 
-export const googleTasksAPI = new GoogleTasksAPI();
+

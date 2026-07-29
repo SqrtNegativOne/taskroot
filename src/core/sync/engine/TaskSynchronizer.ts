@@ -1,11 +1,14 @@
-import { googleTasksAPI } from "../GoogleTasksAPI";
 import type { ISyncEngineContext, SyncQueueItem } from "./types";
 import { SyncAction, SyncType } from "./types";
+import type { ITasksAPI } from "../api-interfaces";
 
 export class TaskSynchronizer {
     private context: ISyncEngineContext;
-    constructor(context: ISyncEngineContext) {
+    private tasksAPI: ITasksAPI;
+
+    constructor(context: ISyncEngineContext, tasksAPI: ITasksAPI) {
         this.context = context;
+        this.tasksAPI = tasksAPI;
     }
 
     async pollTasks() {
@@ -15,7 +18,7 @@ export class TaskSynchronizer {
         const tasks = this.context.getLocalData<import('../../domain/models').AppTask[]>("tasks");
         this.context.updatePrevTasksMap(tasks);
 
-        const remoteTasks = await googleTasksAPI.fetchTasks();
+        const remoteTasks = await this.tasksAPI.fetchTasks();
         if (!remoteTasks) return;
 
         let updated = false;
@@ -94,7 +97,7 @@ export class TaskSynchronizer {
     async processPushItem(taskOrEvent: SyncQueueItem) {
         if (taskOrEvent.type !== SyncType.Task) return;
         if (taskOrEvent.action === SyncAction.Create) {
-            const gid = await googleTasksAPI.createTask(
+            const gid = await this.tasksAPI.createTask(
                 taskOrEvent.item,
             );
             if (gid) {
@@ -115,7 +118,7 @@ export class TaskSynchronizer {
             taskOrEvent.action === SyncAction.Update &&
             taskOrEvent.id
         ) {
-            await googleTasksAPI.updateTask(
+            await this.tasksAPI.updateTask(
                 taskOrEvent.id,
                 taskOrEvent.item,
             );
@@ -123,7 +126,7 @@ export class TaskSynchronizer {
             taskOrEvent.action === SyncAction.Delete &&
             taskOrEvent.id
         ) {
-            await googleTasksAPI.deleteTask(taskOrEvent.id);
+            await this.tasksAPI.deleteTask(taskOrEvent.id);
         }
     }
 
@@ -147,7 +150,7 @@ export class TaskSynchronizer {
         }
 
         const existingLocalTask = localId ? tasksMap.get(localId) : null;
-        const standardizedRemote = googleTasksAPI.toLocalTask(
+        const standardizedRemote = this.tasksAPI.toLocalTask(
             remote,
             existingLocalTask,
         );

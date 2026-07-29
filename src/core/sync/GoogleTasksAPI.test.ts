@@ -9,11 +9,16 @@ vi.mock("../store/api", () => ({
 
 describe("GoogleTasksAPI", () => {
     let googleTasksAPI: GoogleTasksAPI;
+    const mockAuthManager = {
+        getToken: vi.fn().mockReturnValue("fake-token"),
+        refreshAccessToken: vi.fn().mockResolvedValue(true),
+    };
 
     beforeEach(() => {
         vi.resetAllMocks();
-        googleTasksAPI = new GoogleTasksAPI();
-        googleTasksAPI.setToken("fake-token");
+        mockAuthManager.getToken.mockReturnValue("fake-token");
+        mockAuthManager.refreshAccessToken.mockResolvedValue(true);
+        googleTasksAPI = new GoogleTasksAPI(mockAuthManager);
     });
 
     describe("fetchTasks", () => {
@@ -44,11 +49,12 @@ describe("GoogleTasksAPI", () => {
             expect(tasks?.[1].id).toBe("task2");
         });
 
-        it("throws Unauthorized on 401", async () => {
+        it("throws Unauthorized on 401 if refresh fails", async () => {
             const mockFetch = vi.mocked(api.fetchWithTimeout);
             mockFetch.mockResolvedValueOnce(
                 new Response(null, { status: 401 })
             );
+            mockAuthManager.refreshAccessToken.mockResolvedValueOnce(false);
 
             await expect(googleTasksAPI.fetchTasks()).rejects.toThrow(
                 "Unauthorized",

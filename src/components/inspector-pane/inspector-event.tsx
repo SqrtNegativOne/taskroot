@@ -1,7 +1,7 @@
 import React from "react";
 import type { AppEvent, AppTask } from "../../core/domain/models";
 import { isDateString } from "../../core/domain/models";
-import { RepeatSelect, minToTime, timeToMin } from "./inspector-shared";
+import { RepeatSelect, minToTime, timeToMin, LabeledToggle } from "./inspector-shared";
 import "./inspector.css";
 
 interface EventInspectorProps {
@@ -12,16 +12,7 @@ interface EventInspectorProps {
     isReadOnlyCalendar: boolean;
 }
 
-function LabeledToggle({ label, checked, onChange, disabled }: { label: string, checked: boolean, onChange: (v: boolean) => void, disabled?: boolean }) {
-    return (
-        <button type="button" className="inspector-toggle-label" disabled={disabled} onClick={() => onChange(!checked)}>
-            <div className={`toggle-switch ${checked ? "is-on" : ""}`}>
-                <div className="toggle-switch-thumb" />
-            </div>
-            <span className="inspector-toggle-text">{label}</span>
-        </button>
-    );
-}
+
 
 function EventTypeSelector({ event, tasks, updateEvent, isReadOnlyCalendar }: { event: AppEvent, tasks: AppTask[], updateEvent: (id: string, updates: Partial<AppEvent>) => void, isReadOnlyCalendar: boolean }) {
     return (

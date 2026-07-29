@@ -9,11 +9,16 @@ vi.mock("../store/api", () => ({
 
 describe("GoogleCalendarAPI", () => {
     let googleCalendarAPI: GoogleCalendarAPI;
+    const mockAuthManager = {
+        getToken: vi.fn().mockReturnValue("fake-token"),
+        refreshAccessToken: vi.fn().mockResolvedValue(true),
+    };
 
     beforeEach(() => {
         vi.resetAllMocks();
-        googleCalendarAPI = new GoogleCalendarAPI();
-        googleCalendarAPI.setToken("fake-token");
+        mockAuthManager.getToken.mockReturnValue("fake-token");
+        mockAuthManager.refreshAccessToken.mockResolvedValue(true);
+        googleCalendarAPI = new GoogleCalendarAPI(mockAuthManager);
     });
 
     describe("fetchEvents", () => {
@@ -40,11 +45,12 @@ describe("GoogleCalendarAPI", () => {
             expect(events).toHaveLength(1);
         });
 
-        it("throws Unauthorized on 401", async () => {
+        it("throws Unauthorized on 401 if refresh fails", async () => {
             const mockFetch = vi.mocked(api.fetchWithTimeout);
             mockFetch.mockResolvedValueOnce(
                 new Response(null, { status: 401 })
             );
+            mockAuthManager.refreshAccessToken.mockResolvedValueOnce(false);
 
             await expect(
                 googleCalendarAPI.fetchEvents("start", "end"),

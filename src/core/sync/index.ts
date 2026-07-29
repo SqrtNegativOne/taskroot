@@ -5,6 +5,10 @@ import { EventSynchronizer } from "./engine/EventSynchronizer";
 import { Pusher } from "./engine/Pusher";
 import { Poller } from "./engine/Poller";
 
+import { GoogleAuthManager } from "../auth/TokenBouncer";
+import { GoogleCalendarAPI } from "./GoogleCalendarAPI";
+import { GoogleTasksAPI } from "./GoogleTasksAPI";
+
 const prevTasksMap = new Map<string, import('../domain/models').AppTask>();
 const prevEventsMap = new Map<string, import('../domain/models').AppEvent>();
 
@@ -31,12 +35,22 @@ const context = {
     updateStatus: () => {}, // SyncState derives this now
 };
 
-export const taskSync: TaskSynchronizer = new TaskSynchronizer(context);
-export const eventSync: EventSynchronizer = new EventSynchronizer(context);
+const googleAuth = new GoogleAuthManager();
+export const calendarApi = new GoogleCalendarAPI(googleAuth);
+export const tasksApi = new GoogleTasksAPI(googleAuth);
+
+export const taskSync: TaskSynchronizer = new TaskSynchronizer(context, tasksApi);
+export const eventSync: EventSynchronizer = new EventSynchronizer(context, calendarApi);
 
 export const pusher: Pusher = new Pusher(taskSync, eventSync, getSettings);
 
+const hasAuth = () => !!googleAuth.getToken() || !!localStorage.getItem("google_refresh_token");
+export const poller: Poller = new Poller(taskSync, eventSync, pusher, getSettings, hasAuth);
 
-export const poller: Poller = new Poller(taskSync, eventSync, pusher, getSettings);
+window.addEventListener("storage", (e) => {
+    if (e.key === "google_access_token") {
+        poller.forceSync();
+    }
+});
 
 export { syncState } from "./SyncState";

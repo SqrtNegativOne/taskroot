@@ -1,11 +1,14 @@
-import { googleCalendarAPI } from "../GoogleCalendarAPI";
 import type { ISyncEngineContext, SyncQueueItem } from "./types";
 import { SyncAction, SyncType } from "./types";
+import type { ICalendarAPI } from "../api-interfaces";
 
 export class EventSynchronizer {
     private context: ISyncEngineContext;
-    constructor(context: ISyncEngineContext) {
+    private calendarAPI: ICalendarAPI;
+
+    constructor(context: ISyncEngineContext, calendarAPI: ICalendarAPI) {
         this.context = context;
+        this.calendarAPI = calendarAPI;
     }
 
     async pollEvents() {
@@ -20,7 +23,7 @@ export class EventSynchronizer {
         const timeMax = new Date();
         timeMax.setMonth(timeMax.getMonth() + 2);
 
-        const calendars = await googleCalendarAPI.fetchCalendars();
+        const calendars = await this.calendarAPI.fetchCalendars();
         const prevCalendars = this.context.getLocalData<import('../../store/repositories').CalendarData[]>("calendars");
         this.context.setLocalData(
             "calendars",
@@ -37,7 +40,7 @@ export class EventSynchronizer {
 
         const allRemoteEvents: (import('../../domain/models').AppEvent & { _deleted?: boolean })[] = [];
         for (const cal of calendars) {
-            const remoteEvents = await googleCalendarAPI.fetchEvents(
+            const remoteEvents = await this.calendarAPI.fetchEvents(
                 timeMin.toISOString(),
                 timeMax.toISOString(),
                 cal.id,
@@ -45,7 +48,7 @@ export class EventSynchronizer {
             if (remoteEvents) {
                 allRemoteEvents.push(
                     ...remoteEvents.map((e: gapi.client.calendar.Event) =>
-                        googleCalendarAPI.toLocalEvent(e, cal.id, cal.summary),
+                        this.calendarAPI.toLocalEvent(e, cal.id, cal.summary),
                     ),
                 );
             }
@@ -103,7 +106,7 @@ export class EventSynchronizer {
             taskOrEvent.item.googleCalendarId || "primary";
 
         if (taskOrEvent.action === SyncAction.Create) {
-            const res = await googleCalendarAPI.createEvent(
+            const res = await this.calendarAPI.createEvent(
                 taskOrEvent.item,
                 tasks,
                 targetCalendarId,
@@ -127,7 +130,7 @@ export class EventSynchronizer {
             taskOrEvent.action === SyncAction.Update &&
             taskOrEvent.id
         ) {
-            await googleCalendarAPI.updateEvent(
+            await this.calendarAPI.updateEvent(
                 taskOrEvent.id,
                 taskOrEvent.item,
                 tasks,
@@ -137,7 +140,7 @@ export class EventSynchronizer {
             taskOrEvent.action === SyncAction.Delete &&
             taskOrEvent.id
         ) {
-            await googleCalendarAPI.deleteEvent(
+            await this.calendarAPI.deleteEvent(
                 taskOrEvent.id,
                 taskOrEvent.calendarId,
             );

@@ -1,34 +1,32 @@
 import { fetchWithTimeout } from "../store/api";
-import { tokenBouncer } from "../auth/TokenBouncer";
 import type { AppTask, AppEvent } from "../domain/models";
+import type { IAuthManager, ICalendarAPI } from "./api-interfaces";
 /// <reference types="gapi.client.calendar" />
 
-export class GoogleCalendarAPI {
-    private token: string | null = null;
+export class GoogleCalendarAPI implements ICalendarAPI {
+    private authManager: IAuthManager;
 
-    setToken(token: string | null) {
-        this.token = token;
-    }
-
-    getToken(): string | null {
-        return this.token;
+    constructor(authManager: IAuthManager) {
+        this.authManager = authManager;
     }
 
     private async fetchWithAuth(url: string, options: RequestInit = {}) {
-        if (!this.token) throw new Error("Unauthorized");
-        const getOptions = () => ({
+        const token = this.authManager.getToken();
+        if (!token) throw new Error("Unauthorized");
+        const getOptions = (t: string) => ({
             ...options,
             headers: {
                 ...options.headers,
-                Authorization: `Bearer ${this.token}`,
+                Authorization: `Bearer ${t}`,
             }
         });
 
-        let res = await fetchWithTimeout(url, getOptions());
+        let res = await fetchWithTimeout(url, getOptions(token));
         if (res.status === 401) {
-            const refreshed = await tokenBouncer.refreshAccessToken();
+            const refreshed = await this.authManager.refreshAccessToken();
             if (refreshed) {
-                res = await fetchWithTimeout(url, getOptions());
+                const newToken = this.authManager.getToken();
+                res = await fetchWithTimeout(url, getOptions(newToken || ""));
             } else {
                 throw new Error("Unauthorized");
             }
@@ -53,7 +51,7 @@ export class GoogleCalendarAPI {
     }
 
     async fetchCalendars(): Promise<{id: string, summary: string, accessRole?: string}[]> {
-        if (!this.token)
+        if (!this.authManager.getToken())
             return [{ id: "primary", summary: "Primary Calendar", accessRole: "owner" }];
         const res = await this.fetchWithAuth(
             "https://www.googleapis.com/calendar/v3/users/me/calendarList"
@@ -266,4 +264,4 @@ function extractEventMetadata(googleEvent: gapi.client.calendar.Event) {
     return { taskId, id, type };
 }
 
-export const googleCalendarAPI = new GoogleCalendarAPI();
+

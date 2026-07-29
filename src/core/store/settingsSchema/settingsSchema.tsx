@@ -1,3 +1,5 @@
+/* oxlint-disable max-lines -- It's nice to have all the settings in one file. */
+
 import {
     ExportDataButton,
     ImportTasksButton,

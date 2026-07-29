@@ -1,10 +1,13 @@
 import { fetchWithTimeout } from "../store/api";
-import { googleCalendarAPI } from "../sync/GoogleCalendarAPI";
-import { googleTasksAPI } from "../sync/GoogleTasksAPI";
+import type { IAuthManager } from "../sync/api-interfaces";
 
-class TokenBouncer {
+export class GoogleAuthManager implements IAuthManager {
     private isRefreshing = false;
     private refreshPromise: Promise<boolean> | null = null;
+
+    getToken(): string | null {
+        return localStorage.getItem("google_access_token");
+    }
 
     async refreshAccessToken(): Promise<boolean> {
         if (this.isRefreshing && this.refreshPromise) {
@@ -45,8 +48,6 @@ class TokenBouncer {
             const data = await res.json();
             if (data.access_token) {
                 localStorage.setItem("google_access_token", data.access_token);
-                googleCalendarAPI.setToken(data.access_token);
-                googleTasksAPI.setToken(data.access_token);
                 return true;
             }
         } catch (e) {
@@ -56,4 +57,3 @@ class TokenBouncer {
     }
 }
 
-export const tokenBouncer = new TokenBouncer();

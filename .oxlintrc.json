@@ -6,6 +6,8 @@
     "suspicious": "error"
   },
   "rules": {
+    "unicorn/no-null": "error",
+
     "react/rules-of-hooks": "error",
     "react/exhaustive-deps": "warn",
     "react/jsx-max-depth": ["warn", { "max": 6 }],

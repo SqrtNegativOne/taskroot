@@ -8,6 +8,28 @@ export const MAX_RETRIES = 3;
 
 /// <reference types="gapi.client.tasks" />
 
+function extractLocalTaskId(googleTask: gapi.client.tasks.Task, existing?: AppTask): string {
+    return existing?.id || (googleTask.notes || "").match(/Taskroot Task ID: (t[0-9a-zA-Z-]+)/)?.[1] || googleTask.id || "";
+}
+
+function parseGoogleTaskDue(dueStr?: string): import("../../domain/models").DateString | undefined {
+    const p = dueStr?.split("T")[0].split("-");
+    if (p?.length === MAX_RETRIES) {
+        return `${Number(p[0])}-${Number(p[1])}-${Number(p[2])}`;
+    }
+    return undefined;
+}
+
+function getGoogleTaskBase(googleTask: gapi.client.tasks.Task) {
+    return {
+        googleTaskId: googleTask.id || "",
+        title: googleTask.title || "",
+        notes: googleTask.notes || "",
+        status: googleTask.status === "completed" ? "done" as const : "todo" as const,
+        updatedAt: googleTask.updated ? new Date(googleTask.updated).getTime() : Date.now(),
+    };
+}
+
 export class GoogleTasksAPI implements ITasksAPI {
     private authManager: IAuthManager;
     constructor(authManager: IAuthManager) {
@@ -64,15 +86,10 @@ export class GoogleTasksAPI implements ITasksAPI {
         if (googleTask.deleted) {
             return { id: existing?.id || googleTask.id || "", _deleted: true, updatedAt: new Date(googleTask.updated || 0).getTime() };
         }
-        const id = existing?.id || (googleTask.notes || "").match(/Taskroot Task ID: (t[0-9a-zA-Z-]+)/)?.[1] || googleTask.id || "";
-        const p = googleTask.due?.split("T")[0].split("-");
-        const due: import("../../domain/models").DateString | undefined = p?.length === MAX_RETRIES ? `${Number(p[0])}-${Number(p[1])}-${Number(p[2])}` : undefined;
-        
-        const base = {
-            googleTaskId: googleTask.id || "", title: googleTask.title || "", notes: googleTask.notes || "",
-            status: googleTask.status === "completed" ? "done" as const : "todo" as const,
-            updatedAt: googleTask.updated ? new Date(googleTask.updated).getTime() : Date.now(),
-        };
+
+        const id = extractLocalTaskId(googleTask, existing);
+        const due = parseGoogleTaskDue(googleTask.due);
+        const base = getGoogleTaskBase(googleTask);
 
         if (existing) return { ...existing, ...base, due: due || existing.due };
         return {

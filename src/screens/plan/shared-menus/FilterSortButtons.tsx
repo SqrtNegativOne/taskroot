@@ -30,7 +30,10 @@ export function FilterSortButtons({
         }
         document.addEventListener("pointerdown", handleClickOutside);
         return () => document.removeEventListener("pointerdown", handleClickOutside);
-    }, [
+        
+        // False positive.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [ 
         filterMenu.isOpen,
         filterMenu.isClosing,
         filterMenu.close,

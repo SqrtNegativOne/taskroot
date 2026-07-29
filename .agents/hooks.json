@@ -2,13 +2,9 @@
   "ping-on-stop": {
     "Stop": [
       {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "powershell -c \"[System.Console]::Beep(800, 300)\"",
-            "timeout": 10
-          }
-        ]
+        "type": "command",
+        "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File .agents/ping.ps1",
+        "timeout": 5
       }
     ]
   }

@@ -5,152 +5,73 @@ import type { IAuthManager, ICalendarAPI } from "./api-interfaces";
 
 export class GoogleCalendarAPI implements ICalendarAPI {
     private authManager: IAuthManager;
-
     constructor(authManager: IAuthManager) {
         this.authManager = authManager;
     }
 
-    private async fetchWithAuth(url: string, options: RequestInit = {}) {
-        const token = this.authManager.getToken();
+    private async fetchWithAuth(endpoint: string, options: RequestInit = {}) {
+        const getOpts = (t: string) => ({ ...options, headers: { ...options.headers, Authorization: `Bearer ${t}` } });
+        let token = this.authManager.getToken();
         if (!token) throw new Error("Unauthorized");
-        const getOptions = (t: string) => ({
-            ...options,
-            headers: {
-                ...options.headers,
-                Authorization: `Bearer ${t}`,
-            }
-        });
-
-        let res = await fetchWithTimeout(url, getOptions(token));
+        let res = await fetchWithTimeout(`https://www.googleapis.com/calendar/v3/${endpoint}`, getOpts(token));
         if (res.status === 401) {
-            const refreshed = await this.authManager.refreshAccessToken();
-            if (refreshed) {
-                const newToken = this.authManager.getToken();
-                res = await fetchWithTimeout(url, getOptions(newToken || ""));
-            } else {
-                throw new Error("Unauthorized");
-            }
+            if (!await this.authManager.refreshAccessToken()) throw new Error("Unauthorized");
+            res = await fetchWithTimeout(`https://www.googleapis.com/calendar/v3/${endpoint}`, getOpts(this.authManager.getToken() || ""));
         }
         return res;
     }
 
-    async fetchEvents(
-        timeMin: string,
-        timeMax: string,
-        calendarId = "primary",
-    ) {
-        const res = await this.fetchWithAuth(
-            `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=false&maxResults=2500`
-        );
-        if (!res.ok) {
-            console.warn(`Failed to fetch events for calendar ${calendarId}`);
-            return null;
-        }
-        const data = await res.json();
+    async fetchEvents(timeMin: string, timeMax: string, calendarId = "primary") {
+        const res = await this.fetchWithAuth(`calendars/${encodeURIComponent(calendarId)}/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=false&maxResults=2500`);
+        if (!res.ok) { console.warn(`Failed to fetch events for calendar ${calendarId}`); return undefined; }
+        const data: { items?: gapi.client.calendar.Event[] } = await res.json();
         return data.items || [];
     }
 
     async fetchCalendars(): Promise<{id: string, summary: string, accessRole?: string}[]> {
-        if (!this.authManager.getToken())
-            return [{ id: "primary", summary: "Primary Calendar", accessRole: "owner" }];
-        const res = await this.fetchWithAuth(
-            "https://www.googleapis.com/calendar/v3/users/me/calendarList"
-        );
-        if (!res.ok) {
-            console.warn(`Failed to fetch calendars`);
-            return [{ id: "primary", summary: "Primary Calendar", accessRole: "owner" }];
-        }
-        const data = await res.json();
-        return data.items || [{ id: "primary", summary: "Primary Calendar", accessRole: "owner" }];
+        const def = [{ id: "primary", summary: "Primary Calendar", accessRole: "owner" }];
+        if (!this.authManager.getToken()) return def;
+        const res = await this.fetchWithAuth("users/me/calendarList");
+        if (!res.ok) { console.warn(`Failed to fetch calendars`); return def; }
+        const data: { items?: {id: string, summary: string, accessRole?: string}[] } = await res.json();
+        return data.items || def;
     }
 
     async createEvent(localEvent: AppEvent, tasks: AppTask[], calendarId = "primary") {
-        const body = this.toGoogleEvent(localEvent, tasks);
-        const res = await this.fetchWithAuth(
-            `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`,
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(body),
-            },
-        );
-        if (!res.ok) {
-            const text = await res.text();
-            throw new Error(`Failed to create event: ${res.status} ${text}`);
-        }
-        const data = await res.json();
-        return { id: data.id, calendarId };
+        const res = await this.fetchWithAuth(`calendars/${encodeURIComponent(calendarId)}/events`, {
+            method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(this.toGoogleEvent(localEvent, tasks))
+        });
+        if (!res.ok) throw new Error(`Failed to create event: ${res.status} ${await res.text()}`);
+        const data: { id?: string } = await res.json();
+        return { id: data.id || "", calendarId };
     }
 
-    async updateEvent(
-        googleEventId: string,
-        localEvent: AppEvent,
-        tasks: AppTask[],
-        calendarId = "primary",
-    ) {
-        const body = this.toGoogleEvent(localEvent, tasks);
-        const res = await this.fetchWithAuth(
-            `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${googleEventId}`,
-            {
-                method: "PATCH",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(body),
-            },
-        );
-        if (!res.ok) {
-            const text = await res.text();
-            throw new Error(`Failed to update event: ${res.status} ${text}`);
-        }
+    async updateEvent(googleEventId: string, localEvent: AppEvent, tasks: AppTask[], calendarId = "primary") {
+        const res = await this.fetchWithAuth(`calendars/${encodeURIComponent(calendarId)}/events/${googleEventId}`, {
+            method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(this.toGoogleEvent(localEvent, tasks))
+        });
+        if (!res.ok) throw new Error(`Failed to update event: ${res.status} ${await res.text()}`);
     }
 
     async deleteEvent(googleEventId: string, calendarId = "primary") {
-        const res = await this.fetchWithAuth(
-            `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${googleEventId}`,
-            {
-                method: "DELETE",
-            },
-        );
-        if (!res.ok) {
-            const text = await res.text();
-            throw new Error(`Failed to delete event: ${res.status} ${text}`);
-        }
+        const res = await this.fetchWithAuth(`calendars/${encodeURIComponent(calendarId)}/events/${googleEventId}`, { method: "DELETE" });
+        if (!res.ok) throw new Error(`Failed to delete event: ${res.status} ${await res.text()}`);
     }
 
     toGoogleEvent(localEvent: AppEvent, tasks: AppTask[]): gapi.client.calendar.Event {
-        const task = localEvent.taskId
-            ? tasks.find((t) => t.id === localEvent.taskId)
-            : null;
-        const title = task ? task.title : localEvent.title;
-
-        const dateStr = localEvent.date;
-        const startH = Math.floor(localEvent.start / 60);
-        const startM = localEvent.start % 60;
-        let endH = Math.floor(localEvent.end / 60);
-        const endM = localEvent.end % 60;
-        let endYMD: string = dateStr;
-
-        if (endH >= 24) {
-            endH = 0;
-            const endDt = new Date(dateStr);
-            endDt.setDate(endDt.getDate() + 1);
-            const y = endDt.getFullYear();
-            const m = (endDt.getMonth() + 1).toString().padStart(2, "0");
-            const d = endDt.getDate().toString().padStart(2, "0");
-            endYMD = `${y}-${m}-${d}`;
-        }
-
-        const startStr = `${dateStr}T${startH.toString().padStart(2, "0")}:${startM.toString().padStart(2, "0")}:00`;
-        const endStr = `${endYMD}T${endH.toString().padStart(2, "0")}:${endM.toString().padStart(2, "0")}:00`;
+        const task = localEvent.taskId ? tasks.find((t) => t.id === localEvent.taskId) : null;
+        const pad = (n: number) => n.toString().padStart(2, "0");
+        const dtStr = (date: string, mins: number) => {
+            let [y, m, d] = date.split("-").map(Number);
+            if (mins >= 1440) { d += Math.floor(mins / 1440); mins %= 1440; }
+            const dt = new Date(y, m - 1, d);
+            return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(Math.floor(mins / 60))}:${pad(mins % 60)}:00`;
+        };
         const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-        const r: gapi.client.calendar.Event = {
-            summary: title || "Taskroot Event",
-            start: { dateTime: startStr, timeZone },
-            end: { dateTime: endStr, timeZone },
+        return {
+            summary: (task ? task.title : localEvent.title) || "Taskroot Event",
+            start: { dateTime: dtStr(localEvent.date, localEvent.start), timeZone },
+            end: { dateTime: dtStr(localEvent.date, localEvent.end), timeZone },
             description: localEvent.description || "",
             extendedProperties: {
                 private: {
@@ -159,56 +80,27 @@ export class GoogleCalendarAPI implements ICalendarAPI {
                     type: localEvent.type || "",
                 },
             },
+            ...(localEvent.rrule ? { recurrence: [`RRULE:${localEvent.rrule}`] } : {})
         };
-
-        if (localEvent.rrule) {
-            r.recurrence = [`RRULE:${localEvent.rrule}`];
-        }
-        return r;
     }
 
-    toLocalEvent(
-        googleEvent: gapi.client.calendar.Event,
-        calendarId = "primary",
-        calendarSummary = "",
-    ) {
+    toLocalEvent(googleEvent: gapi.client.calendar.Event, calendarId = "primary", calendarSummary = "") {
         if (googleEvent.status === "cancelled") {
-            let id = googleEvent.id;
-            if (googleEvent.extendedProperties?.private?.taskrootEventId) {
-                id = googleEvent.extendedProperties.private.taskrootEventId;
-            }
             return {
-                id,
+                id: googleEvent.extendedProperties?.private?.taskrootEventId || googleEvent.id || "",
                 _deleted: true,
                 updatedAt: new Date(googleEvent.updated || 0).getTime(),
             };
         }
-
-        const time = extractEventTime(googleEvent);
-        const meta = extractEventMetadata(googleEvent);
-
-        const rrule =
-            googleEvent.recurrence && googleEvent.recurrence.length > 0
-                ? googleEvent.recurrence
-                      .find((r: string) => r.startsWith("RRULE:"))
-                      ?.replace(/^RRULE:/i, "")
-                : undefined;
+        const { date, start, end } = extractEventTime(googleEvent);
+        const { taskId, id, type } = extractEventMetadata(googleEvent);
+        const rrule = googleEvent.recurrence?.find((r) => r.startsWith("RRULE:"))?.replace(/^RRULE:/i, "");
 
         return {
-            id: meta.id,
-            googleEventId: googleEvent.id,
-            googleCalendarId: calendarId,
-            taskId: meta.taskId,
-            title: googleEvent.summary || "Untitled Event",
-            date: time.date,
-            start: time.start,
-            end: time.end,
-            type: meta.type,
-            category: calendarSummary,
-            rrule: rrule,
-            updatedAt: googleEvent.updated
-                ? new Date(googleEvent.updated).getTime()
-                : Date.now(),
+            id: id || "", googleEventId: googleEvent.id, googleCalendarId: calendarId, taskId,
+            title: googleEvent.summary || "Untitled Event", date: date || "", start: start || 0, end: end || 0, type,
+            category: calendarSummary, rrule,
+            updatedAt: googleEvent.updated ? new Date(googleEvent.updated).getTime() : Date.now(),
         };
     }
 }
@@ -216,52 +108,26 @@ export class GoogleCalendarAPI implements ICalendarAPI {
 function extractEventTime(googleEvent: gapi.client.calendar.Event) {
     if (googleEvent.start?.dateTime) {
         const startDt = new Date(googleEvent.start.dateTime);
-        const endDt = new Date(
-            googleEvent.end?.dateTime || googleEvent.start.dateTime,
-        );
-        const y = startDt.getFullYear();
-        const m = (startDt.getMonth() + 1).toString().padStart(2, "0");
-        const d = startDt.getDate().toString().padStart(2, "0");
-        const date = `${y}-${m}-${d}`;
-        const start = startDt.getHours() * 60 + startDt.getMinutes();
-        let end;
-        if (
-            endDt.getDate() !== startDt.getDate() &&
-            endDt.getTime() > startDt.getTime()
-        ) {
-            end = 24 * 60;
-        } else {
-            end = endDt.getHours() * 60 + endDt.getMinutes();
-        }
-        return { date, start, end };
+        const endDt = new Date(googleEvent.end?.dateTime || googleEvent.start.dateTime);
+        const pad = (n: number) => n.toString().padStart(2, "0");
+        return {
+            date: `${startDt.getFullYear()}-${pad(startDt.getMonth() + 1)}-${pad(startDt.getDate())}`,
+            start: startDt.getHours() * 60 + startDt.getMinutes(),
+            end: (endDt.getDate() !== startDt.getDate() && endDt.getTime() > startDt.getTime()) ? 24 * 60 : endDt.getHours() * 60 + endDt.getMinutes()
+        };
     }
-    if (googleEvent.start?.date) {
-        return { date: googleEvent.start.date, start: 0, end: 24 * 60 };
-    }
-    return { date: undefined, start: undefined, end: undefined };
+    return googleEvent.start?.date 
+        ? { date: googleEvent.start.date, start: 0, end: 24 * 60 } 
+        : { date: undefined, start: undefined, end: undefined };
 }
 
 function extractEventMetadata(googleEvent: gapi.client.calendar.Event) {
-    let taskId = null;
-    let id = googleEvent.id;
-    let type = googleEvent.start?.date ? "info" : "busy";
-
-    if (googleEvent.extendedProperties?.private?.taskrootEventId) {
-        const priv = googleEvent.extendedProperties.private;
-        if (priv.taskId) taskId = priv.taskId;
-        if (priv.taskrootEventId) id = priv.taskrootEventId;
-        if (priv.type) type = priv.type;
-    } else {
-        const desc = googleEvent.description || "";
-        const match = desc.match(/Task ID: (t\d+)/);
-        if (match) taskId = match[1];
-        
-        const idMatch = desc.match(/Taskroot Event ID: (e[0-9a-zA-Z-]+)/);
-        if (idMatch) id = idMatch[1];
-        
-        if (taskId) type = "plan";
-    }
-    return { taskId, id, type };
+    const priv = googleEvent.extendedProperties?.private;
+    const desc = googleEvent.description || "";
+    const taskId = priv?.taskId || desc.match(/Task ID: (t\d+)/)?.[1] || null;
+    return {
+        taskId,
+        id: priv?.taskrootEventId || desc.match(/Taskroot Event ID: (e[0-9a-zA-Z-]+)/)?.[1] || googleEvent.id || "",
+        type: priv?.type || (taskId ? "plan" : (googleEvent.start?.date ? "info" : "busy"))
+    };
 }
-
-

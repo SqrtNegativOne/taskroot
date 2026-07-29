@@ -31,7 +31,7 @@ export class TaskSynchronizer extends AbstractSynchronizer<AppTask> {
         this.context.updatePrevTasksMap(items);
     }
 
-    protected async fetchRemoteItems(): Promise<any[] | null> {
+    protected async fetchRemoteItems(): Promise<any[] | undefined> {
         return await this.tasksAPI.fetchTasks();
     }
 
@@ -40,7 +40,7 @@ export class TaskSynchronizer extends AbstractSynchronizer<AppTask> {
         _localItemsArray: AppTask[],
         localItemsMap: Map<string, AppTask>
     ): boolean {
-        let localId = null;
+        let localId: string | undefined = undefined;
         const match = (remote.notes || "").match(
             /Taskroot Task ID: (t[0-9a-zA-Z-]+)/,
         );
@@ -55,7 +55,7 @@ export class TaskSynchronizer extends AbstractSynchronizer<AppTask> {
             }
         }
 
-        const existingLocalTask = localId ? localItemsMap.get(localId) : null;
+        const existingLocalTask = localId ? localItemsMap.get(localId) : undefined;
         const standardizedRemote = this.tasksAPI.toLocalTask(
             remote,
             existingLocalTask,

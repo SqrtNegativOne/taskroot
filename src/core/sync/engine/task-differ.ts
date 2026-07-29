@@ -1,4 +1,5 @@
-import { SyncAction, SyncType, SyncQueueItem } from "./types";
+import type { SyncQueueItem } from "./types";
+import { SyncAction, SyncType } from "./types";
 import type { AppTask } from "../../domain/models";
 
 export function computeTaskDeltaActions(

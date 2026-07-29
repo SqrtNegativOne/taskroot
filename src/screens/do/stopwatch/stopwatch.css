@@ -166,3 +166,73 @@
   50%      { transform: translateY(3px); opacity: 1; }
 }
 
+/* ── Active Task Display ────────────────────────────────────────────────── */
+
+.active-task-btn {
+  margin-top: 16px;
+  font-size: 18px;
+  color: var(--fg);
+  text-align: center;
+  cursor: pointer;
+  transition: color 0.15s;
+  padding: 4px 12px;
+  border-radius: 4px;
+  background: none;
+  border: none;
+  font: inherit;
+}
+.active-task-btn:hover {
+  color: var(--accent);
+}
+.active-task-label {
+  color: var(--fg-dim);
+  margin-right: 8px;
+}
+.active-task-title {
+  font-weight: 400;
+}
+.no-active-task {
+  margin-top: 16px;
+  font-size: 18px;
+  color: var(--fg-dim);
+  text-align: center;
+}
+
+/* ── Display Internals ──────────────────────────────────────────────────── */
+
+.stopwatch-display {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+}
+.sw-digits {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.sw-digits.col {
+  flex-direction: column;
+}
+.sw-digits.row {
+  flex-direction: row;
+}
+.sw-play-icon {
+  margin-left: 0.1em;
+}
+.sw-secondary-text {
+  font-size: 0.08em;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.sw-primary-text {
+  font-size: inherit;
+  margin: 0;
+}
+.sw-primary-text.has-secondary {
+  font-size: 0.7em;
+  margin: 2px 0;
+}
+

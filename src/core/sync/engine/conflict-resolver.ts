@@ -1,11 +1,11 @@
 export function resolveConflict<T extends { id: string, updatedAt?: number }>(
-    remoteItem: T & { _deleted?: boolean },
-    existingLocalItem: T | null | undefined,
+    remoteItem: T | { id: string, _deleted?: boolean, updatedAt?: number },
+    existingLocalItem: T | undefined,
     localItemsMap: Map<string, T>
 ): boolean {
     let updated = false;
 
-    if (remoteItem._deleted) {
+    if ("_deleted" in remoteItem && remoteItem._deleted) {
         if (existingLocalItem) {
             const localUpdated = existingLocalItem.updatedAt || 0;
             if ((remoteItem.updatedAt || 0) > localUpdated) {

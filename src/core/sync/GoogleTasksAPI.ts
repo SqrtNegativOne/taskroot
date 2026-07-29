@@ -5,192 +5,83 @@ import type { IAuthManager, ITasksAPI } from "./api-interfaces";
 
 export class GoogleTasksAPI implements ITasksAPI {
     private authManager: IAuthManager;
-
     constructor(authManager: IAuthManager) {
         this.authManager = authManager;
     }
 
-    private async fetchWithAuth(url: string, options: RequestInit = {}) {
-        const token = this.authManager.getToken();
+    private async fetchWithAuth(endpoint: string, options: RequestInit = {}) {
+        const getOpts = (t: string) => ({ ...options, headers: { ...options.headers, Authorization: `Bearer ${t}` } });
+        let token = this.authManager.getToken();
         if (!token) throw new Error("Unauthorized");
-        const getOptions = (t: string) => ({
-            ...options,
-            headers: {
-                ...options.headers,
-                Authorization: `Bearer ${t}`,
-            }
-        });
-
-        let res = await fetchWithTimeout(url, getOptions(token));
+        let res = await fetchWithTimeout(`https://tasks.googleapis.com/tasks/v1/${endpoint}`, getOpts(token));
         if (res.status === 401) {
-            const refreshed = await this.authManager.refreshAccessToken();
-            if (refreshed) {
-                const newToken = this.authManager.getToken();
-                res = await fetchWithTimeout(url, getOptions(newToken || ""));
-            } else {
-                throw new Error("Unauthorized");
-            }
+            if (!await this.authManager.refreshAccessToken()) throw new Error("Unauthorized");
+            res = await fetchWithTimeout(`https://tasks.googleapis.com/tasks/v1/${endpoint}`, getOpts(this.authManager.getToken() || ""));
         }
         return res;
     }
 
     async fetchTasks(tasklistId = "@default") {
         const allTasks: gapi.client.tasks.Task[] = [];
-        let pageToken: string | null = null;
+        let pageToken = "";
         do {
-            const url = new URL(
-                `https://tasks.googleapis.com/tasks/v1/lists/${tasklistId}/tasks`,
-            );
-            url.searchParams.append("showCompleted", "true");
-            url.searchParams.append("showHidden", "true");
-            url.searchParams.append("maxResults", "100");
-            if (pageToken) url.searchParams.append("pageToken", pageToken);
-
-            const res = await this.fetchWithAuth(url.toString());
-            if (!res.ok) {
-                console.warn(`Failed to fetch google tasks`);
-                return null;
-            }
-            const data = await res.json();
+            const res = await this.fetchWithAuth(`lists/${tasklistId}/tasks?showCompleted=true&showHidden=true&maxResults=100${pageToken ? `&pageToken=${pageToken}` : ""}`);
+            if (!res.ok) { console.warn(`Failed to fetch google tasks`); return undefined; }
+            const data: { items?: gapi.client.tasks.Task[], nextPageToken?: string } = await res.json();
             if (data.items) allTasks.push(...data.items);
-            pageToken = data.nextPageToken;
+            pageToken = data.nextPageToken || "";
         } while (pageToken);
-
         return allTasks;
     }
 
     async createTask(localTask: AppTask, tasklistId = "@default") {
-        const body = this.toGoogleTask(localTask);
-        const res = await this.fetchWithAuth(
-            `https://tasks.googleapis.com/tasks/v1/lists/${tasklistId}/tasks`,
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(body),
-            },
-        );
-        if (!res.ok) {
-            const errText = await res.text();
-            throw new Error(`Failed to create task: ${res.status} ${errText}`);
-        }
-        const data = await res.json();
-        return data.id;
+        const res = await this.fetchWithAuth(`lists/${tasklistId}/tasks`, {
+            method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(this.toGoogleTask(localTask))
+        });
+        if (!res.ok) throw new Error(`Failed to create task: ${res.status} ${await res.text()}`);
+        const data: gapi.client.tasks.Task = await res.json();
+        return data.id || "";
     }
 
-    async updateTask(
-        googleTaskId: string,
-        localTask: AppTask,
-        tasklistId = "@default",
-    ) {
-        const body = this.toGoogleTask(localTask);
-        const res = await this.fetchWithAuth(
-            `https://tasks.googleapis.com/tasks/v1/lists/${tasklistId}/tasks/${googleTaskId}`,
-            {
-                method: "PATCH",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(body),
-            },
-        );
-        if (!res.ok) {
-            const errText = await res.text();
-            throw new Error(`Failed to update task: ${res.status} ${errText}`);
-        }
+    async updateTask(googleTaskId: string, localTask: AppTask, tasklistId = "@default") {
+        const res = await this.fetchWithAuth(`lists/${tasklistId}/tasks/${googleTaskId}`, {
+            method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(this.toGoogleTask(localTask))
+        });
+        if (!res.ok) throw new Error(`Failed to update task: ${res.status} ${await res.text()}`);
     }
 
     async deleteTask(googleTaskId: string, tasklistId = "@default") {
-        const res = await this.fetchWithAuth(
-            `https://tasks.googleapis.com/tasks/v1/lists/${tasklistId}/tasks/${googleTaskId}`,
-            {
-                method: "DELETE",
-            },
-        );
-        if (!res.ok) {
-            const errText = await res.text();
-            throw new Error(`Failed to delete task: ${res.status} ${errText}`);
-        }
+        const res = await this.fetchWithAuth(`lists/${tasklistId}/tasks/${googleTaskId}`, { method: "DELETE" });
+        if (!res.ok) throw new Error(`Failed to delete task: ${res.status} ${await res.text()}`);
     }
 
-    toLocalTask(googleTask: gapi.client.tasks.Task, existingLocalTask: AppTask | null = null): AppTask | { id: string; _deleted: boolean; updatedAt: number; } {
+    toLocalTask(googleTask: gapi.client.tasks.Task, existing: AppTask | undefined = undefined): AppTask | { id: string; _deleted: boolean; updatedAt: number; } {
         if (googleTask.deleted) {
-            let id = googleTask.id || "";
-            if (existingLocalTask) id = existingLocalTask.id;
-            return {
-                id,
-                _deleted: true,
-                updatedAt: new Date(googleTask.updated || 0).getTime(),
-            };
+            return { id: existing?.id || googleTask.id || "", _deleted: true, updatedAt: new Date(googleTask.updated || 0).getTime() };
         }
+        const id = existing?.id || (googleTask.notes || "").match(/Taskroot Task ID: (t[0-9a-zA-Z-]+)/)?.[1] || googleTask.id || "";
+        const p = googleTask.due?.split("T")[0].split("-");
+        const due: import("../domain/models").DateString | undefined = p?.length === 3 ? `${Number(p[0])}-${Number(p[1])}-${Number(p[2])}` : undefined;
+        
+        const base = {
+            googleTaskId: googleTask.id || "", title: googleTask.title || "", notes: googleTask.notes || "",
+            status: googleTask.status === "completed" ? "done" as const : "todo" as const,
+            updatedAt: googleTask.updated ? new Date(googleTask.updated).getTime() : Date.now(),
+        };
 
-        return createUpdatedLocalTask(googleTask, existingLocalTask);
+        if (existing) return { ...existing, ...base, due: due || existing.due };
+        return {
+            id, ...base, priority: 1, tags: [], subtasks: [], parent_task: null, est: 0,
+            added: new Date().toISOString(), isDraft: false, due,
+        };
     }
 
     toGoogleTask(localTask: AppTask): gapi.client.tasks.Task {
-        let notes = localTask.notes || "";
-        if (!notes.includes(`Taskroot Task ID: ${localTask.id}`)) {
-            notes = `Taskroot Task ID: ${localTask.id}\n${notes}`;
-        }
-        const result: gapi.client.tasks.Task = {
-            title: localTask.title,
-            notes: notes,
-            status: localTask.status === "done" ? "completed" : "needsAction",
-        };
-        if (localTask.due) {
-            result.due = new Date(localTask.due).toISOString();
-        }
-        return result;
-    }
-}
-
-const extractTaskId = (gTask: gapi.client.tasks.Task, existing: AppTask | null): string => {
-    if (existing) return existing.id;
-    const match = (gTask.notes || "").match(/Taskroot Task ID: (t[0-9a-zA-Z-]+)/);
-    return match ? match[1] : (gTask.id || "");
-};
-
-const parseDueDate = (dueStr?: string): import("../domain/models").DateString | undefined => {
-    if (!dueStr) return undefined;
-    const parts = dueStr.split("T")[0].split("-");
-    return parts.length === 3 ? `${Number(parts[0])}-${Number(parts[1])}-${Number(parts[2])}` : undefined;
-};
-
-function createUpdatedLocalTask(googleTask: gapi.client.tasks.Task, existingLocalTask: AppTask | null): AppTask {
-    const id = extractTaskId(googleTask, existingLocalTask);
-    const due = parseDueDate(googleTask.due);
-    const updatedAt = googleTask.updated ? new Date(googleTask.updated).getTime() : Date.now();
-    const status = googleTask.status === "completed" ? "done" : "todo";
-
-    const baseTaskData = {
-        googleTaskId: googleTask.id,
-        title: googleTask.title || "",
-        notes: googleTask.notes || "",
-        status,
-        updatedAt,
-    };
-
-    if (existingLocalTask) {
         return {
-            ...existingLocalTask,
-            ...baseTaskData,
-            due: due || existingLocalTask.due,
+            title: localTask.title,
+            notes: localTask.notes?.includes(`Taskroot Task ID: ${localTask.id}`) ? localTask.notes : `Taskroot Task ID: ${localTask.id}\n${localTask.notes || ""}`,
+            status: localTask.status === "done" ? "completed" : "needsAction",
+            ...(localTask.due ? { due: new Date(localTask.due).toISOString() } : {})
         };
     }
-
-    return {
-        id,
-        ...baseTaskData,
-        priority: 1,
-        tags: [],
-        subtasks: [],
-        parent_task: null,
-        est: 0,
-        added: new Date().toISOString(),
-        isDraft: false,
-        due,
-    };
 }
-
-

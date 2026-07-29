@@ -31,7 +31,7 @@ export class EventSynchronizer extends AbstractSynchronizer<AppEvent> {
         this.context.updatePrevEventsMap(items);
     }
 
-    protected async fetchRemoteItems(): Promise<any[] | null> {
+    protected async fetchRemoteItems(): Promise<any[] | undefined> {
         const timeMin = new Date();
         timeMin.setMonth(timeMin.getMonth() - 1);
         const timeMax = new Date();
@@ -52,7 +52,7 @@ export class EventSynchronizer extends AbstractSynchronizer<AppEvent> {
             }),
         );
 
-        const allRemoteEvents: (AppEvent & { _deleted?: boolean })[] = [];
+        const allRemoteEvents: Array<AppEvent | { id: string, _deleted: boolean, updatedAt: number }> = [];
         for (const cal of calendars) {
             const remoteEvents = await this.calendarAPI.fetchEvents(
                 timeMin.toISOString(),
@@ -71,7 +71,7 @@ export class EventSynchronizer extends AbstractSynchronizer<AppEvent> {
     }
 
     protected processSingleRemoteItem(
-        remote: AppEvent & { _deleted?: boolean },
+        remote: AppEvent | { id: string, _deleted?: boolean, updatedAt?: number },
         _localItemsArray: AppEvent[],
         localItemsMap: Map<string, AppEvent>
     ): boolean {

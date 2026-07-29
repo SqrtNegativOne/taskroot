@@ -101,5 +101,12 @@ export function usePlanActions(
         );
     };
 
-    return { createEvent, onAddTask, onAddEvent, onResizeEvent, onMoveEvent };
+    const onDeleteTask = (id: string) => {
+        setTasks((ts: AppTask[]) => ts.filter((t: AppTask) => t.id !== id));
+        setEvents((es: AppEvent[]) =>
+            es.filter((e: AppEvent) => e.taskId !== id),
+        );
+    };
+
+    return { createEvent, onAddTask, onAddEvent, onResizeEvent, onMoveEvent, onDeleteTask };
 }

@@ -69,7 +69,7 @@ export abstract class AbstractSynchronizer<T extends { id: string }> {
     protected abstract updatePrevMapSnapshot(items: T[]): void;
 
     /** Fetches the raw remote items from the respective API */
-    protected abstract fetchRemoteItems(): Promise<any[] | null>;
+    protected abstract fetchRemoteItems(): Promise<any[] | undefined>;
 
     /** 
      * Reconciles a single remote item with the local state.

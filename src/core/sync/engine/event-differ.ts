@@ -1,4 +1,5 @@
-import { SyncAction, SyncType, SyncQueueItem } from "./types";
+import { SyncType, SyncAction } from "./types";
+import type { SyncQueueItem } from "./types";
 import type { AppEvent } from "../../domain/models";
 
 export function computeEventDeltaActions(

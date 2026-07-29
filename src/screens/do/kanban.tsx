@@ -12,6 +12,10 @@ const KANBAN_COLUMNS = [
     { id: "done", label: "done", dim: true },
 ];
 
+const DRAG_START_THRESHOLD_PX = 5;
+const GHOST_OFFSET_X = 12;
+const GHOST_OFFSET_Y = 6;
+
 export function Kanban() {
     const [tasks, setTasks] = useTasks();
     const [drag, setDrag] = React.useState<{ taskId: string; x: number; y: number; overCol: string | null } | null>(null);
@@ -24,7 +28,7 @@ export function Kanban() {
         const move = (ev: PointerEvent) => {
             if (
                 !active &&
-                Math.hypot(ev.clientX - start.x, ev.clientY - start.y) < 5
+                Math.hypot(ev.clientX - start.x, ev.clientY - start.y) < DRAG_START_THRESHOLD_PX
             )
                 return;
             active = true;
@@ -114,7 +118,7 @@ export function Kanban() {
             {drag && (
                 <div
                     className="kanban-ghost"
-                    style={{ left: drag.x + 12, top: drag.y - 6 }}
+                    style={{ left: drag.x + GHOST_OFFSET_X, top: drag.y - GHOST_OFFSET_Y }}
                 >
                     <div
                         className={`task-circle pri-bg-${tasks.find((t) => t.id === drag.taskId)?.priority}`}

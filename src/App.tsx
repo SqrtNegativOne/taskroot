@@ -27,6 +27,7 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
     const { user, loading } = useAuth();
     const { notify } = useNotification();
     const notified = React.useRef(false);
+    const OFFLINE_NOTIFY_DELAY_MS = 500;
 
     if (import.meta.env.VITE_OFFLINE_MODE === "true") {
         if (!notified.current) {
@@ -34,7 +35,7 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
             // Use setTimeout to ensure it doesn't fire during render
             setTimeout(
                 () => notify("Offline mode: Bypassed login", "info"),
-                500,
+                OFFLINE_NOTIFY_DELAY_MS,
             );
         }
         return <>{children}</>;

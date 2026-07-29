@@ -7,13 +7,12 @@ import {
     } from "../../components/day-timeline";
 
 import { InspectorPane } from "../../components/inspector-pane";
-import type { AppTask, AppEvent } from "../../core/domain/models";
+import type { AppEvent } from "../../core/domain/models";
 
 import { DragGhost, type PlanDragState } from "./drag-helpers";
 import { usePlanActions } from "./use-plan-actions";
 import { useDragAndDrop } from "./use-drag-and-drop";
 import { DateGrid } from "./date-grid";
-import { hydrateEvents } from "../../core/domain/events";
 import { TitleBar } from "../../components/shell";
 import { useTasks, useEvents, useSettings, useTaskQuery, useTaskFilters, useTaskSort, useCalFilters, useCalSort, useTimeFilters, useTimeSort } from "../../core/store/hooks";
 
@@ -22,8 +21,9 @@ import { TaskListPane } from "../../components/tasklist";
 
 
 import { SplitPane } from "../../components/split-pane";
-import { FilterSortButtons } from "./shared-menus";
-import { expandEventsForView } from "../../core/domain/rrule-utils";
+import { FilterSortButtons } from "./shared-menus/index";
+import { usePlanEvents, PLAN_EVENT_FILTER_COLUMNS, PLAN_EVENT_SORT_OPTIONS } from "./use-plan-events";
+import { useCleanupDrafts } from "./use-cleanup-drafts";
 
 export function PlanScreen() {
 
@@ -31,21 +31,7 @@ export function PlanScreen() {
     const [tasks, setTasks] = useTasks();
     const [events, setEvents] = useEvents();
     // Clean up empty items
-    React.useEffect(() => {
-        const validTasks = tasks.filter(
-            (t) => t.isDraft || (t.title && t.title.trim() !== ""),
-        );
-        if (validTasks.length !== tasks.length) {
-            setTasks(validTasks);
-            setEvents((es: AppEvent[]) =>
-                es.filter((e: AppEvent) => {
-                    if (e.taskId)
-                        return validTasks.some((t: AppTask) => t.id === e.taskId);
-                    return e.isDraft || (e.title && e.title.trim() !== "");
-                }),
-            );
-        }
-    }, [setTasks, setEvents, tasks]);
+    useCleanupDrafts(tasks, setTasks, setEvents);
 
     // UI state — task list
     const [query, setQuery] = useTaskQuery();
@@ -66,40 +52,7 @@ export function PlanScreen() {
     const [timeFilter, setTimeFilter] = useTimeFilters();
     const [timeSort, setTimeSort] = useTimeSort();
 
-    const allEventTags = React.useMemo(() => {
-        const s = new Set<string>();
-        tasks.forEach((t: AppTask) => (t.tags || []).forEach((tag) => s.add(tag)));
-        return Array.from(s).toSorted();
-    }, [tasks]);
-
-    const visibleEvents = React.useMemo(() => {
-        const start = new Date(anchor);
-        start.setMonth(start.getMonth() - 2);
-        const end = new Date(anchor);
-        end.setMonth(end.getMonth() + 2);
-        return expandEventsForView(events, start, end);
-    }, [events, anchor]);
-
-    const hydratedEvents = React.useMemo(() => {
-        return hydrateEvents(visibleEvents, tasks);
-    }, [visibleEvents, tasks]);
-
-    const getEventFilterValues = React.useCallback(
-        (col: string) => {
-            if (col === "type") return ["info", "plan", "busy", "log"];
-            if (col === "tag") return allEventTags;
-            if (col === "taskStatus") return ["todo", "done", "none"];
-            if (col === "category") {
-                const s = new Set<string>();
-                events.forEach((e: AppEvent) => {
-                    if (e.category) s.add(e.category);
-                });
-                return Array.from(s).toSorted();
-            }
-            return [];
-        },
-        [allEventTags, events],
-    );
+    const { hydratedEvents, getEventFilterValues } = usePlanEvents(tasks, events, anchor);
 
 
     // Inspector state
@@ -107,7 +60,7 @@ export function PlanScreen() {
 
 
 
-    const { createEvent, onAddTask, onAddEvent, onResizeEvent, onMoveEvent } = usePlanActions(timelineDate, setInspectorState);
+    const { createEvent, onAddTask, onAddEvent, onResizeEvent, onMoveEvent, onDeleteTask } = usePlanActions(timelineDate, setInspectorState);
     const { onTaskDragStart, onEventDragStart, dragState, setDragState } = useDragAndDrop(timelineDate, setInspectorState, createEvent);
 
     return (
@@ -133,12 +86,7 @@ export function PlanScreen() {
                         onDragStart={onTaskDragStart}
                         activeDragId={dragState?.task?.id}
                         onAddTask={onAddTask}
-                        onDeleteTask={(id) => {
-                            setTasks((ts: AppTask[]) => ts.filter((t: AppTask) => t.id !== id));
-                            setEvents((es: AppEvent[]) =>
-                                es.filter((e: AppEvent) => e.taskId !== id),
-                            );
-                        }}
+                        onDeleteTask={onDeleteTask}
                     />
                     <div className="right-pane">
                         <SplitPane
@@ -161,28 +109,9 @@ export function PlanScreen() {
                                         setFilters={setCalFilter}
                                         sort={calSort}
                                         setSort={setCalSort}
-                                        columns={[
-                                            { id: "type", label: "Type" },
-                                            { id: "tag", label: "Tag" },
-                                            {
-                                                id: "taskStatus",
-                                                label: "Task Status",
-                                            },
-                                            {
-                                                id: "category",
-                                                label: "Category",
-                                            },
-                                        ]}
-                                        getValuesForColumn={
-                                            getEventFilterValues
-                                        }
-                                        sortOptions={[
-                                            { id: "time", label: "Time" },
-                                            {
-                                                id: "taskStatus",
-                                                label: "Task Completed",
-                                            },
-                                        ]}
+                                        columns={PLAN_EVENT_FILTER_COLUMNS}
+                                        getValuesForColumn={getEventFilterValues}
+                                        sortOptions={PLAN_EVENT_SORT_OPTIONS}
                                         align="right"
                                     />
                                 }
@@ -201,28 +130,9 @@ export function PlanScreen() {
                                         setFilters={setTimeFilter}
                                         sort={timeSort}
                                         setSort={setTimeSort}
-                                        columns={[
-                                            { id: "type", label: "Type" },
-                                            { id: "tag", label: "Tag" },
-                                            {
-                                                id: "taskStatus",
-                                                label: "Task Status",
-                                            },
-                                            {
-                                                id: "category",
-                                                label: "Category",
-                                            },
-                                        ]}
-                                        getValuesForColumn={
-                                            getEventFilterValues
-                                        }
-                                        sortOptions={[
-                                            { id: "time", label: "Time" },
-                                            {
-                                                id: "taskStatus",
-                                                label: "Task Completed",
-                                            },
-                                        ]}
+                                        columns={PLAN_EVENT_FILTER_COLUMNS}
+                                        getValuesForColumn={getEventFilterValues}
+                                        sortOptions={PLAN_EVENT_SORT_OPTIONS}
                                         align="right"
                                     />
                                 }

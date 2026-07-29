@@ -6,72 +6,7 @@ import { CLOCK_STRATEGIES } from "../../../core/domain/clock-strategies";
 import { TaskSelector } from "./TaskSelector";
 import { useStopwatchKeyboard } from "./useStopwatchKeyboard";
 import { useStopwatchActions } from "./useStopwatchActions";
-
-function ActiveTaskDisplay({
-    settings,
-    state,
-    activeTask,
-    running,
-    allowNoTask,
-    setSelectorOpen,
-}: any) {
-    const isGuzey = settings.clockStyle === "guzey";
-    const isFlowBreak = state.isBreak;
-    const shouldShowTask = activeTask && (running || isGuzey || isFlowBreak);
-
-    if (shouldShowTask) {
-        return (
-            <button
-                type="button"
-                aria-label="Open task selector"
-                onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectorOpen(true);
-                }}
-                style={{
-                    marginTop: "16px",
-                    fontSize: "18px",
-                    color: "var(--fg)",
-                    textAlign: "center",
-                    cursor: "pointer",
-                    transition: "color 0.15s",
-                    padding: "4px 12px",
-                    borderRadius: "4px",
-                }}
-                onMouseEnter={(e) => {
-                    e.currentTarget.style.color = "var(--accent)";
-                }}
-                onMouseLeave={(e) => {
-                    e.currentTarget.style.color = "var(--fg)";
-                }}
-                title="Click to change task"
-            >
-                <span style={{ color: "var(--fg-dim)", marginRight: "8px" }}>
-                    Working on:
-                </span>
-                <span style={{ fontWeight: 400 }}>{activeTask.title}</span>
-            </button>
-        );
-    } else if (
-        allowNoTask &&
-        !activeTask &&
-        (running || isGuzey || isFlowBreak)
-    ) {
-        return (
-            <div
-                style={{
-                    marginTop: "16px",
-                    fontSize: "18px",
-                    color: "var(--fg-dim)",
-                    textAlign: "center",
-                }}
-            >
-                No active task.
-            </div>
-        );
-    }
-    return null;
-}
+import { ActiveTaskDisplay } from "./ActiveTaskDisplay";
 
 export function Stopwatch({ onBreakStatusChange }: { onBreakStatusChange?: (status: boolean) => void }) {
     const [state, setState] = useStopwatch();
@@ -189,17 +124,10 @@ export function Stopwatch({ onBreakStatusChange }: { onBreakStatusChange?: (stat
                             className={`stopwatch-display ${running ? "is-running" : ""} ${isPristine ? "is-pristine" : ""}`}
                             onClick={toggle}
                             title="Click to start/stop"
-                            style={{ color: data.color || "inherit", background: "none", border: "none", padding: 0, font: "inherit", cursor: "pointer" }}
+                            style={{ color: data.color || "inherit" }}
                         >
                             <span
-                                className="sw-digits sw-m"
-                                style={{
-                                    display: "flex",
-                                    flexDirection: data.secondaryText ? "column" : "row",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    lineHeight: 1,
-                                }}
+                                className={`sw-digits sw-m ${data.secondaryText ? "col" : "row"}`}
                             >
                                 {data.showPlayIcon ? (
                                     <svg
@@ -208,18 +136,18 @@ export function Stopwatch({ onBreakStatusChange }: { onBreakStatusChange?: (stat
                                         viewBox="0 0 24 24"
                                         fill="currentColor"
                                         xmlns="http://www.w3.org/2000/svg"
-                                        style={{ marginLeft: "0.1em" }}
+                                        className="sw-play-icon"
                                     >
                                         <path d="M8 5v14l11-7z" />
                                     </svg>
                                 ) : (
                                     <>
                                         {data.secondaryText && (
-                                            <span style={{ fontSize: "0.08em", fontWeight: 400, letterSpacing: "0.12em", textTransform: "uppercase" }}>
+                                            <span className="sw-secondary-text">
                                                 {data.secondaryText}
                                             </span>
                                         )}
-                                        <span style={{ fontSize: data.secondaryText ? "0.7em" : "inherit", margin: data.secondaryText ? "2px 0" : "0" }}>
+                                        <span className={`sw-primary-text ${data.secondaryText ? "has-secondary" : ""}`}>
                                             {data.primaryText}
                                         </span>
                                     </>

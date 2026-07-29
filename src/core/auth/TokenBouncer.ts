@@ -5,8 +5,8 @@ export class GoogleAuthManager implements IAuthManager {
     private isRefreshing = false;
     private refreshPromise: Promise<boolean> | null = null;
 
-    getToken(): string | null {
-        return localStorage.getItem("google_access_token");
+    getToken(): string | undefined {
+        return localStorage.getItem("google_access_token") ?? undefined;
     }
 
     async refreshAccessToken(): Promise<boolean> {

@@ -66,8 +66,10 @@ export function NotificationProvider({
         [],
     );
 
+    const contextValue = React.useMemo(() => ({ notify }), [notify]);
+    
     return (
-        <NotificationContext.Provider value={{ notify }}>
+        <NotificationContext.Provider value={contextValue}>
             {children}
             <div
                 style={{

@@ -34,6 +34,7 @@ export function TipsList() {
     return (
         <ul className="tips-list">
             {tips.map((tip, i) => (
+                // eslint-disable-next-line react/no-array-index-key
                 <li key={i} className="tips-row">
                     <span className="tips-bullet">·</span>
                     <span className="tips-text">{tip}</span>

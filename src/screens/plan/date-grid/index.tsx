@@ -97,9 +97,9 @@ export function DateGrid({
                     ))}
                 </div>
                 <div className={`cal-cells ${isStrip ? (is3Weeks ? "is-strip-3" : "is-strip-1") : "is-grid"}`}>
-                    {cells.map((c, i) => (
+                    {cells.map((c) => (
                         <DayCell
-                            key={i}
+                            key={c.date.toISOString()}
                             cell={c}
                             today={today}
                             events={displayEvents.filter((e: HydratedEvent) => {

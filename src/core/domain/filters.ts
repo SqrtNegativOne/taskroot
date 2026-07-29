@@ -90,10 +90,10 @@ export function filterEvents(
             } else if (f.column === "tag") {
                 const eventTags = e.tags || [];
                 const taskTags = e.task && e.task.tags ? e.task.tags : [];
-                const allTags = [...eventTags, ...taskTags].map((t) =>
+                const allTags = new Set([...eventTags, ...taskTags].map((t) =>
                     typeof t === "string" ? t.toLowerCase() : "",
-                );
-                match = values.some(v => allTags.includes(String(v).toLowerCase()));
+                ));
+                match = values.some(v => allTags.has(String(v).toLowerCase()));
             } else if (f.column === "taskStatus") {
                 match = values.some(v => {
                     if (v === "none") return !e.task;

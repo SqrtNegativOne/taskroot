@@ -27,6 +27,6 @@ export function layoutEvents(events: HydratedEvent[]) {
                 if (p.lane > maxLane) maxLane = p.lane;
             }
         }
-        return { ...r, lanes: maxLane + 1 };
+        return Object.assign({}, r, { lanes: maxLane + 1 });
     });
 }

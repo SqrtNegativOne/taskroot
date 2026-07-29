@@ -52,8 +52,10 @@ export class Pusher {
                 }
 
                 if (taskOrEvent.type === SyncType.Task) {
+                    // eslint-disable-next-line no-await-in-loop
                     await this.taskSync.processPushItem(taskOrEvent);
                 } else if (taskOrEvent.type === SyncType.Event) {
+                    // eslint-disable-next-line no-await-in-loop
                     await this.eventSync.processPushItem(taskOrEvent);
                 }
                 this.pushQueue.shift();

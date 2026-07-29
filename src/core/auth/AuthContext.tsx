@@ -21,7 +21,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const [loading] = useState(false);
     const { notify } = useNotification();
 
-    const loginWithGoogle = async () => {
+    const loginWithGoogle = React.useCallback(async () => {
         try {
             await loadGoogleIdentityScript();
             const code = await requestGoogleAuthCode();
@@ -39,9 +39,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             const message = error instanceof Error ? error.message : String(error);
             notify(`Sign in failed: ${message}`, "error");
         }
-    };
+    }, [notify]);
 
-    const logout = async () => {
+    const logout = React.useCallback(async () => {
         try {
             localStorage.removeItem("google_access_token");
             localStorage.removeItem("google_refresh_token");
@@ -53,12 +53,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                 error instanceof Error ? error.message : String(error);
             notify(`Logout failed: ${message}`, "error");
         }
-    };
+    }, [notify]);
+
+    const contextValue = React.useMemo(
+        () => ({ user, loading, loginWithGoogle, logout }),
+        [user, loading, loginWithGoogle, logout]
+    );
 
     return (
-        <AuthContext.Provider
-            value={{ user, loading, loginWithGoogle, logout }}
-        >
+        <AuthContext.Provider value={contextValue}>
             {children}
         </AuthContext.Provider>
     );

@@ -53,20 +53,22 @@ export class EventSynchronizer extends AbstractSynchronizer<AppEvent> {
         );
 
         const allRemoteEvents: Array<AppEvent | { id: string, _deleted: boolean, updatedAt: number }> = [];
-        for (const cal of calendars) {
-            const remoteEvents = await this.calendarAPI.fetchEvents(
-                timeMin.toISOString(),
-                timeMax.toISOString(),
-                cal.id,
-            );
-            if (remoteEvents) {
-                allRemoteEvents.push(
-                    ...remoteEvents.map((e: gapi.client.calendar.Event) =>
-                        this.calendarAPI.toLocalEvent(e, cal.id, cal.summary),
-                    ),
+        await Promise.all(
+            calendars.map(async (cal) => {
+                const remoteEvents = await this.calendarAPI.fetchEvents(
+                    timeMin.toISOString(),
+                    timeMax.toISOString(),
+                    cal.id,
                 );
-            }
-        }
+                if (remoteEvents) {
+                    allRemoteEvents.push(
+                        ...remoteEvents.map((e: gapi.client.calendar.Event) =>
+                            this.calendarAPI.toLocalEvent(e, cal.id, cal.summary),
+                        ),
+                    );
+                }
+            })
+        );
         return allRemoteEvents;
     }
 

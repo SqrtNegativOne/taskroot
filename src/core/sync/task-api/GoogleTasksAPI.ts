@@ -52,8 +52,10 @@ export class GoogleTasksAPI implements ITasksAPI {
         const allTasks: gapi.client.tasks.Task[] = [];
         let pageToken = "";
         do {
+            // eslint-disable-next-line no-await-in-loop
             const res = await this.fetchWithAuth(`lists/${tasklistId}/tasks?showCompleted=true&showHidden=true&maxResults=100${pageToken ? `&pageToken=${pageToken}` : ""}`);
             if (!res.ok) { console.warn(`Failed to fetch google tasks`); return undefined; }
+            // eslint-disable-next-line no-await-in-loop
             const data: { items?: gapi.client.tasks.Task[], nextPageToken?: string } = await res.json();
             if (data.items) allTasks.push(...data.items);
             pageToken = data.nextPageToken || "";

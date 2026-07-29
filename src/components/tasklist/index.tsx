@@ -23,10 +23,13 @@ export interface TaskListPaneProps {
     footer?: React.ReactNode;
 }
 
+const defaultTasks: AppTask[] = [];
+const defaultFilters: AppFilter[] = [];
+
 export function TaskListPane({
-    tasks = [],
+    tasks = defaultTasks,
     setTasks,
-    filters = [],
+    filters = defaultFilters,
     setFilters,
     sort,
     setSort,

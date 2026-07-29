@@ -10,12 +10,14 @@ export interface TitleInputProps {
     autoFocus?: boolean;
 }
 
+const defaultStyle: React.CSSProperties = {};
+
 export function TitleInput({
     value,
     onChange,
     disabled,
     onEnter,
-    style = {},
+    style = defaultStyle,
     className = "",
     autoFocus = false,
 }: TitleInputProps) {

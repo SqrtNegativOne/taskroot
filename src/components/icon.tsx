@@ -8,11 +8,13 @@ interface IconProps {
     style?: React.CSSProperties;
 }
 
+const defaultStyle: React.CSSProperties = {};
+
 export function Icon({
     name,
     size = HOURS_PER_DAY,
     className = "",
-    style = {},
+    style = defaultStyle,
 }: IconProps) {
     return (
         <span

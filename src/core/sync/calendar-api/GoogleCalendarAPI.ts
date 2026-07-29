@@ -1,6 +1,7 @@
-import { fetchWithTimeout } from "../store/api";
-import type { AppTask, AppEvent } from "../domain/models";
-import type { IAuthManager, ICalendarAPI } from "./api-interfaces";
+import { fetchWithTimeout } from "../../store/api";
+import type { AppTask, AppEvent } from "../../domain/models";
+import type { IAuthManager } from "../auth/types";
+import type { ICalendarAPI } from "./types";
 /// <reference types="gapi.client.calendar" />
 
 export class GoogleCalendarAPI implements ICalendarAPI {

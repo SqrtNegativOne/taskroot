@@ -1,5 +1,5 @@
-import { fetchWithTimeout } from "../store/api";
-import type { IAuthManager } from "../sync/api-interfaces";
+import { fetchWithTimeout } from "../../store/api";
+import type { IAuthManager } from "./types";
 
 export class GoogleAuthManager implements IAuthManager {
     private isRefreshing = false;

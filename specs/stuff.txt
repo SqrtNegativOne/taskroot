@@ -10,3 +10,5 @@ So even loading unused (cold) tasks into a IndexedDB or a local file (since this
 Automated local backups are confusing.
 
 No such things as "projects"; functionality achieved through subtasks. ...probably not the best idea though but the idea of subtasks and projects needs to be reconciled somehow.
+
+Currently, last writer wins. So if I modify a prop for a task on my laptop, and then on my phone, and then I sync my laptop, the modification I made on it will fail. ...idk how to handle this.

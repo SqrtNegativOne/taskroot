@@ -28,10 +28,10 @@ export interface StopwatchContext {
     reset?: () => void;
     currentTask?: AppTask | null;
     state: StopwatchState;
-    setState: React.Dispatch<React.SetStateAction<StopwatchState>>;
-    timeLogs?: AppEvent[];
-    setTimeLogs: React.Dispatch<React.SetStateAction<AppEvent[]>>;
-    setSelectorOpen: React.Dispatch<React.SetStateAction<boolean>>;
+    setState?: React.Dispatch<React.SetStateAction<StopwatchState>>;
+    timeLogs?: AppEvent[] | null;
+    setTimeLogs?: React.Dispatch<React.SetStateAction<AppEvent[] | null>> | React.Dispatch<React.SetStateAction<AppEvent[]>>;
+    setSelectorOpen?: React.Dispatch<React.SetStateAction<boolean>>;
     activeTask?: AppTask | null;
     onBreakStatus?: (status: boolean) => void;
     allowNoTask?: boolean;

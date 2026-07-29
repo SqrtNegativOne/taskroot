@@ -22,6 +22,7 @@ import { GraphScreen } from "./screens/graph/GraphScreen";
 import { StatsScreen } from "./screens/stats/StatsScreen";
 import { RecapScreen } from "./screens/recap/RecapScreen";
 import { MiniTrackerScreen } from "./screens/minitracker/MiniTrackerScreen";
+import { AppLayout } from "./components/AppLayout";
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
     const { user, loading } = useAuth();
@@ -88,6 +89,8 @@ const handleSettingsKeydown = (
     }
 };
 
+
+
 function AppRouter() {
     const navigate = useNavigate();
     const [settings] = useSettings();
@@ -110,13 +113,15 @@ function AppRouter() {
 
     return (
         <Routes>
-            <Route path="/plan" element={<PlanScreen />} />
-            <Route path="/do" element={<DoScreen />} />
-            <Route path="/settings" element={<SettingsScreen />} />
-            <Route path="/wrap" element={<WrapScreen />} />
-            <Route path="/graph" element={<GraphScreen />} />
-            <Route path="/stats" element={<StatsScreen />} />
-            <Route path="/recap" element={<RecapScreen />} />
+            <Route element={<AppLayout />}>
+                <Route path="/plan" element={<PlanScreen />} />
+                <Route path="/do" element={<DoScreen />} />
+                <Route path="/settings" element={<SettingsScreen />} />
+                <Route path="/wrap" element={<WrapScreen />} />
+                <Route path="/graph" element={<GraphScreen />} />
+                <Route path="/stats" element={<StatsScreen />} />
+                <Route path="/recap" element={<RecapScreen />} />
+            </Route>
             <Route path="*" element={<Navigate to="/plan" replace />} />
         </Routes>
     );

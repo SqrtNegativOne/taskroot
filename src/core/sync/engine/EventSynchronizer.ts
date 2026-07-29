@@ -1,7 +1,7 @@
 import { AbstractSynchronizer } from "./AbstractSynchronizer";
 import type { ISyncEngineContext, SyncQueueItem } from "./types";
 import { SyncAction, SyncType } from "./types";
-import type { ICalendarAPI } from "../api-interfaces";
+import type { ICalendarAPI } from "../calendar-api/types";
 import type { AppEvent, AppTask } from "../../domain/models";
 import { resolveConflict } from "./conflict-resolver";
 import { computeEventDeltaActions } from "./event-differ";

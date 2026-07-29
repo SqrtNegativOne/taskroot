@@ -32,7 +32,7 @@
       "ts-check": false 
     }],
     "typescript/no-magic-numbers": ["warn", {
-      "ignore": [-1, 0, 1, 100],
+      "ignore": [-1, 0, 1, 100, 2],
       "ignoreArrayIndexes": true,
       "enforceConst": true,
       "detectObjects": false,

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { TitleBar } from "../../components/shell";
+
 import { useEvents, useSettings } from "../../core/store/hooks";
 import type { HydratedEvent } from "../../core/domain/events";
 import { WrapTimelineStep } from "./WrapTimelineStep";
@@ -59,8 +59,7 @@ export function WrapScreen() {
     const untrackedTime = calculateUntrackedTime(logEvents, wake, sleep);
 
     return (
-        <div className="app">
-            <TitleBar current="wrap" />
+        <>
             <div className="main wrap-container">
                 <div className="wrap-content">
                     <h2>Wrap Up Your Day</h2>
@@ -85,6 +84,6 @@ export function WrapScreen() {
                     )}
                 </div>
             </div>
-        </div>
+        </>
     );
 }

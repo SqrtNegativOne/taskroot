@@ -28,6 +28,16 @@ export class SyncQueue {
     }
 
     push(item: SyncQueueItem) {
+        if (item.action === "update") {
+            const index = this.queue.findIndex(
+                (q) => q.action === "update" && q.type === item.type && q.item.id === item.item.id
+            );
+            if (index !== -1) {
+                this.queue[index] = item;
+                this.save();
+                return;
+            }
+        }
         this.queue.push(item);
         this.save();
     }

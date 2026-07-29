@@ -4,7 +4,7 @@ import {
 import { Collapsible } from "../../components/collapsible";
 import { DistractionLog } from "./distraction-log";
 import { Kanban } from "./kanban";
-import { TitleBar } from "../../components/shell";
+
 import { Stopwatch } from "./stopwatch/Stopwatch";
 import { useDistractions, useTasks, useNotes, useTips } from "../../core/store/hooks";
 
@@ -25,8 +25,7 @@ export function DoScreen() {
     };
 
     return (
-        <div className="app app-do">
-            <TitleBar current="do" />
+        <>
 
             <main className="do-main">
                 <Stopwatch onBreakStatusChange={handleBreakStatusChange} />
@@ -102,7 +101,7 @@ export function DoScreen() {
                     </div>
                 )}
             </main>
-        </div>
+        </>
     );
 }
 

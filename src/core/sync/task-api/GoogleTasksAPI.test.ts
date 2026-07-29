@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createMockAppTask } from "../utils/testUtils";
+import { createMockAppTask } from "../../utils/testUtils";
 import { GoogleTasksAPI } from "./GoogleTasksAPI";
-import * as api from "../store/api";
+import * as api from "../../store/api";
 
-vi.mock("../store/api", () => ({
+vi.mock("../../store/api", () => ({
     fetchWithTimeout: vi.fn<(...args: never[]) => unknown>(),
 }));
 

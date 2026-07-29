@@ -13,7 +13,7 @@ import { DragGhost, type PlanDragState } from "./drag-helpers";
 import { usePlanActions } from "./use-plan-actions";
 import { useDragAndDrop } from "./use-drag-and-drop";
 import { DateGrid } from "./date-grid";
-import { TitleBar } from "../../components/shell";
+
 import { useTasks, useEvents, useSettings, useTaskQuery, useTaskFilters, useTaskSort, useCalFilters, useCalSort, useTimeFilters, useTimeSort } from "../../core/store/hooks";
 
 import { TaskListPane } from "../../components/tasklist";
@@ -64,8 +64,7 @@ export function PlanScreen() {
     const { onTaskDragStart, onEventDragStart, dragState, setDragState } = useDragAndDrop(timelineDate, setInspectorState, createEvent);
 
     return (
-        <div className="app">
-            <TitleBar current="plan" />
+        <>
 
             <main className="main" style={{ position: "relative" }}>
                 <SplitPane
@@ -177,7 +176,7 @@ export function PlanScreen() {
             )}
 
 
-        </div>
+        </>
     );
 }
 

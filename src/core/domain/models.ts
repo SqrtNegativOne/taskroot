@@ -5,26 +5,26 @@ export function isDateString(s: unknown): s is DateString {
 }
 
 export interface AppTask {
-    id: string;
-    title: string;
-    status?: "todo" | "next-up" | "doing" | "done" | string;
-    priority?: number | string;
-    tags?: string[];
-    subtasks?: { done: boolean; [key: string]: unknown }[];
-    parent_task?: string | null;
-    dependencies?: string[];
-    est?: number;
-    added?: string;
-    isDraft?: boolean;
-    canvasX?: number;
-    canvasY?: number;
-    onCanvas?: boolean;
-    googleTaskId?: string;
-    notes?: string;
-    due?: DateString;
-    _deleted?: boolean;
-    updatedAt?: number;
-    [key: string]: unknown;
+    readonly id: string;
+    readonly title: string;
+    readonly status?: "todo" | "next-up" | "doing" | "done" | string;
+    readonly priority?: number | string;
+    readonly tags?: readonly string[];
+    readonly subtasks?: readonly { readonly done: boolean; readonly [key: string]: unknown }[];
+    readonly parent_task?: string | null;
+    readonly dependencies?: readonly string[];
+    readonly est?: number;
+    readonly added?: string;
+    readonly isDraft?: boolean;
+    readonly canvasX?: number;
+    readonly canvasY?: number;
+    readonly onCanvas?: boolean;
+    readonly googleTaskId?: string;
+    readonly notes?: string;
+    readonly due?: DateString;
+    readonly _deleted?: boolean;
+    readonly updatedAt?: number;
+    readonly [key: string]: unknown;
 }
 
 export interface AppFilter {

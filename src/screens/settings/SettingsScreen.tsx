@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import Fuse from "fuse.js";
-import { TitleBar } from "../../components/shell";
+
 import { SearchBar } from "../../components/search-bar";
 import { useSettings } from "../../core/store/hooks";
 
@@ -125,8 +125,7 @@ export function SettingsScreen() {
     };
 
     return (
-        <div className="app app-settings">
-            <TitleBar current="settings"  />
+        <>
             <div className="main settings-main">
                 <div
                     className="task-pane settings-sidebar"
@@ -206,6 +205,6 @@ export function SettingsScreen() {
                     </div>
                 </div>
             </div>
-        </div>
+        </>
     );
 }

@@ -3,7 +3,7 @@ import { storeRegistry } from "./storeRegistry";
 import { Repository, repos } from "./repositories";
 
 
-export function useRepository<T>(repo: Repository<T>): [T, (val: T | ((prev: T) => T)) => void, boolean] {
+export function useRepository<T>(repo: Repository<T>): [Readonly<T>, (val: T | ((prev: Readonly<T>) => T)) => void, boolean] {
     const [val, setVal] = useState<T>(() => repo.get());
     const [isLoaded, setIsLoaded] = useState(false);
 
@@ -14,7 +14,7 @@ export function useRepository<T>(repo: Repository<T>): [T, (val: T | ((prev: T) 
         return unregister;
     }, [repo, repo.key]);
 
-    return [val, (newVal) => repo.set(newVal), isLoaded];
+    return [val as Readonly<T>, (newVal) => repo.set(newVal as any), isLoaded];
 }
 
 export const useSettings = () => useRepository(repos.settings);

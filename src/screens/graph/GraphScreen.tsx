@@ -1,4 +1,4 @@
-import { TitleBar } from "../../components/shell";
+
 import { useTasks, useTaskQuery, useTaskFilters, useTaskSort } from "../../core/store/hooks";
 import { TaskListPane } from "../../components/tasklist";
 import { SplitPane } from "../../components/split-pane";
@@ -85,8 +85,7 @@ export function GraphScreen() {
     );
 
     return (
-        <div className="app">
-            <TitleBar current="graph" />
+        <>
             <main className="main">
                 <SplitPane
                     direction="horizontal"
@@ -140,6 +139,6 @@ export function GraphScreen() {
                     </div>
                 </SplitPane>
             </main>
-        </div>
+        </>
     );
 }

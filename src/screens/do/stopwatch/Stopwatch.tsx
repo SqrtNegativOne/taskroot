@@ -40,7 +40,7 @@ export function Stopwatch({ onBreakStatusChange }: { onBreakStatusChange?: (stat
             setTick((t) => t + 1);
             raf = requestAnimationFrame(loop);
         };
-        if (strategy.requiresAnimationLoop({ state } as any)) {
+        if (strategy.requiresAnimationLoop({ state })) {
             raf = requestAnimationFrame(loop);
         }
         return () => {
@@ -82,8 +82,8 @@ export function Stopwatch({ onBreakStatusChange }: { onBreakStatusChange?: (stat
         running,
         isPristine,
         currentMs,
-        timeLogs: timeLogs as any,
-        setTimeLogs: setTimeLogs as any,
+        timeLogs,
+        setTimeLogs,
         activeTask,
         allowNoTask,
         settings,
@@ -96,7 +96,7 @@ export function Stopwatch({ onBreakStatusChange }: { onBreakStatusChange?: (stat
         actionsRef.current = { toggle, reset, startBreak };
     });
 
-    const displayData = strategy.getDisplayData({ currentMs, running, isPristine, toggle, state } as any);
+    const displayData = strategy.getDisplayData({ currentMs, running, isPristine, toggle, state });
     useEffect(() => {
         if (onBreakStatusChange && displayData.isBreak !== undefined) {
             onBreakStatusChange(displayData.isBreak);
@@ -115,7 +115,7 @@ export function Stopwatch({ onBreakStatusChange }: { onBreakStatusChange?: (stat
                         isPristine,
                         toggle,
                         state,
-                    } as any);
+                    });
 
                     return (
                         <button

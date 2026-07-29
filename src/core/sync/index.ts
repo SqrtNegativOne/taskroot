@@ -5,9 +5,9 @@ import { EventSynchronizer } from "./engine/EventSynchronizer";
 import { Pusher } from "./engine/Pusher";
 import { Poller } from "./engine/Poller";
 
-import { GoogleAuthManager } from "../auth/TokenBouncer";
-import { GoogleCalendarAPI } from "./GoogleCalendarAPI";
-import { GoogleTasksAPI } from "./GoogleTasksAPI";
+import { GoogleAuthManager } from "./auth/TokenBouncer";
+import { GoogleCalendarAPI } from "./calendar-api/GoogleCalendarAPI";
+import { GoogleTasksAPI } from "./task-api/GoogleTasksAPI";
 
 const prevTasksMap = new Map<string, import('../domain/models').AppTask>();
 const prevEventsMap = new Map<string, import('../domain/models').AppEvent>();

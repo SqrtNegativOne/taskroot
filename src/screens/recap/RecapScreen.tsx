@@ -1,4 +1,4 @@
-import { TitleBar } from "../../components/shell";
+
 import { TODAY } from "../../core/store/data";
 import { useSettings } from "../../core/store/hooks";
 
@@ -14,8 +14,7 @@ export function RecapScreen() {
     const isTimeForRecap = recapDay === todayName;
 
     return (
-        <div className="app">
-            <TitleBar current="recap"  />
+        <>
             <div
                 className="main"
                 style={{
@@ -36,6 +35,6 @@ export function RecapScreen() {
                     </h2>
                 )}
             </div>
-        </div>
+        </>
     );
 }

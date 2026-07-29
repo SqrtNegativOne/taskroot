@@ -1,3 +1,4 @@
+export * from "./types";
 import { ClockStrategy } from "./ClockStrategy";
 import { CounterClockStrategy } from "./CounterClockStrategy";
 import { FlowtimeClockStrategy } from "./FlowtimeClockStrategy";

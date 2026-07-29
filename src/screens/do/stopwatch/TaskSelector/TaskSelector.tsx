@@ -6,12 +6,13 @@ import "./TaskSelector.css";
 
 
 
+const ANIMATION_DELAY_MS = 150;
 interface TaskSelectorProps {
     selectorOpen: boolean;
     setSelectorOpen: (open: boolean) => void;
     tasks: AppTask[];
     events: AppEvent[];
-    activeTask: AppTask | null | undefined;
+    activeTask?: AppTask;
     allowNoTask: boolean;
     startWithTask: (taskId: string) => void;
 }
@@ -61,7 +62,7 @@ export function TaskSelector({
         [pendingTasks, events, searchQuery]
     );
 
-    if (!visible && !isClosing) return null;
+    if (!visible && !isClosing) return;
 
     const needsBlur = !activeTask && !allowNoTask;
 

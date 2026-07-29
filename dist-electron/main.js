@@ -5,7 +5,7 @@ import { windowManager } from "./windowManager.js";
 import { setupIpcHandlers } from "./ipc.js";
 import { createSystemTray } from "./tray.js";
 import { startLocalServer } from "./server.js";
-let localServer = null;
+let localServer = undefined;
 const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
     app.quit();
@@ -86,7 +86,7 @@ app.on("will-quit", () => {
 app.on("window-all-closed", () => {
     if (process.platform !== "darwin") {
         app.quit();
-        windowManager.win = null;
+        windowManager.win = undefined;
     }
 });
 app.on("activate", () => {

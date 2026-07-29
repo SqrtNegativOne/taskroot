@@ -3,7 +3,8 @@ import type { DistractionStatus } from "../../../core/store/repositories";
 import { hexAlpha } from "./utils";
 
 const OPACITY_SELECTED_BG = 0.22;
-
+const OPACITY_BG = 0.18;
+const OPACITY_BORDER = 0.6;
 
 
 
@@ -33,7 +34,7 @@ export function StatusCell({
     React.useEffect(() => {
         if (!open) return;
         const onDoc = (e: PointerEvent) => {
-            if (popRef.current && !popRef.current.contains(e.target instanceof Node ? e.target : null)) onClose();
+            if (popRef.current && !(e.target instanceof Node && popRef.current.contains(e.target))) onClose();
         };
         setTimeout(() => document.addEventListener("pointerdown", onDoc), 0);
         return () => document.removeEventListener("pointerdown", onDoc);
@@ -46,9 +47,9 @@ export function StatusCell({
                 style={
                     current
                         ? {
-                              background: hexAlpha(current.color, OPACITY_FAINT),
+                              background: hexAlpha(current.color, OPACITY_BG),
                               color: current.color,
-                              borderColor: hexAlpha(current.color, OPACITY_MUTED),
+                              borderColor: hexAlpha(current.color, OPACITY_BORDER),
                           }
                         : { color: "var(--fg-dim)" }
                 }
@@ -70,9 +71,9 @@ export function StatusCell({
                             <span
                                 className="status-chip"
                                 style={{
-                                    background: hexAlpha(s.color, OPACITY_FAINT),
+                                    background: hexAlpha(s.color, OPACITY_BG),
                                     color: s.color,
-                                    borderColor: hexAlpha(s.color, OPACITY_MUTED),
+                                    borderColor: hexAlpha(s.color, OPACITY_BORDER),
                                 }}
                             >
                                 {s.label}

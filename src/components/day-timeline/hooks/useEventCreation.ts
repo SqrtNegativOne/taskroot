@@ -7,7 +7,7 @@ export function useEventCreation(
     onAddEvent?: (d: Date, start: number, end: number) => void
 ) {
     const containerRef = useRef<HTMLDivElement>(null);
-    const [createPreview, setCreatePreview] = useState<{ start: number; end: number } | null>(null);
+    const [createPreview, setCreatePreview] = useState<{ start: number; end: number }>();
 
     const onGridPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
         if (!(e.target instanceof Element)) return;
@@ -49,7 +49,7 @@ export function useEventCreation(
             const s = Math.min(startMin, moveMin);
             const eMin = Math.max(startMin, moveMin);
             const finalEnd = eMin === s ? s + SNAP_MIN : eMin;
-            setCreatePreview(null);
+            setCreatePreview(undefined);
             if (onAddEvent) {
                 onAddEvent(timelineDate, s, finalEnd);
             }

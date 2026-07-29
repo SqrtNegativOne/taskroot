@@ -1,4 +1,6 @@
-import { HTTP_OK, HTTP_INTERNAL_ERROR, HTTP_FORBIDDEN } from "../src/core/utils/constants";
+const HTTP_OK = 200;
+const HTTP_FORBIDDEN = 403;
+const HTTP_INTERNAL_ERROR = 500;
 import fs from "node:fs";
 import path from "node:path";
 import { createServer } from "node:http";

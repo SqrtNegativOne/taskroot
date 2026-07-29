@@ -5,9 +5,7 @@ import { SplitPane } from "../../components/split-pane";
 import { TaskCanvas } from "./TaskCanvas";
 import type { AppTask } from "../../core/domain/models";
 
-
-
-
+import { DRAG_THRESHOLD_PX, ANIMATION_DELAY_MS, GRAPH_NODE_WIDTH_PX } from "./constants";
 
 export function GraphScreen() {
     const [tasks, setTasks] = useTasks();
@@ -117,7 +115,7 @@ export function GraphScreen() {
                                     priority: 1,
                                     tags: [],
                                     subtasks: [],
-                                    parent_task: null,
+                                    parent_task: undefined,
                                     dependencies: [],
                                     est: 60,
                                     added: new Date().toISOString(),

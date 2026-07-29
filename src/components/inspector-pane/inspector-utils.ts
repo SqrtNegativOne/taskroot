@@ -1,3 +1,6 @@
+import type { AppTask, AppEvent } from "../../core/domain/models";
+import { MINUTES_IN_HOUR } from "../../core/utils/constants";
+
 export function minToTime(m: number): string {
     if (typeof m !== "number" || isNaN(m)) return "";
     const hh = String(Math.floor(m / MINUTES_IN_HOUR)).padStart(2, "0");

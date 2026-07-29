@@ -15,7 +15,7 @@ export interface DragStateTarget {
 }
 
 export interface DragState {
-    target: DragStateTarget | null;
+    target?: DragStateTarget;
 }
 
 export interface DayTimelineProps<T extends DragState = DragState> {
@@ -26,8 +26,8 @@ export interface DayTimelineProps<T extends DragState = DragState> {
     today: Date;
     timelineDate: Date;
     setTimelineDate: (d: Date) => void;
-    dragState: T | null;
-    setDragState: React.Dispatch<React.SetStateAction<T | null>>;
+    dragState?: T;
+    setDragState: React.Dispatch<React.SetStateAction<T | undefined>>;
     onDropToTime?: (e: unknown) => void;
     onResizeEvent: (id: string, start: number, end: number) => void;
     onMoveEvent: (id: string, start: number, end: number) => void;
@@ -42,7 +42,7 @@ export interface EventBlockProps<T extends DragState = DragState> {
     lanes: number;
     onResize: (id: string, start: number, end: number) => void;
     onMove: (id: string, start: number, end: number) => void;
-    dragState?: T | null;
-    setDragState?: React.Dispatch<React.SetStateAction<T | null>>;
+    dragState?: T;
+    setDragState?: React.Dispatch<React.SetStateAction<T | undefined>>;
     onEventClick?: (e: HydratedEvent) => void;
 }

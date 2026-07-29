@@ -1,4 +1,6 @@
-import { HOURS_PER_DAY, SECONDS_PER_HOUR, MS_PER_SECOND } from "../utils/constants";
+import { HOURS_PER_DAY } from "../utils/constants";
+const MS_PER_SECOND = 1000;
+const SECONDS_PER_HOUR = 3600;
 import { RRule } from "rrule";
 import type { AppEvent } from "./models";
 

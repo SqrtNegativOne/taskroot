@@ -2,20 +2,20 @@ import { createContext } from "react";
 
 interface User {
     uid: string;
-    email: string | null;
-    displayName: string | null;
-    photoURL: string | null;
+    email?: string;
+    displayName?: string;
+    photoURL?: string;
 }
 
 interface AuthContextType {
-    user: User | null;
+    user?: User;
     loading: boolean;
     loginWithGoogle: () => Promise<void>;
     logout: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType>({
-    user: null,
+    user: undefined,
     loading: true,
     loginWithGoogle: async () => {},
     logout: async () => {},

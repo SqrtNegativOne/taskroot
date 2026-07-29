@@ -1,6 +1,7 @@
 
 import { Handle, Position } from "@xyflow/react";
 import type { AppTask as Task } from "../../core/domain/models";
+import { OPACITY_MUTED } from "./constants";
 
 
 

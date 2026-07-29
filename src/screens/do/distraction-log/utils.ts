@@ -2,6 +2,12 @@ import { MONTHS } from "../../../core/store/data";
 
 export const MAX_DISPLAY_ITEMS = 6;
 export const DRAG_THRESHOLD_PX = 4;
+const HEX_R_START = 0;
+const HEX_R_END = 2;
+const HEX_G_START = 2;
+const HEX_G_END = 4;
+const HEX_B_START = 4;
+const HEX_B_END = 6;
 
 
 export function colIcon(type: string) {
@@ -19,8 +25,8 @@ export function formatDateTime(s?: string) {
 
 export function hexAlpha(hex: string, alpha: number) {
     const h = hex.replace("#", "");
-    const r = parseInt(h.slice(0, 2), 16);
-    const g = parseInt(h.slice(2, DRAG_THRESHOLD_PX), 16);
-    const b = parseInt(h.slice(DRAG_THRESHOLD_PX, MAX_DISPLAY_ITEMS), 16);
+    const r = parseInt(h.slice(HEX_R_START, HEX_R_END), 16);
+    const g = parseInt(h.slice(HEX_G_START, HEX_G_END), 16);
+    const b = parseInt(h.slice(HEX_B_START, HEX_B_END), 16);
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }

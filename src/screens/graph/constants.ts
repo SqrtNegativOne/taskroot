@@ -4,4 +4,4 @@ export const ANIMATION_DELAY_MS = 150;
 
 export const DRAG_THRESHOLD_PX = 4;
 
-
+export const GRAPH_NODE_WIDTH_PX = 250;

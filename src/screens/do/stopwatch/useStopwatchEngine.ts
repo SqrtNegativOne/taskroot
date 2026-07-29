@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import React, { useCallback } from "react";
 import { useTasks, useStopwatch, useTimeLogs, useSettings } from "../../../core/store/hooks";
 import { CLOCK_STRATEGIES } from "../../../core/domain/clock-strategies";
 import type { AppTask } from "../../../core/domain/models";
@@ -9,7 +9,7 @@ export const MIN_POLL_INTERVAL_MINUTES = 5;
 const updateTaskStatus = (ts: AppTask[], taskId: string): AppTask[] => 
     ts.map(t => t.id === taskId ? { ...t, status: "doing" } : t.status === "doing" ? { ...t, status: "todo" } : t);
 
-export function useStopwatchEngine(selectorOpen: boolean, setSelectorOpen: (val: boolean) => void) {
+export function useStopwatchEngine(setSelectorOpen: (val: boolean) => void) {
     const [state, setState] = useStopwatch();
     const [tasks, setTasks] = useTasks();
     const [settings] = useSettings();
@@ -17,7 +17,7 @@ export function useStopwatchEngine(selectorOpen: boolean, setSelectorOpen: (val:
 
     const strategy = CLOCK_STRATEGIES[settings.clockStyle || "counter"] || CLOCK_STRATEGIES.counter;
 
-    const running = state.runningSince !== null && state.runningSince !== undefined;
+    const running = state.runningSince !== undefined;
     const currentMs = state.elapsed + (running && !state.isBreak ? Date.now() - (state.runningSince || 0) : 0);
     const isPristine = currentMs === 0 && !running && !state.isBreak;
     const activeTask = tasks?.find((t: AppTask) => t.status === "doing");

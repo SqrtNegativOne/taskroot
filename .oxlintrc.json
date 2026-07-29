@@ -6,28 +6,31 @@
     "suspicious": "error"
   },
   "rules": {
-    "unicorn/no-null": "error",
-
-    "react/rules-of-hooks": "error",
-    "react/exhaustive-deps": "warn",
-    "react/jsx-max-depth": ["warn", { "max": 6 }],
-    "react/react-in-jsx-scope": "off",
-
-    "import/no-unassigned-import": "off",
+    "eqeqeq": "error",
+    "no-var": "error",
+    "prefer-const": "error",
+    "no-console": "off", // it's fine
     "no-underscore-dangle": "off",
-    "jsx-a11y/no-autofocus": "off",
     "max-depth": ["warn", 4],
     "max-params": ["warn", 4],
     "max-lines-per-function": ["warn", 100],
     "max-classes-per-file": ["warn", 1],
     "complexity": ["warn", 15],
     "max-lines": ["warn", 250],
-    
-    "eqeqeq": "error",
-    "no-var": "error",
-    "prefer-const": "error",
-    // "no-console": "warn",; It's fine.
+
+    "unicorn/no-null": "error",
+
+    "jest/no-export": "error",
+
+    "jsx_a11y/no-autofocus": "off",
+
+    "react/rules-of-hooks": "error",
     "react/no-unstable-nested-components": "error",
+    "react/exhaustive-deps": "warn",
+    "react/jsx-max-depth": ["warn", { "max": 6 }],
+    "react/react-in-jsx-scope": "off",
+
+    "import/no-unassigned-import": "off",
     "vitest/no-focused-tests": "error",
     
     "typescript/no-explicit-any": "error",

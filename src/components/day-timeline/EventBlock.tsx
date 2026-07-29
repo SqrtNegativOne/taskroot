@@ -6,15 +6,24 @@ import type { EventBlockProps } from "./types";
 import type { AppEvent } from "../../core/domain/models";
 
 const MIN_EVENT_HEIGHT_PX = 18;
+const COMPACT_EVENT_HEIGHT_PX = 12;
+const DRAG_THRESHOLD_PX = 3;
 
 
 
 
 
 
-function getEventClassNames(event: AppEvent, pri: string | number | null | undefined, compact: boolean, isGhost: boolean, isFloating: boolean): string {
+
+
+function getEventClassNames(
+    event: AppEvent,
+    compact: boolean,
+    isGhost: boolean,
+    isFloating: boolean
+): string {
     const classNames = ["day-event", `ev-${event.type}`];
-    if (pri) classNames.push(`pri-bar-${pri}`);
+    if (event.priority) classNames.push(`pri-bar-${event.priority}`);
     if (compact) classNames.push("is-compact");
     if (event.isDone) classNames.push("is-done");
     if (isGhost) classNames.push("is-ghost");
@@ -31,7 +40,7 @@ export function EventBlock<T extends import("./types").DragState = import("./typ
     onMove,
     onEventClick,
 }: EventBlockProps<T>) {
-    const [dragOffset, setDragOffset] = useState<number | null>(null);
+    const [dragOffset, setDragOffset] = useState<number>();
 
     const title = event.title;
     const pri = event.priority;
@@ -94,7 +103,7 @@ export function EventBlock<T extends import("./types").DragState = import("./typ
                 if (onEventClick) onEventClick(event);
                 return;
             }
-            setDragOffset(null);
+            setDragOffset(undefined);
             if (finalDm !== 0) {
                 onMove(
                     event.id,
@@ -112,7 +121,7 @@ export function EventBlock<T extends import("./types").DragState = import("./typ
         const height = (end - start) * PX_PER_MIN;
         const compact = height < COMPACT_EVENT_HEIGHT_PX;
         
-        const classNames = getEventClassNames(event, pri, compact, isGhost, isFloating);
+        const classNames = getEventClassNames(event, compact, isGhost, isFloating);
 
         const style = {
             top: `${top}px`,
@@ -136,7 +145,7 @@ export function EventBlock<T extends import("./types").DragState = import("./typ
                 />
                 <div className="day-event-inner">
                     <div className="day-event-title">
-                        {pri !== null && pri !== undefined && (
+                        {pri !== undefined && (
                             <span className={`pri pri-${pri}`}>●</span>
                         )}
                         {title}
@@ -167,7 +176,7 @@ export function EventBlock<T extends import("./types").DragState = import("./typ
         );
     };
 
-    if (dragOffset !== null) {
+    if (dragOffset !== undefined) {
         return (
             <Fragment>
                 {renderBlock(event.start || 0, event.end || 0, true, false)}

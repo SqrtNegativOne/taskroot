@@ -18,8 +18,8 @@ export function DayCell({
     today: Date;
     events: HydratedEvent[];
     isWeek: boolean;
-    dragState: { target?: { kind: string; date: string }; event?: { id: string } } | null;
-    onEventDragStart?: (e: React.PointerEvent<HTMLDivElement>, ev: HydratedEvent, task: unknown) => void;
+    dragState?: { target?: { kind: string; date?: string }; event?: { id: string } };
+    onEventDragStart?: (e: React.PointerEvent<HTMLDivElement>, ev: HydratedEvent, task?: import("../../../core/domain/models").AppTask) => void;
     onAddEvent?: (date: Date) => void;
 }) {
     const ref = React.useRef(null);
@@ -75,15 +75,15 @@ function EventItem({
     onEventDragStart,
 }: {
     ev: HydratedEvent;
-    dragState: { event?: { id: string } } | null;
-    onEventDragStart?: (e: React.PointerEvent<HTMLDivElement>, ev: HydratedEvent, task: unknown) => void;
+    dragState?: { event?: { id: string } };
+    onEventDragStart?: (e: React.PointerEvent<HTMLDivElement>, ev: HydratedEvent, task?: import("../../../core/domain/models").AppTask) => void;
 }) {
     const title = ev.title;
     const pri = ev.priority;
     const isDone = ev.isDone;
     return (
         <div
-            className={`day-cell-event ev-${ev.type} ${pri !== null && pri !== undefined ? `pri-bar-${pri}` : ""} ${isDone ? "is-done" : ""}`}
+            className={`day-cell-event ev-${ev.type} ${pri !== undefined ? `pri-bar-${pri}` : ""} ${isDone ? "is-done" : ""}`}
             title={`${ev.isAllDay ? "All Day" : hhmmShort(ev.start)} — ${title}`}
             style={{
                 cursor: "grab",

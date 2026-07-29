@@ -7,10 +7,10 @@ export interface DLogRowProps {
     row: DistractionRow;
     columns: DistractionColumn[];
     statuses: DistractionStatus[];
-    editingCell: EditingCell | null;
-    setEditingCell: (cell: EditingCell | null) => void;
-    statusEditor: string | null;
-    setStatusEditor: (id: string | null) => void;
+    editingCell?: EditingCell;
+    setEditingCell: (cell?: EditingCell) => void;
+    statusEditor?: string;
+    setStatusEditor: (id?: string) => void;
     updateRow: (id: string, patch: Partial<DistractionRow>) => void;
     deleteRow: (id: string) => void;
     addStatus: (label: string, color: string) => string | undefined;
@@ -61,7 +61,7 @@ export function DLogRow({
                                         updateRow(row.id, {
                                             [col.id]: e.target.value,
                                         });
-                                        setEditingCell(null);
+                                        setEditingCell(undefined);
                                     }}
                                     onKeyDown={(e) => {
                                         if (e.key === "Enter" && e.currentTarget instanceof HTMLElement) {
@@ -69,7 +69,7 @@ export function DLogRow({
                                         }
                                         if (e.key === "Escape" && e.currentTarget instanceof HTMLElement) {
                                             e.currentTarget.blur();
-                                            setEditingCell(null);
+                                            setEditingCell(undefined);
                                         }
                                     }}
                                 />
@@ -83,10 +83,10 @@ export function DLogRow({
                                 value={typeof val === 'string' ? val : undefined}
                                 statuses={statuses}
                                 open={statusEditor === row.id}
-                                onClose={() => setStatusEditor(null)}
+                                onClose={() => setStatusEditor(undefined)}
                                 onChange={(v: string) => {
                                     updateRow(row.id, { [col.id]: v });
-                                    setStatusEditor(null);
+                                    setStatusEditor(undefined);
                                 }}
                                 onAdd={(label: string, color: string) => {
                                     const newId = addStatus(label, color);

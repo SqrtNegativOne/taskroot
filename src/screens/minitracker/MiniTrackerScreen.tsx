@@ -65,7 +65,7 @@ function getClockContent(options: {
     allowStopwatchWithoutTask: boolean;
     clockStyle: string;
     currentMs: number;
-    state: unknown;
+    state: import("../../core/domain/clock-strategies/types").StopwatchState;
     running: boolean;
 }) {
     const { activeTask, allowStopwatchWithoutTask, clockStyle, currentMs, state, running } = options;
@@ -75,14 +75,11 @@ function getClockContent(options: {
     const taskName = activeTask ? activeTask.title : "Work session";
     const strategy = CLOCK_STRATEGIES[clockStyle] || CLOCK_STRATEGIES.counter;
     
-    const optionsObj: unknown = {
+    const optionsObj: import("../../core/domain/clock-strategies").ReadonlyStopwatchContext = {
         currentMs,
         running,
         state,
         isPristine: false,
-        setState: () => {},
-        setTimeLogs: () => {},
-        setSelectorOpen: () => {},
     };
     const data = strategy.getDisplayData(optionsObj);
 
@@ -170,7 +167,7 @@ export function MiniTrackerScreen() {
         if (Date.now() - state.breakStartedAt < state.breakAllowedMs) return;
 
         audioRef.current?.play().catch((e: unknown) => console.error("Sound play failed", e));
-        setState((s: { breakSoundPlayed?: boolean } | unknown) => ({ ...(s && typeof s === 'object' ? s : {}), breakSoundPlayed: true }));
+        setState((s) => ({ ...s, breakSoundPlayed: true }));
     }, [
         now,
         state.isBreak,
@@ -183,7 +180,7 @@ export function MiniTrackerScreen() {
     const activeTask = tasks?.find((t: import('../../core/domain/models').AppTask) => t.status === "doing");
     const clockStyle = settings.clockStyle || "counter";
 
-    const running = state.runningSince !== null && state.runningSince !== undefined;
+    const running = state.runningSince !== undefined;
     const currentMs =
         state.elapsed +
         (running && !state.isBreak && state.runningSince ? now - state.runningSince : 0);

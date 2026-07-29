@@ -38,36 +38,40 @@ export const setupPointerDrag = (
 
 export function useDragAndDrop(
     timelineDate: Date,
-    setInspectorState: React.Dispatch<React.SetStateAction<{ type: string, id: string } | null>>,
-    createEvent: (task: AppTask, date: import("../../core/domain/models").DateString, start: number, duration: number, isAllDay?: boolean) => void
+    setInspectorState: React.Dispatch<React.SetStateAction<{ type: string, id: string } | undefined>>,
+    createEvent: (task: AppTask, overrides: Partial<AppEvent>) => void
 ) {
     const [, setEvents] = useEvents();
     const [calendars] = useCalendars();
     
-    const [dragState, setDragState] = useState<PlanDragState | null>(null);
-    const dragRef = useRef<PlanDragState | null>(null);
+    const [dragState, setDragState] = useState<PlanDragState>();
+    const dragRef = useRef<PlanDragState | undefined>(undefined);
     dragRef.current = dragState;
 
     const onTaskDragStart = (e: React.PointerEvent<Element> | React.MouseEvent<Element, MouseEvent>, task: AppTask) => {
         e.preventDefault();
         setupPointerDrag(e, (ev) => {
-            setDragState({ task, pointerX: ev.clientX, pointerY: ev.clientY, target: resolveDropTarget(document.elementFromPoint(ev.clientX, ev.clientY), ev.clientX, ev.clientY, task, undefined) });
+            setDragState({ task, pointerX: ev.clientX, pointerY: ev.clientY, target: resolveDropTarget(document.elementFromPoint(ev.clientX, ev.clientY) || undefined, ev.clientY, task.est || MINUTES_IN_HOUR) });
         }, (active) => {
             if (!active) return setInspectorState({ type: "task", id: task.id });
             const ds = dragRef.current;
-            if (ds?.target?.kind === "grid-day" && ds.target.date) createEvent(task, ds.target.date, ID_LENGTH * MINUTES_IN_HOUR, task.est || MINUTES_IN_HOUR, true);
-            else if (ds?.target?.kind === "day-time" && ds.target.minute !== undefined) createEvent(task, ymd(timelineDate), ds.target.minute, task.est || MINUTES_IN_HOUR, false);
-            setDragState(null);
+            if (ds?.target?.kind === "grid-day" && ds.target.date) {
+                const start = ID_LENGTH * MINUTES_IN_HOUR;
+                createEvent(task, { date: ds.target.date, endDate: ds.target.date, start, end: start + (task.est || MINUTES_IN_HOUR), isAllDay: true });
+            } else if (ds?.target?.kind === "day-time" && ds.target.minute !== undefined) {
+                createEvent(task, { date: ymd(timelineDate), endDate: ymd(timelineDate), start: ds.target.minute, end: ds.target.minute + (task.est || MINUTES_IN_HOUR), isAllDay: false });
+            }
+            setDragState(undefined);
         });
     };
 
-    const onEventDragStart = (e: React.PointerEvent<Element> | React.MouseEvent<Element, MouseEvent>, eventToMove: AppEvent, task?: AppTask | null) => {
+    const onEventDragStart = (e: React.PointerEvent<Element> | React.MouseEvent<Element, MouseEvent>, eventToMove: AppEvent, task?: AppTask) => {
         if (!canEditEvent(eventToMove, calendars)) return setInspectorState({ type: "event", id: eventToMove.id });
         e.preventDefault();
         e.stopPropagation();
 
         setupPointerDrag(e, (ev) => {
-            setDragState({ event: eventToMove, task, pointerX: ev.clientX, pointerY: ev.clientY, target: resolveDropTarget(document.elementFromPoint(ev.clientX, ev.clientY), ev.clientX, ev.clientY, task, eventToMove) });
+            setDragState({ event: eventToMove, task, pointerX: ev.clientX, pointerY: ev.clientY, target: resolveDropTarget(document.elementFromPoint(ev.clientX, ev.clientY) || undefined, ev.clientY, task?.est || (eventToMove.end - eventToMove.start)) });
         }, (active) => {
             if (!active) return setInspectorState({ type: "event", id: eventToMove.id });
             const ds = dragRef.current;
@@ -79,7 +83,7 @@ export function useDragAndDrop(
                 const dropMinute = ds.target.minute;
                 setEvents(prev => prev.map((evnt) => evnt.id === eventToMove.id ? { ...evnt, date: ymd(timelineDate), endDate: ymd(timelineDate), start: dropMinute, end: dropMinute + duration, isAllDay: false } : evnt));
             }
-            setDragState(null);
+            setDragState(undefined);
         });
     };
 

@@ -77,7 +77,7 @@ export class GuzeyClockStrategy extends ClockStrategy {
         if (state.runningSince) {
             return {
                 shouldLogSession: true,
-                newState: { runningSince: null }
+                newState: { runningSince: undefined }
             };
         }
         return { newState: { runningSince: Date.now() } };
@@ -90,7 +90,7 @@ export class GuzeyClockStrategy extends ClockStrategy {
     calculateReset({ state }: ReadonlyStopwatchContext): ClockActionEffect {
         const effect: ClockActionEffect = {
             selectorOpen: false,
-            newState: { runningSince: null }
+            newState: { runningSince: undefined }
         };
         if (state.runningSince) {
             effect.shouldLogSession = true;

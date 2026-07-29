@@ -1,6 +1,7 @@
 import React from "react";
 import { useState, useEffect, useRef } from "react";
 import { Icon } from "../../../components/icon";
+import { ANIMATION_DELAY_MS } from "./constants";
 
 
 

@@ -3,7 +3,7 @@ import { storeRegistry } from "./storeRegistry";
 import { Repository, repos } from "./repositories";
 
 
-export function useRepository<T>(repo: Repository<T>): [Readonly<T>, (val: T | ((prev: Readonly<T>) => T)) => void, boolean] {
+export function useRepository<T>(repo: Repository<T>): [T, (val: T | ((prev: T) => T)) => void, boolean] {
     const [val, setVal] = useState<T>(() => repo.get());
     const [isLoaded, setIsLoaded] = useState(false);
 
@@ -14,8 +14,8 @@ export function useRepository<T>(repo: Repository<T>): [Readonly<T>, (val: T | (
         return unregister;
     }, [repo, repo.key]);
 
-    const readVal: Readonly<T> = val;
-    const setter = (newVal: T | ((prev: Readonly<T>) => T)) => {
+    const readVal: T = val;
+    const setter = (newVal: T | ((prev: T) => T)) => {
         const v: unknown = newVal;
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         repo.set(v as Parameters<typeof repo.set>[0]);

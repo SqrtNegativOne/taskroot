@@ -6,7 +6,7 @@ import { useCurrentTime } from "../hooks/useCurrentTime";
 export function CurrentTimeLine({ isToday }: { isToday: boolean }) {
     const nowMin = useCurrentTime();
 
-    if (!isToday) return null;
+    if (!isToday) return;
 
     return (
         <div

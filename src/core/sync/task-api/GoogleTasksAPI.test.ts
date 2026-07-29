@@ -53,7 +53,7 @@ describe("GoogleTasksAPI", () => {
         it("throws Unauthorized on 401 if refresh fails", async () => {
             const mockFetch = vi.mocked(api.fetchWithTimeout);
             mockFetch.mockResolvedValueOnce(
-                new Response(null, { status: 401 })
+                new Response(undefined, { status: 401 })
             );
             mockAuthManager.refreshAccessToken.mockResolvedValueOnce(false);
 

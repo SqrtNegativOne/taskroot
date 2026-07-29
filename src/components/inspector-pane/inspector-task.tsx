@@ -1,4 +1,5 @@
 import { MINUTES_IN_HOUR } from "../../core/utils/constants";
+const MAX_PRIORITY = 4;
 import React from "react";
 import type { AppTask } from "../../core/domain/models";
 import { TaskStatusSelect } from "./inspector-shared";
@@ -32,14 +33,14 @@ export function TaskInspector({ task, updateTask }: TaskInspectorProps) {
                         id={`priority-${task.id}`}
                         type="number"
                         min="0"
-                        max="4"
+                        max={MAX_PRIORITY}
                         value={task.priority ?? 2}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                             updateTask(task.id, {
                                 priority: Math.max(
                                     0,
                                     Math.min(
-                                        DRAG_THRESHOLD_PX,
+                                        MAX_PRIORITY,
                                         parseInt(e.target.value) || 0,
                                     ),
                                 ),

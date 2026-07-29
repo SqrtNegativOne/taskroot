@@ -2,8 +2,8 @@ import React, { useState } from "react";
 
 import { AuthContext } from "./context";
 
-import { useNotification } from "../utils/notifications-constants";
-
+import { useNotification } from "../utils/notifications";
+export interface User { uid: string; email: string; displayName: string; }
 
 import {
     loadGoogleIdentityScript,
@@ -14,9 +14,9 @@ import {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     children,
 }) => {
-    const [user, setUser] = useState<User | null>(() => {
+    const [user, setUser] = useState<User | undefined>(() => {
         const token = localStorage.getItem("google_access_token");
-        return token ? { uid: "local-user", email: "user@example.com", displayName: "Local User", photoURL: null } : null;
+        return token ? { uid: "local-user", email: "user@example.com", displayName: "Local User" } : undefined;
     });
     const [loading] = useState(false);
     const { notify } = useNotification();
@@ -45,7 +45,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         try {
             localStorage.removeItem("google_access_token");
             localStorage.removeItem("google_refresh_token");
-            setUser(null);
+            setUser(undefined);
             window.location.reload();
         } catch (error: unknown) {
             console.error("Error signing out:", error);

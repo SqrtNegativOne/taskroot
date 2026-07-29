@@ -14,16 +14,16 @@ export interface PlanDragTarget {
 }
 
 export interface PlanDragState {
-    task?: AppTask | null;
-    event?: AppEvent | null;
+    task?: AppTask;
+    event?: AppEvent;
     pointerX: number;
     pointerY: number;
-    target: PlanDragTarget | null;
+    target?: PlanDragTarget;
 }
 
-export function DragGhost({ task, event, x, y, ghostStyle }: { task?: AppTask | null, event?: AppEvent | null, x: number, y: number, ghostStyle: string }) {
+export function DragGhost({ task, event, x, y, ghostStyle }: { task?: AppTask, event?: AppEvent, x: number, y: number, ghostStyle: string }) {
     const title = task ? task.title : event ? event.title : "";
-    const pri = task ? task.priority : null;
+    const pri = task ? task.priority : undefined;
     const est = task ? task.est : event ? event.end - event.start : MINUTES_IN_HOUR;
     
     return (
@@ -32,7 +32,7 @@ export function DragGhost({ task, event, x, y, ghostStyle }: { task?: AppTask | 
             style={{ left: x + FONT_SIZE_SMALL, top: y - MAX_RECURRENCES }}
         >
             <div className="drag-ghost-inner">
-                {pri !== null && pri !== undefined && (
+                {pri !== undefined && (
                     <div
                         className={`task-circle pri-bg-${pri}`}
                         aria-label={String(pri)}

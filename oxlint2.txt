@@ -1,0 +1,311 @@
+
+  ! eslint(no-magic-numbers): No magic number: 4
+    ,-[src/components/inspector-pane/inspector-task.tsx:42:41]
+ 41 |                                     Math.min(
+ 42 |                                         4,
+    :                                         ^
+ 43 |                                         parseInt(e.target.value) || 0,
+    `----
+  help: Use a named constant instead of a magic number to make the code more readable and maintainable.
+
+  ! eslint(no-magic-numbers): No magic number: 4
+    ,-[src/screens/do/distraction-log/utils.ts:23:35]
+ 22 |     const r = parseInt(h.slice(0, 2), 16);
+ 23 |     const g = parseInt(h.slice(2, 4), 16);
+    :                                   ^
+ 24 |     const b = parseInt(h.slice(4, 6), 16);
+    `----
+  help: Use a named constant instead of a magic number to make the code more readable and maintainable.
+
+  ! eslint(no-magic-numbers): No magic number: 4
+    ,-[src/screens/do/distraction-log/utils.ts:24:32]
+ 23 |     const g = parseInt(h.slice(2, 4), 16);
+ 24 |     const b = parseInt(h.slice(4, 6), 16);
+    :                                ^
+ 25 |     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    `----
+  help: Use a named constant instead of a magic number to make the code more readable and maintainable.
+
+  ! eslint(no-magic-numbers): No magic number: 6
+    ,-[src/screens/do/distraction-log/utils.ts:24:35]
+ 23 |     const g = parseInt(h.slice(2, 4), 16);
+ 24 |     const b = parseInt(h.slice(4, 6), 16);
+    :                                   ^
+ 25 |     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    `----
+  help: Use a named constant instead of a magic number to make the code more readable and maintainable.
+
+  ! eslint(no-magic-numbers): No magic number: 0.18
+    ,-[src/screens/do/distraction-log/status-cell.tsx:49:67]
+ 48 |                         ? {
+ 49 |                               background: hexAlpha(current.color, 0.18),
+    :                                                                   ^^^^
+ 50 |                               color: current.color,
+    `----
+  help: Use a named constant instead of a magic number to make the code more readable and maintainable.
+
+  ! eslint(no-magic-numbers): No magic number: 0.6
+    ,-[src/screens/do/distraction-log/status-cell.tsx:51:68]
+ 50 |                               color: current.color,
+ 51 |                               borderColor: hexAlpha(current.color, 0.6),
+    :                                                                    ^^^
+ 52 |                           }
+    `----
+  help: Use a named constant instead of a magic number to make the code more readable and maintainable.
+
+  ! eslint(no-magic-numbers): No magic number: 0.18
+    ,-[src/screens/do/distraction-log/status-cell.tsx:73:67]
+ 72 |                                 style={{
+ 73 |                                     background: hexAlpha(s.color, 0.18),
+    :                                                                   ^^^^
+ 74 |                                     color: s.color,
+    `----
+  help: Use a named constant instead of a magic number to make the code more readable and maintainable.
+
+  ! eslint(no-magic-numbers): No magic number: 0.6
+    ,-[src/screens/do/distraction-log/status-cell.tsx:75:68]
+ 74 |                                     color: s.color,
+ 75 |                                     borderColor: hexAlpha(s.color, 0.6),
+    :                                                                    ^^^
+ 76 |                                 }}
+    `----
+  help: Use a named constant instead of a magic number to make the code more readable and maintainable.
+
+  ! eslint(max-params): Function 'getEventClassNames' has too many parameters (5). Maximum allowed is 4.
+    ,-[src/components/day-timeline/EventBlock.tsx:17:28]
+ 16 | 
+ 17 | function getEventClassNames(event: AppEvent, pri: string | number | undefined, compact: boolean, isGhost: boolean, isFloating: boolean): string {
+    :                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 18 |     const classNames = ["day-event", `ev-${event.type}`];
+    `----
+  help: This rule enforces a maximum number of parameters allowed in function definitions.
+
+  x eslint(no-unused-vars): Type 'AppTask' is imported but never used.
+   ,-[src/screens/do/stopwatch/Stopwatch.test.tsx:6:15]
+ 5 | import type { ReadonlyStopwatchContext } from "../../../core/domain/clock-strategies/types";
+ 6 | import type { AppTask } from "../../../core/domain/models";
+   :               ^^^|^^^
+   :                  `-- 'AppTask' is imported here
+ 7 | 
+   `----
+  help: Consider removing this import.
+
+  ! eslint(no-magic-numbers): No magic number: 36
+    ,-[src/screens/plan/use-plan-actions.ts:10:72]
+  9 | 
+ 10 | const generateEventId = () => `e${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    :                                                                        ^^
+ 11 | 
+    `----
+  help: Use a named constant instead of a magic number to make the code more readable and maintainable.
+
+  ! eslint(no-magic-numbers): No magic number: 8
+    ,-[src/screens/plan/use-plan-actions.ts:10:85]
+  9 | 
+ 10 | const generateEventId = () => `e${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    :                                                                                     ^
+ 11 | 
+    `----
+  help: Use a named constant instead of a magic number to make the code more readable and maintainable.
+
+  ! eslint(max-params): Arrow function has too many parameters (5). Maximum allowed is 4.
+    ,-[src/screens/plan/use-plan-actions.ts:36:25]
+ 35 | 
+ 36 |     const createEvent = (task: AppTask, date: import("../../core/domain/models").DateString, start: number, duration: number, isAllDay = false) => {
+    :                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 37 |         setEvents(prev => [...prev, {
+    `----
+  help: This rule enforces a maximum number of parameters allowed in function definitions.
+
+  ! eslint(no-magic-numbers): No magic number: 40
+    ,-[src/screens/do/distraction-log/index.tsx:24:98]
+ 23 | 
+ 24 |     const totalWidth = columns.reduce((sum: number, c: DistractionColumn) => sum + c.width, 0) + 40; // +40 for trailing action col
+    :                                                                                                  ^^
+ 25 | 
+    `----
+  help: Use a named constant instead of a magic number to make the code more readable and maintainable.
+
+  ! eslint(no-magic-numbers): No magic number: 80
+    ,-[src/screens/do/distraction-log/index.tsx:46:35]
+ 45 |             const dx = ev.clientX - startX;
+ 46 |             const newW = Math.max(80, startWidth + dx);
+    :                                   ^^
+ 47 |             setColumns((cs: DistractionColumn[]) =>
+    `----
+  help: Use a named constant instead of a magic number to make the code more readable and maintainable.
+
+  ! eslint(no-magic-numbers): No magic number: 36
+    ,-[src/screens/do/distraction-log/index.tsx:64:33]
+ 63 |             "-" +
+ 64 |             Date.now().toString(36).slice(-4);
+    :                                 ^^
+ 65 |         setStatuses((ss: DistractionStatus[]) => [...ss, { id, label, color }]);
+    `----
+  help: Use a named constant instead of a magic number to make the code more readable and maintainable.
+
+  ! eslint(no-magic-numbers): No magic number: -4
+    ,-[src/screens/do/distraction-log/index.tsx:64:43]
+ 63 |             "-" +
+ 64 |             Date.now().toString(36).slice(-4);
+    :                                           ^^
+ 65 |         setStatuses((ss: DistractionStatus[]) => [...ss, { id, label, color }]);
+    `----
+  help: Use a named constant instead of a magic number to make the code more readable and maintainable.
+
+  ! eslint(no-magic-numbers): No magic number: 0.18
+     ,-[src/screens/do/distraction-log/index.tsx:149:63]
+ 148 |                             style={{
+ 149 |                                 background: hexAlpha(s.color, 0.18),
+     :                                                               ^^^^
+ 150 |                                 color: s.color,
+     `----
+  help: Use a named constant instead of a magic number to make the code more readable and maintainable.
+
+  ! eslint(no-magic-numbers): No magic number: 0.6
+     ,-[src/screens/do/distraction-log/index.tsx:151:64]
+ 150 |                                 color: s.color,
+ 151 |                                 borderColor: hexAlpha(s.color, 0.6),
+     :                                                                ^^^
+ 152 |                             }}
+     `----
+  help: Use a named constant instead of a magic number to make the code more readable and maintainable.
+
+  ! eslint(max-params): Function 'resolveDropTarget' has too many parameters (5). Maximum allowed is 4.
+   ,-[src/screens/plan/drag-utils.ts:7:34]
+ 6 | 
+ 7 | export function resolveDropTarget(el: Element | null, _x: number, y: number, task?: AppTask, event?: AppEvent): PlanDragTarget | undefined {
+   :                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 8 |     if (!el) return undefined;
+   `----
+  help: This rule enforces a maximum number of parameters allowed in function definitions.
+
+  ! eslint(no-magic-numbers): No magic number: 10
+    ,-[src/screens/settings/SettingActions.tsx:37:83]
+ 36 |                 a.href = url;
+ 37 |                 a.download = `taskroot-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    :                                                                                   ^^
+ 38 |                 a.click();
+    `----
+  help: Use a named constant instead of a magic number to make the code more readable and maintainable.
+
+  ! eslint(no-magic-numbers): No magic number: 36
+    ,-[src/screens/settings/SettingActions.tsx:85:74]
+ 84 |                         const newTasks = lines.map((line) => ({
+ 85 |                             id: `t${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    :                                                                          ^^
+ 86 |                             title: line,
+    `----
+  help: Use a named constant instead of a magic number to make the code more readable and maintainable.
+
+  ! eslint(no-magic-numbers): No magic number: 6
+    ,-[src/screens/settings/SettingActions.tsx:85:87]
+ 84 |                         const newTasks = lines.map((line) => ({
+ 85 |                             id: `t${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    :                                                                                       ^
+ 86 |                             title: line,
+    `----
+  help: Use a named constant instead of a magic number to make the code more readable and maintainable.
+
+  ! eslint(max-params): Function has too many parameters (5). Maximum allowed is 4.
+    ,-[src/screens/plan/use-drag-and-drop.ts:42:18]
+ 41 |     setInspectorState: React.Dispatch<React.SetStateAction<{ type: string, id: string } | undefined>>,
+ 42 |     createEvent: (task: AppTask, date: import("../../core/domain/models").DateString, start: number, duration: number, isAllDay?: boolean) => void
+    :                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 43 | ) {
+    `----
+  help: This rule enforces a maximum number of parameters allowed in function definitions.
+
+  ! eslint(no-magic-numbers): No magic number: 7
+    ,-[src/screens/plan/date-grid/index.tsx:72:45]
+ 71 |         const d = new Date(anchor);
+ 72 |         if (isWeek) d.setDate(d.getDate() + 7 * n);
+    :                                             ^
+ 73 |         else if (is3Weeks) d.setDate(d.getDate() + DAYS_IN_THREE_WEEKS * n);
+    `----
+  help: Use a named constant instead of a magic number to make the code more readable and maintainable.
+
+  ! eslint(no-magic-numbers): No magic number: 36
+    ,-[src/core/utils/notifications.tsx:55:47]
+ 54 |         (message: string, type: NotificationType = "info") => {
+ 55 |             const id = Math.random().toString(36).substr(2, 9);
+    :                                               ^^
+ 56 |             setNotifications((prev) => [
+    `----
+  help: Use a named constant instead of a magic number to make the code more readable and maintainable.
+
+  ! eslint(no-magic-numbers): No magic number: 9
+    ,-[src/core/utils/notifications.tsx:55:61]
+ 54 |         (message: string, type: NotificationType = "info") => {
+ 55 |             const id = Math.random().toString(36).substr(2, 9);
+    :                                                             ^
+ 56 |             setNotifications((prev) => [
+    `----
+  help: Use a named constant instead of a magic number to make the code more readable and maintainable.
+
+  ! eslint(no-magic-numbers): No magic number: 5000
+     ,-[src/core/utils/notifications.tsx:123:16]
+ 122 |                 onDismiss();
+ 123 |             }, 5000);
+     :                ^^^^
+ 124 |             return () => clearTimeout(timer);
+     `----
+  help: Use a named constant instead of a magic number to make the code more readable and maintainable.
+
+  ! eslint(no-magic-numbers): No magic number: 150
+     ,-[src/core/utils/notifications.tsx:142:20]
+ 141 |                     el.style.background = oldBg;
+ 142 |                 }, 150);
+     :                    ^^^
+ 143 |             }
+     `----
+  help: Use a named constant instead of a magic number to make the code more readable and maintainable.
+
+  ! eslint(max-params): Function has too many parameters (5). Maximum allowed is 4.
+    ,-[src/core/store/repositories.ts:27:16]
+ 26 |     
+ 27 | ,->     constructor(
+ 28 | |           key: string,
+ 29 | |           initial: T,
+ 30 | |           parser?: (saved: unknown) => T,
+ 31 | |           interceptor?: (next: T, prev?: T) => T,
+ 32 | |           onDelta?: (result: T) => void
+ 33 | `->     ) {
+ 34 |             this.key = key;
+    `----
+  help: This rule enforces a maximum number of parameters allowed in function definitions.
+
+  ! eslint(max-params): Function has too many parameters (5). Maximum allowed is 4.
+    ,-[src/core/sync/engine/Poller.ts:19:16]
+ 18 |     
+ 19 | ,->     constructor(
+ 20 | |           taskSync: TaskSynchronizer,
+ 21 | |           eventSync: EventSynchronizer,
+ 22 | |           pusher: Pusher,
+ 23 | |           getSettings: () => Partial<import('../../store/settingsSchema').AppSettings>,
+ 24 | |           hasAuth: () => boolean
+ 25 | `->     ) {
+ 26 |             this.taskSync = taskSync;
+    `----
+  help: This rule enforces a maximum number of parameters allowed in function definitions.
+
+  ! eslint(no-magic-numbers): No magic number: 1000
+    ,-[src/core/domain/rrule-utils.ts:55:34]
+ 54 |                             (endDt.getTime() - startDt.getTime()) /
+ 55 |                                 (1000 * 3600 * HOURS_PER_DAY),
+    :                                  ^^^^
+ 56 |                         );
+    `----
+  help: Use a named constant instead of a magic number to make the code more readable and maintainable.
+
+  ! eslint(no-magic-numbers): No magic number: 3600
+    ,-[src/core/domain/rrule-utils.ts:55:41]
+ 54 |                             (endDt.getTime() - startDt.getTime()) /
+ 55 |                                 (1000 * 3600 * HOURS_PER_DAY),
+    :                                         ^^^^
+ 56 |                         );
+    `----
+  help: Use a named constant instead of a magic number to make the code more readable and maintainable.
+
+Found 32 warnings and 1 error.
+Finished in 131ms on 181 files with 232 rules using 24 threads.

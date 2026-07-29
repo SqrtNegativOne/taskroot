@@ -23,7 +23,7 @@ export function FilterSortButtons({
 
     useEffect(() => {
         function handleClickOutside(e: PointerEvent) {
-            if (ref.current && !ref.current.contains(e.target instanceof Node ? e.target : null)) {
+            if (ref.current && !(e.target instanceof Node && ref.current.contains(e.target))) {
                 if (filterMenu.isOpen && !filterMenu.isClosing) filterMenu.close();
                 if (sortMenu.isOpen && !sortMenu.isClosing) sortMenu.close();
             }

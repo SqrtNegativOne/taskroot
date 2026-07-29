@@ -9,8 +9,8 @@ import { DEFAULT_STATUSES, DEFAULT_DISTRACTION_COLUMNS, REST_CHECKLIST_DEFAULTS 
 export interface DistractionRow { id: string; [key: string]: unknown; }
 export interface DistractionStatus { id: string; label: string; color: string; }
 export interface DistractionColumn { id: string; label: string; width: number; type: string; }
-export interface StopwatchState { elapsed: number; runningSince: number | null; isBreak: boolean; breakAllowedMs: number; breakStartedAt: number | null; breakSoundPlayed: boolean; }
-export interface TimeLog { id?: string; taskId?: string; duration: number; date: string; }
+export interface StopwatchState { elapsed: number; runningSince?: number; isBreak: boolean; breakAllowedMs: number; breakStartedAt?: number; breakSoundPlayed: boolean; }
+export type TimeLog = AppEvent;
 export interface RestItem { id: string; title: string; type: string; checked?: boolean; }
 export interface CalendarData { id: string; summary: string; active: boolean; accessRole?: string; }
 export interface TestKeyData { count: number; }
@@ -27,15 +27,17 @@ export class Repository<T> {
     constructor(
         key: string,
         initial: T,
-        parser?: (saved: unknown) => T,
-        interceptor?: (next: T, prev?: T) => T,
-        onDelta?: (result: T) => void
+        options?: {
+            parser?: (saved: unknown) => T;
+            interceptor?: (next: T, prev?: T) => T;
+            onDelta?: (result: T) => void;
+        }
     ) {
         this.key = key;
         this.initial = initial;
-        this.parser = parser;
-        this.interceptor = interceptor;
-        this.onDelta = onDelta;
+        this.parser = options?.parser;
+        this.interceptor = options?.interceptor;
+        this.onDelta = options?.onDelta;
     }
 
     get(): T {
@@ -127,18 +129,18 @@ function onEventsDelta(result: AppEvent[]) {
 }
 
 export const repos = {
-    settings: new Repository<AppSettings>("settings", DEFAULT_SETTINGS, parseSettings),
-    tasks: new Repository<AppTask[]>("tasks", [], undefined, injectUpdatedAt, onTasksDelta),
-    events: new Repository<AppEvent[]>("events", [], undefined, injectUpdatedAt, onEventsDelta),
+    settings: new Repository<AppSettings>("settings", DEFAULT_SETTINGS, { parser: parseSettings }),
+    tasks: new Repository<AppTask[]>("tasks", [], { interceptor: (next, prev) => injectUpdatedAt(next, prev), onDelta: onTasksDelta }),
+    events: new Repository<AppEvent[]>("events", [], { interceptor: (next, prev) => injectUpdatedAt(next, prev), onDelta: onEventsDelta }),
     distractions: new Repository<DistractionRow[]>("distractions", []),
     distractionStatuses: new Repository<DistractionStatus[]>("distractionStatuses", DEFAULT_STATUSES),
     distractionColumns: new Repository<DistractionColumn[]>("distractionColumns", DEFAULT_DISTRACTION_COLUMNS),
     stopwatch: new Repository<StopwatchState>("stopwatch", {
         elapsed: 0,
-        runningSince: null,
+        runningSince: undefined,
         isBreak: false,
         breakAllowedMs: 0,
-        breakStartedAt: null,
+        breakStartedAt: undefined,
         breakSoundPlayed: false,
     }),
     time_logs: new Repository<TimeLog[]>("time_logs", []),

@@ -150,7 +150,7 @@ function TaskRowLine2({ task, dueStr, overdue }: { task: AppTask; dueStr: string
     const hasEst = est > 0;
 
     if (!hasEst && !hasTags && !hasSubtasks && !dueStr) {
-        return null;
+        return;
     }
 
     const doneSubtasks = hasSubtasks ? subtasks.filter((s) => s.done).length : 0;

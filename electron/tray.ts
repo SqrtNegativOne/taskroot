@@ -2,7 +2,7 @@ import { Tray, Menu, nativeImage, app } from "electron";
 import { ICON_PATH } from "./constants.js";
 import { windowManager } from "./windowManager.js";
 
-let tray: Tray | null = null;
+let tray: Tray | undefined = undefined;
 
 export function createSystemTray() {
     if (tray) return;

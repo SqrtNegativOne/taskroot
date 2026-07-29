@@ -1,5 +1,10 @@
-export function resolveDropTarget(el: Element | null, _x: number, y: number, task?: AppTask | null, event?: AppEvent | null): PlanDragTarget | null {
-    if (!el) return null;
+import { MINUTES_IN_HOUR, HOURS_PER_DAY } from "../../core/utils/constants";
+import { isDateString } from "../../core/domain/models";
+import { PX_PER_MIN, SNAP_MIN } from "../../components/day-timeline/types";
+import type { PlanDragTarget } from "./drag-helpers";
+
+export function resolveDropTarget(el: Element | undefined, y: number, itemDuration: number): PlanDragTarget | undefined {
+    if (!el) return undefined;
     // Day calendar grid
     const grid = el.closest('[data-drop-kind="day-time"]');
     if (grid) {
@@ -16,7 +21,7 @@ export function resolveDropTarget(el: Element | null, _x: number, y: number, tas
         return {
             kind: "day-time",
             minute: snapped,
-            duration: task?.est || (event ? event.end - event.start : MINUTES_IN_HOUR),
+            duration: itemDuration,
         };
     }
     // Date grid day cell
@@ -27,6 +32,6 @@ export function resolveDropTarget(el: Element | null, _x: number, y: number, tas
             return { kind: "grid-day", date: dropDate };
         }
     }
-    return null;
+    return undefined;
 }
 

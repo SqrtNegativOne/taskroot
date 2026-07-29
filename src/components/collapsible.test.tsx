@@ -6,7 +6,7 @@ import { Collapsible } from "./collapsible";
 describe("Collapsible UI Component", () => {
     it("renders the title", () => {
         render(
-            <Collapsible title="My Test Section" badge={null}>
+            <Collapsible title="My Test Section" badge={undefined}>
                 <div>Hidden Content</div>
             </Collapsible>,
         );
@@ -18,7 +18,7 @@ describe("Collapsible UI Component", () => {
     it("toggles content visibility when clicked", () => {
         // 1. Render the component in the virtual DOM
         render(
-            <Collapsible title="Click Me" badge={null}>
+            <Collapsible title="Click Me" badge={undefined}>
                 <div>Hidden Content</div>
             </Collapsible>,
         );

@@ -2,8 +2,8 @@ import { BrowserWindow } from "electron";
 import { PRELOAD_PATH, ICON_PATH } from "./constants.js";
 
 class WindowManager {
-    public win: BrowserWindow | null = null;
-    public miniWin: BrowserWindow | null = null;
+    public win: BrowserWindow | undefined = undefined;
+    public miniWin: BrowserWindow | undefined = undefined;
     public isQuitting = false;
     private mainUrl = "";
     private miniWindowUrl = "";
@@ -60,7 +60,7 @@ class WindowManager {
         });
 
         this.miniWin.on("closed", () => {
-            this.miniWin = null;
+            this.miniWin = undefined;
         });
 
         this.miniWin.on("maximize", () => {

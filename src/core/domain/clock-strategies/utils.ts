@@ -8,11 +8,11 @@ export const RANDOM_ID_MULTIPLIER = 10000;
 export function createWorkSessionEvent(
     startMs: number,
     endMs: number,
-    taskId: string | null | undefined,
+    taskId: string | undefined,
     clockStyle: string,
-): AppEvent | null {
-    if (!startMs || !endMs) return null;
-    if (endMs - startMs < MS_PER_MINUTE) return null; // ignore < 1 min sessions
+): AppEvent | undefined {
+    if (!startMs || !endMs) return undefined;
+    if (endMs - startMs < MS_PER_MINUTE) return undefined; // ignore < 1 min sessions
     return {
         id: `log-${Date.now()}-${Math.floor(Math.random() * RANDOM_ID_MULTIPLIER)}`,
         title: `Worked on ${taskId || "Task"}`,

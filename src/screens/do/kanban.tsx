@@ -18,7 +18,7 @@ const GHOST_OFFSET_Y = 6;
 
 export function Kanban() {
     const [tasks, setTasks] = useTasks();
-    const [drag, setDrag] = React.useState<{ taskId: string; x: number; y: number; overCol: string | null } | null>(null);
+    const [drag, setDrag] = React.useState<{ taskId: string; x: number; y: number; overCol?: string }>();
 
     const onTaskDown = (task: AppTask) => (e: React.PointerEvent<HTMLDivElement>) => {
         if (e.button !== 0) return;
@@ -33,12 +33,12 @@ export function Kanban() {
                 return;
             active = true;
             const el = document.elementFromPoint(ev.clientX, ev.clientY);
-            const colEl = el instanceof Element ? el.closest("[data-kanban-col]") : null;
+            const colEl = el instanceof Element ? el.closest("[data-kanban-col]") : undefined;
             setDrag({
                 taskId: task.id,
                 x: ev.clientX,
                 y: ev.clientY,
-                overCol: colEl instanceof HTMLElement ? (colEl.dataset?.kanbanCol || null) : null,
+                overCol: colEl instanceof HTMLElement ? colEl.dataset?.kanbanCol : undefined,
             });
         };
         const up = (ev: PointerEvent) => {
@@ -46,7 +46,7 @@ export function Kanban() {
             window.removeEventListener("pointerup", up);
             if (active) {
                 const el = document.elementFromPoint(ev.clientX, ev.clientY);
-                const colEl = el instanceof Element ? el.closest("[data-kanban-col]") : null;
+                const colEl = el instanceof Element ? el.closest("[data-kanban-col]") : undefined;
                 if (
                     colEl instanceof HTMLElement &&
                     colEl.dataset.kanbanCol !== task.status
@@ -63,7 +63,7 @@ export function Kanban() {
                     );
                 }
             }
-            setDrag(null);
+            setDrag(undefined);
         };
         window.addEventListener("pointermove", move);
         window.addEventListener("pointerup", up);

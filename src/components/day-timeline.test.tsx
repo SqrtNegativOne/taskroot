@@ -55,11 +55,11 @@ test("filters events by category correctly", () => {
             events={hydrateEvents(events, tasks)}
             filter={filter}
             sort="time"
-            filterMenu={null}
+            filterMenu={undefined}
             today={today}
             timelineDate={today}
             setTimelineDate={() => {}}
-            dragState={null}
+            dragState={undefined}
             setDragState={() => {}}
             onDropToTime={() => {}}
             onResizeEvent={() => {}}
@@ -112,11 +112,11 @@ test("filters out events by category correctly using 'is not'", () => {
             events={hydrateEvents(events, tasks)}
             filter={filter}
             sort="time"
-            filterMenu={null}
+            filterMenu={undefined}
             today={today}
             timelineDate={today}
             setTimelineDate={() => {}}
-            dragState={null}
+            dragState={undefined}
             setDragState={() => {}}
             onDropToTime={() => {}}
             onResizeEvent={() => {}}

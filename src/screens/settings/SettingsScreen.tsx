@@ -54,12 +54,13 @@ export function SettingsScreen() {
         const Renderer = SETTING_RENDERERS[setting.type];
 
         return (
-            <button
-                type="button"
+            <div
                 className="settings-section"
                 key={setting.id}
-                onClick={(e) => {
-                    if (setting.type === "checkbox") {
+                {...(setting.type === "checkbox" ? {
+                    role: "button",
+                    tabIndex: 0,
+                    onClick: (e: React.MouseEvent) => {
                         const target = e.target;
                         if (target instanceof Element && (target.closest('button') || target.closest('.toggle-switch'))) {
                             return;
@@ -69,20 +70,18 @@ export function SettingsScreen() {
                             const prevVal = Reflect.get(prev, setting.id) !== undefined ? Reflect.get(prev, setting.id) : defaultVal;
                             return { ...prev, [setting.id]: !prevVal };
                         });
-                    }
-                }}
-                onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        if (setting.type === "checkbox") {
-                                setSettings((prev: import('../../core/store/settingsSchema').AppSettings) => {
-                                    const defaultVal = Reflect.get(setting, "defaultValue");
-                                    const prevVal = Reflect.get(prev, setting.id) !== undefined ? Reflect.get(prev, setting.id) : defaultVal;
-                                    return { ...prev, [setting.id]: !prevVal };
-                                });
+                    },
+                    onKeyDown: (e: React.KeyboardEvent) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            setSettings((prev: import('../../core/store/settingsSchema').AppSettings) => {
+                                const defaultVal = Reflect.get(setting, "defaultValue");
+                                const prevVal = Reflect.get(prev, setting.id) !== undefined ? Reflect.get(prev, setting.id) : defaultVal;
+                                return { ...prev, [setting.id]: !prevVal };
+                            });
                         }
                     }
-                }}
+                } : {})}
                 style={{
                     marginBottom: setting.danger ? "32px" : "12px",
                     display: "flex",
@@ -121,7 +120,7 @@ export function SettingsScreen() {
                 >
                     {Renderer && <Renderer setting={setting} val={val} settings={settings} setSettings={setSettings} />}
                 </div>
-            </button>
+            </div>
         );
     };
 

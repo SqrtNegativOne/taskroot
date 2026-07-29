@@ -93,7 +93,7 @@ export class GoogleTasksAPI implements ITasksAPI {
 
         if (existing) return { ...existing, ...base, due: due || existing.due };
         return {
-            id, ...base, priority: 1, tags: [], subtasks: [], parent_task: null, est: 0,
+            id, ...base, priority: 1, tags: [], subtasks: [], parent_task: undefined, est: 0,
             added: new Date().toISOString(), isDraft: false, due,
         };
     }

@@ -31,7 +31,7 @@ describe("rrule-utils", () => {
                 end: 0,
                 title: "Daily Standup",
                 date: "2026-07-10",
-                rrule: "FREQ=DAILY;COUNT=5",
+                rrule: "DTSTART:20260710T000000Z\nFREQ=DAILY;COUNT=5",
             }
         ];
         const viewStart = new Date("2026-07-01T00:00:00Z");
@@ -52,7 +52,7 @@ describe("rrule-utils", () => {
                 end: 0,
                 title: "Weekly Meeting",
                 date: "2026-07-01",
-                rrule: "FREQ=WEEKLY;COUNT=3",
+                rrule: "DTSTART:20260701T000000Z\nFREQ=WEEKLY;COUNT=3",
             },
             {
                 id: "exception_1",

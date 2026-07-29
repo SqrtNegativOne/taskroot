@@ -91,7 +91,7 @@ export function Stopwatch({ onBreakStatusChange }: { onBreakStatusChange?: (stat
         strategy,
         context,
         actions
-    } = useStopwatchEngine(selectorOpen, setSelectorOpen);
+    } = useStopwatchEngine(setSelectorOpen);
 
     const [, setRealStopwatchState] = useStopwatch();
 

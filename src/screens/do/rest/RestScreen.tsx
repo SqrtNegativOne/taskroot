@@ -7,7 +7,7 @@ import { useRestItems } from "../../../core/store/hooks";
 function useRestChecklistState() {
     const [items, setItems] = useRestItems();
     const [checked, setChecked] = React.useState<Record<string, boolean>>({});
-    const [editing, setEditing] = React.useState<string | null>(null);
+    const [editing, setEditing] = React.useState<string>();
     const [adding, setAdding] = React.useState(false);
     const [draft, setDraft] = React.useState("");
 
@@ -20,7 +20,7 @@ function useRestChecklistState() {
                 its.map((i) => (i.id === id ? { ...i, title: title.trim() } : i))
             );
         }
-        setEditing(null);
+        setEditing(undefined);
     };
     const addItem = () => {
         const t = draft.trim();
@@ -140,7 +140,7 @@ function RestChecklist({ state }: { state: ReturnType<typeof useRestChecklistSta
                                 if (e.key === "Enter") {
                                     if (e.currentTarget instanceof HTMLElement) e.currentTarget.blur();
                                 }
-                                if (e.key === "Escape") state.setEditing(null);
+                                if (e.key === "Escape") state.setEditing(undefined);
                             }}
                         />
                     ) : (

@@ -4,11 +4,11 @@ import { hhmmShort } from "../../../core/store/data";
 import type { DragStateTarget } from "../types";
 
 interface DropPreviewProps {
-    target: DragStateTarget | null;
+    target?: DragStateTarget;
 }
 
 export function DropPreview({ target }: DropPreviewProps) {
-    if (!target || target.minute === undefined) return null;
+    if (!target || target.minute === undefined) return;
 
     return (
         <div

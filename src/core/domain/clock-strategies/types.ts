@@ -11,10 +11,10 @@ export interface ClockDisplayData {
 
 export interface StopwatchState {
     elapsed: number;
-    runningSince: number | null;
+    runningSince?: number;
     isBreak: boolean;
     breakAllowedMs: number;
-    breakStartedAt: number | null;
+    breakStartedAt?: number;
     breakSoundPlayed: boolean;
 }
 
@@ -29,7 +29,7 @@ export interface ReadonlyStopwatchContext {
     currentMs: number;
     isPristine: boolean;
     running: boolean;
-    activeTask?: AppTask | null;
+    activeTask?: AppTask;
     allowNoTask?: boolean;
     settings?: Partial<AppSettings>;
 }

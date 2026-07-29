@@ -10,7 +10,7 @@ import { InspectorPaneHeader } from "./inspector-shared";
 import "./inspector.css";
 
 interface InspectorPaneProps {
-    inspectorState: { type: string; id: string } | null;
+    inspectorState?: { type: string; id: string };
     onClose: () => void;
     tasks: AppTask[];
     setTasks: React.Dispatch<React.SetStateAction<AppTask[]>>;
@@ -19,15 +19,15 @@ interface InspectorPaneProps {
 }
 
 function useCurrentItem(
-    inspectorState: { type: string; id: string } | null,
-    activeState: { type: string; id: string } | null,
+    inspectorState: { type: string; id: string } | undefined,
+    activeState: { type: string; id: string } | undefined,
     tasks: AppTask[],
     events: AppEvent[]
 ) {
     const currentState = inspectorState || activeState;
     const currentTask = currentState?.type === "task" ? tasks.find((t) => t.id === currentState.id) : undefined;
     const currentEvent = currentState?.type === "event" ? (events.find((e) => e.id === currentState.id) || events.find((e) => e.id === currentState.id.split("_")[0])) : undefined;
-    const currentItem = currentTask || currentEvent || null;
+    const currentItem = currentTask || currentEvent;
     return { currentTask, currentEvent, currentItem, isCurrentTask: !!currentTask };
 }
 interface InspectorPaneContentProps {
@@ -35,7 +35,7 @@ interface InspectorPaneContentProps {
     currentTask?: AppTask;
     currentEvent?: AppEvent;
     isReadOnlyCalendar: boolean;
-    title: string | null;
+    title?: string;
     tasks: AppTask[];
     calendars: CalendarData[];
     onPaneClose: () => void;
@@ -118,7 +118,7 @@ function InspectorPaneContent({
                         updateEvent={updateEvent}
                         isReadOnlyCalendar={isReadOnlyCalendar}
                     />
-                ) : null}
+                ) : undefined}
             </div>
         </React.Fragment>
     );
@@ -134,7 +134,7 @@ export function InspectorPane({
     const paneRef = React.useRef<HTMLDivElement>(null);
     const [calendars] = useCalendars();
 
-    const [activeState, setActiveState] = React.useState<{ type: string; id: string } | null>(null);
+    const [activeState, setActiveState] = React.useState<{ type: string; id: string }>();
     React.useEffect(() => {
         if (inspectorState) setActiveState(inspectorState);
     }, [inspectorState]);
@@ -210,7 +210,7 @@ export function InspectorPane({
             if (
                 inspectorState &&
                 paneRef.current &&
-                !paneRef.current.contains(e.target instanceof Node ? e.target : null)
+                !(e.target instanceof Node && paneRef.current.contains(e.target))
             ) {
                 onPaneClose();
             }

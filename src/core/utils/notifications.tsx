@@ -6,6 +6,11 @@ import React, {
 } from "react";
 
 const DEBOUNCE_DELAY_MS = 600;
+const ID_RADIX = 36;
+const ID_SUBSTR_START = 2;
+const ID_LENGTH = 9;
+const NOTIFICATION_TIMEOUT_MS = 5000;
+const NOTIFICATION_FLASH_DURATION_MS = 150;
 
 
 
@@ -22,11 +27,15 @@ interface NotificationContextType {
     notify: (message: string, type?: NotificationType) => void;
 }
 
-const NotificationContext = createContext<NotificationContextType>({
+export const NotificationContext = createContext<NotificationContextType>({
     notify: () => {},
 });
 
 
+
+export function useNotification() {
+    return React.useContext(NotificationContext);
+}
 
 export function NotificationProvider({
     children,
@@ -48,7 +57,7 @@ export function NotificationProvider({
 
     const notify = useCallback(
         (message: string, type: NotificationType = "info") => {
-            const id = Math.random().toString(BASE_36).substr(2, ID_LENGTH);
+            const id = Math.random().toString(ID_RADIX).substr(ID_SUBSTR_START, ID_LENGTH);
             setNotifications((prev) => [
                 ...prev,
                 { id, message, type, exiting: false },
@@ -116,7 +125,7 @@ function NotificationItem({
         if (notification.type !== "error") {
             const timer = setTimeout(() => {
                 onDismiss();
-            }, SYNC_POLL_INTERVAL_MS);
+            }, NOTIFICATION_TIMEOUT_MS);
             return () => clearTimeout(timer);
         }
     }, [notification.type, onDismiss]);
@@ -135,7 +144,7 @@ function NotificationItem({
                 el.style.background = "rgba(255, 255, 255, 0.2)";
                 setTimeout(() => {
                     el.style.background = oldBg;
-                }, ANIMATION_DELAY_MS);
+                }, NOTIFICATION_FLASH_DURATION_MS);
             }
         } catch (err) {
             console.error("Failed to copy notification:", err);
@@ -144,13 +153,8 @@ function NotificationItem({
 
     return (
         <button
+            type="button"
             onClick={handleClick}
-            onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    handleClick();
-                }
-            }}
             id={`notif-${notification.id}`}
             style={{
                 fontFamily: "inherit",

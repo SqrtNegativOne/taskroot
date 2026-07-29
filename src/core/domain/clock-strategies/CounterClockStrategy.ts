@@ -12,7 +12,7 @@ export class CounterClockStrategy extends ClockStrategy {
     }
 
     requiresAnimationLoop({ state }: ReadonlyStopwatchContext) {
-        return state.runningSince !== null;
+        return state.runningSince !== undefined;
     }
 
     calculateToggle({ isPristine, activeTask, allowNoTask, state }: ReadonlyStopwatchContext): ClockActionEffect {
@@ -24,7 +24,7 @@ export class CounterClockStrategy extends ClockStrategy {
                 shouldLogSession: true,
                 newState: {
                     elapsed: state.elapsed + (Date.now() - state.runningSince),
-                    runningSince: null,
+                    runningSince: undefined,
                 }
             };
         }
@@ -41,7 +41,7 @@ export class CounterClockStrategy extends ClockStrategy {
     calculateReset({ state }: ReadonlyStopwatchContext): ClockActionEffect {
         const effect: ClockActionEffect = {
             selectorOpen: false,
-            newState: { elapsed: 0, runningSince: null }
+            newState: { elapsed: 0, runningSince: undefined }
         };
         if (state.runningSince) {
             effect.shouldLogSession = true;

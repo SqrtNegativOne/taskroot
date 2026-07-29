@@ -6,7 +6,9 @@ import { setupIpcHandlers } from "./ipc.js";
 import { createSystemTray } from "./tray.js";
 import { startLocalServer } from "./server.js";
 
-let localServer: import("http").Server | null = null;
+
+
+let localServer: import("http").Server | undefined = undefined;
 
 const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
@@ -97,7 +99,7 @@ app.on("will-quit", () => {
 app.on("window-all-closed", () => {
     if (process.platform !== "darwin") {
         app.quit();
-        windowManager.win = null;
+        windowManager.win = undefined;
     }
 });
 

@@ -81,14 +81,14 @@ export function TipsList() {
 
 export function NotesList() {
     const [notes, setNotes] = useNotes();
-    const [toast, setToast] = React.useState<string | null>(null);
+    const [toast, setToast] = React.useState<string>();
     const [adding, setAdding] = React.useState(false);
     const [draft, setDraft] = React.useState("");
 
     const openInObsidian = (note: AppNote) => {
         // Mocked — would normally fire obsidian:// deep link
         setToast(`would open obsidian://${note.vault}/${note.path}`);
-        setTimeout(() => setToast(null), TIP_DURATION_MS);
+        setTimeout(() => setToast(undefined), TIP_DURATION_MS);
     };
     const remove = (id: string) => setNotes((ns) => ns.filter((n) => n.id !== id));
     const addNote = () => {

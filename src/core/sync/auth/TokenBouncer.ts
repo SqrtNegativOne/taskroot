@@ -3,7 +3,7 @@ import type { IAuthManager } from "./types";
 
 export class GoogleAuthManager implements IAuthManager {
     private isRefreshing = false;
-    private refreshPromise: Promise<boolean> | null = null;
+    private refreshPromise: Promise<boolean> | undefined = undefined;
 
     getToken(): string | undefined {
         return localStorage.getItem("google_access_token") ?? undefined;
@@ -18,7 +18,7 @@ export class GoogleAuthManager implements IAuthManager {
         this.refreshPromise = this._refresh();
         const result = await this.refreshPromise;
         this.isRefreshing = false;
-        this.refreshPromise = null;
+        this.refreshPromise = undefined;
         return result;
     }
 

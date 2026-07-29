@@ -24,7 +24,7 @@ beforeAll(() => {
         value: vi.fn<(...args: never[]) => unknown>().mockImplementation((query: unknown) => ({
             matches: false,
             media: query,
-            onchange: null,
+            onchange: undefined,
             addListener: vi.fn<(...args: never[]) => unknown>(), // Deprecated
             removeListener: vi.fn<(...args: never[]) => unknown>(), // Deprecated
             addEventListener: vi.fn<(...args: never[]) => unknown>(),

@@ -8,7 +8,7 @@ export function ActiveTaskDisplay({
 }: {
     settings: { clockStyle: string };
     state: { isBreak: boolean };
-    activeTask?: { title: string } | null;
+    activeTask?: { title: string };
     running: boolean;
     allowNoTask: boolean;
     setSelectorOpen: (open: boolean) => void;
@@ -46,5 +46,5 @@ export function ActiveTaskDisplay({
             </div>
         );
     }
-    return null;
+    return;
 }

@@ -1,4 +1,3 @@
-import { BASE_36 } from "../../../core/utils/constants";
 import React from "react";
 import { PAD2 } from "../../../core/store/data";
 import { useDistractions, useDistractionStatuses, useDistractionColumns } from "../../../core/store/hooks";
@@ -12,6 +11,13 @@ import { colIcon, hexAlpha } from "./utils";
 
 
 
+const TRAILING_ACTION_COL_WIDTH = 40;
+const MIN_COLUMN_WIDTH = 80;
+const ID_RADIX = 36;
+const ID_SUFFIX_LENGTH = -4;
+const OPACITY_BG = 0.18;
+const OPACITY_BORDER = 0.6;
+
 // Distraction log — Notion-like table.
 // Resizable columns, inline cell editing, custom status types.
 
@@ -19,10 +25,10 @@ export function DistractionLog() {
     const [rows, setRows] = useDistractions();
     const [statuses, setStatuses] = useDistractionStatuses();
     const [columns, setColumns] = useDistractionColumns();
-    const [editingCell, setEditingCell] = React.useState<EditingCell | null>(null);
-    const [statusEditor, setStatusEditor] = React.useState<string | null>(null); // rowId
+    const [editingCell, setEditingCell] = React.useState<EditingCell>();
+    const [statusEditor, setStatusEditor] = React.useState<string>(); // rowId
 
-    const totalWidth = columns.reduce((sum: number, c: DistractionColumn) => sum + c.width, 0) + COMPACT_EVENT_HEIGHT_PX; // +40 for trailing action col
+    const totalWidth = columns.reduce((sum: number, c: DistractionColumn) => sum + c.width, 0) + TRAILING_ACTION_COL_WIDTH; // for trailing action col
 
     const updateRow = (id: string, patch: Partial<DistractionRow>) => {
         setRows((rs: DistractionRow[]) => rs.map((r) => (r.id === id ? { ...r, ...patch } : r)));
@@ -44,7 +50,7 @@ export function DistractionLog() {
         e.preventDefault();
         const onMove = (ev: PointerEvent) => {
             const dx = ev.clientX - startX;
-            const newW = Math.max(MIN_COLUMN_WIDTH_PX, startWidth + dx);
+            const newW = Math.max(MIN_COLUMN_WIDTH, startWidth + dx);
             setColumns((cs: DistractionColumn[]) =>
                 cs.map((c) => (c.id === colId ? { ...c, width: newW } : c)),
             );
@@ -62,7 +68,7 @@ export function DistractionLog() {
         const id =
             label.toLowerCase().replace(/\s+/g, "-") +
             "-" +
-            Date.now().toString(BASE_36).slice(RESIZE_HANDLE_OFFSET_PX);
+            Date.now().toString(ID_RADIX).slice(ID_SUFFIX_LENGTH);
         setStatuses((ss: DistractionStatus[]) => [...ss, { id, label, color }]);
         return id;
     };
@@ -147,9 +153,9 @@ export function DistractionLog() {
                         <span
                             className="status-chip"
                             style={{
-                                background: hexAlpha(s.color, OPACITY_FAINT),
+                                background: hexAlpha(s.color, OPACITY_BG),
                                 color: s.color,
-                                borderColor: hexAlpha(s.color, OPACITY_MUTED),
+                                borderColor: hexAlpha(s.color, OPACITY_BORDER),
                             }}
                         >
                             {s.label}

@@ -53,12 +53,13 @@ test("filters events by category correctly", () => {
             setView={() => {}}
             anchor={today}
             setAnchor={() => {}}
-            events={events}
+            // eslint-disable-next-line typescript/consistent-type-assertions
+            events={events as unknown as import("../../core/domain/events").HydratedEvent[]}
             filter={filter}
             sort="time"
-            filterMenu={null}
+            filterMenu={undefined}
             today={today}
-            dragState={null}
+            dragState={undefined}
             onEventDragStart={() => {}}
             onAddEvent={() => {}}
         />
@@ -107,12 +108,13 @@ test("filters out events by category correctly using 'is not'", () => {
             setView={() => {}}
             anchor={today}
             setAnchor={() => {}}
-            events={events}
+            // eslint-disable-next-line typescript/consistent-type-assertions
+            events={events as unknown as import("../../core/domain/events").HydratedEvent[]}
             filter={filter}
             sort="time"
-            filterMenu={null}
+            filterMenu={undefined}
             today={today}
-            dragState={null}
+            dragState={undefined}
             onEventDragStart={() => {}}
             onAddEvent={() => {}}
         />

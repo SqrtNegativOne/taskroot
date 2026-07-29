@@ -45,7 +45,7 @@ export const eventSync: EventSynchronizer = new EventSynchronizer(context, calen
 export const pusher: Pusher = new Pusher(taskSync, eventSync, getSettings);
 
 const hasAuth = () => !!googleAuth.getToken() || !!localStorage.getItem("google_refresh_token");
-export const poller: Poller = new Poller(taskSync, eventSync, pusher, getSettings, hasAuth);
+export const poller: Poller = new Poller(taskSync, eventSync, pusher, { getSettings, hasAuth });
 
 window.addEventListener("storage", (e) => {
     if (e.key === "google_access_token") {

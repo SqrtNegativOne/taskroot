@@ -13,7 +13,7 @@ import { purgeOrphanedData } from "./core/store/repositories";
 
 
 import { syncState, poller } from "./core/sync";
-import { useNotification } from "./core/utils/notifications-constants";
+import { useNotification } from "./core/utils/notifications";
 import { NotificationProvider } from "./core/utils/notifications";
 
 import { LoginScreen } from "./screens/login/LoginScreen";
@@ -129,6 +129,7 @@ function AppRouter() {
 
 function GlobalSyncLoading({ syncMessage }: { syncMessage: string | null }) {
     if (window.location.search.includes("minitracker=true")) {
+        // eslint-disable-next-line unicorn/no-null
         return null;
     }
     return (
@@ -195,11 +196,11 @@ function GlobalSync({ children }: { children: React.ReactNode }) {
         const checkNotifications = () => {
             if (syncState.error) {
                 notify(`Sync error: ${syncState.error}`, "error");
-                syncState.error = null;
+                syncState.error = undefined;
             }
             if (syncState.info) {
                 notify(syncState.info, "info");
-                syncState.info = null;
+                syncState.info = undefined;
             }
         };
         checkNotifications();

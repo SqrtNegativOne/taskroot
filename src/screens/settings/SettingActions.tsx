@@ -1,4 +1,3 @@
-import { BASE_36 } from "../../core/utils/constants";
 import { useState } from "react";
 import { api } from "../../core/store/api";
 import { useAuth } from "../../core/auth/useAuth";
@@ -9,6 +8,11 @@ import { useTasks } from "../../core/store/hooks";
 
 
 
+const DATE_SLICE_START = 0;
+const DATE_SLICE_END = 10;
+const ID_RADIX = 36;
+const ID_SUBSTR_START = 2;
+const ID_SUBSTR_END = 6;
 
 export function ExportDataButton() {
     return (
@@ -29,13 +33,13 @@ export function ExportDataButton() {
                         }
                     }
                 }
-                const blob = new Blob([JSON.stringify(data, null, 2)], {
+                const blob = new Blob([JSON.stringify(data, undefined, 2)], {
                     type: "application/json",
                 });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement("a");
                 a.href = url;
-                a.download = `taskroot-backup-${new Date().toISOString().slice(0, MAX_SEARCH_RESULTS)}.json`;
+                a.download = `taskroot-backup-${new Date().toISOString().slice(DATE_SLICE_START, DATE_SLICE_END)}.json`;
                 a.click();
                 URL.revokeObjectURL(url);
             }}
@@ -83,7 +87,7 @@ export function ImportTasksButton({ settings }: { settings: Partial<import('../.
                         .filter(Boolean);
                     if (lines.length > 0) {
                         const newTasks = lines.map((line) => ({
-                            id: `t${Date.now()}-${Math.random().toString(BASE_36).slice(2, MAX_DISPLAY_ITEMS)}`,
+                            id: `t${Date.now()}-${Math.random().toString(ID_RADIX).slice(ID_SUBSTR_START, ID_SUBSTR_END)}`,
                             title: line,
                             status: "todo",
                             priority: 1,

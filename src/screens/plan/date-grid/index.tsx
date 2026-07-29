@@ -17,6 +17,7 @@ import type { HydratedEvent } from "../../../core/domain/events";
 import type { AppFilter } from "../../../core/domain/models";
 
 const DAYS_IN_CALENDAR_GRID = 42;
+const DAYS_IN_WEEK = 7;
 const DAYS_IN_THREE_WEEKS = 21;
 
 
@@ -45,8 +46,8 @@ export function DateGrid({
     sort: string;
     filterMenu: React.ReactNode;
     today: Date;
-    dragState: { target?: { kind: string; date: string }; event?: { id: string } } | null;
-    onEventDragStart?: (e: React.PointerEvent<HTMLDivElement>, ev: HydratedEvent, task: unknown) => void;
+    dragState?: { target?: { kind: string; date?: string }; event?: { id: string } };
+    onEventDragStart?: (e: React.PointerEvent<HTMLDivElement>, ev: HydratedEvent, task?: import("../../../core/domain/models").AppTask) => void;
     onAddEvent?: (date: Date) => void;
 }) {
     const isWeek = view === "week" || view === "1 week";

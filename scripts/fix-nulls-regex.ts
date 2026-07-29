@@ -21,7 +21,7 @@ let fixedCount = 0;
 
 for (const file of files) {
     let content = fs.readFileSync(file, 'utf8');
-    let original = content;
+    const original = content;
 
     // Fix `?: Type | null`
     // We can do a simpler replace: ` | null` followed by `;` or `,` or `\n` or `}`

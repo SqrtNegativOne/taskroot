@@ -17,7 +17,7 @@ export interface StopwatchKeyboardOptions {
     selectorOpen: boolean;
     setSelectorOpen: (val: boolean | ((prev: boolean) => boolean)) => void;
     actions: StopwatchActions;
-    activeTask: AppTask | null | undefined;
+    activeTask?: AppTask;
     allowNoTask: boolean;
 }
 

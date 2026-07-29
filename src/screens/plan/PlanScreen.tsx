@@ -56,7 +56,7 @@ export function PlanScreen() {
 
 
     // Inspector state
-    const [inspectorState, setInspectorState] = React.useState<{ type: string, id: string } | null>(null); // { type: 'task', id } or { type: 'event', id }
+    const [inspectorState, setInspectorState] = React.useState<{ type: string, id: string }>(); // { type: 'task', id } or { type: 'event', id }
 
 
 
@@ -96,7 +96,7 @@ export function PlanScreen() {
                         >
                             <DateGrid
                                 view={view}
-                                setView={(v: "month" | "week") => setView(v)}
+                                setView={(v: string) => setView(v === "month" ? "month" : "week")}
                                 anchor={anchor}
                                 setAnchor={setAnchor}
                                 events={hydratedEvents}
@@ -157,7 +157,7 @@ export function PlanScreen() {
 
                 <InspectorPane
                     inspectorState={inspectorState}
-                    onClose={() => setInspectorState(null)}
+                    onClose={() => setInspectorState(undefined)}
                     tasks={tasks}
                     setTasks={setTasks}
                     events={events}

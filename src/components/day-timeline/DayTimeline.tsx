@@ -53,7 +53,7 @@ export function DayTimeline<T extends DragState = DragState>({
     }, [events, viewDate, filter, sort]);
 
     const dropPreview =
-        dragState?.target?.kind === "day-time" ? dragState.target : null;
+        dragState?.target?.kind === "day-time" ? dragState.target : undefined;
 
     return (
         <section className="day-pane">

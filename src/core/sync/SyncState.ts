@@ -3,8 +3,8 @@ type Listener = () => void;
 class SyncStateStore {
     private _isPolling = false;
     private _isPushing = false;
-    private _error: string | null = null;
-    private _info: string | null = null;
+    private _error: string | undefined = undefined;
+    private _info: string | undefined = undefined;
     private _initialSyncComplete = false;
     private _nextSyncTime = 0;
 
@@ -38,7 +38,7 @@ class SyncStateStore {
     }
 
     get error() { return this._error; }
-    set error(val: string | null) {
+    set error(val: string | undefined) {
         if (this._error !== val) {
             this._error = val;
             this.notify();
@@ -46,7 +46,7 @@ class SyncStateStore {
     }
 
     get info() { return this._info; }
-    set info(val: string | null) {
+    set info(val: string | undefined) {
         if (this._info !== val) {
             this._info = val;
             this.notify();

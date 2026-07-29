@@ -63,7 +63,7 @@ export class GoogleCalendarAPI implements ICalendarAPI {
     }
 
     toGoogleEvent(localEvent: AppEvent, tasks: AppTask[]): gapi.client.calendar.Event {
-        const task = localEvent.taskId ? tasks.find((t) => t.id === localEvent.taskId) : null;
+        const task = localEvent.taskId ? tasks.find((t) => t.id === localEvent.taskId) : undefined;
         const dtStr = (date: string, mins: number) => {
             const parts = date.split("-").map(Number);
             const y = parts[0];
@@ -94,7 +94,7 @@ export class GoogleCalendarAPI implements ICalendarAPI {
         if (googleEvent.status === "cancelled") {
             const privateProps = googleEvent.extendedProperties?.private;
             return {
-                id: (privateProps ? privateProps.taskrootEventId : null) || googleEvent.id || "",
+                id: (privateProps ? privateProps.taskrootEventId : undefined) || googleEvent.id || "",
                 _deleted: true,
                 updatedAt: new Date(googleEvent.updated || 0).getTime(),
             };
@@ -141,7 +141,7 @@ function getEventTaskId(googleEvent: gapi.client.calendar.Event) {
     const desc = googleEvent.description || "";
     if (priv?.taskId) return priv.taskId;
     const match = desc.match(/Task ID: (t\d+)/);
-    return match ? match[1] : null;
+    return match ? match[1] : undefined;
 }
 
 function extractEventMetadata(googleEvent: gapi.client.calendar.Event) {

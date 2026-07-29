@@ -5,7 +5,7 @@ export function MultiSelect({ options, values, onChange }: { options: string[], 
     const ref = useRef<HTMLDivElement>(null);
     useEffect(() => {
         function handleClickOutside(e: PointerEvent) {
-            if (ref.current && !ref.current.contains(e.target instanceof Node ? e.target : null)) {
+            if (ref.current && !(e.target instanceof Node && ref.current.contains(e.target))) {
                 setOpen(false);
             }
         }

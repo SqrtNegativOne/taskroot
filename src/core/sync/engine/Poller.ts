@@ -9,7 +9,7 @@ export const LONG_PRESS_DELAY_MS = 1500;
 
 
 export class Poller {
-    private pollInterval: ReturnType<typeof setInterval> | null = null;
+    private pollInterval: ReturnType<typeof setInterval> | undefined = undefined;
     private taskSync: TaskSynchronizer;
     private eventSync: EventSynchronizer;
     private pusher: Pusher;
@@ -20,14 +20,16 @@ export class Poller {
         taskSync: TaskSynchronizer,
         eventSync: EventSynchronizer,
         pusher: Pusher,
-        getSettings: () => Partial<import('../../store/settingsSchema').AppSettings>,
-        hasAuth: () => boolean
+        options: {
+            getSettings: () => Partial<import('../../store/settingsSchema').AppSettings>;
+            hasAuth: () => boolean;
+        }
     ) {
         this.taskSync = taskSync;
         this.eventSync = eventSync;
         this.pusher = pusher;
-        this.getSettings = getSettings;
-        this.hasAuth = hasAuth;
+        this.getSettings = options.getSettings;
+        this.hasAuth = options.hasAuth;
     }
 
     start() {
@@ -77,7 +79,7 @@ export class Poller {
     async poll() {
         if (syncState.isPolling) return;
         syncState.isPolling = true;
-        syncState.error = null;
+        syncState.error = undefined;
 
         try {
             await this.taskSync.pollTasks();

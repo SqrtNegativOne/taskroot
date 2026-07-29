@@ -15,7 +15,7 @@ const applyConnection = (prev: Task[], connection: Connection | Edge): Task[] =>
 const applyEdgeDeletions = (prev: Task[], deletedEdges: Edge[]): Task[] => {
     let updated = [...prev];
     for (const edge of deletedEdges) {
-        if (edge.targetHandle === "parent" && edge.sourceHandle === "child") updated = updated.map(t => t.id === edge.target ? { ...t, parent_task: null } : t);
+        if (edge.targetHandle === "parent" && edge.sourceHandle === "child") updated = updated.map(t => t.id === edge.target ? { ...t, parent_task: undefined } : t);
         if (edge.targetHandle === "dependency" && edge.sourceHandle === "dependent") updated = updated.map(t => t.id === edge.target ? { ...t, dependencies: (t.dependencies || []).filter(dep => dep !== edge.source) } : t);
     }
     return updated;
@@ -23,7 +23,7 @@ const applyEdgeDeletions = (prev: Task[], deletedEdges: Edge[]): Task[] => {
 
 const createDefaultCanvasTask = (id: string, position: {x: number, y: number}): Task => ({
     id, title: "New Task", status: "todo", priority: 1, tags: [], subtasks: [], 
-    parent_task: null, dependencies: [], est: 60, added: new Date().toISOString(), 
+    parent_task: undefined, dependencies: [], est: 60, added: new Date().toISOString(), 
     onCanvas: true, canvasX: position.x, canvasY: position.y
 });
 

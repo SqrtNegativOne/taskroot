@@ -1,3 +1,7 @@
+function isNotDeleted<T extends object>(item: T | { id: string, _deleted?: boolean, updatedAt?: number }): item is T {
+    return !("_deleted" in item && item._deleted);
+}
+
 export function resolveConflict<T extends { id: string, updatedAt?: number }>(
     remoteItem: T | { id: string, _deleted?: boolean, updatedAt?: number },
     existingLocalItem: T | undefined,
@@ -5,7 +9,7 @@ export function resolveConflict<T extends { id: string, updatedAt?: number }>(
 ): boolean {
     let updated = false;
 
-    if ("_deleted" in remoteItem && remoteItem._deleted) {
+    if (!isNotDeleted(remoteItem)) {
         if (existingLocalItem) {
             const localUpdated = existingLocalItem.updatedAt || 0;
             if ((remoteItem.updatedAt || 0) > localUpdated) {
@@ -21,13 +25,11 @@ export function resolveConflict<T extends { id: string, updatedAt?: number }>(
         const remoteUpdated = remoteItem.updatedAt || 0;
 
         if (remoteUpdated > localUpdated) {
-            const newItem: T = remoteItem;
-            localItemsMap.set(existingLocalItem.id, newItem);
+            localItemsMap.set(existingLocalItem.id, remoteItem);
             updated = true;
         }
     } else {
-        const newItem: T = remoteItem;
-        localItemsMap.set(remoteItem.id, newItem);
+        localItemsMap.set(remoteItem.id, remoteItem);
         updated = true;
     }
     

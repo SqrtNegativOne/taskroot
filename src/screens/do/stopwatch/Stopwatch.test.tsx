@@ -1,48 +1,34 @@
 import { MS_PER_SECOND } from "../../../core/utils/constants";
-
-import { expect, test, describe, vi } from "vitest";
+import { expect, test, describe } from "vitest";
 import { CLOCK_STRATEGIES } from "../../../core/domain/clock-strategies";
-import { logWorkSession } from "../../../core/domain/clock-strategies/utils";
+import { createWorkSessionEvent } from "../../../core/domain/clock-strategies/utils";
+import type { ReadonlyStopwatchContext } from "../../../core/domain/clock-strategies/types";
 
-type MockStopwatchContext = Parameters<typeof CLOCK_STRATEGIES.counter.onToggle>[0];
 
-// We use `as` here to easily create mock contexts for testing without implementing every method.
-function createMockContext(overrides: Partial<MockStopwatchContext>): MockStopwatchContext {
+function createMockContext(overrides: Partial<ReadonlyStopwatchContext>): ReadonlyStopwatchContext {
     return {
-                currentMs: 0,
-                running: false,
-                isPristine: true,
-                toggle: vi.fn<(...args: unknown[]) => void>(),
-                state: { runningSince: null, elapsed: 0, isBreak: false, breakAllowedMs: 0, breakStartedAt: null, breakSoundPlayed: false },
-                setState: vi.fn<(...args: unknown[]) => void>(),
-                timeLogs: [],
-                setTimeLogs: vi.fn<(...args: unknown[]) => void>(),
-                setSelectorOpen: vi.fn<(...args: unknown[]) => void>(),
-                selectorOpen: false,
-                activeTask: null,
-                allowNoTask: false,
-                settings: {},
-                onBreakStatus: undefined,
-                ...overrides
-            };
+        currentMs: 0,
+        running: false,
+        isPristine: true,
+        state: { runningSince: undefined, elapsed: 0, isBreak: false, breakAllowedMs: 0, breakStartedAt: undefined, breakSoundPlayed: false },
+        activeTask: undefined,
+        allowNoTask: false,
+        settings: {},
+        ...overrides
+    };
 }
 
-describe("logWorkSession", () => {
+describe("createWorkSessionEvent", () => {
     test("ignores sessions less than 1 minute", () => {
-        const setTimeLogs = vi.fn<(...args: unknown[]) => void>();
-        logWorkSession(setTimeLogs, MS_PER_SECOND, MS_PER_SECOND * 2, "task1", "counter");
- // eslint-disable-line typescript/no-magic-numbers
-        expect(setTimeLogs).not.toHaveBeenCalled();
+        const ev = createWorkSessionEvent(MS_PER_SECOND, MS_PER_SECOND * 2, "task1", "counter");
+        expect(ev).toBeUndefined();
     });
 
     test("logs sessions 1 minute or longer", () => {
-        const setTimeLogs = vi.fn<(...args: unknown[]) => void>((updater: unknown) => { if (typeof updater === 'function') updater([]); });
-        logWorkSession(setTimeLogs, MS_PER_SECOND, 62000, "task1", "counter"); // eslint-disable-line typescript/no-magic-numbers
-        expect(setTimeLogs).toHaveBeenCalled();
-        const result = setTimeLogs.mock.results[0].value;
-        expect(result.length).toBe(1);
-        expect(result[0].taskId).toBe("task1");
-        expect(result[0].clockStyle).toBe("counter");
+        const ev = createWorkSessionEvent(MS_PER_SECOND, 62000, "task1", "counter"); // eslint-disable-line typescript/no-magic-numbers
+        expect(ev).not.toBeUndefined();
+        expect(ev?.taskId).toBe("task1");
+        expect(ev?.clockStyle).toBe("counter");
     });
 });
 
@@ -51,63 +37,42 @@ describe("CounterClockStrategy", () => {
 
     test("requiresAnimationLoop when running", () => {
         expect(
-            strategy.requiresAnimationLoop(createMockContext({ state: { runningSince: 123, elapsed: 0, isBreak: false, breakAllowedMs: 0, breakStartedAt: null, breakSoundPlayed: false } })),
+            strategy.requiresAnimationLoop(createMockContext({ running: true, state: { runningSince: 123, elapsed: 0, isBreak: false, breakAllowedMs: 0, breakStartedAt: undefined, breakSoundPlayed: false } })),
         ).toBe(true);
         expect(
-            strategy.requiresAnimationLoop(createMockContext({ state: { runningSince: null, elapsed: 0, isBreak: false, breakAllowedMs: 0, breakStartedAt: null, breakSoundPlayed: false } })),
+            strategy.requiresAnimationLoop(createMockContext({ running: false, state: { runningSince: undefined, elapsed: 0, isBreak: false, breakAllowedMs: 0, breakStartedAt: undefined, breakSoundPlayed: false } })),
         ).toBe(false);
     });
 
-    test("onToggle toggles state", () => {
-        const setState = vi.fn<(...args: unknown[]) => void>((updater: unknown) => {
-            if (typeof updater === 'function') return updater({ elapsed: 0, runningSince: null });
-        });
-        const setSelectorOpen = vi.fn<(...args: unknown[]) => void>();
-
+    test("calculateToggle toggles state", () => {
         // Start
-        strategy.onToggle(createMockContext({
+        const effect1 = strategy.calculateToggle(createMockContext({
             isPristine: true,
-            setSelectorOpen,
-            setState,
             activeTask: { id: "t1", title: "Task" },
         }));
-
-        expect(setState).toHaveBeenCalled();
-        const stateResult = setState.mock.results[0].value;
-        expect(stateResult.runningSince).toBeTypeOf("number");
+        expect(effect1.newState?.runningSince).toBeTypeOf("number");
 
         // Stop
-        const setState2 = vi.fn<(...args: unknown[]) => void>((updater: unknown) => {
-            if (typeof updater === 'function') return updater({ elapsed: 1000, runningSince: 1000 });
-        });
-        const setTimeLogs = vi.fn<(...args: unknown[]) => void>();
-        strategy.onToggle(createMockContext({
+        const effect2 = strategy.calculateToggle(createMockContext({
             isPristine: false,
-            setSelectorOpen,
-            setState: setState2,
-            setTimeLogs,
+            running: true,
+            state: { elapsed: 1000, runningSince: 1000, isBreak: false, breakAllowedMs: 0, breakStartedAt: undefined, breakSoundPlayed: false },
             activeTask: { id: "t1", title: "Task" },
         }));
-
-        const stateResult2 = setState2.mock.results[0].value;
-        expect(stateResult2.runningSince).toBeNull();
+        expect(effect2.newState?.runningSince).toBeUndefined();
     });
 });
 
 describe("FlowtimeClockStrategy", () => {
     const strategy = CLOCK_STRATEGIES.flowtime;
 
-    test("onToggle prevents pause during break", () => {
-        const setState = vi.fn<(...args: unknown[]) => void>((updater: unknown) => {
-            if (typeof updater === 'function') return updater({ elapsed: 100, runningSince: null, isBreak: true });
-        });
-        strategy.onToggle(createMockContext({
+    test("calculateToggle prevents pause during break", () => {
+        const effect = strategy.calculateToggle(createMockContext({
             isPristine: false,
-            setState,
+            running: false,
+            state: { elapsed: 100, runningSince: undefined, isBreak: true, breakAllowedMs: 0, breakStartedAt: 0, breakSoundPlayed: false },
         }));
-
-        const stateResult = setState.mock.results[0].value;
-        expect(stateResult.isBreak).toBe(true); // Should return unmodified state
+        expect(effect.newState).toBeUndefined(); // Should return no state modifications
     });
 });
 
@@ -115,7 +80,6 @@ describe("GuzeyClockStrategy", () => {
     const strategy = CLOCK_STRATEGIES.guzey;
 
     test("requiresAnimationLoop is true", () => {
-        expect(strategy.requiresAnimationLoop(createMockContext({ state: { runningSince: 1000, elapsed: 0, isBreak: false, breakAllowedMs: 0, breakStartedAt: null, breakSoundPlayed: false } }))).toBe(true);
+        expect(strategy.requiresAnimationLoop(createMockContext({ running: true, state: { runningSince: 1000, elapsed: 0, isBreak: false, breakAllowedMs: 0, breakStartedAt: undefined, breakSoundPlayed: false } }))).toBe(true);
     });
 });
-

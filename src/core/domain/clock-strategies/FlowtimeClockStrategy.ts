@@ -30,7 +30,7 @@ export class FlowtimeClockStrategy extends ClockStrategy {
     }
 
     requiresAnimationLoop({ state }: ReadonlyStopwatchContext) {
-        return state.runningSince !== null || state.isBreak;
+        return state.runningSince !== undefined || state.isBreak;
     }
 
     calculateToggle({ isPristine, activeTask, allowNoTask, state }: ReadonlyStopwatchContext): ClockActionEffect {
@@ -44,7 +44,7 @@ export class FlowtimeClockStrategy extends ClockStrategy {
                 shouldLogSession: true,
                 newState: {
                     elapsed: state.elapsed + (Date.now() - state.runningSince),
-                    runningSince: null,
+                    runningSince: undefined,
                 }
             };
         }
@@ -63,10 +63,10 @@ export class FlowtimeClockStrategy extends ClockStrategy {
             selectorOpen: false,
             newState: {
                 elapsed: 0,
-                runningSince: null,
+                runningSince: undefined,
                 isBreak: false,
                 breakAllowedMs: 0,
-                breakStartedAt: null,
+                breakStartedAt: undefined,
             }
         };
         if (state.runningSince && !state.isBreak) {
@@ -83,7 +83,7 @@ export class FlowtimeClockStrategy extends ClockStrategy {
                 isBreak: true,
                 breakAllowedMs: (state.elapsed + (state.runningSince ? Date.now() - state.runningSince : 0)) / (settings?.flowtimeBreakDivisor || DEFAULT_FLOWTIME_BREAK_DIVISOR),
                 breakStartedAt: Date.now(),
-                runningSince: null,
+                runningSince: undefined,
                 elapsed: 0,
                 breakSoundPlayed: false,
             }

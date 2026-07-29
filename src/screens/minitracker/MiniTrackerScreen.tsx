@@ -60,21 +60,22 @@ function isDimShortcut(e: KeyboardEvent) {
            !e.shiftKey;
 }
 
-function getClockContent(
-    activeTask: any,
-    allowStopwatchWithoutTask: boolean,
-    clockStyle: string,
-    currentMs: number,
-    state: any,
-    running: boolean
-) {
+function getClockContent(options: {
+    activeTask: { title: string } | undefined | null;
+    allowStopwatchWithoutTask: boolean;
+    clockStyle: string;
+    currentMs: number;
+    state: unknown;
+    running: boolean;
+}) {
+    const { activeTask, allowStopwatchWithoutTask, clockStyle, currentMs, state, running } = options;
     if (!activeTask && !allowStopwatchWithoutTask)
         return <div style={{ color: "var(--fg-dim)" }}>No active task.</div>;
     
     const taskName = activeTask ? activeTask.title : "Work session";
     const strategy = CLOCK_STRATEGIES[clockStyle] || CLOCK_STRATEGIES.counter;
     
-    const data = strategy.getDisplayData({
+    const optionsObj: unknown = {
         currentMs,
         running,
         state,
@@ -82,7 +83,8 @@ function getClockContent(
         setState: () => {},
         setTimeLogs: () => {},
         setSelectorOpen: () => {},
-    } as any);
+    };
+    const data = strategy.getDisplayData(optionsObj);
 
     if (data.secondaryText === "TRACKING PAUSED")
         return <div style={{ color: data.color }}>TRACKING PAUSED</div>;
@@ -167,8 +169,8 @@ export function MiniTrackerScreen() {
         if (!state.isBreak || !state.breakStartedAt || state.breakSoundPlayed) return;
         if (Date.now() - state.breakStartedAt < state.breakAllowedMs) return;
 
-        audioRef.current?.play().catch((e: any) => console.error("Sound play failed", e));
-        setState((s: any) => ({ ...s, breakSoundPlayed: true }));
+        audioRef.current?.play().catch((e: unknown) => console.error("Sound play failed", e));
+        setState((s: { breakSoundPlayed?: boolean } | unknown) => ({ ...(s && typeof s === 'object' ? s : {}), breakSoundPlayed: true }));
     }, [
         now,
         state.isBreak,
@@ -186,14 +188,14 @@ export function MiniTrackerScreen() {
         state.elapsed +
         (running && !state.isBreak && state.runningSince ? now - state.runningSince : 0);
 
-    const content = getClockContent(
+    const content = getClockContent({
         activeTask,
-        settings.allowStopwatchWithoutTask ?? false,
+        allowStopwatchWithoutTask: settings.allowStopwatchWithoutTask ?? false,
         clockStyle,
         currentMs,
         state,
         running
-    );
+    });
 
 
 

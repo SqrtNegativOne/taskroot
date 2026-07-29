@@ -31,7 +31,7 @@ export class TaskSynchronizer extends AbstractSynchronizer<AppTask> {
         this.context.updatePrevTasksMap(items);
     }
 
-    protected async fetchRemoteItems(): Promise<any[] | undefined> {
+    protected async fetchRemoteItems(): Promise<unknown[] | undefined> {
         return await this.tasksAPI.fetchTasks();
     }
 

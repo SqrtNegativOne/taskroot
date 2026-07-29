@@ -5,6 +5,8 @@ import type { IAuthManager } from "../auth/types";
 import type { ICalendarAPI } from "./types";
 /// <reference types="gapi.client.calendar" />
 
+const pad = (n: number) => n.toString().padStart(2, "0");
+
 export class GoogleCalendarAPI implements ICalendarAPI {
     private authManager: IAuthManager;
     constructor(authManager: IAuthManager) {
@@ -62,7 +64,6 @@ export class GoogleCalendarAPI implements ICalendarAPI {
 
     toGoogleEvent(localEvent: AppEvent, tasks: AppTask[]): gapi.client.calendar.Event {
         const task = localEvent.taskId ? tasks.find((t) => t.id === localEvent.taskId) : null;
-        const pad = (n: number) => n.toString().padStart(2, "0");
         const dtStr = (date: string, mins: number) => {
             let [y, m, d] = date.split("-").map(Number);
             if (mins >= MINUTES_PER_DAY) { d += Math.floor(mins / MINUTES_PER_DAY); mins %= MINUTES_PER_DAY; }
@@ -88,15 +89,16 @@ export class GoogleCalendarAPI implements ICalendarAPI {
 
     toLocalEvent(googleEvent: gapi.client.calendar.Event, calendarId = "primary", calendarSummary = "") {
         if (googleEvent.status === "cancelled") {
+            const privateProps = googleEvent.extendedProperties?.private;
             return {
-                id: googleEvent.extendedProperties?.private?.taskrootEventId || googleEvent.id || "",
+                id: (privateProps ? privateProps.taskrootEventId : null) || googleEvent.id || "",
                 _deleted: true,
                 updatedAt: new Date(googleEvent.updated || 0).getTime(),
             };
         }
         const { date, start, end } = extractEventTime(googleEvent);
         const { taskId, id, type } = extractEventMetadata(googleEvent);
-        const rrule = googleEvent.recurrence?.find((r) => r.startsWith("RRULE:"))?.replace(/^RRULE:/i, "");
+        const rrule = parseRecurrenceRule(googleEvent.recurrence);
 
         return {
             id: id || "", googleEventId: googleEvent.id, googleCalendarId: calendarId, taskId,
@@ -111,7 +113,6 @@ function extractEventTime(googleEvent: gapi.client.calendar.Event) {
     if (googleEvent.start?.dateTime) {
         const startDt = new Date(googleEvent.start.dateTime);
         const endDt = new Date(googleEvent.end?.dateTime || googleEvent.start.dateTime);
-        const pad = (n: number) => n.toString().padStart(2, "0");
         return {
             date: `${startDt.getFullYear()}-${pad(startDt.getMonth() + 1)}-${pad(startDt.getDate())}`,
             start: startDt.getHours() * MINUTES_IN_HOUR + startDt.getMinutes(),
@@ -123,13 +124,33 @@ function extractEventTime(googleEvent: gapi.client.calendar.Event) {
         : { date: undefined, start: undefined, end: undefined };
 }
 
-function extractEventMetadata(googleEvent: gapi.client.calendar.Event) {
+function getEventId(googleEvent: gapi.client.calendar.Event) {
     const priv = googleEvent.extendedProperties?.private;
     const desc = googleEvent.description || "";
-    const taskId = priv?.taskId || desc.match(/Task ID: (t\d+)/)?.[1] || null;
-    return {
-        taskId,
-        id: priv?.taskrootEventId || desc.match(/Taskroot Event ID: (e[0-9a-zA-Z-]+)/)?.[1] || googleEvent.id || "",
-        type: priv?.type || (taskId ? "plan" : (googleEvent.start?.date ? "info" : "busy"))
-    };
+    if (priv?.taskrootEventId) return priv.taskrootEventId;
+    const match = desc.match(/Taskroot Event ID: (e[0-9a-zA-Z-]+)/);
+    if (match) return match[1];
+    return googleEvent.id || "";
+}
+
+function getEventTaskId(googleEvent: gapi.client.calendar.Event) {
+    const priv = googleEvent.extendedProperties?.private;
+    const desc = googleEvent.description || "";
+    if (priv?.taskId) return priv.taskId;
+    const match = desc.match(/Task ID: (t\d+)/);
+    return match ? match[1] : null;
+}
+
+function extractEventMetadata(googleEvent: gapi.client.calendar.Event) {
+    const taskId = getEventTaskId(googleEvent);
+    const id = getEventId(googleEvent);
+    const type = googleEvent.extendedProperties?.private?.type || (taskId ? "plan" : (googleEvent.start?.date ? "info" : "busy"));
+    return { taskId, id, type };
+}
+
+function parseRecurrenceRule(recurrence?: string[]): string | undefined {
+    if (!recurrence) return undefined;
+    const r = recurrence.find((ruleStr) => ruleStr.startsWith("RRULE:"));
+    if (r) return r.replace(/^RRULE:/i, "");
+    return undefined;
 }

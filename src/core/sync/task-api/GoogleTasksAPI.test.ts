@@ -7,11 +7,12 @@ vi.mock("../../store/api", () => ({
     fetchWithTimeout: vi.fn<(...args: never[]) => unknown>(),
 }));
 
+// eslint-disable-next-line max-lines-per-function
 describe("GoogleTasksAPI", () => {
     let googleTasksAPI: GoogleTasksAPI;
     const mockAuthManager = {
-        getToken: vi.fn().mockReturnValue("fake-token"),
-        refreshAccessToken: vi.fn().mockResolvedValue(true),
+        getToken: vi.fn<(...args: unknown[]) => string>().mockReturnValue("fake-token"),
+        refreshAccessToken: vi.fn<(...args: unknown[]) => Promise<boolean>>().mockResolvedValue(true),
     };
 
     beforeEach(() => {

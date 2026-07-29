@@ -260,11 +260,14 @@ const SETTINGS_CONFIG: Record<string, Record<string, ConfigItem[]>> = {
 export const SETTINGS_SCHEMA: SettingSchema[] = Object.entries(SETTINGS_CONFIG).flatMap(
     ([tab, sections]) =>
         Object.entries(sections).flatMap(([section, settings]) =>
-            settings.map((setting) => ({
-                ...setting,
-                tab,
-                section,
-            } as SettingSchema))
+            settings.map((setting) => {
+                const schemaItem: SettingSchema = {
+                    ...setting,
+                    tab,
+                    section,
+                };
+                return schemaItem;
+            })
         )
 );
 

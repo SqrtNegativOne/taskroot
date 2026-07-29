@@ -19,9 +19,9 @@ interface UseStopwatchActionsProps {
     setTimeLogs: React.Dispatch<React.SetStateAction<AppEvent[]>>;
     activeTask: AppTask | undefined;
     allowNoTask: boolean;
-    settings: any;
+    settings: unknown;
     strategy: ClockStrategy;
-    setTasks: any;
+    setTasks: unknown;
 }
 
 export function useStopwatchActions({

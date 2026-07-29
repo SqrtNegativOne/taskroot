@@ -1,0 +1,15 @@
+{
+  "ping-on-stop": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -c \"[System.Console]::Beep(800, 300)\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

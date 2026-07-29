@@ -14,7 +14,13 @@ export function useRepository<T>(repo: Repository<T>): [Readonly<T>, (val: T | (
         return unregister;
     }, [repo, repo.key]);
 
-    return [val as Readonly<T>, (newVal) => repo.set(newVal as any), isLoaded];
+    const readVal: Readonly<T> = val;
+    const setter = (newVal: T | ((prev: Readonly<T>) => T)) => {
+        const v: unknown = newVal;
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        repo.set(v as Parameters<typeof repo.set>[0]);
+    };
+    return [readVal, setter, isLoaded];
 }
 
 export const useSettings = () => useRepository(repos.settings);

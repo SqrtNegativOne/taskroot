@@ -47,7 +47,7 @@ beforeAll(() => {
 beforeEach(() => {
     localStorage.clear();
     // clear jsdom prompt/confirm
-    window.confirm = vi.fn<(...args: any[]) => any>(() => true);
+    window.confirm = vi.fn<(...args: unknown[]) => boolean>(() => true);
 });
 
 test("deleting a task also deletes its associated events", async () => {
@@ -111,7 +111,8 @@ test("deleting a task also deletes its associated events", async () => {
     const deleteButton = document.querySelector(
         '.task-row-actions button[title="Delete"]',
     );
-    fireEvent.click(deleteButton!);
+    if (!deleteButton) throw new Error("deleteButton not found");
+    fireEvent.click(deleteButton);
 
     // Wait for task to disappear
     await waitFor(() => {
@@ -124,10 +125,10 @@ test("deleting a task also deletes its associated events", async () => {
     const postDeleteEvents = JSON.parse(postDeleteEventsStr);
 
     // e1 should be deleted (fix is already in place), e2 should remain
-    expect(postDeleteEvents.some((e: any) => e.id === "e2")).toBe(true);
+    expect(postDeleteEvents.some((e: { id: string }) => e.id === "e2")).toBe(true);
     // Wait, since we are doing `setEvents(es => es.filter...)` it will use what was in `events` state.
     // Did `events` state have e1 and e2?
     // It should, because useStored initialized it from localStorage!
     // But previously it failed because `api` mock was weird. Let's see if this passes now.
-    expect(postDeleteEvents.some((e: any) => e.id === "e1")).toBe(false);
+    expect(postDeleteEvents.some((e: { id: string }) => e.id === "e1")).toBe(false);
 });

@@ -21,11 +21,13 @@ export function resolveConflict<T extends { id: string, updatedAt?: number }>(
         const remoteUpdated = remoteItem.updatedAt || 0;
 
         if (remoteUpdated > localUpdated) {
-            localItemsMap.set(existingLocalItem.id, remoteItem as T);
+            const newItem: T = remoteItem;
+            localItemsMap.set(existingLocalItem.id, newItem);
             updated = true;
         }
     } else {
-        localItemsMap.set(remoteItem.id, remoteItem as T);
+        const newItem: T = remoteItem;
+        localItemsMap.set(remoteItem.id, newItem);
         updated = true;
     }
     

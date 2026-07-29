@@ -31,7 +31,7 @@ export class EventSynchronizer extends AbstractSynchronizer<AppEvent> {
         this.context.updatePrevEventsMap(items);
     }
 
-    protected async fetchRemoteItems(): Promise<any[] | undefined> {
+    protected async fetchRemoteItems(): Promise<unknown[] | undefined> {
         const timeMin = new Date();
         timeMin.setMonth(timeMin.getMonth() - 1);
         const timeMax = new Date();

@@ -22,7 +22,8 @@ function EventTypeSelector({ event, tasks, updateEvent, isReadOnlyCalendar }: { 
                     value={event.type}
                     disabled={isReadOnlyCalendar}
                     onChange={(e) => {
-                        const type = e.target.value as "plan" | "busy" | "info";
+                        const val = e.target.value;
+                        const type: "plan" | "busy" | "info" = val === "plan" ? "plan" : val === "busy" ? "busy" : "info";
                         updateEvent(event.id, type === "plan" ? { type } : { type, taskId: undefined });
                     }}
                 >

@@ -1,0 +1,1064 @@
+{
+  "src/screens/do/stopwatch/useStopwatchActions.ts": [
+    {
+      "rule": "typescript(no-explicit-any)",
+      "msg": "Unexpected `any`. Specify a different type.",
+      "labels": [
+        {
+          "span": {
+            "offset": 892,
+            "length": 3,
+            "line": 22,
+            "column": 15
+          }
+        }
+      ]
+    },
+    {
+      "rule": "typescript(no-explicit-any)",
+      "msg": "Unexpected `any`. Specify a different type.",
+      "labels": [
+        {
+          "span": {
+            "offset": 942,
+            "length": 3,
+            "line": 24,
+            "column": 15
+          }
+        }
+      ]
+    }
+  ],
+  "src/screens/do/stopwatch/ActiveTaskDisplay.tsx": [
+    {
+      "rule": "typescript(no-explicit-any)",
+      "msg": "Unexpected `any`. Specify a different type.",
+      "labels": [
+        {
+          "span": {
+            "offset": 138,
+            "length": 3,
+            "line": 8,
+            "column": 4
+          }
+        }
+      ]
+    }
+  ],
+  "src/core/sync/engine/conflict-resolver.ts": [
+    {
+      "rule": "typescript(consistent-type-assertions)",
+      "msg": "Do not use any type assertions.",
+      "labels": [
+        {
+          "span": {
+            "offset": 903,
+            "length": 15,
+            "line": 24,
+            "column": 53
+          }
+        }
+      ]
+    },
+    {
+      "rule": "typescript(consistent-type-assertions)",
+      "msg": "Do not use any type assertions.",
+      "labels": [
+        {
+          "span": {
+            "offset": 1017,
+            "length": 15,
+            "line": 28,
+            "column": 42
+          }
+        }
+      ]
+    }
+  ],
+  "src/core/store/settingsSchema/settingsSchema.tsx": [
+    {
+      "rule": "typescript(consistent-type-assertions)",
+      "msg": "Do not use any type assertions.",
+      "labels": [
+        {
+          "span": {
+            "offset": 9971,
+            "length": 110,
+            "line": 263,
+            "column": 40
+          }
+        }
+      ]
+    }
+  ],
+  "src/core/sync/engine/AbstractSynchronizer.ts": [
+    {
+      "rule": "typescript(no-explicit-any)",
+      "msg": "Unexpected `any`. Specify a different type.",
+      "labels": [
+        {
+          "span": {
+            "offset": 2504,
+            "length": 3,
+            "line": 72,
+            "column": 52
+          }
+        }
+      ]
+    },
+    {
+      "rule": "typescript(no-explicit-any)",
+      "msg": "Unexpected `any`. Specify a different type.",
+      "labels": [
+        {
+          "span": {
+            "offset": 2714,
+            "length": 3,
+            "line": 78,
+            "column": 56
+          }
+        }
+      ]
+    }
+  ],
+  "src/components/inspector-pane/inspector-event.tsx": [
+    {
+      "rule": "typescript(consistent-type-assertions)",
+      "msg": "Do not use any type assertions.",
+      "labels": [
+        {
+          "span": {
+            "offset": 1034,
+            "length": 42,
+            "line": 25,
+            "column": 38
+          }
+        }
+      ]
+    }
+  ],
+  "src/core/sync/calendar-api/GoogleCalendarAPI.test.ts": [
+    {
+      "rule": "vitest(require-mock-type-parameters)",
+      "msg": "Missing type parameters on mock function call",
+      "labels": [
+        {
+          "span": {
+            "offset": 472,
+            "length": 2,
+            "line": 13,
+            "column": 22
+          }
+        }
+      ]
+    },
+    {
+      "rule": "vitest(require-mock-type-parameters)",
+      "msg": "Missing type parameters on mock function call",
+      "labels": [
+        {
+          "span": {
+            "offset": 540,
+            "length": 2,
+            "line": 14,
+            "column": 32
+          }
+        }
+      ]
+    }
+  ],
+  "src/core/sync/task-api/GoogleTasksAPI.test.ts": [
+    {
+      "rule": "vitest(require-mock-type-parameters)",
+      "msg": "Missing type parameters on mock function call",
+      "labels": [
+        {
+          "span": {
+            "offset": 456,
+            "length": 2,
+            "line": 13,
+            "column": 22
+          }
+        }
+      ]
+    },
+    {
+      "rule": "vitest(require-mock-type-parameters)",
+      "msg": "Missing type parameters on mock function call",
+      "labels": [
+        {
+          "span": {
+            "offset": 524,
+            "length": 2,
+            "line": 14,
+            "column": 32
+          }
+        }
+      ]
+    }
+  ],
+  "src/core/sync/engine/EventSynchronizer.ts": [
+    {
+      "rule": "typescript(no-explicit-any)",
+      "msg": "Unexpected `any`. Specify a different type.",
+      "labels": [
+        {
+          "span": {
+            "offset": 1159,
+            "length": 3,
+            "line": 34,
+            "column": 49
+          }
+        }
+      ]
+    }
+  ],
+  "src/screens/settings/SettingRenderers.tsx": [
+    {
+      "rule": "typescript(consistent-type-assertions)",
+      "msg": "Do not use any type assertions.",
+      "labels": [
+        {
+          "span": {
+            "offset": 1036,
+            "length": 72,
+            "line": 33,
+            "column": 15
+          }
+        }
+      ]
+    },
+    {
+      "rule": "typescript(no-explicit-any)",
+      "msg": "Unexpected `any`. Specify a different type.",
+      "labels": [
+        {
+          "span": {
+            "offset": 1631,
+            "length": 3,
+            "line": 44,
+            "column": 45
+          }
+        }
+      ]
+    },
+    {
+      "rule": "typescript(consistent-type-assertions)",
+      "msg": "Do not use any type assertions.",
+      "labels": [
+        {
+          "span": {
+            "offset": 2229,
+            "length": 72,
+            "line": 60,
+            "column": 15
+          }
+        }
+      ]
+    },
+    {
+      "rule": "typescript(consistent-type-assertions)",
+      "msg": "Do not use any type assertions.",
+      "labels": [
+        {
+          "span": {
+            "offset": 3362,
+            "length": 72,
+            "line": 88,
+            "column": 15
+          }
+        }
+      ]
+    }
+  ],
+  "src/core/sync/calendar-api/GoogleCalendarAPI.ts": [
+    {
+      "rule": "unicorn(consistent-function-scoping)",
+      "msg": "Function `pad` does not capture any variables from its parent scope",
+      "labels": [
+        {
+          "span": {
+            "offset": 3918,
+            "length": 3,
+            "line": 65,
+            "column": 15
+          }
+        }
+      ]
+    },
+    {
+      "rule": "unicorn(consistent-function-scoping)",
+      "msg": "Function `pad` does not capture any variables from its parent scope",
+      "labels": [
+        {
+          "span": {
+            "offset": 6568,
+            "length": 3,
+            "line": 114,
+            "column": 15
+          }
+        }
+      ]
+    }
+  ],
+  "src/core/sync/engine/TaskSynchronizer.ts": [
+    {
+      "rule": "typescript(no-explicit-any)",
+      "msg": "Unexpected `any`. Specify a different type.",
+      "labels": [
+        {
+          "span": {
+            "offset": 1130,
+            "length": 3,
+            "line": 34,
+            "column": 49
+          }
+        }
+      ]
+    }
+  ],
+  "src/screens/do/stopwatch/Stopwatch.test.tsx": [
+    {
+      "rule": "typescript(no-explicit-any)",
+      "msg": "Unexpected `any`. Specify a different type.",
+      "labels": [
+        {
+          "span": {
+            "offset": 1652,
+            "length": 3,
+            "line": 39,
+            "column": 45
+          }
+        }
+      ]
+    },
+    {
+      "rule": "typescript(no-explicit-any)",
+      "msg": "Unexpected `any`. Specify a different type.",
+      "labels": [
+        {
+          "span": {
+            "offset": 2784,
+            "length": 3,
+            "line": 63,
+            "column": 42
+          }
+        }
+      ]
+    },
+    {
+      "rule": "typescript(no-explicit-any)",
+      "msg": "Unexpected `any`. Specify a different type.",
+      "labels": [
+        {
+          "span": {
+            "offset": 3358,
+            "length": 3,
+            "line": 81,
+            "column": 43
+          }
+        }
+      ]
+    },
+    {
+      "rule": "typescript(no-explicit-any)",
+      "msg": "Unexpected `any`. Specify a different type.",
+      "labels": [
+        {
+          "span": {
+            "offset": 4044,
+            "length": 3,
+            "line": 102,
+            "column": 42
+          }
+        }
+      ]
+    },
+    {
+      "rule": "vitest(require-mock-type-parameters)",
+      "msg": "Missing type parameters on mock function call",
+      "labels": [
+        {
+          "span": {
+            "offset": 696,
+            "length": 2,
+            "line": 15,
+            "column": 28
+          }
+        }
+      ]
+    },
+    {
+      "rule": "vitest(require-mock-type-parameters)",
+      "msg": "Missing type parameters on mock function call",
+      "labels": [
+        {
+          "span": {
+            "offset": 874,
+            "length": 2,
+            "line": 17,
+            "column": 30
+          }
+        }
+      ]
+    },
+    {
+      "rule": "vitest(require-mock-type-parameters)",
+      "msg": "Missing type parameters on mock function call",
+      "labels": [
+        {
+          "span": {
+            "offset": 944,
+            "length": 2,
+            "line": 19,
+            "column": 33
+          }
+        }
+      ]
+    },
+    {
+      "rule": "vitest(require-mock-type-parameters)",
+      "msg": "Missing type parameters on mock function call",
+      "labels": [
+        {
+          "span": {
+            "offset": 987,
+            "length": 2,
+            "line": 20,
+            "column": 37
+          }
+        }
+      ]
+    },
+    {
+      "rule": "vitest(require-mock-type-parameters)",
+      "msg": "Missing type parameters on mock function call",
+      "labels": [
+        {
+          "span": {
+            "offset": 1353,
+            "length": 2,
+            "line": 32,
+            "column": 32
+          }
+        }
+      ]
+    },
+    {
+      "rule": "vitest(require-mock-type-parameters)",
+      "msg": "Missing type parameters on mock function call",
+      "labels": [
+        {
+          "span": {
+            "offset": 1639,
+            "length": 2,
+            "line": 39,
+            "column": 32
+          }
+        }
+      ]
+    },
+    {
+      "rule": "vitest(require-mock-type-parameters)",
+      "msg": "Missing type parameters on mock function call",
+      "labels": [
+        {
+          "span": {
+            "offset": 2771,
+            "length": 2,
+            "line": 63,
+            "column": 29
+          }
+        }
+      ]
+    },
+    {
+      "rule": "vitest(require-mock-type-parameters)",
+      "msg": "Missing type parameters on mock function call",
+      "labels": [
+        {
+          "span": {
+            "offset": 2898,
+            "length": 2,
+            "line": 66,
+            "column": 36
+          }
+        }
+      ]
+    },
+    {
+      "rule": "vitest(require-mock-type-parameters)",
+      "msg": "Missing type parameters on mock function call",
+      "labels": [
+        {
+          "span": {
+            "offset": 3345,
+            "length": 2,
+            "line": 81,
+            "column": 30
+          }
+        }
+      ]
+    },
+    {
+      "rule": "vitest(require-mock-type-parameters)",
+      "msg": "Missing type parameters on mock function call",
+      "labels": [
+        {
+          "span": {
+            "offset": 3471,
+            "length": 2,
+            "line": 84,
+            "column": 32
+          }
+        }
+      ]
+    },
+    {
+      "rule": "vitest(require-mock-type-parameters)",
+      "msg": "Missing type parameters on mock function call",
+      "labels": [
+        {
+          "span": {
+            "offset": 4031,
+            "length": 2,
+            "line": 102,
+            "column": 29
+          }
+        }
+      ]
+    }
+  ],
+  "src/screens/settings/SettingsScreen.test.tsx": [
+    {
+      "rule": "typescript(no-explicit-any)",
+      "msg": "Unexpected `any`. Specify a different type.",
+      "labels": [
+        {
+          "span": {
+            "offset": 492,
+            "length": 3,
+            "line": 15,
+            "column": 39
+          }
+        }
+      ]
+    },
+    {
+      "rule": "typescript(no-explicit-any)",
+      "msg": "Unexpected `any`. Specify a different type.",
+      "labels": [
+        {
+          "span": {
+            "offset": 502,
+            "length": 3,
+            "line": 15,
+            "column": 49
+          }
+        }
+      ]
+    },
+    {
+      "rule": "typescript(no-explicit-any)",
+      "msg": "Unexpected `any`. Specify a different type.",
+      "labels": [
+        {
+          "span": {
+            "offset": 553,
+            "length": 3,
+            "line": 16,
+            "column": 43
+          }
+        }
+      ]
+    },
+    {
+      "rule": "typescript(no-explicit-any)",
+      "msg": "Unexpected `any`. Specify a different type.",
+      "labels": [
+        {
+          "span": {
+            "offset": 563,
+            "length": 3,
+            "line": 16,
+            "column": 53
+          }
+        }
+      ]
+    }
+  ],
+  "src/screens/minitracker/MiniTrackerScreen.tsx": [
+    {
+      "rule": "typescript(no-explicit-any)",
+      "msg": "Unexpected `any`. Specify a different type.",
+      "labels": [
+        {
+          "span": {
+            "offset": 2194,
+            "length": 3,
+            "line": 64,
+            "column": 17
+          }
+        }
+      ]
+    },
+    {
+      "rule": "typescript(no-explicit-any)",
+      "msg": "Unexpected `any`. Specify a different type.",
+      "labels": [
+        {
+          "span": {
+            "offset": 2301,
+            "length": 3,
+            "line": 68,
+            "column": 12
+          }
+        }
+      ]
+    },
+    {
+      "rule": "typescript(consistent-type-assertions)",
+      "msg": "Do not use any type assertions.",
+      "labels": [
+        {
+          "span": {
+            "offset": 2668,
+            "length": 194,
+            "line": 77,
+            "column": 42
+          }
+        }
+      ]
+    },
+    {
+      "rule": "typescript(no-explicit-any)",
+      "msg": "Unexpected `any`. Specify a different type.",
+      "labels": [
+        {
+          "span": {
+            "offset": 2859,
+            "length": 3,
+            "line": 85,
+            "column": 10
+          }
+        }
+      ]
+    },
+    {
+      "rule": "typescript(no-explicit-any)",
+      "msg": "Unexpected `any`. Specify a different type.",
+      "labels": [
+        {
+          "span": {
+            "offset": 5699,
+            "length": 3,
+            "line": 170,
+            "column": 44
+          }
+        }
+      ]
+    },
+    {
+      "rule": "typescript(no-explicit-any)",
+      "msg": "Unexpected `any`. Specify a different type.",
+      "labels": [
+        {
+          "span": {
+            "offset": 5769,
+            "length": 3,
+            "line": 171,
+            "column": 22
+          }
+        }
+      ]
+    }
+  ],
+  "src/screens/plan/task-deletion.test.tsx": [
+    {
+      "rule": "typescript(no-explicit-any)",
+      "msg": "Unexpected `any`. Specify a different type.",
+      "labels": [
+        {
+          "span": {
+            "offset": 1625,
+            "length": 3,
+            "line": 50,
+            "column": 38
+          }
+        }
+      ]
+    },
+    {
+      "rule": "typescript(no-explicit-any)",
+      "msg": "Unexpected `any`. Specify a different type.",
+      "labels": [
+        {
+          "span": {
+            "offset": 1635,
+            "length": 3,
+            "line": 50,
+            "column": 48
+          }
+        }
+      ]
+    },
+    {
+      "rule": "typescript(no-non-null-assertion)",
+      "msg": "Forbidden non-null assertion.",
+      "labels": [
+        {
+          "span": {
+            "offset": 3572,
+            "length": 13,
+            "line": 114,
+            "column": 21
+          }
+        }
+      ]
+    },
+    {
+      "rule": "typescript(no-explicit-any)",
+      "msg": "Unexpected `any`. Specify a different type.",
+      "labels": [
+        {
+          "span": {
+            "offset": 4160,
+            "length": 3,
+            "line": 127,
+            "column": 38
+          }
+        }
+      ]
+    },
+    {
+      "rule": "typescript(no-explicit-any)",
+      "msg": "Unexpected `any`. Specify a different type.",
+      "labels": [
+        {
+          "span": {
+            "offset": 4546,
+            "length": 3,
+            "line": 132,
+            "column": 38
+          }
+        }
+      ]
+    }
+  ],
+  "src/core/store/hooks.ts": [
+    {
+      "rule": "typescript(consistent-type-assertions)",
+      "msg": "Do not use any type assertions.",
+      "labels": [
+        {
+          "span": {
+            "offset": 644,
+            "length": 18,
+            "line": 17,
+            "column": 13
+          }
+        }
+      ]
+    },
+    {
+      "rule": "typescript(consistent-type-assertions)",
+      "msg": "Do not use any type assertions.",
+      "labels": [
+        {
+          "span": {
+            "offset": 685,
+            "length": 13,
+            "line": 17,
+            "column": 54
+          }
+        }
+      ]
+    },
+    {
+      "rule": "typescript(no-explicit-any)",
+      "msg": "Unexpected `any`. Specify a different type.",
+      "labels": [
+        {
+          "span": {
+            "offset": 695,
+            "length": 3,
+            "line": 17,
+            "column": 64
+          }
+        }
+      ]
+    }
+  ],
+  "src/screens/settings/SettingsScreen.tsx": [
+    {
+      "rule": "typescript(consistent-type-assertions)",
+      "msg": "Do not use any type assertions.",
+      "labels": [
+        {
+          "span": {
+            "offset": 1705,
+            "length": 73,
+            "line": 50,
+            "column": 22
+          }
+        }
+      ]
+    },
+    {
+      "rule": "typescript(consistent-type-assertions)",
+      "msg": "Do not use any type assertions.",
+      "labels": [
+        {
+          "span": {
+            "offset": 1822,
+            "length": 73,
+            "line": 51,
+            "column": 28
+          }
+        }
+      ]
+    },
+    {
+      "rule": "typescript(consistent-type-assertions)",
+      "msg": "Do not use any type assertions.",
+      "labels": [
+        {
+          "span": {
+            "offset": 1917,
+            "length": 14,
+            "line": 52,
+            "column": 20
+          }
+        }
+      ]
+    },
+    {
+      "rule": "typescript(no-explicit-any)",
+      "msg": "Unexpected `any`. Specify a different type.",
+      "labels": [
+        {
+          "span": {
+            "offset": 1928,
+            "length": 3,
+            "line": 52,
+            "column": 31
+          }
+        }
+      ]
+    },
+    {
+      "rule": "typescript(consistent-type-assertions)",
+      "msg": "Do not use any type assertions.",
+      "labels": [
+        {
+          "span": {
+            "offset": 2774,
+            "length": 14,
+            "line": 69,
+            "column": 127
+          }
+        }
+      ]
+    },
+    {
+      "rule": "typescript(no-explicit-any)",
+      "msg": "Unexpected `any`. Specify a different type.",
+      "labels": [
+        {
+          "span": {
+            "offset": 2785,
+            "length": 3,
+            "line": 69,
+            "column": 138
+          }
+        }
+      ]
+    },
+    {
+      "rule": "typescript(consistent-type-assertions)",
+      "msg": "Do not use any type assertions.",
+      "labels": [
+        {
+          "span": {
+            "offset": 3404,
+            "length": 14,
+            "line": 79,
+            "column": 135
+          }
+        }
+      ]
+    },
+    {
+      "rule": "typescript(no-explicit-any)",
+      "msg": "Unexpected `any`. Specify a different type.",
+      "labels": [
+        {
+          "span": {
+            "offset": 3415,
+            "length": 3,
+            "line": 79,
+            "column": 146
+          }
+        }
+      ]
+    }
+  ],
+  "src/screens/plan/PlanScreen.tsx": [
+    {
+      "rule": "typescript(consistent-type-assertions)",
+      "msg": "Do not use any type assertions.",
+      "labels": [
+        {
+          "span": {
+            "offset": 3942,
+            "length": 21,
+            "line": 99,
+            "column": 57
+          }
+        }
+      ]
+    },
+    {
+      "rule": "typescript(consistent-type-assertions)",
+      "msg": "Do not use any type assertions.",
+      "labels": [
+        {
+          "span": {
+            "offset": 5035,
+            "length": 16,
+            "line": 118,
+            "column": 44
+          }
+        }
+      ]
+    },
+    {
+      "rule": "typescript(no-explicit-any)",
+      "msg": "Unexpected `any`. Specify a different type.",
+      "labels": [
+        {
+          "span": {
+            "offset": 5048,
+            "length": 3,
+            "line": 118,
+            "column": 57
+          }
+        }
+      ]
+    },
+    {
+      "rule": "typescript(consistent-type-assertions)",
+      "msg": "Do not use any type assertions.",
+      "labels": [
+        {
+          "span": {
+            "offset": 5104,
+            "length": 23,
+            "line": 119,
+            "column": 51
+          }
+        }
+      ]
+    },
+    {
+      "rule": "typescript(no-explicit-any)",
+      "msg": "Unexpected `any`. Specify a different type.",
+      "labels": [
+        {
+          "span": {
+            "offset": 5124,
+            "length": 3,
+            "line": 119,
+            "column": 71
+          }
+        }
+      ]
+    },
+    {
+      "rule": "typescript(consistent-type-assertions)",
+      "msg": "Do not use any type assertions.",
+      "labels": [
+        {
+          "span": {
+            "offset": 6374,
+            "length": 16,
+            "line": 141,
+            "column": 44
+          }
+        }
+      ]
+    },
+    {
+      "rule": "typescript(no-explicit-any)",
+      "msg": "Unexpected `any`. Specify a different type.",
+      "labels": [
+        {
+          "span": {
+            "offset": 6387,
+            "length": 3,
+            "line": 141,
+            "column": 57
+          }
+        }
+      ]
+    }
+  ],
+  "src/screens/plan/date-grid.test.tsx": [
+    {
+      "rule": "typescript(consistent-type-assertions)",
+      "msg": "Do not use any type assertions.",
+      "labels": [
+        {
+          "span": {
+            "offset": 1599,
+            "length": 36,
+            "line": 56,
+            "column": 21
+          }
+        }
+      ]
+    },
+    {
+      "rule": "typescript(consistent-type-assertions)",
+      "msg": "Do not use any type assertions.",
+      "labels": [
+        {
+          "span": {
+            "offset": 1599,
+            "length": 17,
+            "line": 56,
+            "column": 21
+          }
+        }
+      ]
+    },
+    {
+      "rule": "typescript(consistent-type-assertions)",
+      "msg": "Do not use any type assertions.",
+      "labels": [
+        {
+          "span": {
+            "offset": 3132,
+            "length": 36,
+            "line": 110,
+            "column": 21
+          }
+        }
+      ]
+    },
+    {
+      "rule": "typescript(consistent-type-assertions)",
+      "msg": "Do not use any type assertions.",
+      "labels": [
+        {
+          "span": {
+            "offset": 3132,
+            "length": 17,
+            "line": 110,
+            "column": 21
+          }
+        }
+      ]
+    }
+  ]
+}

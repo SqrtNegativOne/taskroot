@@ -12,12 +12,12 @@ function createMockContext(overrides: Partial<MockStopwatchContext>): MockStopwa
                 currentMs: 0,
                 running: false,
                 isPristine: true,
-                toggle: vi.fn(),
+                toggle: vi.fn<(...args: unknown[]) => void>(),
                 state: { runningSince: null, elapsed: 0, isBreak: false, breakAllowedMs: 0, breakStartedAt: null, breakSoundPlayed: false },
-                setState: vi.fn(),
+                setState: vi.fn<(...args: unknown[]) => void>(),
                 timeLogs: [],
-                setTimeLogs: vi.fn(),
-                setSelectorOpen: vi.fn(),
+                setTimeLogs: vi.fn<(...args: unknown[]) => void>(),
+                setSelectorOpen: vi.fn<(...args: unknown[]) => void>(),
                 selectorOpen: false,
                 activeTask: null,
                 allowNoTask: false,
@@ -29,14 +29,15 @@ function createMockContext(overrides: Partial<MockStopwatchContext>): MockStopwa
 
 describe("logWorkSession", () => {
     test("ignores sessions less than 1 minute", () => {
-        const setTimeLogs = vi.fn();
-        logWorkSession(setTimeLogs, MS_PER_SECOND, 2000, "task1", "counter"); // eslint-disable-line typescript/no-magic-numbers
+        const setTimeLogs = vi.fn<(...args: unknown[]) => void>();
+        logWorkSession(setTimeLogs, MS_PER_SECOND, MS_PER_SECOND * 2, "task1", "counter");
+ // eslint-disable-line typescript/no-magic-numbers
         expect(setTimeLogs).not.toHaveBeenCalled();
     });
 
     test("logs sessions 1 minute or longer", () => {
-        const setTimeLogs = vi.fn((updater: any) => updater([]));
-        logWorkSession(setTimeLogs, MS_PER_SECOND, 62000, "task1", "counter"); // eslint-disable-line typescript/no-magic-numbers
+        const setTimeLogs = vi.fn<(...args: unknown[]) => void>((updater: unknown) => { if (typeof updater === 'function') updater([]); });
+        logWorkSession(setTimeLogs, MS_PER_SECOND, 62000, "task1", "counter"); // eslint-disable-line typescript/no-magic-numbers
         expect(setTimeLogs).toHaveBeenCalled();
         const result = setTimeLogs.mock.results[0].value;
         expect(result.length).toBe(1);
@@ -58,10 +59,10 @@ describe("CounterClockStrategy", () => {
     });
 
     test("onToggle toggles state", () => {
-        const setState = vi.fn((updater: any) =>
-            updater({ elapsed: 0, runningSince: null }),
-        );
-        const setSelectorOpen = vi.fn();
+        const setState = vi.fn<(...args: unknown[]) => void>((updater: unknown) => {
+            if (typeof updater === 'function') return updater({ elapsed: 0, runningSince: null });
+        });
+        const setSelectorOpen = vi.fn<(...args: unknown[]) => void>();
 
         // Start
         strategy.onToggle(createMockContext({
@@ -76,10 +77,10 @@ describe("CounterClockStrategy", () => {
         expect(stateResult.runningSince).toBeTypeOf("number");
 
         // Stop
-        const setState2 = vi.fn((updater: any) =>
-            updater({ elapsed: 1000, runningSince: 1000 }),
-        );
-        const setTimeLogs = vi.fn();
+        const setState2 = vi.fn<(...args: unknown[]) => void>((updater: unknown) => {
+            if (typeof updater === 'function') return updater({ elapsed: 1000, runningSince: 1000 });
+        });
+        const setTimeLogs = vi.fn<(...args: unknown[]) => void>();
         strategy.onToggle(createMockContext({
             isPristine: false,
             setSelectorOpen,
@@ -97,9 +98,9 @@ describe("FlowtimeClockStrategy", () => {
     const strategy = CLOCK_STRATEGIES.flowtime;
 
     test("onToggle prevents pause during break", () => {
-        const setState = vi.fn((updater: any) =>
-            updater({ elapsed: 100, runningSince: null, isBreak: true }),
-        );
+        const setState = vi.fn<(...args: unknown[]) => void>((updater: unknown) => {
+            if (typeof updater === 'function') return updater({ elapsed: 100, runningSince: null, isBreak: true });
+        });
         strategy.onToggle(createMockContext({
             isPristine: false,
             setState,

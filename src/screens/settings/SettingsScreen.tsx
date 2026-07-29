@@ -46,10 +46,9 @@ export function SettingsScreen() {
     }, [displayedSettings]);
 
     const renderSetting = (setting: import('../../core/store/settingsSchema').SettingSchema) => {
-        const val =
-            settings[setting.id as keyof import('../../core/store/settingsSchema').AppSettings] !== undefined
-                ? settings[setting.id as keyof import('../../core/store/settingsSchema').AppSettings]
-                : (setting as any).defaultValue;
+        const currentVal = Reflect.get(settings, setting.id);
+        const defaultValue = Reflect.get(setting, "defaultValue");
+        const val = currentVal !== undefined ? currentVal : defaultValue;
 
         const isComplex = setting.type === "custom";
         const Renderer = SETTING_RENDERERS[setting.type];
@@ -66,8 +65,9 @@ export function SettingsScreen() {
                             return;
                         }
                         setSettings((prev: import('../../core/store/settingsSchema').AppSettings) => {
-                            const currentVal = Reflect.get(prev, setting.id) !== undefined ? Reflect.get(prev, setting.id) : (setting as any).defaultValue;
-                            return { ...prev, [setting.id]: !currentVal };
+                            const defaultVal = Reflect.get(setting, "defaultValue");
+                            const prevVal = Reflect.get(prev, setting.id) !== undefined ? Reflect.get(prev, setting.id) : defaultVal;
+                            return { ...prev, [setting.id]: !prevVal };
                         });
                     }
                 }}
@@ -76,8 +76,9 @@ export function SettingsScreen() {
                         e.preventDefault();
                         if (setting.type === "checkbox") {
                                 setSettings((prev: import('../../core/store/settingsSchema').AppSettings) => {
-                                    const currentVal = Reflect.get(prev, setting.id) !== undefined ? Reflect.get(prev, setting.id) : (setting as any).defaultValue;
-                                    return { ...prev, [setting.id]: !currentVal };
+                                    const defaultVal = Reflect.get(setting, "defaultValue");
+                                    const prevVal = Reflect.get(prev, setting.id) !== undefined ? Reflect.get(prev, setting.id) : defaultVal;
+                                    return { ...prev, [setting.id]: !prevVal };
                                 });
                         }
                     }

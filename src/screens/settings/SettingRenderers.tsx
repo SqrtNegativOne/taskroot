@@ -30,7 +30,7 @@ export interface SettingRendererProps {
 }
 
 const SelectSetting = ({ setting, val, settings, setSettings }: SettingRendererProps) => {
-    const s = setting as import("../../core/store/settingsSchema").SelectSettingSchema;
+    if (setting.type !== "select") return null;
     return (
         <div style={{ display: "flex", gap: "12px", alignItems: "center", color: "var(--fg)" }}>
             <SegmentedControl
@@ -41,7 +41,7 @@ const SelectSetting = ({ setting, val, settings, setSettings }: SettingRendererP
                         [setting.id]: typeof val === "number" ? Number(v) : v,
                     })
                 }
-                options={s.options?.map((o: any) => ({ ...o, value: String(o.value) })) || []}
+                options={setting.options?.map((o: { label: string; value: unknown }) => ({ ...o, value: String(o.value) })) || []}
             />
         </div>
     );
@@ -57,12 +57,12 @@ const TimeSetting = ({ setting, val, settings, setSettings }: SettingRendererPro
 );
 
 const NumberSetting = ({ setting, val, settings, setSettings }: SettingRendererProps) => {
-    const s = setting as import("../../core/store/settingsSchema").NumberSettingSchema;
+    if (setting.type !== "number") return null;
     return (
         <div style={{ display: "flex", gap: "12px", alignItems: "center", color: "var(--fg)" }}>
             <NumberInput
-                min={s.min}
-                max={s.max}
+                min={setting.min}
+                max={setting.max}
                 value={typeof val === "number" || typeof val === "string" ? val : ""}
                 onChange={(v) => setSettings({ ...settings, [setting.id]: v })}
             />
@@ -85,8 +85,8 @@ const KeybindingSetting = ({ setting, val, settings, setSettings }: SettingRende
 );
 
 const CustomSetting = ({ setting, settings, setSettings }: SettingRendererProps) => {
-    const s = setting as import("../../core/store/settingsSchema").CustomSettingSchema;
-    return s.render?.({ settings, setSettings }) || null;
+    if (setting.type !== "custom") return null;
+    return setting.render?.({ settings, setSettings }) || null;
 };
 
 export const SETTING_RENDERERS: Record<string, React.FC<SettingRendererProps>> = {

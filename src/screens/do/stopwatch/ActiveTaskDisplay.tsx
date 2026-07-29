@@ -5,7 +5,14 @@ export function ActiveTaskDisplay({
     running,
     allowNoTask,
     setSelectorOpen,
-}: any) {
+}: {
+    settings: { clockStyle: string };
+    state: { isBreak: boolean };
+    activeTask?: { title: string } | null;
+    running: boolean;
+    allowNoTask: boolean;
+    setSelectorOpen: (open: boolean) => void;
+}) {
     const isGuzey = settings.clockStyle === "guzey";
     const isFlowBreak = state.isBreak;
     const shouldShowTask = activeTask && (running || isGuzey || isFlowBreak);

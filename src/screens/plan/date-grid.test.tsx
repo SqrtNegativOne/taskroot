@@ -1,4 +1,4 @@
-import type { HydratedEvent } from "../../core/domain/events";
+
 import "../../../vitest-setup.ts";
 
 import "@testing-library/jest-dom";
@@ -53,7 +53,7 @@ test("filters events by category correctly", () => {
             setView={() => {}}
             anchor={today}
             setAnchor={() => {}}
-            events={events as unknown as HydratedEvent[]}
+            events={events}
             filter={filter}
             sort="time"
             filterMenu={null}
@@ -107,7 +107,7 @@ test("filters out events by category correctly using 'is not'", () => {
             setView={() => {}}
             anchor={today}
             setAnchor={() => {}}
-            events={events as unknown as HydratedEvent[]}
+            events={events}
             filter={filter}
             sort="time"
             filterMenu={null}

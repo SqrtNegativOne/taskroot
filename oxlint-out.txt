@@ -1,0 +1,217 @@
+
+  x Unexpected token
+    ,-[src/core/sync/calendar-api/GoogleCalendarAPI.test.ts:26:48]
+ 25 |         it("requests events with proper parameters", async () => {
+ 26 |             const mockFetch = vi.mocked<typeof >();
+    :                                                ^
+ 27 |             mockFetch.mockResolvedValueOnce(
+    `----
+
+  x typescript(consistent-type-assertions): Do not use any type assertions.
+    ,-[src/core/sync/engine/conflict-resolver.ts:24:53]
+ 23 |         if (remoteUpdated > localUpdated) {
+ 24 |             localItemsMap.set(existingLocalItem.id, remoteItem as T);
+    :                                                     ^^^^^^^^^^^^^^^
+ 25 |             updated = true;
+    `----
+  help: Remove the type assertion and use a type annotation instead. For example, change `const x = value as Type` to `const x: Type = value`. Alternatively, use the `satisfies` operator: `const x = value satisfies Type`.
+  note: Type assertions bypass TypeScript's type checking and can hide type errors. Using type annotations or the `satisfies` operator provides better type safety while still allowing TypeScript to infer types where appropriate.
+
+  x typescript(consistent-type-assertions): Do not use any type assertions.
+    ,-[src/core/sync/engine/conflict-resolver.ts:28:42]
+ 27 |     } else {
+ 28 |         localItemsMap.set(remoteItem.id, remoteItem as T);
+    :                                          ^^^^^^^^^^^^^^^
+ 29 |         updated = true;
+    `----
+  help: Remove the type assertion and use a type annotation instead. For example, change `const x = value as Type` to `const x: Type = value`. Alternatively, use the `satisfies` operator: `const x = value satisfies Type`.
+  note: Type assertions bypass TypeScript's type checking and can hide type errors. Using type annotations or the `satisfies` operator provides better type safety while still allowing TypeScript to infer types where appropriate.
+
+  x typescript(no-explicit-any): Unexpected `any`. Specify a different type.
+    ,-[src/core/sync/engine/AbstractSynchronizer.ts:72:52]
+ 71 |     /** Fetches the raw remote items from the respective API */
+ 72 |     protected abstract fetchRemoteItems(): Promise<any[] | undefined>;
+    :                                                    ^^^
+ 73 | 
+    `----
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  x typescript(no-explicit-any): Unexpected `any`. Specify a different type.
+    ,-[src/core/sync/engine/AbstractSynchronizer.ts:78:56]
+ 77 |      */
+ 78 |     protected abstract processSingleRemoteItem(remote: any, localItemsArray: T[], localItemsMap: Map<string, T>): boolean;
+    :                                                        ^^^
+ 79 | 
+    `----
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  x typescript(no-explicit-any): Unexpected `any`. Specify a different type.
+    ,-[src/screens/do/stopwatch/useStopwatchActions.ts:22:15]
+ 21 |     allowNoTask: boolean;
+ 22 |     settings: any;
+    :               ^^^
+ 23 |     strategy: ClockStrategy;
+    `----
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  x typescript(no-explicit-any): Unexpected `any`. Specify a different type.
+    ,-[src/screens/do/stopwatch/useStopwatchActions.ts:24:15]
+ 23 |     strategy: ClockStrategy;
+ 24 |     setTasks: any;
+    :               ^^^
+ 25 | }
+    `----
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  ! eslint(max-lines-per-function): The function `useStopwatchActions` has too many lines (112). Maximum allowed is 100.
+     ,-[src/screens/do/stopwatch/useStopwatchActions.ts:27:8]
+  26 |     
+  27 | ,-> export function useStopwatchActions({
+  28 | |       state,
+  29 | |       setState,
+  30 | |       selectorOpen,
+  31 | |       setSelectorOpen,
+  32 | |       running,
+  33 | |       isPristine,
+  34 | |       currentMs,
+  35 | |       timeLogs,
+  36 | |       setTimeLogs,
+  37 | |       activeTask,
+  38 | |       allowNoTask,
+  39 | |       settings,
+  40 | |       strategy,
+  41 | |       setTasks,
+  42 | |   }: UseStopwatchActionsProps) {
+  43 | |       const toggle = () =>
+  44 | |           strategy.onToggle({
+  45 | |               state,
+  46 | |               setState,
+  47 | |               selectorOpen,
+  48 | |               setSelectorOpen,
+  49 | |               running,
+  50 | |               isPristine,
+  51 | |               currentMs,
+  52 | |               timeLogs,
+  53 | |               setTimeLogs,
+  54 | |               activeTask,
+  55 | |               allowNoTask,
+  56 | |               settings,
+  57 | |           });
+  58 | |   
+  59 | |       const reset = () =>
+  60 | |           strategy.onReset({
+  61 | |               state,
+  62 | |               setState,
+  63 | |               selectorOpen,
+  64 | |               setSelectorOpen,
+  65 | |               running,
+  66 | |               isPristine,
+  67 | |               currentMs,
+  68 | |               timeLogs,
+  69 | |               setTimeLogs,
+  70 | |               activeTask,
+  71 | |               allowNoTask,
+  72 | |               settings,
+  73 | |           });
+  74 | |   
+  75 | |       const startWithTask = (taskId: string) => {
+  76 | |           setTasks((ts: AppTask[]) =>
+  77 | |               ts.map((t) => {
+  78 | |                   if (t.id === taskId) return { ...t, status: "doing" };
+  79 | |                   if (t.status === "doing") return { ...t, status: "todo" };
+  80 | |                   return t;
+  81 | |               }),
+  82 | |           );
+  83 | |           strategy.onTaskSelected({
+  84 | |               state,
+  85 | |               setState,
+  86 | |               selectorOpen,
+  87 | |               setSelectorOpen,
+  88 | |               running,
+  89 | |               isPristine,
+  90 | |               currentMs,
+  91 | |               timeLogs,
+  92 | |               setTimeLogs,
+  93 | |               activeTask,
+  94 | |               allowNoTask,
+  95 | |               settings,
+  96 | |           });
+  97 | |       };
+  98 | |   
+  99 | |       const startBreak = () => {
+ 100 | |           if (settings.clockStyle === "flowtime") {
+ 101 | |               setState((s: StopwatchState) => {
+ 102 | |                   if (s.isBreak) {
+ 103 | |                       return {
+ 104 | |                           ...s,
+ 105 | |                           isBreak: false,
+ 106 | |                           elapsed: 0,
+ 107 | |                           runningSince: Date.now(),
+ 108 | |                       };
+ 109 | |                   } else {
+ 110 | |                       if (s.runningSince) {
+ 111 | |                           logWorkSession(
+ 112 | |                               setTimeLogs,
+ 113 | |                               s.runningSince,
+ 114 | |                               Date.now(),
+ 115 | |                               activeTask?.id,
+ 116 | |                               "flowtime",
+ 117 | |                           );
+ 118 | |                       }
+ 119 | |                       const elapsed =
+ 120 | |                           s.elapsed +
+ 121 | |                           (s.runningSince ? Date.now() - s.runningSince : 0);
+ 122 | |                       const div = settings.flowtimeBreakDivisor || MIN_POLL_INTERVAL_MINUTES;
+ 123 | |                       return {
+ 124 | |                           ...s,
+ 125 | |                           isBreak: true,
+ 126 | |                           breakAllowedMs: elapsed / div,
+ 127 | |                           breakStartedAt: Date.now(),
+ 128 | |                           runningSince: null,
+ 129 | |                           elapsed: 0,
+ 130 | |                           breakSoundPlayed: false,
+ 131 | |                       };
+ 132 | |                   }
+ 133 | |               });
+ 134 | |           }
+ 135 | |       };
+ 136 | |   
+ 137 | |       return { toggle, reset, startWithTask, startBreak };
+ 138 | `-> }
+     `----
+  help: Consider splitting it into smaller functions.
+
+  x typescript(no-explicit-any): Unexpected `any`. Specify a different type.
+   ,-[src/screens/do/stopwatch/ActiveTaskDisplay.tsx:8:4]
+ 7 |     setSelectorOpen,
+ 8 | }: any) {
+   :    ^^^
+ 9 |     const isGuzey = settings.clockStyle === "guzey";
+   `----
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  x typescript(consistent-type-assertions): Do not use any type assertions.
+     ,-[src/core/store/settingsSchema/settingsSchema.tsx:263:40]
+ 262 |             Object.entries(sections).flatMap(([section, settings]) =>
+ 263 | ,->             settings.map((setting) => ({
+ 264 | |                   ...setting,
+ 265 | |                   tab,
+ 266 | |                   section,
+ 267 | `->             } as SettingSchema))
+ 268 |             )
+     `----
+  help: Remove the type assertion and use a type annotation instead. For example, change `const x = value as Type` to `const x: Type = value`. Alternatively, use the `satisfies` operator: `const x = value satisfies Type`.
+  note: Type assertions bypass TypeScript's type checking and can hide type errors. Using type annotations or the `satisfies` operator provides better type safety while still allowing TypeScript to infer types where appropriate.
+
+  x typescript(consistent-type-assertions): Do not use any type assertions.
+    ,-[src/components/inspector-pane/inspector-event.tsx:25:38]
+ 24 |                     onChange={(e) => {
+ 25 |                         const type = e.target.value as "plan" | "busy" | "info";
+    :                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 26 |                         updateEvent(event.id, type === "plan" ? { type } : { type, taskId: undefined });
+    `----
+  help: Remove the type assertion and use a type annotation instead. For example, change `const x = value as Type` to `const x: Type = value`. Alternatively, use the `satisfies` operator: `const x = value satisfies Type`.
+  note: Type assertions bypass TypeScript's type checking and can hide type errors. Using type annotations or the `satisfies` operator provides better type safety while still allowing TypeScript to infer types where appropriate.
+
+Found 1 warning and 10 errors.
+Finished in 17ms on 7 files with 227 rules using 24 threads.

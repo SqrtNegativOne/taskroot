@@ -1,30 +1,44 @@
+import { AbstractSynchronizer } from "./AbstractSynchronizer";
 import type { ISyncEngineContext, SyncQueueItem } from "./types";
 import { SyncAction, SyncType } from "./types";
 import type { ICalendarAPI } from "../api-interfaces";
+import type { AppEvent, AppTask } from "../../domain/models";
+import { resolveConflict } from "./conflict-resolver";
+import { computeEventDeltaActions } from "./event-differ";
 
-export class EventSynchronizer {
-    private context: ISyncEngineContext;
+export class EventSynchronizer extends AbstractSynchronizer<AppEvent> {
     private calendarAPI: ICalendarAPI;
 
     constructor(context: ISyncEngineContext, calendarAPI: ICalendarAPI) {
-        this.context = context;
+        super(context);
         this.calendarAPI = calendarAPI;
     }
 
-    async pollEvents() {
-        const settings = this.context.getSettings();
-        if (settings.enableCalendarSync === false) return;
+    // Alias for backward compatibility
+    pollEvents() {
+        return this.poll();
+    }
 
-        const events = this.context.getLocalData<import('../../domain/models').AppEvent[]>("events");
-        this.context.updatePrevEventsMap(events);
+    protected isSyncEnabled(): boolean {
+        return this.context.getSettings().enableCalendarSync !== false;
+    }
 
+    protected getLocalStoreKey(): string {
+        return "events";
+    }
+
+    protected updatePrevMapSnapshot(items: AppEvent[]): void {
+        this.context.updatePrevEventsMap(items);
+    }
+
+    protected async fetchRemoteItems(): Promise<any[] | null> {
         const timeMin = new Date();
         timeMin.setMonth(timeMin.getMonth() - 1);
         const timeMax = new Date();
         timeMax.setMonth(timeMax.getMonth() + 2);
 
         const calendars = await this.calendarAPI.fetchCalendars();
-        const prevCalendars = this.context.getLocalData<import('../../store/repositories').CalendarData[]>("calendars");
+        const prevCalendars = this.context.getLocalData<{id: string, summary: string, accessRole: string, active: boolean}[]>("calendars") || [];
         this.context.setLocalData(
             "calendars",
             calendars.map((c) => {
@@ -38,7 +52,7 @@ export class EventSynchronizer {
             }),
         );
 
-        const allRemoteEvents: (import('../../domain/models').AppEvent & { _deleted?: boolean })[] = [];
+        const allRemoteEvents: (AppEvent & { _deleted?: boolean })[] = [];
         for (const cal of calendars) {
             const remoteEvents = await this.calendarAPI.fetchEvents(
                 timeMin.toISOString(),
@@ -53,55 +67,55 @@ export class EventSynchronizer {
                 );
             }
         }
-
-        let updated = false;
-        const eventsMap = new Map<string, import('../../domain/models').AppEvent>(
-            events.map((e) => [e.id, e]),
-        );
-
-        for (const remote of allRemoteEvents) {
-            if (this.processSingleRemoteEvent(remote, eventsMap)) {
-                updated = true;
-            }
-        }
-
-        // --- Optimistic Overlay ---
-        if (this.applyOptimisticOverlay(eventsMap)) {
-            updated = true;
-        }
-
-        if (updated) {
-            const newEvents = Array.from(eventsMap.values());
-            this.context.setLocalData("events", newEvents);
-            this.context.updatePrevEventsMap(newEvents);
-        }
+        return allRemoteEvents;
     }
 
-    computeEventsDelta(newEvents: import('../../domain/models').AppEvent[]) {
-        const newEventsMap = new Map(newEvents.map((e) => [e.id, e]));
+    protected processSingleRemoteItem(
+        remote: AppEvent & { _deleted?: boolean },
+        _localItemsArray: AppEvent[],
+        localItemsMap: Map<string, AppEvent>
+    ): boolean {
+        const existingLocalEvent = localItemsMap.get(remote.id);
+        return resolveConflict(remote, existingLocalEvent, localItemsMap);
+    }
 
-        for (const event of newEvents) {
-            this.handleComputeEventDelta(event, newEventsMap);
-        }
+    protected processQueueItem(q: SyncQueueItem, eventsMap: Map<string, AppEvent>): boolean {
+        if (q.type !== SyncType.Event) return false;
+        let updated = false;
 
-        for (const [id, prev] of this.context.prevEventsMap.entries()) {
-            if (!newEventsMap.has(id) && prev.googleEventId) {
-                this.context.pushQueue.push({
-                    type: SyncType.Event,
-                    action: SyncAction.Delete,
-                    item: prev,
-                    id: prev.googleEventId,
-                    calendarId: prev.googleCalendarId || "primary",
-                });
+        if (q.action === SyncAction.Delete) {
+            if (q.item && q.item.id) eventsMap.delete(q.item.id);
+            if (q.id) {
+                for (const [key, event] of Array.from(eventsMap.entries())) {
+                    if (event.googleEventId === q.id) {
+                        eventsMap.delete(key);
+                    }
+                }
             }
+            updated = true;
+        } else if ((q.action === SyncAction.Update || q.action === SyncAction.Create) && q.item && q.item.id) {
+            eventsMap.set(q.item.id, q.item);
+            updated = true;
         }
+        return updated;
+    }
 
+    computeDelta(newEvents: AppEvent[]) {
+        this.computeEventsDelta(newEvents);
+    }
+
+    computeEventsDelta(newEvents: AppEvent[]) {
+        const calendars = this.context.getLocalData<{id: string, summary: string}[]>("calendars") || [];
+        const actions = computeEventDeltaActions(newEvents, this.context.prevEventsMap, calendars);
+        for (const action of actions) {
+            this.context.pushQueue.push(action);
+        }
         this.context.updatePrevEventsMap(newEvents);
     }
 
     async processPushItem(taskOrEvent: SyncQueueItem) {
         if (taskOrEvent.type !== SyncType.Event) return;
-        const tasks = this.context.getLocalData<import('../../domain/models').AppTask[]>("tasks");
+        const tasks = this.context.getLocalData<AppTask[]>("tasks");
         let targetCalendarId =
             taskOrEvent.item.googleCalendarId || "primary";
 
@@ -112,7 +126,7 @@ export class EventSynchronizer {
                 targetCalendarId,
             );
             if (res) {
-                const events = this.context.getLocalData<import('../../domain/models').AppEvent[]>("events");
+                const events = this.context.getLocalData<AppEvent[]>("events");
                 const idx = events.findIndex(
                     (e) => e.id === taskOrEvent.item.id,
                 );
@@ -144,133 +158,6 @@ export class EventSynchronizer {
                 taskOrEvent.id,
                 taskOrEvent.calendarId,
             );
-        }
-    }
-
-    private processSingleRemoteEvent(
-        remote: import('../../domain/models').AppEvent & { _deleted?: boolean },
-        eventsMap: Map<string, import('../../domain/models').AppEvent>
-    ): boolean {
-        let updated = false;
-        const existingLocalEvent = eventsMap.get(remote.id);
-
-        if (remote._deleted) {
-            if (existingLocalEvent) {
-                const localUpdated = existingLocalEvent.updatedAt || 0;
-                if ((remote.updatedAt || 0) > localUpdated) {
-                    eventsMap.delete(existingLocalEvent.id);
-                    updated = true;
-                }
-            }
-            return updated;
-        }
-
-        if (existingLocalEvent) {
-            const localUpdated = existingLocalEvent.updatedAt || 0;
-            const remoteUpdated = remote.updatedAt || 0;
-
-            if (remoteUpdated > localUpdated) {
-                eventsMap.set(existingLocalEvent.id, remote);
-                updated = true;
-            }
-        } else {
-            eventsMap.set(remote.id, remote);
-            updated = true;
-        }
-        return updated;
-    }
-
-    private processQueueItem(q: SyncQueueItem, eventsMap: Map<string, import('../../domain/models').AppEvent>): boolean {
-        if (q.type !== SyncType.Event) return false;
-        let updated = false;
-
-        if (q.action === SyncAction.Delete) {
-            if (q.item && q.item.id) eventsMap.delete(q.item.id);
-            if (q.id) {
-                for (const [key, event] of Array.from(eventsMap.entries())) {
-                    if (event.googleEventId === q.id) {
-                        eventsMap.delete(key);
-                    }
-                }
-            }
-            updated = true;
-        } else if ((q.action === SyncAction.Update || q.action === SyncAction.Create) && q.item && q.item.id) {
-            eventsMap.set(q.item.id, q.item);
-            updated = true;
-        }
-        return updated;
-    }
-
-    private applyOptimisticOverlay(eventsMap: Map<string, import('../../domain/models').AppEvent>): boolean {
-        let updated = false;
-        for (const q of this.context.pushQueue.getItems()) {
-            if (this.processQueueItem(q, eventsMap)) {
-                updated = true;
-            }
-        }
-        return updated;
-    }
-
-    private handleComputeEventDelta(event: import('../../domain/models').AppEvent, _newEventsMap: Map<string, import('../../domain/models').AppEvent>) {
-        const prev = this.context.prevEventsMap.get(event.id);
-        if (!prev) {
-            if (!event.googleEventId) {
-                this.context.pushQueue.push({
-                    type: SyncType.Event,
-                    action: SyncAction.Create,
-                    item: event,
-                });
-            }
-            return;
-        }
-
-        if (!(
-            event.updatedAt &&
-            prev.updatedAt &&
-            event.updatedAt > prev.updatedAt
-        )) {
-            return;
-        }
-
-        const calendars = this.context.getLocalData<{id: string, summary: string}[]>("calendars");
-        let targetCalendarId = prev.googleCalendarId || "primary";
-        if (event.category) {
-            const cal = calendars.find((c) => c.summary === event.category);
-            if (cal) targetCalendarId = cal.id;
-        }
-
-        if (
-            prev.googleCalendarId &&
-            prev.googleCalendarId !== targetCalendarId
-        ) {
-            if (prev.googleEventId) {
-                this.context.pushQueue.push({
-                    type: SyncType.Event,
-                    action: SyncAction.Delete,
-                    item: prev,
-                    id: prev.googleEventId,
-                    calendarId: prev.googleCalendarId,
-                });
-            }
-            this.context.pushQueue.push({
-                type: SyncType.Event,
-                action: SyncAction.Create,
-                item: event,
-            });
-        } else if (event.googleEventId) {
-            this.context.pushQueue.push({
-                type: SyncType.Event,
-                action: SyncAction.Update,
-                item: event,
-                id: event.googleEventId,
-                calendarId: targetCalendarId,
-            });
-        } else {
-            this.context.pushQueue.push({
-                type: SyncType.Event,
-                action: SyncAction.Create,
-                item: event,
-            });
         }
     }
 }

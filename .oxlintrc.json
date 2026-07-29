@@ -32,6 +32,17 @@
 
     "import/no-unassigned-import": "off",
     "vitest/no-focused-tests": "error",
+
+    "no-await-in-loop": "error",
+    "no-useless-call": "error",
+    "oxc/no-accumulating-spread": "error",
+    "oxc/no-map-spread": "error",
+    "react/jsx-no-constructed-context-values": "error",
+    "react/no-array-index-key": "error",
+    "react/no-object-type-as-default-prop": "error",
+    "unicorn/prefer-array-find": "error",
+    "unicorn/prefer-array-flat-map": "error",
+    "unicorn/prefer-set-has": "error",
     
     "typescript/no-explicit-any": "error",
     "typescript/no-unsafe-function-type": "error",

@@ -1,6 +1,4 @@
-import { MINUTES_IN_HOUR } from "../../core/utils/constants";
 import React from "react";
-import type { AppEvent, AppTask } from "../../core/domain/models";
 
 const OPACITY_DISABLED = 0.3;
 

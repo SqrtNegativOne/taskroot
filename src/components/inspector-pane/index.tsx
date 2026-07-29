@@ -1,13 +1,12 @@
 import React from "react";
-
 import type { AppEvent, AppTask } from "../../core/domain/models";
 import { useCalendars } from "../../core/store/hooks";
+import type { CalendarData } from "../../core/store/repositories";
 import { TitleInput, DescriptionInput } from "../inputs";
 import { TaskInspector } from "./inspector-task";
 import { EventInspector } from "./inspector-event";
 import { getInspectorTitle } from "./inspector-utils";
 import { InspectorPaneHeader } from "./inspector-shared";
-
 import "./inspector.css";
 
 interface InspectorPaneProps {
@@ -19,8 +18,111 @@ interface InspectorPaneProps {
     setEvents: React.Dispatch<React.SetStateAction<AppEvent[]>>;
 }
 
+function useCurrentItem(
+    inspectorState: { type: string; id: string } | null,
+    activeState: { type: string; id: string } | null,
+    tasks: AppTask[],
+    events: AppEvent[]
+) {
+    const currentState = inspectorState || activeState;
+    const currentTask = currentState?.type === "task" ? tasks.find((t) => t.id === currentState.id) : undefined;
+    const currentEvent = currentState?.type === "event" ? (events.find((e) => e.id === currentState.id) || events.find((e) => e.id === currentState.id.split("_")[0])) : undefined;
+    const currentItem = currentTask || currentEvent || null;
+    return { currentTask, currentEvent, currentItem, isCurrentTask: !!currentTask };
+}
+interface InspectorPaneContentProps {
+    currentItem: AppTask | AppEvent;
+    currentTask?: AppTask;
+    currentEvent?: AppEvent;
+    isReadOnlyCalendar: boolean;
+    title: string | null;
+    tasks: AppTask[];
+    calendars: CalendarData[];
+    onPaneClose: () => void;
+    onPaneDelete: () => void;
+    handleTitleChange: (t: string) => void;
+    handleDescChange: (d: string) => void;
+    updateTask: (id: string, updates: Partial<AppTask>) => void;
+    updateEvent: (id: string, updates: Partial<AppEvent>) => void;
+}
+function InspectorPaneContent({
+    currentItem,
+    currentTask,
+    currentEvent,
+    isReadOnlyCalendar,
+    title,
+    tasks,
+    calendars,
+    onPaneClose,
+    onPaneDelete,
+    handleTitleChange,
+    handleDescChange,
+    updateTask,
+    updateEvent,
+}: InspectorPaneContentProps) {
+    return (
+        <React.Fragment key={currentItem.id}>
+            <InspectorPaneHeader handleClose={onPaneClose} handleDelete={onPaneDelete} isReadOnlyCalendar={isReadOnlyCalendar} />
+            <div className="inspector-body" style={{ paddingTop: 0 }}>
+                <div
+                    className="inspector-field"
+                    style={{ marginTop: "24px", marginBottom: "4px" }}
+                >
+                    <TitleInput
+                        value={title || ""}
+                        onChange={handleTitleChange}
+                        disabled={Boolean(currentEvent?.taskId) || isReadOnlyCalendar}
+                        onEnter={onPaneClose}
+                        style={{
+                            fontSize: "24px",
+                            fontWeight: "normal",
+                            border: "none",
+                            background: "transparent",
+                            padding: "0",
+                            outline: "none",
+                            width: "100%",
+                            color: "var(--fg)",
+                        }}
+                        autoFocus={Boolean(currentTask?.isDraft)}
+                    />
+                </div>
+                <div
+                    className="inspector-field"
+                    style={{
+                        flexDirection: "column",
+                        alignItems: "flex-start",
+                    }}
+                >
+                    <DescriptionInput
+                        value={(currentEvent?.description) || ""}
+                        onChange={handleDescChange}
+                    />
+                </div>
 
+                {isReadOnlyCalendar && (
+                    <div className="inspector-field" style={{color: "var(--tag-red)", fontSize: "0.85em", marginTop: "8px"}}>
+                        This event belongs to a read-only calendar and cannot be modified.
+                    </div>
+                )}
 
+                {currentTask ? (
+                    <TaskInspector 
+                        task={currentTask} 
+                        updateTask={updateTask} 
+                    />
+                ) : currentEvent ? (
+                    <EventInspector 
+                        event={currentEvent} 
+                        tasks={tasks}
+                        calendars={calendars}
+                        updateEvent={updateEvent}
+                        isReadOnlyCalendar={isReadOnlyCalendar}
+                    />
+                ) : null}
+            </div>
+        </React.Fragment>
+    );
+}
 export function InspectorPane({
     inspectorState,
     onClose,
@@ -37,17 +139,13 @@ export function InspectorPane({
         if (inspectorState) setActiveState(inspectorState);
     }, [inspectorState]);
 
-    const currentState = inspectorState || activeState;
-    const currentTask = currentState?.type === "task" ? tasks.find((t) => t.id === currentState.id) : undefined;
-    const currentEvent = currentState?.type === "event" ? (events.find((e) => e.id === currentState.id) || events.find((e) => e.id === currentState.id.split("_")[0])) : undefined;
-    const currentItem = currentTask || currentEvent || null;
-    const isCurrentTask = !!currentTask;
+    const { currentTask, currentEvent, currentItem, isCurrentTask } = useCurrentItem(inspectorState, activeState, tasks, events);
 
     const isReadOnlyCalendar = React.useMemo(() => {
         if (!currentEvent) return false;
         const calId = currentEvent.googleCalendarId || "primary";
-        const cal = calendars.find((c) => c.id === calId);
-        return cal && (cal.accessRole === "reader" || cal.accessRole === "freeBusyReader");
+        const cal = calendars.find((c: CalendarData) => c.id === calId);
+        return Boolean(cal && (cal.accessRole === "reader" || cal.accessRole === "freeBusyReader"));
     }, [currentEvent, calendars]);
 
     const title = getInspectorTitle(currentTask, currentEvent, tasks);
@@ -107,8 +205,6 @@ export function InspectorPane({
         onClose();
     }, [inspectorState, currentItem, isCurrentTask, setTasks, setEvents, onClose]);
 
-
-
     React.useEffect(() => {
         function handleClickOutside(e: PointerEvent) {
             if (
@@ -129,68 +225,22 @@ export function InspectorPane({
             className={`inspector-pane ${isOpen ? "is-open" : ""}`}
         >
             {currentItem && (
-                <React.Fragment key={currentItem.id}>
-                    <InspectorPaneHeader handleClose={onPaneClose} handleDelete={onPaneDelete} isReadOnlyCalendar={isReadOnlyCalendar ?? false} />
-                    <div className="inspector-body" style={{ paddingTop: 0 }}>
-                        <div
-                            className="inspector-field"
-                            style={{ marginTop: "24px", marginBottom: "4px" }}
-                        >
-                            <TitleInput
-                                value={title || ""}
-                                onChange={handleTitleChange}
-                                disabled={Boolean(currentEvent?.taskId) || isReadOnlyCalendar}
-                                onEnter={onPaneClose}
-                                style={{
-                                    fontSize: "24px",
-                                    fontWeight: "normal",
-                                    border: "none",
-                                    background: "transparent",
-                                    padding: "0",
-                                    outline: "none",
-                                    width: "100%",
-                                    color: "var(--fg)",
-                                }}
-                                autoFocus={Boolean(currentTask?.isDraft)}
-                            />
-                        </div>
-                        <div
-                            className="inspector-field"
-                            style={{
-                                flexDirection: "column",
-                                alignItems: "flex-start",
-                            }}
-                        >
-                            <DescriptionInput
-                                value={(currentEvent?.description) || ""}
-                                onChange={handleDescChange}
-                            />
-                        </div>
-
-                        {isReadOnlyCalendar && (
-                            <div className="inspector-field" style={{color: "var(--tag-red)", fontSize: "0.85em", marginTop: "8px"}}>
-                                This event belongs to a read-only calendar and cannot be modified.
-                            </div>
-                        )}
-
-                        {currentTask ? (
-                            <TaskInspector 
-                                task={currentTask} 
-                                updateTask={updateTask} 
-                            />
-                        ) : currentEvent ? (
-                            <EventInspector 
-                                event={currentEvent} 
-                                tasks={tasks}
-                                calendars={calendars}
-                                updateEvent={updateEvent}
-                                isReadOnlyCalendar={isReadOnlyCalendar ?? false}
-                            />
-                        ) : null}
-                    </div>
-                </React.Fragment>
+                <InspectorPaneContent
+                    currentItem={currentItem}
+                    currentTask={currentTask}
+                    currentEvent={currentEvent}
+                    isReadOnlyCalendar={isReadOnlyCalendar}
+                    title={title}
+                    tasks={tasks}
+                    calendars={calendars}
+                    onPaneClose={onPaneClose}
+                    onPaneDelete={onPaneDelete}
+                    handleTitleChange={handleTitleChange}
+                    handleDescChange={handleDescChange}
+                    updateTask={updateTask}
+                    updateEvent={updateEvent}
+                />
             )}
         </div>
     );
 }
-

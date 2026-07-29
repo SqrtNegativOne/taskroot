@@ -21,7 +21,15 @@
     "complexity": ["warn", 15],
     "max-lines": ["warn", 250],
     
+    "eqeqeq": "error",
+    "no-var": "error",
+    "prefer-const": "error",
+    // "no-console": "warn", It's fine.
+    "react/no-unstable-nested-components": "error",
+    "vitest/no-focused-tests": "error",
+    
     "typescript/no-explicit-any": "error",
+    "typescript/no-unsafe-function-type": "error",
     "typescript/no-non-null-assertion": "error",
     "typescript/consistent-type-assertions": ["error", { "assertionStyle": "never" }],
     "typescript/ban-ts-comment": ["error", {
@@ -42,6 +50,12 @@
     }]
   },
   "overrides": [
+    {
+      "files": ["*.tsx"],
+      "rules": {
+        "max-lines-per-function": ["warn", 200]
+      }
+    },
     {
       "files": ["*.test.ts", "*.test.tsx"],
       "rules": {

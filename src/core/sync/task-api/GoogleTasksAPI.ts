@@ -16,7 +16,7 @@ export class GoogleTasksAPI implements ITasksAPI {
 
     private async fetchWithAuth(endpoint: string, options: RequestInit = {}) {
         const getOpts = (t: string) => ({ ...options, headers: { ...options.headers, Authorization: `Bearer ${t}` } });
-        let token = this.authManager.getToken();
+        const token = this.authManager.getToken();
         if (!token) throw new Error("Unauthorized");
         let res = await fetchWithTimeout(`https://tasks.googleapis.com/tasks/v1/${endpoint}`, getOpts(token));
         if (res.status === HTTP_UNAUTHORIZED) {

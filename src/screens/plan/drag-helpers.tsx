@@ -1,7 +1,6 @@
-import { MINUTES_IN_HOUR, HOURS_PER_DAY } from "../../core/utils/constants";
+import { MINUTES_IN_HOUR } from "../../core/utils/constants";
 import type { AppTask, AppEvent } from "../../core/domain/models";
 import { durationLabel } from "../../core/store/data";
-import { PX_PER_MIN, SNAP_MIN } from "../../components/day-timeline";
 
 const MAX_RECURRENCES = 8;
 const FONT_SIZE_SMALL = 14;
@@ -48,8 +47,6 @@ export function DragGhost({ task, event, x, y, ghostStyle }: { task?: AppTask | 
     );
 }
 
-function isDateString(s: string | undefined): s is import("../../core/domain/models").DateString {
-    return typeof s === "string" && /^\d+-\d+-\d+$/.test(s);
-}
+
 
 

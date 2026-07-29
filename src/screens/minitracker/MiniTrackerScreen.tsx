@@ -183,7 +183,7 @@ export function MiniTrackerScreen() {
     const activeTask = tasks?.find((t: import('../../core/domain/models').AppTask) => t.status === "doing");
     const clockStyle = settings.clockStyle || "counter";
 
-    const running = state.runningSince != null;
+    const running = state.runningSince !== null && state.runningSince !== undefined;
     const currentMs =
         state.elapsed +
         (running && !state.isBreak && state.runningSince ? now - state.runningSince : 0);

@@ -116,7 +116,7 @@ export class EventSynchronizer extends AbstractSynchronizer<AppEvent> {
     async processPushItem(taskOrEvent: SyncQueueItem) {
         if (taskOrEvent.type !== SyncType.Event) return;
         const tasks = this.context.getLocalData<AppTask[]>("tasks");
-        let targetCalendarId =
+        const targetCalendarId =
             taskOrEvent.item.googleCalendarId || "primary";
 
         if (taskOrEvent.action === SyncAction.Create) {

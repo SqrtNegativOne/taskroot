@@ -10,7 +10,7 @@ const MIN_EVENT_HEIGHT_PX = 18;
 
 
 
-const EV_WIDTH_PERCENT = 80;
+
 
 function getEventClassNames(event: AppEvent, pri: string | number | null | undefined, compact: boolean, isGhost: boolean, isFloating: boolean): string {
     const classNames = ["day-event", `ev-${event.type}`];

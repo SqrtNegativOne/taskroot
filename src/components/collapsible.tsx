@@ -21,7 +21,7 @@ export function Collapsible({ title, badge, defaultOpen = false, children }: Col
             >
                 <span className="collapsible-chev">{open ? "▾" : "▸"}</span>
                 <span className="collapsible-title">{title}</span>
-                {badge != null && (
+                {badge !== null && badge !== undefined && (
                     <span className="collapsible-badge">{badge}</span>
                 )}
                 <span className="collapsible-rule" />

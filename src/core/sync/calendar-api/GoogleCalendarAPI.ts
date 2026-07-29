@@ -15,7 +15,7 @@ export class GoogleCalendarAPI implements ICalendarAPI {
 
     private async fetchWithAuth(endpoint: string, options: RequestInit = {}) {
         const getOpts = (t: string) => ({ ...options, headers: { ...options.headers, Authorization: `Bearer ${t}` } });
-        let token = this.authManager.getToken();
+        const token = this.authManager.getToken();
         if (!token) throw new Error("Unauthorized");
         let res = await fetchWithTimeout(`https://www.googleapis.com/calendar/v3/${endpoint}`, getOpts(token));
         if (res.status === HTTP_UNAUTHORIZED) {
@@ -65,7 +65,10 @@ export class GoogleCalendarAPI implements ICalendarAPI {
     toGoogleEvent(localEvent: AppEvent, tasks: AppTask[]): gapi.client.calendar.Event {
         const task = localEvent.taskId ? tasks.find((t) => t.id === localEvent.taskId) : null;
         const dtStr = (date: string, mins: number) => {
-            let [y, m, d] = date.split("-").map(Number);
+            const parts = date.split("-").map(Number);
+            const y = parts[0];
+            const m = parts[1];
+            let d = parts[2];
             if (mins >= MINUTES_PER_DAY) { d += Math.floor(mins / MINUTES_PER_DAY); mins %= MINUTES_PER_DAY; }
             const dt = new Date(y, m - 1, d);
             return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(Math.floor(mins / MINUTES_IN_HOUR))}:${pad(mins % MINUTES_IN_HOUR)}:00`;

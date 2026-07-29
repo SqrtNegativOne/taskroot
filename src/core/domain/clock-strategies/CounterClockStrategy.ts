@@ -12,7 +12,7 @@ export class CounterClockStrategy extends ClockStrategy {
     }
 
     requiresAnimationLoop({ state }: ReadonlyStopwatchContext) {
-        return state.runningSince != null;
+        return state.runningSince !== null;
     }
 
     calculateToggle({ isPristine, activeTask, allowNoTask, state }: ReadonlyStopwatchContext): ClockActionEffect {

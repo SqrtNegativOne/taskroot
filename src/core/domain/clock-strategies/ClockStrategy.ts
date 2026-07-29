@@ -6,4 +6,5 @@ export abstract class ClockStrategy {
     abstract calculateToggle(context: ReadonlyStopwatchContext): ClockActionEffect;
     abstract calculateTaskSelected(context: ReadonlyStopwatchContext): ClockActionEffect;
     abstract calculateReset(context: ReadonlyStopwatchContext): ClockActionEffect;
+    calculateStartBreak?(context: ReadonlyStopwatchContext): ClockActionEffect;
 }

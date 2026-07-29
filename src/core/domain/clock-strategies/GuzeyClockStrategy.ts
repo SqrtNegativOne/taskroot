@@ -43,7 +43,7 @@ export class GuzeyClockStrategy extends ClockStrategy {
             }
         }
 
-        let target = new Date(now);
+        const target = new Date(now);
         target.setSeconds(0);
         target.setMilliseconds(0);
         if (nextMin === MINUTES_IN_HOUR) {

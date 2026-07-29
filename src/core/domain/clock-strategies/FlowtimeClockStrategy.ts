@@ -4,6 +4,8 @@ import type { ReadonlyStopwatchContext, ClockDisplayData, ClockActionEffect } fr
 import { splitTime } from "./utils";
 import { PAD2 } from "../../../core/store/data";
 
+const DEFAULT_FLOWTIME_BREAK_DIVISOR = 5;
+
 export class FlowtimeClockStrategy extends ClockStrategy {
     getDisplayData({ currentMs = 0, isPristine, state }: ReadonlyStopwatchContext): ClockDisplayData {
         if (state.isBreak && state.breakStartedAt) {
@@ -28,7 +30,7 @@ export class FlowtimeClockStrategy extends ClockStrategy {
     }
 
     requiresAnimationLoop({ state }: ReadonlyStopwatchContext) {
-        return state.runningSince != null || state.isBreak;
+        return state.runningSince !== null || state.isBreak;
     }
 
     calculateToggle({ isPristine, activeTask, allowNoTask, state }: ReadonlyStopwatchContext): ClockActionEffect {
@@ -70,6 +72,23 @@ export class FlowtimeClockStrategy extends ClockStrategy {
         if (state.runningSince && !state.isBreak) {
             effect.shouldLogSession = true;
         }
+        return effect;
+    }
+
+    calculateStartBreak({ state, settings }: ReadonlyStopwatchContext): ClockActionEffect {
+        if (state.isBreak) return { newState: { isBreak: false, elapsed: 0, runningSince: Date.now() } };
+        
+        const effect: ClockActionEffect = {
+            newState: {
+                isBreak: true,
+                breakAllowedMs: (state.elapsed + (state.runningSince ? Date.now() - state.runningSince : 0)) / (settings?.flowtimeBreakDivisor || DEFAULT_FLOWTIME_BREAK_DIVISOR),
+                breakStartedAt: Date.now(),
+                runningSince: null,
+                elapsed: 0,
+                breakSoundPlayed: false,
+            }
+        };
+        if (state.runningSince) effect.shouldLogSession = true;
         return effect;
     }
 }

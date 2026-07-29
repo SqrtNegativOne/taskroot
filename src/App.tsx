@@ -215,7 +215,7 @@ function GlobalSync({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
 }
 
-export default function App() {
+export function App() {
     React.useEffect(() => {
         import("cuelume").then(({ bind }) => bind());
     }, []);

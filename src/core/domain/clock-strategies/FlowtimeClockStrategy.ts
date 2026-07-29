@@ -1,3 +1,4 @@
+import { MINUTES_IN_HOUR, MS_PER_SECOND } from "../../utils/constants";
 import { ClockStrategy } from "./ClockStrategy";
 import type { StopwatchContext, ClockDisplayData } from "./types";
 import { logWorkSession, splitTime } from "./utils";
@@ -7,9 +8,9 @@ export class FlowtimeClockStrategy extends ClockStrategy {
     getDisplayData({ currentMs = 0, isPristine, state }: StopwatchContext): ClockDisplayData {
         if (state.isBreak && state.breakStartedAt) {
             const breakRemainingMs = state.breakAllowedMs - (Date.now() - state.breakStartedAt);
-            const remSecs = Math.max(0, Math.ceil(breakRemainingMs / 1000));
-            const remM = Math.floor(remSecs / 60);
-            const remS = remSecs % 60;
+            const remSecs = Math.max(0, Math.ceil(breakRemainingMs / MS_PER_SECOND));
+            const remM = Math.floor(remSecs / MINUTES_IN_HOUR);
+            const remS = remSecs % MINUTES_IN_HOUR;
             const color = remSecs === 0 ? "var(--red)" : "var(--tag-green)";
             
             return {

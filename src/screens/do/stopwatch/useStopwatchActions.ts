@@ -4,6 +4,9 @@ import type { AppTask, AppEvent } from "../../../core/domain/models";
 import type { StopwatchState } from "../../../core/domain/clock-strategies/types";
 import type { ClockStrategy } from "../../../core/domain/clock-strategies/ClockStrategy";
 
+export const MIN_POLL_INTERVAL_MINUTES = 5;
+
+
 interface UseStopwatchActionsProps {
     state: StopwatchState;
     setState: React.Dispatch<React.SetStateAction<StopwatchState>>;
@@ -116,7 +119,7 @@ export function useStopwatchActions({
                     const elapsed =
                         s.elapsed +
                         (s.runningSince ? Date.now() - s.runningSince : 0);
-                    const div = settings.flowtimeBreakDivisor || 5;
+                    const div = settings.flowtimeBreakDivisor || MIN_POLL_INTERVAL_MINUTES;
                     return {
                         ...s,
                         isBreak: true,

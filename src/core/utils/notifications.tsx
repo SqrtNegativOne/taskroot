@@ -6,6 +6,11 @@ import React, {
     useEffect,
 } from "react";
 
+export const DEBOUNCE_DELAY_MS = 600;
+export const ID_LENGTH = 9;
+export const SYNC_POLL_INTERVAL_MS = 5000;
+export const ANIMATION_DELAY_MS = 150;
+
 export type NotificationType = "info" | "error" | "success";
 
 interface NotificationData {
@@ -42,12 +47,12 @@ export function NotificationProvider({
         // Remove from DOM after exit animation completes
         setTimeout(() => {
             setNotifications((prev) => prev.filter((n) => n.id !== id));
-        }, 600);
+        }, DEBOUNCE_DELAY_MS);
     }, []);
 
     const notify = useCallback(
         (message: string, type: NotificationType = "info") => {
-            const id = Math.random().toString(36).substr(2, 9);
+            const id = Math.random().toString(BASE_36).substr(2, ID_LENGTH);
             setNotifications((prev) => [
                 ...prev,
                 { id, message, type, exiting: false },
@@ -115,7 +120,7 @@ function NotificationItem({
         if (notification.type !== "error") {
             const timer = setTimeout(() => {
                 onDismiss();
-            }, 5000);
+            }, SYNC_POLL_INTERVAL_MS);
             return () => clearTimeout(timer);
         }
     }, [notification.type, onDismiss]);
@@ -134,7 +139,7 @@ function NotificationItem({
                 el.style.background = "rgba(255, 255, 255, 0.2)";
                 setTimeout(() => {
                     el.style.background = oldBg;
-                }, 150);
+                }, ANIMATION_DELAY_MS);
             }
         } catch (err) {
             console.error("Failed to copy notification:", err);

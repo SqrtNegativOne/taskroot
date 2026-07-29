@@ -1,8 +1,14 @@
+import { MINUTES_IN_HOUR, HOURS_PER_DAY } from "../../core/utils/constants";
 import React, { useState, Fragment } from "react";
 import { PAD2 } from "../../core/store/data";
 import { PX_PER_MIN, SNAP_MIN } from "./types";
 import type { EventBlockProps } from "./types";
 import type { AppEvent } from "../../core/domain/models";
+
+export const MIN_EVENT_HEIGHT_PX = 18;
+export const COMPACT_EVENT_HEIGHT_PX = 40;
+export const DRAG_THRESHOLD_PX = 4;
+
 
 export const EV_WIDTH_PERCENT = 80;
 
@@ -42,7 +48,7 @@ export function EventBlock<T extends import("./types").DragState = import("./typ
             if (edge === "bottom") {
                 const newEnd = Math.max(
                     startStart + SNAP_MIN,
-                    Math.min(24 * 60, startEnd + dm),
+                    Math.min(HOURS_PER_DAY * MINUTES_IN_HOUR, startEnd + dm),
                 );
                 onResize(event.id, startStart, newEnd);
             } else {
@@ -73,11 +79,11 @@ export function EventBlock<T extends import("./types").DragState = import("./typ
         let finalDm = 0;
         const move = (ev: PointerEvent) => {
             const dy = ev.clientY - startY;
-            if (!moved && Math.abs(dy) < 4) return;
+            if (!moved && Math.abs(dy) < DRAG_THRESHOLD_PX) return;
             moved = true;
             const dm = Math.round(dy / PX_PER_MIN / SNAP_MIN) * SNAP_MIN;
             const minDm = -startStart;
-            const maxDm = 24 * 60 - startEnd;
+            const maxDm = HOURS_PER_DAY * MINUTES_IN_HOUR - startEnd;
             finalDm = Math.max(minDm, Math.min(maxDm, dm));
             setDragOffset(finalDm);
         };
@@ -104,13 +110,13 @@ export function EventBlock<T extends import("./types").DragState = import("./typ
     const renderBlock = (start: number, end: number, isGhost: boolean, isFloating: boolean) => {
         const top = start * PX_PER_MIN;
         const height = (end - start) * PX_PER_MIN;
-        const compact = height < 40;
+        const compact = height < COMPACT_EVENT_HEIGHT_PX;
         
         const classNames = getEventClassNames(event, pri, compact, isGhost, isFloating);
 
         const style = {
             top: `${top}px`,
-            height: `${Math.max(height, 18)}px`,
+            height: `${Math.max(height, MIN_EVENT_HEIGHT_PX)}px`,
             left: `calc(56px + ((100% - 56px) / ${lanes}) * ${lane})`,
             width: `calc(((100% - 56px) / ${lanes}) - 2px)`,
         };
@@ -136,8 +142,8 @@ export function EventBlock<T extends import("./types").DragState = import("./typ
                         {title}
                     </div>
                     <div className="day-event-time">
-                        {PAD2(Math.floor(start / 60))}:{PAD2(start % 60)} –{" "}
-                        {PAD2(Math.floor(end / 60))}:{PAD2(end % 60)}
+                        {PAD2(Math.floor(start / MINUTES_IN_HOUR))}:{PAD2(start % MINUTES_IN_HOUR)} –{" "}
+                        {PAD2(Math.floor(end / MINUTES_IN_HOUR))}:{PAD2(end % MINUTES_IN_HOUR)}
                     </div>
                     {hasTags && (
                         <div className="day-event-tags">

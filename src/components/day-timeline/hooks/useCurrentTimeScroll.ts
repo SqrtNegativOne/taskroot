@@ -1,5 +1,9 @@
+import { MINUTES_IN_HOUR } from "../../../core/utils/constants";
 import { useEffect, useRef } from "react";
 import { PX_PER_MIN } from "../types";
+
+export const MONTHS_IN_YEAR = 12;
+
 
 export function useCurrentTimeScroll() {
     const scrollRef = useRef<HTMLDivElement>(null);
@@ -7,10 +11,10 @@ export function useCurrentTimeScroll() {
     useEffect(() => {
         const tick = () => {
             if (scrollRef.current) {
-                const currentMin = new Date().getHours() * 60 + new Date().getMinutes();
+                const currentMin = new Date().getHours() * MINUTES_IN_HOUR + new Date().getMinutes();
                 (scrollRef.current instanceof HTMLElement ? scrollRef.current : { scrollTop: 0 }).scrollTop = Math.max(
                     0,
-                    (currentMin - 60) * PX_PER_MIN - 12,
+                    (currentMin - MINUTES_IN_HOUR) * PX_PER_MIN - MONTHS_IN_YEAR,
                 );
             }
         };

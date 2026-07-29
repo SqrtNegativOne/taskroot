@@ -3,6 +3,10 @@ import "@fontsource-variable/roboto-mono";
 import { useTasks, useStopwatch, useSettings } from "../../core/store/hooks";
 import { CLOCK_STRATEGIES } from "../../core/domain/clock-strategies";
 
+export const OPACITY_DIM = 0.2;
+export const OPACITY_HOVER = 0.8;
+
+
 
 function getMiniTrackerContainerStyle(currentOpacity: number, showBorder: boolean): React.CSSProperties {
     return {
@@ -198,15 +202,15 @@ export function MiniTrackerScreen() {
     const baseOpacity =
         settings.trackerOpacity !== undefined
             ? settings.trackerOpacity / 100
-            : 0.8;
+            : OPACITY_HOVER;
     const hoverReduction =
         settings.trackerHoverReduction !== undefined
             ? settings.trackerHoverReduction / 100
-            : 0.2;
+            : OPACITY_DIM;
     const dimmedOpacity =
         settings.trackerDimmedOpacity !== undefined
             ? settings.trackerDimmedOpacity / 100
-            : 0.2;
+            : OPACITY_DIM;
 
     let currentOpacity = baseOpacity;
     if (isDimmed) {

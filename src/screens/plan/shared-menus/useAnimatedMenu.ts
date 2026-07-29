@@ -1,6 +1,9 @@
 import { useState, useCallback } from "react";
 
-export function useAnimatedMenu(closeDelay = 150) {
+export const ANIMATION_DELAY_MS = 150;
+
+
+export function useAnimatedMenu(closeDelay = ANIMATION_DELAY_MS) {
     const [isOpen, setIsOpen] = useState(false);
     const [isClosing, setIsClosing] = useState(false);
 

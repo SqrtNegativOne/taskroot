@@ -1,3 +1,4 @@
+import { MINUTES_IN_HOUR, HOURS_PER_DAY } from "../../core/utils/constants";
 import { useMemo } from "react";
 import { ymd, sameDay } from "../../core/store/data";
 import type { HydratedEvent } from "../../core/domain/events";
@@ -68,7 +69,7 @@ export function DayTimeline<T extends DragState = DragState>({
                 <div
                     className="day-grid"
                     ref={containerRef}
-                    style={{ height: `${24 * 60 * PX_PER_MIN}px` }}
+                    style={{ height: `${HOURS_PER_DAY * MINUTES_IN_HOUR * PX_PER_MIN}px` }}
                     data-drop-kind="day-time"
                     onPointerDown={onGridPointerDown}
                 >

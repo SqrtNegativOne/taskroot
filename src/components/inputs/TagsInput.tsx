@@ -1,5 +1,8 @@
 import React from "react";
 
+export const SUCCESS_STATUS_CODE = 200;
+
+
 export interface TagsInputProps {
     tags: string[];
     allTags: string[];
@@ -58,7 +61,7 @@ export function TagsInput({ tags, allTags, onChange }: TagsInputProps) {
                     onKeyDown={handleKeyDown}
                     onFocus={() => setShowSuggestions(true)}
                     onBlur={() =>
-                        setTimeout(() => setShowSuggestions(false), 200)
+                        setTimeout(() => setShowSuggestions(false), SUCCESS_STATUS_CODE)
                     }
                     placeholder={tags.length === 0 ? "Add tags..." : ""}
                 />

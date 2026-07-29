@@ -1,3 +1,4 @@
+import { MINUTES_IN_HOUR } from "../../../core/utils/constants";
 import { useState, useRef, useCallback } from "react";
 import { PX_PER_MIN, SNAP_MIN } from "../types";
 
@@ -39,7 +40,7 @@ export function useEventCreation(
             window.removeEventListener("pointerup", up);
             if (!active) {
                 if (onAddEvent) {
-                    onAddEvent(timelineDate, startMin, startMin + 60);
+                    onAddEvent(timelineDate, startMin, startMin + MINUTES_IN_HOUR);
                 }
                 return;
             }

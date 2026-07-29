@@ -1,7 +1,11 @@
+import { MINUTES_IN_HOUR } from "../../core/utils/constants";
 import type { HydratedEvent } from "../../core/domain/events";
 import type { AppTask, AppFilter } from "../../core/domain/models";
 
-export const PX_PER_MIN = 56 / 60; // 56 px per hour
+export const PIXELS_PER_HOUR = 56;
+
+
+export const PX_PER_MIN = PIXELS_PER_HOUR / MINUTES_IN_HOUR; // 56 px per hour
 export const SNAP_MIN = 15;
 
 export interface DragStateTarget {

@@ -1,3 +1,4 @@
+import { MS_PER_SECOND, MS_PER_MINUTE } from "../../core/utils/constants";
 import React, { useEffect, useRef } from "react";
 import { Icon } from "../icon";
 import { syncState, poller } from "../../core/sync";
@@ -19,13 +20,13 @@ export function SyncStatus() {
         const updateTitle = () => {
             if (!syncBtnRef.current) return;
             const remaining = Math.max(0, syncState.nextSyncTime - Date.now());
-            const m = Math.floor(remaining / 60000);
-            const s = Math.floor((remaining % 60000) / 1000);
+            const m = Math.floor(remaining / MS_PER_MINUTE);
+            const s = Math.floor((remaining % MS_PER_MINUTE) / MS_PER_SECOND);
             syncBtnRef.current.title = `Next sync in ${m}m ${s}s (Click to force sync)`;
         };
 
         updateTitle();
-        const interval = setInterval(updateTitle, 1000);
+        const interval = setInterval(updateTitle, MS_PER_SECOND);
         return () => clearInterval(interval);
     }, [syncStatus]);
 

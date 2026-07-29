@@ -2,6 +2,11 @@ import React from "react";
 import type { DistractionStatus } from "../../../core/store/repositories";
 import { hexAlpha } from "./utils";
 
+export const OPACITY_SELECTED_BG = 0.22;
+export const OPACITY_MUTED = 0.6;
+export const OPACITY_FAINT = 0.18;
+
+
 export interface StatusCellProps {
     value?: string;
     statuses: DistractionStatus[];
@@ -41,9 +46,9 @@ export function StatusCell({
                 style={
                     current
                         ? {
-                              background: hexAlpha(current.color, 0.18),
+                              background: hexAlpha(current.color, OPACITY_FAINT),
                               color: current.color,
-                              borderColor: hexAlpha(current.color, 0.6),
+                              borderColor: hexAlpha(current.color, OPACITY_MUTED),
                           }
                         : { color: "var(--fg-dim)" }
                 }
@@ -65,9 +70,9 @@ export function StatusCell({
                             <span
                                 className="status-chip"
                                 style={{
-                                    background: hexAlpha(s.color, 0.18),
+                                    background: hexAlpha(s.color, OPACITY_FAINT),
                                     color: s.color,
-                                    borderColor: hexAlpha(s.color, 0.6),
+                                    borderColor: hexAlpha(s.color, OPACITY_MUTED),
                                 }}
                             >
                                 {s.label}
@@ -107,7 +112,7 @@ export function StatusCell({
                                         key={c}
                                         className={`dlog-status-color ${newColor === c ? "is-selected" : ""}`}
                                         style={{
-                                            background: hexAlpha(c, 0.22),
+                                            background: hexAlpha(c, OPACITY_SELECTED_BG),
                                             borderColor: c,
                                             color: c,
                                         }}

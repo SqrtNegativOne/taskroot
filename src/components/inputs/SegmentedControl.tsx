@@ -1,5 +1,9 @@
 import React from "react";
 
+export const FONT_WEIGHT_REGULAR = 400;
+export const FONT_WEIGHT_MEDIUM = 500;
+
+
 export interface SegmentedControlProps<T> {
     options: { label: string; value: T }[];
     value: T;
@@ -101,7 +105,7 @@ export function SegmentedControl<T>({
                         cursor: "pointer",
                         color:
                             opt.value === value ? "var(--fg)" : "var(--fg-dim)",
-                        fontWeight: opt.value === value ? 500 : 400,
+                        fontWeight: opt.value === value ? FONT_WEIGHT_MEDIUM : FONT_WEIGHT_REGULAR,
                         transition:
                             "color 0.15s cubic-bezier(0.1, 0.9, 0.2, 1)",
                         flex: "1 1 auto",

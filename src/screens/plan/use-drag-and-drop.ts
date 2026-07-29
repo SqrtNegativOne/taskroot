@@ -1,9 +1,14 @@
+import { MINUTES_IN_HOUR } from "../../core/utils/constants";
 import React, { useState, useRef } from 'react';
 import { useEvents, useCalendars } from "../../core/store/hooks";
 import type { AppTask, AppEvent } from "../../core/domain/models";
 import { ymd } from "../../core/store/data";
 import { resolveDropTarget } from "./drag-helpers";
 import type { PlanDragState } from "./drag-helpers";
+
+export const MIN_POLL_INTERVAL_MINUTES = 5;
+export const ID_LENGTH = 9;
+
 
 export function useDragAndDrop(
     timelineDate: Date,
@@ -26,7 +31,7 @@ export function useDragAndDrop(
             if (!active) {
                 const dx = ev.clientX - start.x;
                 const dy = ev.clientY - start.y;
-                if (Math.hypot(dx, dy) < 5) return;
+                if (Math.hypot(dx, dy) < MIN_POLL_INTERVAL_MINUTES) return;
                 active = true;
             }
             const el = document.elementFromPoint(ev.clientX, ev.clientY);
@@ -57,8 +62,8 @@ export function useDragAndDrop(
                         createEvent(
                             task,
                             ds.target.date,
-                            9 * 60,
-                            task.est || 60,
+                            ID_LENGTH * MINUTES_IN_HOUR,
+                            task.est || MINUTES_IN_HOUR,
                             true,
                         );
                     } else if (ds.target.kind === "day-time" && ds.target.minute !== undefined) {
@@ -66,7 +71,7 @@ export function useDragAndDrop(
                             task,
                             ymd(timelineDate),
                             ds.target.minute,
-                            task.est || 60,
+                            task.est || MINUTES_IN_HOUR,
                             false,
                         );
                     }
@@ -95,7 +100,7 @@ export function useDragAndDrop(
             if (!active) {
                 const dx = ev.clientX - start.x;
                 const dy = ev.clientY - start.y;
-                if (Math.hypot(dx, dy) < 5) return;
+                if (Math.hypot(dx, dy) < MIN_POLL_INTERVAL_MINUTES) return;
                 active = true;
             }
             const el = document.elementFromPoint(ev.clientX, ev.clientY);

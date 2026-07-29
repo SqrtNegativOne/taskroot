@@ -1,3 +1,4 @@
+import { MINUTES_IN_HOUR } from "../../core/utils/constants";
 import type { SettingSchema, AppSettings } from "../../core/store/settingsSchema";
 import React from "react";
 import {
@@ -10,15 +11,15 @@ import {
 
 function minToTime(m: number) {
     if (typeof m !== "number" || isNaN(m)) return "";
-    const hh = String(Math.floor(m / 60)).padStart(2, "0");
-    const mm = String(m % 60).padStart(2, "0");
+    const hh = String(Math.floor(m / MINUTES_IN_HOUR)).padStart(2, "0");
+    const mm = String(m % MINUTES_IN_HOUR).padStart(2, "0");
     return `${hh}:${mm}`;
 }
 
 function timeToMin(t: string) {
     if (!t) return 0;
     const [hh, mm] = t.split(":");
-    return parseInt(hh, 10) * 60 + parseInt(mm, 10);
+    return parseInt(hh, 10) * MINUTES_IN_HOUR + parseInt(mm, 10);
 }
 
 export interface SettingRendererProps {

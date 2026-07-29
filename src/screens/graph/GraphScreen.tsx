@@ -5,6 +5,11 @@ import { SplitPane } from "../../components/split-pane";
 import { TaskCanvas } from "./TaskCanvas";
 import type { AppTask } from "../../core/domain/models";
 
+export const ANIMATION_DELAY_MS = 150;
+export const DRAG_THRESHOLD_PX = 4;
+export const GRAPH_NODE_WIDTH_PX = 250;
+
+
 export function GraphScreen() {
     const [tasks, setTasks] = useTasks();
 
@@ -49,8 +54,8 @@ export function GraphScreen() {
                 const newT = {
                     ...t,
                     onCanvas: true,
-                    canvasX: (layoutIndex % 4) * 250,
-                    canvasY: Math.floor(layoutIndex / 4) * 150,
+                    canvasX: (layoutIndex % DRAG_THRESHOLD_PX) * GRAPH_NODE_WIDTH_PX,
+                    canvasY: Math.floor(layoutIndex / DRAG_THRESHOLD_PX) * ANIMATION_DELAY_MS,
                 };
                 layoutIndex++;
                 return newT;

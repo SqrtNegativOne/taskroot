@@ -1,3 +1,4 @@
+import { MINUTES_IN_HOUR } from "../../core/utils/constants";
 import { TODAY, minutesToHHMM } from "../../core/store/data";
 import { DayTimeline } from "../../components/day-timeline";
 import type { HydratedEvent } from "../../core/domain/events";
@@ -41,8 +42,8 @@ export function WrapTimelineStep({
                 />
             </div>
             <p className="wrap-timeline-text">
-                Time untracked today: {Math.floor(untrackedTime / 60)}h{" "}
-                {untrackedTime % 60}m (from {minutesToHHMM(wake)} to{" "}
+                Time untracked today: {Math.floor(untrackedTime / MINUTES_IN_HOUR)}h{" "}
+                {untrackedTime % MINUTES_IN_HOUR}m (from {minutesToHHMM(wake)} to{" "}
                 {minutesToHHMM(sleep)})
             </p>
             {isActive && (

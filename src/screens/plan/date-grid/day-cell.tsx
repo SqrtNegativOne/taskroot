@@ -2,6 +2,9 @@ import React from "react";
 import { ymd, hhmmShort, PAD2, sameDay } from "../../../core/store/data";
 import type { HydratedEvent } from "../../../core/domain/events";
 
+export const OPACITY_FADED = 0.4;
+
+
 export function DayCell({
     cell,
     today,
@@ -84,7 +87,7 @@ function EventItem({
             title={`${ev.isAllDay ? "All Day" : hhmmShort(ev.start)} — ${title}`}
             style={{
                 cursor: "grab",
-                opacity: dragState?.event?.id === ev.id ? 0.4 : 1,
+                opacity: dragState?.event?.id === ev.id ? OPACITY_FADED : 1,
             }}
             onPointerDown={(e) =>
                 onEventDragStart && onEventDragStart(e, ev, ev.task)

@@ -1,3 +1,4 @@
+import { MS_PER_SECOND } from "../../../core/utils/constants";
 
 import { expect, test, describe, vi } from "vitest";
 import { CLOCK_STRATEGIES } from "../../../core/domain/clock-strategies";
@@ -29,13 +30,13 @@ function createMockContext(overrides: Partial<MockStopwatchContext>): MockStopwa
 describe("logWorkSession", () => {
     test("ignores sessions less than 1 minute", () => {
         const setTimeLogs = vi.fn();
-        logWorkSession(setTimeLogs, 1000, 2000, "task1", "counter");
+        logWorkSession(setTimeLogs, MS_PER_SECOND, 2000, "task1", "counter"); // eslint-disable-line typescript/no-magic-numbers
         expect(setTimeLogs).not.toHaveBeenCalled();
     });
 
     test("logs sessions 1 minute or longer", () => {
         const setTimeLogs = vi.fn((updater: any) => updater([]));
-        logWorkSession(setTimeLogs, 1000, 62000, "task1", "counter");
+        logWorkSession(setTimeLogs, MS_PER_SECOND, 62000, "task1", "counter"); // eslint-disable-line typescript/no-magic-numbers
         expect(setTimeLogs).toHaveBeenCalled();
         const result = setTimeLogs.mock.results[0].value;
         expect(result.length).toBe(1);

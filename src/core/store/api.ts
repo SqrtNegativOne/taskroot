@@ -1,8 +1,11 @@
+
+export const API_TIMEOUT_MS = 15000;
+
 export async function fetchWithTimeout(
     resource: RequestInfo | URL,
     options: RequestInit & { timeout?: number } = {},
 ) {
-    const { timeout = 15000, ...rest } = options;
+    const { timeout = API_TIMEOUT_MS, ...rest } = options;
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), timeout);
     try {

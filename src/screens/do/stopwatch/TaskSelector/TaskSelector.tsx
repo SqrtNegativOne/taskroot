@@ -3,6 +3,9 @@ import type { AppTask, AppEvent } from "../../../../core/domain/models";
 import { sortTasksForSelection } from "./sortTasksForSelection";
 import "./TaskSelector.css";
 
+export const ANIMATION_DELAY_MS = 150;
+
+
 interface TaskSelectorProps {
     selectorOpen: boolean;
     setSelectorOpen: (open: boolean) => void;
@@ -37,7 +40,7 @@ export function TaskSelector({
             const timer = setTimeout(() => {
                 setVisible(false);
                 setIsClosing(false);
-            }, 150);
+            }, ANIMATION_DELAY_MS);
             return () => clearTimeout(timer);
         }
     }, [selectorOpen, visible]);

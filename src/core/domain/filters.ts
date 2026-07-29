@@ -1,6 +1,10 @@
 import type { HydratedEvent } from "./events";
 import type { AppFilter } from "./models";
 
+export const DRAG_THRESHOLD_PX = 4;
+export const MAX_RETRIES = 3;
+
+
 function processFilters(filters: AppFilter[]) {
     const req: Record<string, Set<string | number>> = {};
     const excl: Record<string, Set<string | number>> = {};
@@ -27,7 +31,7 @@ function processSingleValueCols(
 ) {
     const FALLBACKS: Record<string, (string | number)[]> = {
         status: ["todo", "next-up", "doing", "done"],
-        priority: [1, 2, 3, 4, 0],
+        priority: [1, 2, MAX_RETRIES, DRAG_THRESHOLD_PX, 0],
     };
     const singleValueCols = ["status", "priority"];
     for (const col of singleValueCols) {

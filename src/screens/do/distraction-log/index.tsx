@@ -1,3 +1,4 @@
+import { BASE_36 } from "../../../core/utils/constants";
 import React from "react";
 import { PAD2 } from "../../../core/store/data";
 import { useDistractions, useDistractionStatuses, useDistractionColumns } from "../../../core/store/hooks";
@@ -5,6 +6,13 @@ import type { DistractionRow, DistractionStatus, DistractionColumn } from "../..
 import { DLogRow } from "./row";
 import type { EditingCell } from "./types";
 import { colIcon, hexAlpha } from "./utils";
+
+export const OPACITY_MUTED = 0.6;
+export const OPACITY_FAINT = 0.18;
+export const RESIZE_HANDLE_OFFSET_PX = -4;
+export const MIN_COLUMN_WIDTH_PX = 80;
+export const COMPACT_EVENT_HEIGHT_PX = 40;
+
 
 // Distraction log — Notion-like table.
 // Resizable columns, inline cell editing, custom status types.
@@ -16,7 +24,7 @@ export function DistractionLog() {
     const [editingCell, setEditingCell] = React.useState<EditingCell | null>(null);
     const [statusEditor, setStatusEditor] = React.useState<string | null>(null); // rowId
 
-    const totalWidth = columns.reduce((sum: number, c: DistractionColumn) => sum + c.width, 0) + 40; // +40 for trailing action col
+    const totalWidth = columns.reduce((sum: number, c: DistractionColumn) => sum + c.width, 0) + COMPACT_EVENT_HEIGHT_PX; // +40 for trailing action col
 
     const updateRow = (id: string, patch: Partial<DistractionRow>) => {
         setRows((rs: DistractionRow[]) => rs.map((r) => (r.id === id ? { ...r, ...patch } : r)));
@@ -38,7 +46,7 @@ export function DistractionLog() {
         e.preventDefault();
         const onMove = (ev: PointerEvent) => {
             const dx = ev.clientX - startX;
-            const newW = Math.max(80, startWidth + dx);
+            const newW = Math.max(MIN_COLUMN_WIDTH_PX, startWidth + dx);
             setColumns((cs: DistractionColumn[]) =>
                 cs.map((c) => (c.id === colId ? { ...c, width: newW } : c)),
             );
@@ -56,7 +64,7 @@ export function DistractionLog() {
         const id =
             label.toLowerCase().replace(/\s+/g, "-") +
             "-" +
-            Date.now().toString(36).slice(-4);
+            Date.now().toString(BASE_36).slice(RESIZE_HANDLE_OFFSET_PX);
         setStatuses((ss: DistractionStatus[]) => [...ss, { id, label, color }]);
         return id;
     };
@@ -141,9 +149,9 @@ export function DistractionLog() {
                         <span
                             className="status-chip"
                             style={{
-                                background: hexAlpha(s.color, 0.18),
+                                background: hexAlpha(s.color, OPACITY_FAINT),
                                 color: s.color,
-                                borderColor: hexAlpha(s.color, 0.6),
+                                borderColor: hexAlpha(s.color, OPACITY_MUTED),
                             }}
                         >
                             {s.label}

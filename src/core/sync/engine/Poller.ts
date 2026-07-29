@@ -1,7 +1,12 @@
+import { MS_PER_SECOND, MINUTES_IN_HOUR } from "../../utils/constants";
 import { syncState } from "../SyncState";
 import { TaskSynchronizer } from "./TaskSynchronizer";
 import { EventSynchronizer } from "./EventSynchronizer";
 import { Pusher } from "./Pusher";
+
+export const MIN_POLL_INTERVAL_MINUTES = 5;
+export const LONG_PRESS_DELAY_MS = 1500;
+
 
 export class Poller {
     private pollInterval: ReturnType<typeof setInterval> | null = null;
@@ -40,15 +45,15 @@ export class Poller {
             if (!offline && (settings.enableCalendarSync !== false || settings.enableTasksSync !== false)) {
                 setTimeout(() => {
                     syncState.error = "Sync is paused: No authorization token found. Please log out and log in again to authorize.";
-                }, 1500);
+                }, LONG_PRESS_DELAY_MS);
             }
         }
 
-        syncState.nextSyncTime = Date.now() + (settings.syncInterval || 5) * 60 * 1000;
+        syncState.nextSyncTime = Date.now() + (settings.syncInterval || MIN_POLL_INTERVAL_MINUTES) * MINUTES_IN_HOUR * MS_PER_SECOND;
         this.pollInterval = setInterval(() => {
             if (Date.now() >= syncState.nextSyncTime)
                 this.poll();
-        }, 1000);
+        }, MS_PER_SECOND);
 
         window.addEventListener("online", () => {
             syncState.info = "Network reconnected. Forcing sync.";
@@ -62,11 +67,11 @@ export class Poller {
             clearInterval(this.pollInterval);
         this.poll();
         const settings = this.getSettings();
-        syncState.nextSyncTime = Date.now() + (settings.syncInterval || 5) * 60 * 1000;
+        syncState.nextSyncTime = Date.now() + (settings.syncInterval || MIN_POLL_INTERVAL_MINUTES) * MINUTES_IN_HOUR * MS_PER_SECOND;
         this.pollInterval = setInterval(() => {
             if (Date.now() >= syncState.nextSyncTime)
                 this.poll();
-        }, 1000);
+        }, MS_PER_SECOND);
     }
 
     async poll() {
@@ -91,7 +96,7 @@ export class Poller {
         } finally {
             syncState.isPolling = false;
             const settings = this.getSettings();
-            syncState.nextSyncTime = Date.now() + (settings.syncInterval || 5) * 60 * 1000;
+            syncState.nextSyncTime = Date.now() + (settings.syncInterval || MIN_POLL_INTERVAL_MINUTES) * MINUTES_IN_HOUR * MS_PER_SECOND;
             if (!syncState.initialSyncComplete) {
                 syncState.initialSyncComplete = true;
             }

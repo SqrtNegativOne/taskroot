@@ -1,3 +1,4 @@
+import { MINUTES_IN_HOUR, HOURS_PER_DAY, MINUTES_PER_DAY, HTTP_UNAUTHORIZED } from "../../utils/constants";
 import { fetchWithTimeout } from "../../store/api";
 import type { AppTask, AppEvent } from "../../domain/models";
 import type { IAuthManager } from "../auth/types";
@@ -15,7 +16,7 @@ export class GoogleCalendarAPI implements ICalendarAPI {
         let token = this.authManager.getToken();
         if (!token) throw new Error("Unauthorized");
         let res = await fetchWithTimeout(`https://www.googleapis.com/calendar/v3/${endpoint}`, getOpts(token));
-        if (res.status === 401) {
+        if (res.status === HTTP_UNAUTHORIZED) {
             if (!await this.authManager.refreshAccessToken()) throw new Error("Unauthorized");
             res = await fetchWithTimeout(`https://www.googleapis.com/calendar/v3/${endpoint}`, getOpts(this.authManager.getToken() || ""));
         }
@@ -64,9 +65,9 @@ export class GoogleCalendarAPI implements ICalendarAPI {
         const pad = (n: number) => n.toString().padStart(2, "0");
         const dtStr = (date: string, mins: number) => {
             let [y, m, d] = date.split("-").map(Number);
-            if (mins >= 1440) { d += Math.floor(mins / 1440); mins %= 1440; }
+            if (mins >= MINUTES_PER_DAY) { d += Math.floor(mins / MINUTES_PER_DAY); mins %= MINUTES_PER_DAY; }
             const dt = new Date(y, m - 1, d);
-            return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(Math.floor(mins / 60))}:${pad(mins % 60)}:00`;
+            return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(Math.floor(mins / MINUTES_IN_HOUR))}:${pad(mins % MINUTES_IN_HOUR)}:00`;
         };
         const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
         return {
@@ -113,12 +114,12 @@ function extractEventTime(googleEvent: gapi.client.calendar.Event) {
         const pad = (n: number) => n.toString().padStart(2, "0");
         return {
             date: `${startDt.getFullYear()}-${pad(startDt.getMonth() + 1)}-${pad(startDt.getDate())}`,
-            start: startDt.getHours() * 60 + startDt.getMinutes(),
-            end: (endDt.getDate() !== startDt.getDate() && endDt.getTime() > startDt.getTime()) ? 24 * 60 : endDt.getHours() * 60 + endDt.getMinutes()
+            start: startDt.getHours() * MINUTES_IN_HOUR + startDt.getMinutes(),
+            end: (endDt.getDate() !== startDt.getDate() && endDt.getTime() > startDt.getTime()) ? HOURS_PER_DAY * MINUTES_IN_HOUR : endDt.getHours() * MINUTES_IN_HOUR + endDt.getMinutes()
         };
     }
     return googleEvent.start?.date 
-        ? { date: googleEvent.start.date, start: 0, end: 24 * 60 } 
+        ? { date: googleEvent.start.date, start: 0, end: HOURS_PER_DAY * MINUTES_IN_HOUR } 
         : { date: undefined, start: undefined, end: undefined };
 }
 

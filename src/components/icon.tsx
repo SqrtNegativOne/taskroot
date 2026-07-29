@@ -1,3 +1,4 @@
+import { HOURS_PER_DAY } from "../core/utils/constants";
 import React from "react";
 
 interface IconProps {
@@ -9,7 +10,7 @@ interface IconProps {
 
 export function Icon({
     name,
-    size = 24,
+    size = HOURS_PER_DAY,
     className = "",
     style = {},
 }: IconProps) {

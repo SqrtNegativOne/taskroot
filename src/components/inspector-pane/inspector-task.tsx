@@ -1,6 +1,10 @@
+import { MINUTES_IN_HOUR } from "../../core/utils/constants";
 import React from "react";
 import type { AppTask } from "../../core/domain/models";
 import { TaskStatusSelect } from "./inspector-shared";
+
+export const DRAG_THRESHOLD_PX = 4;
+
 
 interface TaskInspectorProps {
     task: AppTask;
@@ -35,7 +39,7 @@ export function TaskInspector({ task, updateTask }: TaskInspectorProps) {
                                 priority: Math.max(
                                     0,
                                     Math.min(
-                                        4,
+                                        DRAG_THRESHOLD_PX,
                                         parseInt(e.target.value) || 0,
                                     ),
                                 ),
@@ -54,7 +58,7 @@ export function TaskInspector({ task, updateTask }: TaskInspectorProps) {
                     value={!task.est ? "" : task.est}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                         let val = e.target.value ? parseInt(e.target.value) : 0;
-                        if (val > 60) val = 60;
+                        if (val > MINUTES_IN_HOUR) val = MINUTES_IN_HOUR;
                         updateTask(task.id, { est: val });
                     }}
                 />

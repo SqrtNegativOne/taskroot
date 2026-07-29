@@ -1,7 +1,12 @@
+import { BASE_36 } from "../../core/utils/constants";
 import { useState } from "react";
 import { api } from "../../core/store/api";
 import { useAuth } from "../../core/auth/AuthContext";
 import { useTasks } from "../../core/store/hooks";
+
+export const MAX_DISPLAY_ITEMS = 6;
+export const MAX_SEARCH_RESULTS = 10;
+
 
 
 
@@ -30,7 +35,7 @@ export function ExportDataButton() {
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement("a");
                 a.href = url;
-                a.download = `taskroot-backup-${new Date().toISOString().slice(0, 10)}.json`;
+                a.download = `taskroot-backup-${new Date().toISOString().slice(0, MAX_SEARCH_RESULTS)}.json`;
                 a.click();
                 URL.revokeObjectURL(url);
             }}
@@ -78,7 +83,7 @@ export function ImportTasksButton({ settings }: { settings: Partial<import('../.
                         .filter(Boolean);
                     if (lines.length > 0) {
                         const newTasks = lines.map((line) => ({
-                            id: `t${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+                            id: `t${Date.now()}-${Math.random().toString(BASE_36).slice(2, MAX_DISPLAY_ITEMS)}`,
                             title: line,
                             status: "todo",
                             priority: 1,

@@ -1,7 +1,12 @@
+import { BASE_36, MINUTES_IN_HOUR, HOURS_PER_DAY } from "../../core/utils/constants";
 import React from 'react';
 import { useTasks, useEvents, useSettings, useCalendars } from "../../core/store/hooks";
 import type { AppTask, AppEvent } from "../../core/domain/models";
 import { ymd } from "../../core/store/data";
+
+export const MAX_DISPLAY_ITEMS = 6;
+export const ID_LENGTH = 9;
+
 
 export function usePlanActions(
     timelineDate: Date, 
@@ -13,14 +18,14 @@ export function usePlanActions(
     const [calendars] = useCalendars();
 
     const createEvent = (task: AppTask, date: import("../../core/domain/models").DateString, start: number, duration: number, isAllDay = false) => {
-        const id = `e${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+        const id = `e${Date.now()}-${Math.random().toString(BASE_36).slice(2, MAX_DISPLAY_ITEMS)}`;
         const newEvent = {
             id,
             taskId: task.id,
             date,
             endDate: date,
             start,
-            end: Math.min(24 * 60, start + duration),
+            end: Math.min(HOURS_PER_DAY * MINUTES_IN_HOUR, start + duration),
             type: "plan",
             isAllDay,
             title: task.title,
@@ -57,9 +62,9 @@ export function usePlanActions(
     const onAddEvent = (dateArg: Date | string, startArg?: number, endArg?: number) => {
         const d = dateArg instanceof Date ? dateArg : timelineDate;
         const isAllDay = typeof startArg !== "number";
-        const start = typeof startArg === "number" ? startArg : 9 * 60;
-        const end = typeof endArg === "number" ? endArg : start + 60;
-        const id = `e${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+        const start = typeof startArg === "number" ? startArg : ID_LENGTH * MINUTES_IN_HOUR;
+        const end = typeof endArg === "number" ? endArg : start + MINUTES_IN_HOUR;
+        const id = `e${Date.now()}-${Math.random().toString(BASE_36).slice(2, MAX_DISPLAY_ITEMS)}`;
         setEvents((es: AppEvent[]) => [
             ...es,
             {

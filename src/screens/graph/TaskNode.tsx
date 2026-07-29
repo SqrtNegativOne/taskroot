@@ -2,6 +2,9 @@
 import { Handle, Position } from "@xyflow/react";
 import type { AppTask as Task } from "../../core/domain/models";
 
+export const OPACITY_MUTED = 0.6;
+
+
 export interface TaskNodeProps {
     data: { task: Task; [key: string]: unknown };
     id: string;
@@ -21,7 +24,7 @@ export const TaskNodeComponent = ({ data }: TaskNodeProps) => {
                 minWidth: "200px",
                 boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
                 position: "relative",
-                opacity: task.status === "done" ? 0.6 : 1,
+                opacity: task.status === "done" ? OPACITY_MUTED : 1,
             }}
         >
             {/* Top Target Handle: Parent connection */}

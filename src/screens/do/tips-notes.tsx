@@ -2,6 +2,9 @@ import React from "react";
 
 import { useNotes, useTips } from "../../core/store/hooks";
 
+export const TIP_DURATION_MS = 2200;
+
+
 
 export type AppNote = {
     id: string;
@@ -85,7 +88,7 @@ export function NotesList() {
     const openInObsidian = (note: AppNote) => {
         // Mocked — would normally fire obsidian:// deep link
         setToast(`would open obsidian://${note.vault}/${note.path}`);
-        setTimeout(() => setToast(null), 2200);
+        setTimeout(() => setToast(null), TIP_DURATION_MS);
     };
     const remove = (id: string) => setNotes((ns) => ns.filter((n) => n.id !== id));
     const addNote = () => {

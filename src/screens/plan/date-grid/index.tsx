@@ -16,6 +16,11 @@ import { filterEvents, sortEvents } from "../../../core/domain/filters";
 import type { HydratedEvent } from "../../../core/domain/events";
 import type { AppFilter } from "../../../core/domain/models";
 
+export const DAYS_IN_CALENDAR_GRID = 42;
+export const DAYS_IN_THREE_WEEKS = 21;
+export const DAYS_IN_WEEK = 7;
+
+
 export function DateGrid({
     view,
     setView,
@@ -64,8 +69,8 @@ export function DateGrid({
 
     const shift = (n: number) => {
         const d = new Date(anchor);
-        if (isWeek) d.setDate(d.getDate() + 7 * n);
-        else if (is3Weeks) d.setDate(d.getDate() + 21 * n);
+        if (isWeek) d.setDate(d.getDate() + DAYS_IN_WEEK * n);
+        else if (is3Weeks) d.setDate(d.getDate() + DAYS_IN_THREE_WEEKS * n);
         else d.setMonth(d.getMonth() + n);
         setAnchor(d);
     };
@@ -133,7 +138,7 @@ function buildMonthOrWeekCells(anchor: Date, view: string) {
     const first = startOfMonth(anchor);
     const start = startOfWeek(first);
     const cells = [];
-    for (let i = 0; i < 42; i++) {
+    for (let i = 0; i < DAYS_IN_CALENDAR_GRID; i++) {
         const d = addDays(start, i);
         cells.push({ date: d, outOfMonth: d.getMonth() !== anchor.getMonth() });
     }

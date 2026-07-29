@@ -6,6 +6,10 @@ import { WrapTimelineStep } from "./WrapTimelineStep";
 import { WrapReflectionStep, type ReflectionAnswers } from "./WrapReflectionStep";
 import "./wrap.css";
 
+export const MINUTES_IN_22_HOURS = 1320;
+export const DEFAULT_WORKDAY_MINUTES = 480;
+
+
 function calculateUntrackedTime(logEvents: HydratedEvent[], wake: number, sleep: number) {
     const totalDayTime = sleep - wake;
     let trackedTime = 0;
@@ -54,8 +58,8 @@ export function WrapScreen() {
             isDone: false,
         }));
 
-    const wake = settings.earliest_wake_time || 480;
-    const sleep = settings.last_sleep_time || 1320;
+    const wake = settings.earliest_wake_time || DEFAULT_WORKDAY_MINUTES;
+    const sleep = settings.last_sleep_time || MINUTES_IN_22_HOURS;
     const untrackedTime = calculateUntrackedTime(logEvents, wake, sleep);
 
     return (

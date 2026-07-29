@@ -1,3 +1,4 @@
+import { MINUTES_IN_HOUR } from "../../../../core/utils/constants";
 import type { AppTask, AppEvent } from "../../../../core/domain/models";
 import { ymd } from "../../../../core/store/data";
 
@@ -8,7 +9,7 @@ export function sortTasksForSelection(
 ): AppTask[] {
     const todayStr = ymd(new Date());
     const now = new Date();
-    const nowMin = now.getHours() * 60 + now.getMinutes();
+    const nowMin = now.getHours() * MINUTES_IN_HOUR + now.getMinutes();
 
     let filtered = pendingTasks;
     if (searchQuery.trim()) {
@@ -29,12 +30,12 @@ export function sortTasksForSelection(
         const aThisHour = aEvents.some(
             (e) =>
                 (e.start || 0) <= nowMin &&
-                ((e.end || 0) >= nowMin || (e.start || 0) + 60 >= nowMin)
+                ((e.end || 0) >= nowMin || (e.start || 0) + MINUTES_IN_HOUR >= nowMin)
         );
         const bThisHour = bEvents.some(
             (e) =>
                 (e.start || 0) <= nowMin &&
-                ((e.end || 0) >= nowMin || (e.start || 0) + 60 >= nowMin)
+                ((e.end || 0) >= nowMin || (e.start || 0) + MINUTES_IN_HOUR >= nowMin)
         );
 
         if (aThisHour !== bThisHour) return aThisHour ? -1 : 1;

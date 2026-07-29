@@ -1,5 +1,9 @@
+import { MINUTES_IN_HOUR } from "../../core/utils/constants";
 import React from "react";
 import type { AppEvent, AppTask } from "../../core/domain/models";
+
+export const OPACITY_DISABLED = 0.3;
+
 
 export const TaskStatusSelect = ({ value, onChange }: { value: string, onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void }) => (
     <select value={value} onChange={onChange}>
@@ -22,15 +26,15 @@ export const RepeatSelect = ({ value, disabled, onChange }: { value: string, dis
 
 export function minToTime(m: number): string {
     if (typeof m !== "number" || isNaN(m)) return "";
-    const hh = String(Math.floor(m / 60)).padStart(2, "0");
-    const mm = String(m % 60).padStart(2, "0");
+    const hh = String(Math.floor(m / MINUTES_IN_HOUR)).padStart(2, "0");
+    const mm = String(m % MINUTES_IN_HOUR).padStart(2, "0");
     return `${hh}:${mm}`;
 }
 
 export function timeToMin(t: string): number {
     if (!t) return 0;
     const [hh, mm] = t.split(":");
-    return parseInt(hh, 10) * 60 + parseInt(mm, 10);
+    return parseInt(hh, 10) * MINUTES_IN_HOUR + parseInt(mm, 10);
 }
 
 export function getInspectorTitle(currentTask: AppTask | undefined, currentEvent: AppEvent | undefined, tasks: AppTask[]): string {
@@ -71,7 +75,7 @@ export function InspectorPaneHeader({ handleClose, handleDelete, isReadOnlyCalen
             >
                 <span
                     className="material-symbols-outlined"
-                    style={{ fontSize: "20px", opacity: isReadOnlyCalendar ? 0.3 : 1 }}
+                    style={{ fontSize: "20px", opacity: isReadOnlyCalendar ? OPACITY_DISABLED : 1 }}
                 >
                     delete
                 </span>

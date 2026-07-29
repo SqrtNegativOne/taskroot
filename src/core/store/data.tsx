@@ -1,3 +1,9 @@
+import { MS_PER_DAY, MINUTES_IN_HOUR } from "../utils/constants";
+
+export const DAYS_IN_WEEK = 7;
+export const MONTHS_IN_YEAR = 12;
+export const MAX_MONTH_INDEX = 11;
+
 // Sample data + helpers for Taskroot.
 
 export const TODAY = new Date();
@@ -31,35 +37,35 @@ export const getWeekNumber = (d: Date): number => {
     const startOfYear = new Date(date.getFullYear(), 0, 1);
     const firstWeekStart = startOfWeek(startOfYear);
     const diffDays = Math.round(
-        (date.getTime() - firstWeekStart.getTime()) / 86400000,
+        (date.getTime() - firstWeekStart.getTime()) / MS_PER_DAY,
     );
-    return Math.floor(diffDays / 7) + 1;
+    return Math.floor(diffDays / DAYS_IN_WEEK) + 1;
 };
 export const minutesToHHMM = (m: number): string =>
-    `${PAD2(Math.floor(m / 60))}:${PAD2(m % 60)}`;
+    `${PAD2(Math.floor(m / MINUTES_IN_HOUR))}:${PAD2(m % MINUTES_IN_HOUR)}`;
 export const hhmmShort = (m: number): string => {
-    const h = Math.floor(m / 60),
-        mm = m % 60;
-    const h12 = ((h + 11) % 12) + 1;
-    const ap = h < 12 ? "a" : "p";
+    const h = Math.floor(m / MINUTES_IN_HOUR),
+        mm = m % MINUTES_IN_HOUR;
+    const h12 = ((h + MAX_MONTH_INDEX) % MONTHS_IN_YEAR) + 1;
+    const ap = h < MONTHS_IN_YEAR ? "a" : "p";
     return mm === 0 ? `${h12}${ap}` : `${h12}:${PAD2(mm)}${ap}`;
 };
 export const durationLabel = (mins: number | undefined | null): string => {
     if (!mins || mins === 0) return "";
-    if (mins < 60) return `${mins}m`;
-    const h = Math.floor(mins / 60),
-        m = mins % 60;
+    if (mins < MINUTES_IN_HOUR) return `${mins}m`;
+    const h = Math.floor(mins / MINUTES_IN_HOUR),
+        m = mins % MINUTES_IN_HOUR;
     return m === 0 ? `${h}h` : `${h}h ${m}m`;
 };
 export const dueLabel = (dueStr: string | null | undefined, today: Date): string => {
     if (!dueStr) return "";
     const d = parseYMD(dueStr);
-    const diff = Math.round((d.getTime() - today.getTime()) / 86400000);
+    const diff = Math.round((d.getTime() - today.getTime()) / MS_PER_DAY);
     if (diff === 0) return "today";
     if (diff === 1) return "tomorrow";
     if (diff === -1) return "yesterday";
     if (diff < 0) return `${-diff}d ago`;
-    if (diff < 7) return `${diff}d`;
+    if (diff < DAYS_IN_WEEK) return `${diff}d`;
     return `${d.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
 };
 

@@ -1,3 +1,4 @@
+import { HTTP_OK, HTTP_INTERNAL_ERROR, HTTP_FORBIDDEN } from "../src/core/utils/constants";
 import fs from "node:fs";
 import path from "node:path";
 import { createServer } from "node:http";
@@ -10,7 +11,7 @@ export function startLocalServer(onReady: (port: number) => void): import("http"
         let filePath = path.join(RENDERER_DIST, pathname);
 
         if (!filePath.startsWith(RENDERER_DIST)) {
-            res.writeHead(403);
+            res.writeHead(HTTP_FORBIDDEN);
             res.end("Forbidden");
             return;
         }
@@ -35,10 +36,10 @@ export function startLocalServer(onReady: (port: number) => void): import("http"
 
         fs.readFile(filePath, (err, content) => {
             if (err) {
-                res.writeHead(500);
+                res.writeHead(HTTP_INTERNAL_ERROR);
                 res.end("Internal Server Error");
             } else {
-                res.writeHead(200, { "Content-Type": contentType });
+                res.writeHead(HTTP_OK, { "Content-Type": contentType });
                 res.end(content, "utf-8");
             }
         });

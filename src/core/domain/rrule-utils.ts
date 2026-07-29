@@ -1,3 +1,4 @@
+import { HOURS_PER_DAY, SECONDS_PER_HOUR, MS_PER_SECOND } from "../utils/constants";
 import { RRule } from "rrule";
 import type { AppEvent } from "./models";
 
@@ -51,7 +52,7 @@ export function expandEventsForView(
                         const endDt = new Date(event.endDate);
                         const diffDays = Math.round(
                             (endDt.getTime() - startDt.getTime()) /
-                                (1000 * 3600 * 24),
+                                (MS_PER_SECOND * SECONDS_PER_HOUR * HOURS_PER_DAY),
                         );
 
                         const newEndDt = new Date(date.getTime());

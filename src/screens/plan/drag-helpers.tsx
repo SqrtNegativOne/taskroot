@@ -1,6 +1,11 @@
+import { MINUTES_IN_HOUR, HOURS_PER_DAY } from "../../core/utils/constants";
 import type { AppTask, AppEvent } from "../../core/domain/models";
 import { durationLabel } from "../../core/store/data";
 import { PX_PER_MIN, SNAP_MIN } from "../../components/day-timeline";
+
+export const MAX_RECURRENCES = 8;
+export const FONT_SIZE_SMALL = 14;
+
 
 export interface PlanDragTarget {
     kind: string;
@@ -20,12 +25,12 @@ export interface PlanDragState {
 export function DragGhost({ task, event, x, y, ghostStyle }: { task?: AppTask | null, event?: AppEvent | null, x: number, y: number, ghostStyle: string }) {
     const title = task ? task.title : event ? event.title : "";
     const pri = task ? task.priority : null;
-    const est = task ? task.est : event ? event.end - event.start : 60;
+    const est = task ? task.est : event ? event.end - event.start : MINUTES_IN_HOUR;
     
     return (
         <div
             className={`drag-ghost is-${ghostStyle}`}
-            style={{ left: x + 14, top: y - 8 }}
+            style={{ left: x + FONT_SIZE_SMALL, top: y - MAX_RECURRENCES }}
         >
             <div className="drag-ghost-inner">
                 {pri !== null && pri !== undefined && (
@@ -58,14 +63,14 @@ export function resolveDropTarget(el: Element | null, _x: number, y: number, tas
         const snapped = Math.max(
             0,
             Math.min(
-                24 * 60 - SNAP_MIN,
+                HOURS_PER_DAY * MINUTES_IN_HOUR - SNAP_MIN,
                 Math.round(rawMin / SNAP_MIN) * SNAP_MIN,
             ),
         );
         return {
             kind: "day-time",
             minute: snapped,
-            duration: task?.est || (event ? event.end - event.start : 60),
+            duration: task?.est || (event ? event.end - event.start : MINUTES_IN_HOUR),
         };
     }
     // Date grid day cell

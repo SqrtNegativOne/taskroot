@@ -1,7 +1,11 @@
+import { HTTP_UNAUTHORIZED } from "../../utils/constants";
 import { fetchWithTimeout } from "../../store/api";
 import type { AppTask } from "../../domain/models";
 import type { IAuthManager } from "../auth/types";
 import type { ITasksAPI } from "./types";
+
+export const MAX_RETRIES = 3;
+
 /// <reference types="gapi.client.tasks" />
 
 export class GoogleTasksAPI implements ITasksAPI {
@@ -15,7 +19,7 @@ export class GoogleTasksAPI implements ITasksAPI {
         let token = this.authManager.getToken();
         if (!token) throw new Error("Unauthorized");
         let res = await fetchWithTimeout(`https://tasks.googleapis.com/tasks/v1/${endpoint}`, getOpts(token));
-        if (res.status === 401) {
+        if (res.status === HTTP_UNAUTHORIZED) {
             if (!await this.authManager.refreshAccessToken()) throw new Error("Unauthorized");
             res = await fetchWithTimeout(`https://tasks.googleapis.com/tasks/v1/${endpoint}`, getOpts(this.authManager.getToken() || ""));
         }
@@ -62,7 +66,7 @@ export class GoogleTasksAPI implements ITasksAPI {
         }
         const id = existing?.id || (googleTask.notes || "").match(/Taskroot Task ID: (t[0-9a-zA-Z-]+)/)?.[1] || googleTask.id || "";
         const p = googleTask.due?.split("T")[0].split("-");
-        const due: import("../../domain/models").DateString | undefined = p?.length === 3 ? `${Number(p[0])}-${Number(p[1])}-${Number(p[2])}` : undefined;
+        const due: import("../../domain/models").DateString | undefined = p?.length === MAX_RETRIES ? `${Number(p[0])}-${Number(p[1])}-${Number(p[2])}` : undefined;
         
         const base = {
             googleTaskId: googleTask.id || "", title: googleTask.title || "", notes: googleTask.notes || "",

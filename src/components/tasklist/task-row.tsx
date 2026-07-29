@@ -3,6 +3,9 @@ import { TODAY, parseYMD, durationLabel, dueLabel } from "../../core/store/data"
 import type { AppTask, AppFilter } from "../../core/domain/models";
 import { checkTaskAgainstFilters } from "./filters";
 
+export const TRANSITION_DURATION_MS = 400;
+
+
 export interface TaskRowProps {
     task: AppTask;
     onDragStart?: (e: React.PointerEvent<HTMLDivElement> | React.MouseEvent<HTMLDivElement>, task: AppTask) => void;
@@ -69,7 +72,7 @@ export function TaskRow({
                             updateTask(task.id, { status: newStatus });
                             setIsChecking(false);
                             setIsExiting(false);
-                        }, 400);
+                        }, TRANSITION_DURATION_MS);
                         return;
                     }
 
@@ -113,7 +116,7 @@ export function TaskRow({
                                 e.stopPropagation();
                                 if (e.shiftKey || confirm("Delete task?")) {
                                     setIsExiting(true);
-                                    setTimeout(() => deleteTask(task.id), 400);
+                                    setTimeout(() => deleteTask(task.id), TRANSITION_DURATION_MS);
                                 }
                             }}
                             title="Delete"

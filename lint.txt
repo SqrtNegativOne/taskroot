@@ -1,0 +1,3620 @@
+
+  ! eslint(max-lines-per-function): The function `useStopwatchEngine` has too many lines (118). Maximum allowed is 100.
+     ,-[src/screens/do/stopwatch/useStopwatchEngine.ts:9:8]
+   8 |     
+   9 | ,-> export function useStopwatchEngine(selectorOpen: boolean, setSelectorOpen: (val: boolean) => void) {
+  10 | |       const [state, setState] = useStopwatch();
+  11 | |       const [tasks, setTasks] = useTasks();
+  12 | |       const [settings] = useSettings();
+  13 | |       const [, setTimeLogs] = useTimeLogs();
+  14 | |   
+  15 | |       const strategy = CLOCK_STRATEGIES[settings.clockStyle || "counter"] || CLOCK_STRATEGIES.counter;
+  16 | |   
+  17 | |       const running = state.runningSince != null;
+  18 | |       const currentMs = state.elapsed + (running && !state.isBreak ? Date.now() - (state.runningSince || 0) : 0);
+  19 | |       const isPristine = currentMs === 0 && !running && !state.isBreak;
+  20 | |       const activeTask = tasks?.find((t: AppTask) => t.status === "doing");
+  21 | |       const allowNoTask = !!settings.allowStopwatchWithoutTask;
+  22 | |   
+  23 | |       const context: ReadonlyStopwatchContext = React.useMemo(() => ({
+  24 | |           state,
+  25 | |           currentMs,
+  26 | |           isPristine,
+  27 | |           running,
+  28 | |           activeTask,
+  29 | |           allowNoTask,
+  30 | |           settings
+  31 | |       }), [state, currentMs, isPristine, running, activeTask, allowNoTask, settings]);
+  32 | |   
+  33 | |       const applyEffect = useCallback((effect: ClockActionEffect) => {
+  34 | |           if (effect.shouldLogSession && state.runningSince) {
+  35 | |               const ev = createWorkSessionEvent(
+  36 | |                   state.runningSince,
+  37 | |                   Date.now(),
+  38 | |                   activeTask?.id,
+  39 | |                   settings.clockStyle || "counter"
+  40 | |               );
+  41 | |               if (ev) {
+  42 | |                   setTimeLogs((logs) => [...(logs || []), ev]);
+  43 | |               }
+  44 | |           }
+  45 | |           if (effect.newState) {
+  46 | |               setState((s) => ({ ...s, ...effect.newState }));
+  47 | |           }
+  48 | |           if (effect.selectorOpen !== undefined) {
+  49 | |               setSelectorOpen(effect.selectorOpen);
+  50 | |           }
+  51 | |       }, [state, activeTask, settings, setTimeLogs, setState, setSelectorOpen]);
+  52 | |   
+  53 | |       const toggle = useCallback(() => {
+  54 | |           const effect = strategy.calculateToggle(context);
+  55 | |           applyEffect(effect);
+  56 | |       }, [strategy, context, applyEffect]);
+  57 | |   
+  58 | |       const reset = useCallback(() => {
+  59 | |           const effect = strategy.calculateReset(context);
+  60 | |           applyEffect(effect);
+  61 | |       }, [strategy, context, applyEffect]);
+  62 | |   
+  63 | |       const startWithTask = useCallback((taskId: string) => {
+  64 | |           setTasks((ts: AppTask[]) =>
+  65 | |               ts.map((t) => {
+  66 | |                   if (t.id === taskId) return { ...t, status: "doing" };
+  67 | |                   if (t.status === "doing") return { ...t, status: "todo" };
+  68 | |                   return t;
+  69 | |               })
+  70 | |           );
+  71 | |           const effect = strategy.calculateTaskSelected(context);
+  72 | |           applyEffect(effect);
+  73 | |       }, [strategy, context, applyEffect, setTasks]);
+  74 | |   
+  75 | |       const startBreak = useCallback(() => {
+  76 | |           if (settings.clockStyle === "flowtime") {
+  77 | |               setState((s: StopwatchState) => {
+  78 | |                   if (s.isBreak) {
+  79 | |                       return {
+  80 | |                           ...s,
+  81 | |                           isBreak: false,
+  82 | |                           elapsed: 0,
+  83 | |                           runningSince: Date.now(),
+  84 | |                       };
+  85 | |                   } else {
+  86 | |                       if (s.runningSince) {
+  87 | |                           const ev = createWorkSessionEvent(
+  88 | |                               s.runningSince,
+  89 | |                               Date.now(),
+  90 | |                               activeTask?.id,
+  91 | |                               "flowtime"
+  92 | |                           );
+  93 | |                           if (ev) {
+  94 | |                               setTimeLogs((logs) => [...(logs || []), ev]);
+  95 | |                           }
+  96 | |                       }
+  97 | |                       const elapsed = s.elapsed + (s.runningSince ? Date.now() - s.runningSince : 0);
+  98 | |                       const div = settings.flowtimeBreakDivisor || MIN_POLL_INTERVAL_MINUTES;
+  99 | |                       return {
+ 100 | |                           ...s,
+ 101 | |                           isBreak: true,
+ 102 | |                           breakAllowedMs: elapsed / div,
+ 103 | |                           breakStartedAt: Date.now(),
+ 104 | |                           runningSince: null,
+ 105 | |                           elapsed: 0,
+ 106 | |                           breakSoundPlayed: false,
+ 107 | |                       };
+ 108 | |                   }
+ 109 | |               });
+ 110 | |           }
+ 111 | |       }, [settings.clockStyle, settings.flowtimeBreakDivisor, setState, activeTask, setTimeLogs]);
+ 112 | |   
+ 113 | |       return {
+ 114 | |           state,
+ 115 | |           currentMs,
+ 116 | |           isPristine,
+ 117 | |           running,
+ 118 | |           activeTask,
+ 119 | |           allowNoTask,
+ 120 | |           settings,
+ 121 | |           tasks,
+ 122 | |           strategy,
+ 123 | |           context,
+ 124 | |           actions: { toggle, reset, startWithTask, startBreak }
+ 125 | |       };
+ 126 | `-> }
+     `----
+  help: Consider splitting it into smaller functions.
+
+  ! eslint(max-lines-per-function): The function `FilterSortButtons` has too many lines (101). Maximum allowed is 100.
+     ,-[src/screens/plan/shared-menus/FilterSortButtons.tsx:10:8]
+   9 |     
+  10 | ,-> export function FilterSortButtons({
+  11 | |       filters,
+  12 | |       setFilters,
+  13 | |       sort,
+  14 | |       setSort,
+  15 | |       columns,
+  16 | |       getValuesForColumn,
+  17 | |       sortOptions,
+  18 | |       align = "left",
+  19 | |   }: FilterSortButtonsProps) {
+  20 | |       const filterMenu = useAnimatedMenu();
+  21 | |       const sortMenu = useAnimatedMenu();
+  22 | |       const ref = useRef<HTMLDivElement>(null);
+  23 | |   
+  24 | |       useEffect(() => {
+  25 | |           function handleClickOutside(e: PointerEvent) {
+  26 | |               if (ref.current && !ref.current.contains(e.target instanceof Node ? e.target : null)) {
+  27 | |                   if (filterMenu.isOpen && !filterMenu.isClosing) filterMenu.close();
+  28 | |                   if (sortMenu.isOpen && !sortMenu.isClosing) sortMenu.close();
+  29 | |               }
+  30 | |           }
+  31 | |           document.addEventListener("pointerdown", handleClickOutside);
+  32 | |           return () => document.removeEventListener("pointerdown", handleClickOutside);
+  33 | |       }, [
+  34 | |           filterMenu.isOpen,
+  35 | |           filterMenu.isClosing,
+  36 | |           filterMenu.close,
+  37 | |           sortMenu.isOpen,
+  38 | |           sortMenu.isClosing,
+  39 | |           sortMenu.close,
+  40 | |       ]);
+  41 | |   
+  42 | |       const { addFilter, updateFilter, removeFilter } = useFilterActions(
+  43 | |           filters,
+  44 | |           setFilters,
+  45 | |           columns,
+  46 | |           getValuesForColumn
+  47 | |       );
+  48 | |   
+  49 | |       const handleToggleFilters = () => {
+  50 | |           if (filterMenu.isOpen) {
+  51 | |               filterMenu.close();
+  52 | |           } else {
+  53 | |               filterMenu.open();
+  54 | |               if (sortMenu.isOpen) sortMenu.close();
+  55 | |           }
+  56 | |       };
+  57 | |   
+  58 | |       const handleToggleSort = () => {
+  59 | |           if (sortMenu.isOpen) {
+  60 | |               sortMenu.close();
+  61 | |           } else {
+  62 | |               sortMenu.open();
+  63 | |               if (filterMenu.isOpen) filterMenu.close();
+  64 | |           }
+  65 | |       };
+  66 | |   
+  67 | |       return (
+  68 | |           <div className="filter-sort-container" ref={ref}>
+  69 | |               <MenuTriggerButton
+  70 | |                   isActive={filterMenu.isOpen || filters.length > 0}
+  71 | |                   onClick={handleToggleFilters}
+  72 | |                   icon="filter_list"
+  73 | |                   title="Filter"
+  74 | |                   badgeCount={filters.length}
+  75 | |               />
+  76 | |   
+  77 | |               {sortOptions && (
+  78 | |                   <MenuTriggerButton
+  79 | |                       isActive={sortMenu.isOpen}
+  80 | |                       onClick={handleToggleSort}
+  81 | |                       icon="swap_vert"
+  82 | |                       title="Sort"
+  83 | |                   />
+  84 | |               )}
+  85 | |   
+  86 | |               {filterMenu.isOpen && (
+  87 | |                   <FilterMenu
+  88 | |                       filters={filters}
+  89 | |                       columns={columns}
+  90 | |                       getValuesForColumn={getValuesForColumn}
+  91 | |                       updateFilter={updateFilter}
+  92 | |                       removeFilter={removeFilter}
+  93 | |                       addFilter={addFilter}
+  94 | |                       closingFilters={filterMenu.isClosing}
+  95 | |                       align={align}
+  96 | |                   />
+  97 | |               )}
+  98 | |   
+  99 | |               {sortMenu.isOpen && sortOptions && (
+ 100 | |                   <SortMenu
+ 101 | |                       sort={sort}
+ 102 | |                       setSort={setSort}
+ 103 | |                       sortOptions={sortOptions}
+ 104 | |                       closingSort={sortMenu.isClosing}
+ 105 | |                       align={align}
+ 106 | |                   />
+ 107 | |               )}
+ 108 | |           </div>
+ 109 | |       );
+ 110 | `-> }
+     `----
+  help: Consider splitting it into smaller functions.
+
+  ! react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'sortMenu', and 'filterMenu'
+    ,-[src/screens/plan/shared-menus/FilterSortButtons.tsx:33:8]
+ 26 |                 if (ref.current && !ref.current.contains(e.target instanceof Node ? e.target : null)) {
+ 27 |                     if (filterMenu.isOpen && !filterMenu.isClosing) filterMenu.close();
+    :                                                                     ^^^^^^^^^^
+ 28 |                     if (sortMenu.isOpen && !sortMenu.isClosing) sortMenu.close();
+    :                                                                 ^^^^^^^^
+ 29 |                 }
+ 30 |             }
+ 31 |             document.addEventListener("pointerdown", handleClickOutside);
+ 32 |             return () => document.removeEventListener("pointerdown", handleClickOutside);
+ 33 | ,->     }, [
+ 34 | |           filterMenu.isOpen,
+ 35 | |           filterMenu.isClosing,
+ 36 | |           filterMenu.close,
+ 37 | |           sortMenu.isOpen,
+ 38 | |           sortMenu.isClosing,
+ 39 | |           sortMenu.close,
+ 40 | `->     ]);
+ 41 |     
+    `----
+  help: Either include it or remove the dependency array.
+
+  ! eslint(max-lines-per-function): The function `CalendarHeader` has too many lines (142). Maximum allowed is 100.
+     ,-[src/screens/plan/date-grid/calendar-header.tsx:8:8]
+   7 |     
+   8 | ,-> export function CalendarHeader({
+   9 | |       titleLabel,
+  10 | |       today,
+  11 | |       view,
+  12 | |       setView,
+  13 | |       setAnchor,
+  14 | |       shift,
+  15 | |       filterMenu
+  16 | |   }: {
+  17 | |       titleLabel: string;
+  18 | |       today: Date | number | string;
+  19 | |       view: string;
+  20 | |       setView: (view: string) => void;
+  21 | |       setAnchor: (date: Date) => void;
+  22 | |       shift: (n: number) => void;
+  23 | |       filterMenu: React.ReactNode;
+  24 | |   }) {
+  25 | |       const [showViewMenu, setShowViewMenu] = useState(false);
+  26 | |       const [closingViewMenu, setClosingViewMenu] = useState(false);
+  27 | |       const viewMenuRef = useRef<HTMLDivElement>(null);
+  28 | |   
+  29 | |       const closeViewMenu = () => {
+  30 | |           setClosingViewMenu(true);
+  31 | |           setTimeout(() => {
+  32 | |               setShowViewMenu(false);
+  33 | |               setClosingViewMenu(false);
+  34 | |           }, ANIMATION_DELAY_MS);
+  35 | |       };
+  36 | |   
+  37 | |       useEffect(() => {
+  38 | |           function handleClickOutside(e: PointerEvent) {
+  39 | |               if (
+  40 | |                   e.target instanceof Node &&
+  41 | |                   viewMenuRef.current &&
+  42 | |                   !viewMenuRef.current.contains(e.target)
+  43 | |               ) {
+  44 | |                   if (showViewMenu && !closingViewMenu) closeViewMenu();
+  45 | |               }
+  46 | |           }
+  47 | |           document.addEventListener("pointerdown", handleClickOutside);
+  48 | |           return () => document.removeEventListener("pointerdown", handleClickOutside);
+  49 | |       }, [showViewMenu, closingViewMenu]);
+  50 | |   
+  51 | |       return (
+  52 | |           <header className="cal-hd">
+  53 | |               <div className="cal-hd-left">
+  54 | |                   <span className="cal-hd-title">{titleLabel}</span>
+  55 | |               </div>
+  56 | |               <div className="cal-hd-right">
+  57 | |                   <div className="cal-nav">
+  58 | |                       <button
+  59 | |                           className="cal-nav-btn"
+  60 | |                           onClick={() => shift(-1)}
+  61 | |                           aria-label="previous"
+  62 | |                       >
+  63 | |                           ◀
+  64 | |                       </button>
+  65 | |                       <button
+  66 | |                           className="cal-nav-btn"
+  67 | |                           onClick={() => setAnchor(new Date(today))}
+  68 | |                       >
+  69 | |                           ◉
+  70 | |                       </button>
+  71 | |                       <button
+  72 | |                           className="cal-nav-btn"
+  73 | |                           onClick={() => shift(1)}
+  74 | |                           aria-label="next"
+  75 | |                       >
+  76 | |                           ▶
+  77 | |                       </button>
+  78 | |                   </div>
+  79 | |                   {filterMenu}
+  80 | |                   <div style={{ position: "relative" }} ref={viewMenuRef}>
+  81 | |                       <button
+  82 | |                           onClick={() => {
+  83 | |                               if (showViewMenu) closeViewMenu();
+  84 | |                               else setShowViewMenu(true);
+  85 | |                           }}
+  86 | |                           title="View options"
+  87 | |                           style={{
+  88 | |                               background: showViewMenu
+  89 | |                                   ? "var(--bg-surface)"
+  90 | |                                   : "transparent",
+  91 | |                               border: "1px solid var(--border)",
+  92 | |                               color: "var(--fg)",
+  93 | |                               borderRadius: "4px",
+  94 | |                               padding: "4px 6px",
+  95 | |                               display: "flex",
+  96 | |                               alignItems: "center",
+  97 | |                               gap: "4px",
+  98 | |                               cursor: "pointer",
+  99 | |                           }}
+ 100 | |                       >
+ 101 | |                           <Icon name="dashboard" size={16} />
+ 102 | |                       </button>
+ 103 | |                       
+ 104 | |                       {showViewMenu && (
+ 105 | |                           <div
+ 106 | |                               className={`floating-menu ${closingViewMenu ? "is-closing" : ""}`}
+ 107 | |                               style={{
+ 108 | |                                   position: "absolute",
+ 109 | |                                   top: "calc(100% + 8px)",
+ 110 | |                                   right: 0,
+ 111 | |                                   zIndex: 1000,
+ 112 | |                                   display: "flex",
+ 113 | |                                   flexDirection: "column",
+ 114 | |                                   background: "var(--bg-surface)",
+ 115 | |                                   borderRadius: "6px",
+ 116 | |                                   border: "1px solid var(--border)",
+ 117 | |                                   boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+ 118 | |                                   minWidth: "120px",
+ 119 | |                                   overflow: "hidden"
+ 120 | |                               }}
+ 121 | |                           >
+ 122 | |                               {["month", "1 week", "3 weeks"].map((mode) => (
+ 123 | |                                   <button
+ 124 | |                                       key={mode}
+ 125 | |                                       onClick={() => {
+ 126 | |                                           setView(mode);
+ 127 | |                                           closeViewMenu();
+ 128 | |                                       }}
+ 129 | |                                       style={{
+ 130 | |                                           padding: "8px 12px",
+ 131 | |                                           textAlign: "left",
+ 132 | |                                           background: view === mode || (view === "week" && mode === "1 week") ? "var(--accent-soft)" : "transparent",
+ 133 | |                                           color: view === mode || (view === "week" && mode === "1 week") ? "var(--accent)" : "var(--fg)",
+ 134 | |                                           border: "none",
+ 135 | |                                           cursor: "pointer",
+ 136 | |                                           fontSize: "0.9em",
+ 137 | |                                           textTransform: "capitalize"
+ 138 | |                                       }}
+ 139 | |                                   >
+ 140 | |                                       {mode}
+ 141 | |                                   </button>
+ 142 | |                               ))}
+ 143 | |                           </div>
+ 144 | |                       )}
+ 145 | |                   </div>
+ 146 | |               </div>
+ 147 | |           </header>
+ 148 | |       );
+ 149 | `-> }
+     `----
+  help: Consider splitting it into smaller functions.
+
+  ! eslint(complexity): function `computeEventDeltaActions` has a complexity of 18. Maximum allowed is 15.
+    ,-[src/core/sync/engine/event-differ.ts:5:8]
+  4 |     
+  5 | ,-> export function computeEventDeltaActions(
+  6 | |       newEvents: AppEvent[],
+  7 | |       prevEventsMap: Map<string, AppEvent>,
+  8 | |       calendars: { id: string; summary: string }[]
+  9 | |   ): SyncQueueItem[] {
+ 10 | |       const actions: SyncQueueItem[] = [];
+ 11 | |       const newEventsMap = new Map(newEvents.map((e) => [e.id, e]));
+ 12 | |   
+ 13 | |       for (const event of newEvents) {
+ 14 | |           const prev = prevEventsMap.get(event.id);
+ 15 | |           if (!prev) {
+ 16 | |               if (!event.googleEventId) {
+ 17 | |                   actions.push({
+ 18 | |                       type: SyncType.Event,
+ 19 | |                       action: SyncAction.Create,
+ 20 | |                       item: event,
+ 21 | |                   });
+ 22 | |               }
+ 23 | |               continue;
+ 24 | |           }
+ 25 | |   
+ 26 | |           if (!(
+ 27 | |               event.updatedAt &&
+ 28 | |               prev.updatedAt &&
+ 29 | |               event.updatedAt > prev.updatedAt
+ 30 | |           )) {
+ 31 | |               continue;
+ 32 | |           }
+ 33 | |   
+ 34 | |           let targetCalendarId = prev.googleCalendarId || "primary";
+ 35 | |           if (event.category) {
+ 36 | |               const cal = calendars.find((c) => c.summary === event.category);
+ 37 | |               if (cal) targetCalendarId = cal.id;
+ 38 | |           }
+ 39 | |   
+ 40 | |           if (
+ 41 | |               prev.googleCalendarId &&
+ 42 | |               prev.googleCalendarId !== targetCalendarId
+ 43 | |           ) {
+ 44 | |               if (prev.googleEventId) {
+ 45 | |                   actions.push({
+ 46 | |                       type: SyncType.Event,
+ 47 | |                       action: SyncAction.Delete,
+ 48 | |                       item: prev,
+ 49 | |                       id: prev.googleEventId,
+ 50 | |                       calendarId: prev.googleCalendarId,
+ 51 | |                   });
+ 52 | |               }
+ 53 | |               actions.push({
+ 54 | |                   type: SyncType.Event,
+ 55 | |                   action: SyncAction.Create,
+ 56 | |                   item: event,
+ 57 | |               });
+ 58 | |           } else if (event.googleEventId) {
+ 59 | |               actions.push({
+ 60 | |                   type: SyncType.Event,
+ 61 | |                   action: SyncAction.Update,
+ 62 | |                   item: event,
+ 63 | |                   id: event.googleEventId,
+ 64 | |                   calendarId: targetCalendarId,
+ 65 | |               });
+ 66 | |           } else {
+ 67 | |               actions.push({
+ 68 | |                   type: SyncType.Event,
+ 69 | |                   action: SyncAction.Create,
+ 70 | |                   item: event,
+ 71 | |               });
+ 72 | |           }
+ 73 | |       }
+ 74 | |   
+ 75 | |       for (const [id, prev] of prevEventsMap.entries()) {
+ 76 | |           if (!newEventsMap.has(id) && prev.googleEventId) {
+ 77 | |               actions.push({
+ 78 | |                   type: SyncType.Event,
+ 79 | |                   action: SyncAction.Delete,
+ 80 | |                   item: prev,
+ 81 | |                   id: prev.googleEventId,
+ 82 | |                   calendarId: prev.googleCalendarId || "primary",
+ 83 | |               });
+ 84 | |           }
+ 85 | |       }
+ 86 | |   
+ 87 | |       return actions;
+ 88 | `-> }
+    `----
+
+  ! eslint(max-lines-per-function): The function `SelectInput` has too many lines (101). Maximum allowed is 100.
+     ,-[src/components/inputs/SelectInput.tsx:10:8]
+   9 |     
+  10 | ,-> export function SelectInput({ value, onChange, options, style }: SelectInputProps) {
+  11 | |       const [open, setOpen] = useState(false);
+  12 | |       const ref = useRef<HTMLDivElement>(null);
+  13 | |   
+  14 | |       useEffect(() => {
+  15 | |           function handleClickOutside(e: PointerEvent) {
+  16 | |               if (ref.current && !ref.current.contains(e.target instanceof Node ? e.target : null)) {
+  17 | |                   setOpen(false);
+  18 | |               }
+  19 | |           }
+  20 | |           document.addEventListener("pointerdown", handleClickOutside);
+  21 | |           return () => document.removeEventListener("pointerdown", handleClickOutside);
+  22 | |       }, []);
+  23 | |   
+  24 | |       const selectedOption = options.find((o) => o.value === value);
+  25 | |   
+  26 | |       return (
+  27 | |           <div ref={ref} style={{ position: "relative", ...style }}>
+  28 | |               <button
+  29 | |                   type="button"
+  30 | |                   className="selector-input"
+  31 | |                   style={{
+  32 | |                       padding: "4px 8px",
+  33 | |                       border: "1px solid var(--border)",
+  34 | |                       borderRadius: "4px",
+  35 | |                       background: "var(--bg-app)",
+  36 | |                       color: "var(--fg)",
+  37 | |                       cursor: "pointer",
+  38 | |                       minHeight: "24px",
+  39 | |                       display: "flex",
+  40 | |                       alignItems: "center",
+  41 | |                       gap: "4px",
+  42 | |                       width: "100%",
+  43 | |                       textAlign: "left",
+  44 | |                       fontFamily: "inherit",
+  45 | |                       fontSize: "inherit",
+  46 | |                   }}
+  47 | |                   onClick={() => setOpen(!open)}
+  48 | |               >
+  49 | |                   {selectedOption ? selectedOption.label : value}
+  50 | |                   <span
+  51 | |                       className="material-symbols-outlined"
+  52 | |                       style={{ fontSize: "16px", marginLeft: "auto", opacity: 0.5 }}
+  53 | |                   >
+  54 | |                       arrow_drop_down
+  55 | |                   </span>
+  56 | |               </button>
+  57 | |               {open && (
+  58 | |                   <div
+  59 | |                       style={{
+  60 | |                           position: "absolute",
+  61 | |                           top: "100%",
+  62 | |                           left: 0,
+  63 | |                           right: 0,
+  64 | |                           zIndex: 1001,
+  65 | |                           background: "var(--bg-surface)",
+  66 | |                           border: "1px solid var(--border)",
+  67 | |                           borderRadius: "4px",
+  68 | |                           maxHeight: "200px",
+  69 | |                           overflowY: "auto",
+  70 | |                           display: "flex",
+  71 | |                           flexDirection: "column",
+  72 | |                           marginTop: "4px",
+  73 | |                           boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+  74 | |                       }}
+  75 | |                   >
+  76 | |                       {options.map((o) => (
+  77 | |                           <button
+  78 | |                               key={o.value}
+  79 | |                               type="button"
+  80 | |                               onClick={(e) => {
+  81 | |                                   e.stopPropagation();
+  82 | |                                   onChange(o.value);
+  83 | |                                   setOpen(false);
+  84 | |                               }}
+  85 | |                               style={{
+  86 | |                                   padding: "6px 8px",
+  87 | |                                   cursor: "pointer",
+  88 | |                                   display: "flex",
+  89 | |                                   alignItems: "center",
+  90 | |                                   gap: "6px",
+  91 | |                                   background:
+  92 | |                                       value === o.value
+  93 | |                                           ? "var(--accent-soft)"
+  94 | |                                           : "transparent",
+  95 | |                                   width: "100%",
+  96 | |                                   border: "none",
+  97 | |                                   textAlign: "left",
+  98 | |                                   color: "inherit",
+  99 | |                                   fontFamily: "inherit",
+ 100 | |                                   fontSize: "inherit",
+ 101 | |                               }}
+ 102 | |                           >
+ 103 | |                               {o.label}
+ 104 | |                           </button>
+ 105 | |                       ))}
+ 106 | |                   </div>
+ 107 | |               )}
+ 108 | |           </div>
+ 109 | |       );
+ 110 | `-> }
+     `----
+  help: Consider splitting it into smaller functions.
+
+  ! eslint(max-lines-per-function): The function `useDragAndDrop` has too many lines (157). Maximum allowed is 100.
+     ,-[src/screens/plan/use-drag-and-drop.ts:13:8]
+  12 |     
+  13 | ,-> export function useDragAndDrop(
+  14 | |       timelineDate: Date,
+  15 | |       setInspectorState: React.Dispatch<React.SetStateAction<{ type: string, id: string } | null>>,
+  16 | |       createEvent: (task: AppTask, date: import("../../core/domain/models").DateString, start: number, duration: number, isAllDay?: boolean) => void
+  17 | |   ) {
+  18 | |       const [, setEvents] = useEvents();
+  19 | |       const [calendars] = useCalendars();
+  20 | |       
+  21 | |       const [dragState, setDragState] = useState<PlanDragState | null>(null);
+  22 | |       const dragRef = useRef<PlanDragState | null>(null);
+  23 | |       dragRef.current = dragState;
+  24 | |   
+  25 | |       const onTaskDragStart = (e: React.PointerEvent<Element> | React.MouseEvent<Element, MouseEvent>, task: AppTask) => {
+  26 | |           e.preventDefault();
+  27 | |           const start = { x: e.clientX, y: e.clientY };
+  28 | |           let active = false;
+  29 | |   
+  30 | |           const move = (ev: PointerEvent | MouseEvent) => {
+  31 | |               if (!active) {
+  32 | |                   const dx = ev.clientX - start.x;
+  33 | |                   const dy = ev.clientY - start.y;
+  34 | |                   if (Math.hypot(dx, dy) < MIN_POLL_INTERVAL_MINUTES) return;
+  35 | |                   active = true;
+  36 | |               }
+  37 | |               const el = document.elementFromPoint(ev.clientX, ev.clientY);
+  38 | |               const target = resolveDropTarget(
+  39 | |                   el,
+  40 | |                   ev.clientX,
+  41 | |                   ev.clientY,
+  42 | |                   task,
+  43 | |                   undefined,
+  44 | |               );
+  45 | |               setDragState({
+  46 | |                   task,
+  47 | |                   pointerX: ev.clientX,
+  48 | |                   pointerY: ev.clientY,
+  49 | |                   target,
+  50 | |               });
+  51 | |           };
+  52 | |   
+  53 | |           const up = () => {
+  54 | |               window.removeEventListener("pointermove", move);
+  55 | |               window.removeEventListener("pointerup", up);
+  56 | |               if (!active) {
+  57 | |                   setInspectorState({ type: "task", id: task.id });
+  58 | |               } else {
+  59 | |                   const ds = dragRef.current;
+  60 | |                   if (ds && ds.target) {
+  61 | |                       if (ds.target.kind === "grid-day" && ds.target.date) {
+  62 | |                           createEvent(
+  63 | |                               task,
+  64 | |                               ds.target.date,
+  65 | |                               ID_LENGTH * MINUTES_IN_HOUR,
+  66 | |                               task.est || MINUTES_IN_HOUR,
+  67 | |                               true,
+  68 | |                           );
+  69 | |                       } else if (ds.target.kind === "day-time" && ds.target.minute !== undefined) {
+  70 | |                           createEvent(
+  71 | |                               task,
+  72 | |                               ymd(timelineDate),
+  73 | |                               ds.target.minute,
+  74 | |                               task.est || MINUTES_IN_HOUR,
+  75 | |                               false,
+  76 | |                           );
+  77 | |                       }
+  78 | |                   }
+  79 | |               }
+  80 | |               setDragState(null);
+  81 | |           };
+  82 | |           window.addEventListener("pointermove", move);
+  83 | |           window.addEventListener("pointerup", up);
+  84 | |       };
+  85 | |   
+  86 | |       const onEventDragStart = (e: React.PointerEvent<Element> | React.MouseEvent<Element, MouseEvent>, eventToMove: AppEvent, task?: AppTask | null) => {
+  87 | |           const calId = eventToMove.googleCalendarId || "primary";
+  88 | |           const cal = calendars.find((c) => c.id === calId);
+  89 | |           if (cal && (cal.accessRole === "reader" || cal.accessRole === "freeBusyReader")) {
+  90 | |               setInspectorState({ type: "event", id: eventToMove.id });
+  91 | |               return;
+  92 | |           }
+  93 | |   
+  94 | |           e.preventDefault();
+  95 | |           e.stopPropagation();
+  96 | |           const start = { x: e.clientX, y: e.clientY };
+  97 | |           let active = false;
+  98 | |   
+  99 | |           const move = (ev: PointerEvent | MouseEvent) => {
+ 100 | |               if (!active) {
+ 101 | |                   const dx = ev.clientX - start.x;
+ 102 | |                   const dy = ev.clientY - start.y;
+ 103 | |                   if (Math.hypot(dx, dy) < MIN_POLL_INTERVAL_MINUTES) return;
+ 104 | |                   active = true;
+ 105 | |               }
+ 106 | |               const el = document.elementFromPoint(ev.clientX, ev.clientY);
+ 107 | |               const target = resolveDropTarget(
+ 108 | |                   el,
+ 109 | |                   ev.clientX,
+ 110 | |                   ev.clientY,
+ 111 | |                   task,
+ 112 | |                   eventToMove,
+ 113 | |               );
+ 114 | |               setDragState({
+ 115 | |                   event: eventToMove,
+ 116 | |                   task,
+ 117 | |                   pointerX: ev.clientX,
+ 118 | |                   pointerY: ev.clientY,
+ 119 | |                   target,
+ 120 | |               });
+ 121 | |           };
+ 122 | |   
+ 123 | |           const up = () => {
+ 124 | |               window.removeEventListener("pointermove", move);
+ 125 | |               window.removeEventListener("pointerup", up);
+ 126 | |               if (!active) {
+ 127 | |                   setInspectorState({ type: "event", id: eventToMove.id });
+ 128 | |               } else {
+ 129 | |                   const ds = dragRef.current;
+ 130 | |                   if (ds && ds.target) {
+ 131 | |                       if (ds.target.kind === "grid-day" && ds.target.date) {
+ 132 | |                           setEvents((prev: AppEvent[]) =>
+ 133 | |                               prev.map((evnt: AppEvent) =>
+ 134 | |                                   evnt.id === eventToMove.id
+ 135 | |                                       ? {
+ 136 | |                                             ...evnt,
+ 137 | |                                             date: ds.target?.date ?? evnt.date,
+ 138 | |                                             endDate: ds.target?.date ?? evnt.endDate,
+ 139 | |                                         }
+ 140 | |                                       : evnt,
+ 141 | |                               ),
+ 142 | |                           );
+ 143 | |                       } else if (ds.target.kind === "day-time" && ds.target.minute !== undefined) {
+ 144 | |                           const duration = eventToMove.end - eventToMove.start;
+ 145 | |                           setEvents((prev: AppEvent[]) =>
+ 146 | |                               prev.map((evnt: AppEvent) =>
+ 147 | |                                   evnt.id === eventToMove.id
+ 148 | |                                       ? {
+ 149 | |                                             ...evnt,
+ 150 | |                                             date: ymd(timelineDate),
+ 151 | |                                             endDate: ymd(timelineDate),
+ 152 | |                                             start: ds.target?.minute ?? evnt.start,
+ 153 | |                                             end: (ds.target?.minute ?? evnt.start) + duration,
+ 154 | |                                             isAllDay: false,
+ 155 | |                                         }
+ 156 | |                                       : evnt,
+ 157 | |                               ),
+ 158 | |                           );
+ 159 | |                       }
+ 160 | |                   }
+ 161 | |               }
+ 162 | |               setDragState(null);
+ 163 | |           };
+ 164 | |           window.addEventListener("pointermove", move);
+ 165 | |           window.addEventListener("pointerup", up);
+ 166 | |       };
+ 167 | |   
+ 168 | |       return { onTaskDragStart, onEventDragStart, dragState, setDragState };
+ 169 | `-> }
+     `----
+  help: Consider splitting it into smaller functions.
+
+  ! eslint(max-params): Function has too many parameters (5). Maximum allowed is 4.
+    ,-[src/screens/plan/use-drag-and-drop.ts:16:18]
+ 15 |     setInspectorState: React.Dispatch<React.SetStateAction<{ type: string, id: string } | null>>,
+ 16 |     createEvent: (task: AppTask, date: import("../../core/domain/models").DateString, start: number, duration: number, isAllDay?: boolean) => void
+    :                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 17 | ) {
+    `----
+  help: This rule enforces a maximum number of parameters allowed in function definitions.
+
+  ! eslint(complexity): method `toLocalTask` has a complexity of 23. Maximum allowed is 15.
+    ,-[src/core/sync/task-api/GoogleTasksAPI.ts:63:16]
+ 62 |     
+ 63 | ,->     toLocalTask(googleTask: gapi.client.tasks.Task, existing: AppTask | undefined = undefined): AppTask | { id: string; _deleted: boolean; updatedAt: number; } {
+ 64 | |           if (googleTask.deleted) {
+ 65 | |               return { id: existing?.id || googleTask.id || "", _deleted: true, updatedAt: new Date(googleTask.updated || 0).getTime() };
+ 66 | |           }
+ 67 | |           const id = existing?.id || (googleTask.notes || "").match(/Taskroot Task ID: (t[0-9a-zA-Z-]+)/)?.[1] || googleTask.id || "";
+ 68 | |           const p = googleTask.due?.split("T")[0].split("-");
+ 69 | |           const due: import("../../domain/models").DateString | undefined = p?.length === MAX_RETRIES ? `${Number(p[0])}-${Number(p[1])}-${Number(p[2])}` : undefined;
+ 70 | |           
+ 71 | |           const base = {
+ 72 | |               googleTaskId: googleTask.id || "", title: googleTask.title || "", notes: googleTask.notes || "",
+ 73 | |               status: googleTask.status === "completed" ? "done" as const : "todo" as const,
+ 74 | |               updatedAt: googleTask.updated ? new Date(googleTask.updated).getTime() : Date.now(),
+ 75 | |           };
+ 76 | |   
+ 77 | |           if (existing) return { ...existing, ...base, due: due || existing.due };
+ 78 | |           return {
+ 79 | |               id, ...base, priority: 1, tags: [], subtasks: [], parent_task: null, est: 0,
+ 80 | |               added: new Date().toISOString(), isDraft: false, due,
+ 81 | |           };
+ 82 | `->     }
+ 83 |     
+    `----
+
+  ! eslint(max-lines-per-function): The function `usePlanActions` has too many lines (107). Maximum allowed is 100.
+     ,-[src/screens/plan/use-plan-actions.ts:11:8]
+  10 |     
+  11 | ,-> export function usePlanActions(
+  12 | |       timelineDate: Date, 
+  13 | |       setInspectorState: React.Dispatch<React.SetStateAction<{ type: string, id: string } | null>>
+  14 | |   ) {
+  15 | |       const [, setTasks] = useTasks();
+  16 | |       const [events, setEvents] = useEvents();
+  17 | |       const [settings] = useSettings();
+  18 | |       const [calendars] = useCalendars();
+  19 | |   
+  20 | |       const createEvent = (task: AppTask, date: import("../../core/domain/models").DateString, start: number, duration: number, isAllDay = false) => {
+  21 | |           const id = `e${Date.now()}-${Math.random().toString(BASE_36).slice(2, MAX_DISPLAY_ITEMS)}`;
+  22 | |           const newEvent = {
+  23 | |               id,
+  24 | |               taskId: task.id,
+  25 | |               date,
+  26 | |               endDate: date,
+  27 | |               start,
+  28 | |               end: Math.min(HOURS_PER_DAY * MINUTES_IN_HOUR, start + duration),
+  29 | |               type: "plan",
+  30 | |               isAllDay,
+  31 | |               title: task.title,
+  32 | |           };
+  33 | |           setEvents((prev: AppEvent[]) => [...prev, newEvent]);
+  34 | |       };
+  35 | |   
+  36 | |       const onAddTask = (defaults: Partial<AppTask> = {}) => {
+  37 | |           const id = `t${Date.now()}`;
+  38 | |           setTasks((ts: AppTask[]) => [
+  39 | |               {
+  40 | |                   id,
+  41 | |                   title: "",
+  42 | |                   status: "todo",
+  43 | |                   priority: 1,
+  44 | |                   tags: [],
+  45 | |                   subtasks: [],
+  46 | |                   parent_task: null,
+  47 | |                   dependency: null,
+  48 | |                   est:
+  49 | |                       settings.defaultTaskDuration === 0 ||
+  50 | |                       settings.defaultTaskDuration === undefined
+  51 | |                           ? 0
+  52 | |                           : settings.defaultTaskDuration,
+  53 | |                   added: new Date().toISOString(),
+  54 | |                   isDraft: true,
+  55 | |                   ...defaults,
+  56 | |               },
+  57 | |               ...ts,
+  58 | |           ]);
+  59 | |           setInspectorState({ type: "task", id });
+  60 | |       };
+  61 | |   
+  62 | |       const onAddEvent = (dateArg: Date | string, startArg?: number, endArg?: number) => {
+  63 | |           const d = dateArg instanceof Date ? dateArg : timelineDate;
+  64 | |           const isAllDay = typeof startArg !== "number";
+  65 | |           const start = typeof startArg === "number" ? startArg : ID_LENGTH * MINUTES_IN_HOUR;
+  66 | |           const end = typeof endArg === "number" ? endArg : start + MINUTES_IN_HOUR;
+  67 | |           const id = `e${Date.now()}-${Math.random().toString(BASE_36).slice(2, MAX_DISPLAY_ITEMS)}`;
+  68 | |           setEvents((es: AppEvent[]) => [
+  69 | |               ...es,
+  70 | |               {
+  71 | |                   id,
+  72 | |                   title: "",
+  73 | |                   date: ymd(d),
+  74 | |                   endDate: ymd(d),
+  75 | |                   start,
+  76 | |                   end,
+  77 | |                   type: isAllDay ? "info" : "busy",
+  78 | |                   isAllDay,
+  79 | |                   isDraft: true,
+  80 | |               },
+  81 | |           ]);
+  82 | |           setInspectorState({ type: "event", id });
+  83 | |       };
+  84 | |   
+  85 | |       const onResizeEvent = (id: string, start: number, end: number) => {
+  86 | |           const ev = events.find((e: AppEvent) => e.id === id);
+  87 | |           if (ev) {
+  88 | |               const calId = ev.googleCalendarId || "primary";
+  89 | |               const cal = calendars.find((c: { id: string; accessRole?: string }) => c.id === calId);
+  90 | |               if (cal && (cal.accessRole === "reader" || cal.accessRole === "freeBusyReader")) return;
+  91 | |           }
+  92 | |           setEvents((prev: AppEvent[]) =>
+  93 | |               prev.map((e: AppEvent) => (e.id === id ? { ...e, start, end } : e)),
+  94 | |           );
+  95 | |       };
+  96 | |   
+  97 | |       const onMoveEvent = (id: string, start: number, end: number) => {
+  98 | |           const ev = events.find((e: AppEvent) => e.id === id);
+  99 | |           if (ev) {
+ 100 | |               const calId = ev.googleCalendarId || "primary";
+ 101 | |               const cal = calendars.find((c: { id: string; accessRole?: string }) => c.id === calId);
+ 102 | |               if (cal && (cal.accessRole === "reader" || cal.accessRole === "freeBusyReader")) return;
+ 103 | |           }
+ 104 | |           setEvents((prev: AppEvent[]) =>
+ 105 | |               prev.map((e: AppEvent) => (e.id === id ? { ...e, start, end } : e)),
+ 106 | |           );
+ 107 | |       };
+ 108 | |   
+ 109 | |       const onDeleteTask = (id: string) => {
+ 110 | |           setTasks((ts: AppTask[]) => ts.filter((t: AppTask) => t.id !== id));
+ 111 | |           setEvents((es: AppEvent[]) =>
+ 112 | |               es.filter((e: AppEvent) => e.taskId !== id),
+ 113 | |           );
+ 114 | |       };
+ 115 | |   
+ 116 | |       return { createEvent, onAddTask, onAddEvent, onResizeEvent, onMoveEvent, onDeleteTask };
+ 117 | `-> }
+     `----
+  help: Consider splitting it into smaller functions.
+
+  ! eslint(max-params): Arrow function has too many parameters (5). Maximum allowed is 4.
+    ,-[src/screens/plan/use-plan-actions.ts:20:25]
+ 19 | 
+ 20 |     const createEvent = (task: AppTask, date: import("../../core/domain/models").DateString, start: number, duration: number, isAllDay = false) => {
+    :                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 21 |         const id = `e${Date.now()}-${Math.random().toString(BASE_36).slice(2, MAX_DISPLAY_ITEMS)}`;
+    `----
+  help: This rule enforces a maximum number of parameters allowed in function definitions.
+
+  ! eslint(max-lines-per-function): The function `SettingsScreen` has too many lines (197). Maximum allowed is 100.
+     ,-[src/screens/settings/SettingsScreen.tsx:15:8]
+  14 |     
+  15 | ,-> export function SettingsScreen() {
+  16 | |       const [activeTab, setActiveTab] = useState("general");
+  17 | |       const [settings, setSettings] = useSettings();
+  18 | |       const [searchQuery, setSearchQuery] = useState("");
+  19 | |   
+  20 | |       const fuse = useMemo(
+  21 | |           () =>
+  22 | |               new Fuse(SETTINGS_SCHEMA, {
+  23 | |                   keys: ["label", "description", "keywords", "section"],
+  24 | |                   threshold: 0.3,
+  25 | |               }),
+  26 | |           [],
+  27 | |       );
+  28 | |   
+  29 | |       const displayedSettings = useMemo(() => {
+  30 | |           let matches = SETTINGS_SCHEMA;
+  31 | |           if (searchQuery.trim()) {
+  32 | |               matches = fuse.search(searchQuery).map((res) => res.item);
+  33 | |           } else {
+  34 | |               matches = SETTINGS_SCHEMA.filter((s) => s.tab === activeTab);
+  35 | |           }
+  36 | |           return matches.filter((s) => !s.showIf || s.showIf(settings));
+  37 | |       }, [searchQuery, activeTab, fuse, settings]);
+  38 | |   
+  39 | |       const settingsBySection = useMemo(() => {
+  40 | |           const grouped: Record<string, typeof SETTINGS_SCHEMA> = {};
+  41 | |           for (const s of displayedSettings) {
+  42 | |               if (!grouped[s.section]) grouped[s.section] = [];
+  43 | |               grouped[s.section].push(s);
+  44 | |           }
+  45 | |           return grouped;
+  46 | |       }, [displayedSettings]);
+  47 | |   
+  48 | |       const renderSetting = (setting: import('../../core/store/settingsSchema').SettingSchema) => {
+  49 | |           const currentVal = Reflect.get(settings, setting.id);
+  50 | |           const defaultValue = Reflect.get(setting, "defaultValue");
+  51 | |           const val = currentVal !== undefined ? currentVal : defaultValue;
+  52 | |   
+  53 | |           const isComplex = setting.type === "custom";
+  54 | |           const Renderer = SETTING_RENDERERS[setting.type];
+  55 | |   
+  56 | |           return (
+  57 | |               <button
+  58 | |                   type="button"
+  59 | |                   className="settings-section"
+  60 | |                   key={setting.id}
+  61 | |                   onClick={(e) => {
+  62 | |                       if (setting.type === "checkbox") {
+  63 | |                           const target = e.target;
+  64 | |                           if (target instanceof Element && (target.closest('button') || target.closest('.toggle-switch'))) {
+  65 | |                               return;
+  66 | |                           }
+  67 | |                           setSettings((prev: import('../../core/store/settingsSchema').AppSettings) => {
+  68 | |                               const defaultVal = Reflect.get(setting, "defaultValue");
+  69 | |                               const prevVal = Reflect.get(prev, setting.id) !== undefined ? Reflect.get(prev, setting.id) : defaultVal;
+  70 | |                               return { ...prev, [setting.id]: !prevVal };
+  71 | |                           });
+  72 | |                       }
+  73 | |                   }}
+  74 | |                   onKeyDown={(e) => {
+  75 | |                       if (e.key === "Enter" || e.key === " ") {
+  76 | |                           e.preventDefault();
+  77 | |                           if (setting.type === "checkbox") {
+  78 | |                                   setSettings((prev: import('../../core/store/settingsSchema').AppSettings) => {
+  79 | |                                       const defaultVal = Reflect.get(setting, "defaultValue");
+  80 | |                                       const prevVal = Reflect.get(prev, setting.id) !== undefined ? Reflect.get(prev, setting.id) : defaultVal;
+  81 | |                                       return { ...prev, [setting.id]: !prevVal };
+  82 | |                                   });
+  83 | |                           }
+  84 | |                       }
+  85 | |                   }}
+  86 | |                   style={{
+  87 | |                       marginBottom: setting.danger ? "32px" : "12px",
+  88 | |                       display: "flex",
+  89 | |                       flexDirection: isComplex ? "column" : "row",
+  90 | |                       justifyContent: "space-between",
+  91 | |                       alignItems: isComplex ? "flex-start" : "center",
+  92 | |                       gap: isComplex ? "8px" : "16px",
+  93 | |                       cursor: setting.type === "checkbox" ? "pointer" : "default",
+  94 | |                       background: "none",
+  95 | |                       border: "none",
+  96 | |                       padding: 0,
+  97 | |                       font: "inherit",
+  98 | |                       color: "inherit",
+  99 | |                       textAlign: "left",
+ 100 | |                       width: "100%",
+ 101 | |                   }}
+ 102 | |               >
+ 103 | |                   <div style={{ display: "flex", flexDirection: "column", gap: "4px", flex: 1 }}>
+ 104 | |                       <div className="settings-section-title" style={{ color: setting.danger ? "var(--red)" : undefined }}>
+ 105 | |                           {setting.label} {setting.beta && <span className="status-pill status-nextup">BETA</span>}
+ 106 | |                       </div>
+ 107 | |                       {setting.description && (
+ 108 | |                           <div className="settings-section-desc dim" style={{ marginBottom: 0 }}>
+ 109 | |                               {setting.description}
+ 110 | |                           </div>
+ 111 | |                       )}
+ 112 | |                   </div>
+ 113 | |                   <div
+ 114 | |                       className="settings-section-actions"
+ 115 | |                       style={{
+ 116 | |                           margin: 0,
+ 117 | |                           flexShrink: 0,
+ 118 | |                           display: setting.danger ? "flex" : "block",
+ 119 | |                           justifyContent: setting.danger ? "flex-end" : "flex-start",
+ 120 | |                       }}
+ 121 | |                   >
+ 122 | |                       {Renderer && <Renderer setting={setting} val={val} settings={settings} setSettings={setSettings} />}
+ 123 | |                   </div>
+ 124 | |               </button>
+ 125 | |           );
+ 126 | |       };
+ 127 | |   
+ 128 | |       return (
+ 129 | |           <>
+ 130 | |               <div className="main settings-main">
+ 131 | |                   <div
+ 132 | |                       className="task-pane settings-sidebar"
+ 133 | |                       style={{ display: "flex", flexDirection: "column" }}
+ 134 | |                   >
+ 135 | |                       <div className="task-pane-hd">
+ 136 | |                           <SearchBar
+ 137 | |                               value={searchQuery}
+ 138 | |                               onChange={setSearchQuery}
+ 139 | |                           />
+ 140 | |                       </div>
+ 141 | |   
+ 142 | |                       {!searchQuery && (
+ 143 | |                           <div className="task-list">
+ 144 | |                               {SETTINGS_TABS.map((tab) => (
+ 145 | |                                   <div
+ 146 | |                                       key={tab.id}
+ 147 | |                                       role="tab"
+ 148 | |                                       tabIndex={0}
+ 149 | |                                       className={`task-row ${activeTab === tab.id ? "is-active" : ""}`}
+ 150 | |                                       onClick={() => setActiveTab(tab.id)}
+ 151 | |                                       onKeyDown={(e) => {
+ 152 | |                                           if (e.key === "Enter" || e.key === " ") {
+ 153 | |                                               e.preventDefault();
+ 154 | |                                               setActiveTab(tab.id);
+ 155 | |                                           }
+ 156 | |                                       }}
+ 157 | |                                       style={{ cursor: "pointer" }}
+ 158 | |                                       data-cuelume-hover="tick"
+ 159 | |                                       data-cuelume-toggle
+ 160 | |                                   >
+ 161 | |                                       <div className="task-row-title">
+ 162 | |                                           {tab.label}
+ 163 | |                                       </div>
+ 164 | |                                   </div>
+ 165 | |                               ))}
+ 166 | |                           </div>
+ 167 | |                       )}
+ 168 | |                   </div>
+ 169 | |   
+ 170 | |                   <div className="right-pane settings-content">
+ 171 | |                       <div className="settings-detail-pane">
+ 172 | |                           {Object.entries(settingsBySection).map(
+ 173 | |                               ([section, settingsList]) => (
+ 174 | |                                   <div
+ 175 | |                                       key={section}
+ 176 | |                                       style={{ marginBottom: "32px" }}
+ 177 | |                                   >
+ 178 | |                                       <h3
+ 179 | |                                           style={{
+ 180 | |                                               margin: "0 0 16px 0",
+ 181 | |                                               fontSize: "18px",
+ 182 | |                                               color: "var(--fg)",
+ 183 | |                                               borderBottom:
+ 184 | |                                                   "1px solid var(--border)",
+ 185 | |                                               paddingBottom: "8px",
+ 186 | |                                           }}
+ 187 | |                                       >
+ 188 | |                                           {section}
+ 189 | |                                       </h3>
+ 190 | |                                       {settingsList.map(renderSetting)}
+ 191 | |                                   </div>
+ 192 | |                               ),
+ 193 | |                           )}
+ 194 | |   
+ 195 | |                           {displayedSettings.length === 0 && (
+ 196 | |                               <div
+ 197 | |                                   style={{
+ 198 | |                                       padding: "32px",
+ 199 | |                                       textAlign: "center",
+ 200 | |                                       color: "var(--fg-dim)",
+ 201 | |                                   }}
+ 202 | |                               >
+ 203 | |                                   No settings found for "{searchQuery}".
+ 204 | |                               </div>
+ 205 | |                           )}
+ 206 | |                       </div>
+ 207 | |                   </div>
+ 208 | |               </div>
+ 209 | |           </>
+ 210 | |       );
+ 211 | `-> }
+     `----
+  help: Consider splitting it into smaller functions.
+
+  ! eslint(max-lines-per-function): The function `DLogRow` has too many lines (102). Maximum allowed is 100.
+     ,-[src/screens/do/distraction-log/row.tsx:19:8]
+  18 |     
+  19 | ,-> export function DLogRow({
+  20 | |       row,
+  21 | |       columns,
+  22 | |       statuses,
+  23 | |       editingCell,
+  24 | |       setEditingCell,
+  25 | |       statusEditor,
+  26 | |       setStatusEditor,
+  27 | |       updateRow,
+  28 | |       deleteRow,
+  29 | |       addStatus,
+  30 | |   }: DLogRowProps) {
+  31 | |       return (
+  32 | |           <div className="dlog-row">
+  33 | |               {columns.map((col: DistractionColumn) => {
+  34 | |                   const isEditing =
+  35 | |                       editingCell?.rowId === row.id &&
+  36 | |                       editingCell?.colId === col.id;
+  37 | |                   const val = typeof row[col.id] === "string" ? row[col.id] : undefined;
+  38 | |                   return (
+  39 | |                       <button
+  40 | |                           type="button"
+  41 | |                           key={col.id}
+  42 | |                           className={`dlog-cell dlog-cell-${col.type} ${isEditing ? "is-editing" : ""}`}
+  43 | |                           style={{ width: col.width, border: "none", background: "none", font: "inherit", color: "inherit", padding: 0, textAlign: "left", cursor: "text" }}
+  44 | |                           onClick={() => {
+  45 | |                               if (col.type === "text")
+  46 | |                                   setEditingCell({
+  47 | |                                       rowId: row.id,
+  48 | |                                       colId: col.id,
+  49 | |                                   });
+  50 | |                               else if (col.type === "status")
+  51 | |                                   setStatusEditor(row.id);
+  52 | |                           }}
+  53 | |                       >
+  54 | |                           {col.type === "text" &&
+  55 | |                               (isEditing ? (
+  56 | |                                   <input
+  57 | |                                       ref={(r) => { if (r && isEditing) r.focus(); }}
+  58 | |                                       className="dlog-cell-input"
+  59 | |                                       defaultValue={typeof val === 'string' ? val : ""}
+  60 | |                                       onBlur={(e) => {
+  61 | |                                           updateRow(row.id, {
+  62 | |                                               [col.id]: e.target.value,
+  63 | |                                           });
+  64 | |                                           setEditingCell(null);
+  65 | |                                       }}
+  66 | |                                       onKeyDown={(e) => {
+  67 | |                                           if (e.key === "Enter" && e.currentTarget instanceof HTMLElement) {
+  68 | |                                               e.currentTarget.blur();
+  69 | |                                           }
+  70 | |                                           if (e.key === "Escape" && e.currentTarget instanceof HTMLElement) {
+  71 | |                                               e.currentTarget.blur();
+  72 | |                                               setEditingCell(null);
+  73 | |                                           }
+  74 | |                                       }}
+  75 | |                                   />
+  76 | |                               ) : (
+  77 | |                                   typeof val === 'string' && val ? val : (
+  78 | |                                       <span className="dim">click to edit</span>
+  79 | |                                   )
+  80 | |                               ))}
+  81 | |                           {col.type === "status" && (
+  82 | |                               <StatusCell
+  83 | |                                   value={typeof val === 'string' ? val : undefined}
+  84 | |                                   statuses={statuses}
+  85 | |                                   open={statusEditor === row.id}
+  86 | |                                   onClose={() => setStatusEditor(null)}
+  87 | |                                   onChange={(v: string) => {
+  88 | |                                       updateRow(row.id, { [col.id]: v });
+  89 | |                                       setStatusEditor(null);
+  90 | |                                   }}
+  91 | |                                   onAdd={(label: string, color: string) => {
+  92 | |                                       const newId = addStatus(label, color);
+  93 | |                                       if (newId)
+  94 | |                                           updateRow(row.id, { [col.id]: newId });
+  95 | |                                   }}
+  96 | |                               />
+  97 | |                           )}
+  98 | |                           {col.type === "datetime" && (
+  99 | |                               <span className="dlog-datetime">
+ 100 | |                                   {formatDateTime(typeof val === 'string' ? val : undefined)}
+ 101 | |                               </span>
+ 102 | |                           )}
+ 103 | |                       </button>
+ 104 | |                   );
+ 105 | |               })}
+ 106 | |               <div className="dlog-cell dlog-cell-actions">
+ 107 | |                   <button
+ 108 | |                       className="dlog-row-x"
+ 109 | |                       onClick={(e) => {
+ 110 | |                           e.stopPropagation();
+ 111 | |                           deleteRow(row.id);
+ 112 | |                       }}
+ 113 | |                       title="Delete row"
+ 114 | |                   >
+ 115 | |                       ×
+ 116 | |                   </button>
+ 117 | |               </div>
+ 118 | |           </div>
+ 119 | |       );
+ 120 | `-> }
+     `----
+  help: Consider splitting it into smaller functions.
+
+  ! eslint(max-lines-per-function): The function `MiniTrackerScreen` has too many lines (101). Maximum allowed is 100.
+     ,-[src/screens/minitracker/MiniTrackerScreen.tsx:135:8]
+ 134 |     
+ 135 | ,-> export function MiniTrackerScreen() {
+ 136 | |       const [state, setState] = useStopwatch();
+ 137 | |       const [tasks] = useTasks();
+ 138 | |       const [settings] = useSettings();
+ 139 | |       const [now, setNow] = useState(Date.now());
+ 140 | |       const [isHovered, setIsHovered] = useState(false);
+ 141 | |       const [isDimmed, setIsDimmed] = useState(false);
+ 142 | |       const audioRef = React.useRef<HTMLAudioElement | null>(null);
+ 143 | |   
+ 144 | |       useEffect(() => {
+ 145 | |           document.documentElement.style.background = "transparent";
+ 146 | |           document.body.style.background = "transparent";
+ 147 | |   
+ 148 | |           if (!audioRef.current) {
+ 149 | |               audioRef.current = new Audio("/wine-glass-alarm.ogg");
+ 150 | |           }
+ 151 | |   
+ 152 | |           return () => {
+ 153 | |               document.documentElement.style.background = "";
+ 154 | |               document.body.style.background = "";
+ 155 | |           };
+ 156 | |       }, []);
+ 157 | |   
+ 158 | |       useEffect(() => {
+ 159 | |           let raf: number;
+ 160 | |           const loop = () => {
+ 161 | |               setNow(Date.now());
+ 162 | |               raf = requestAnimationFrame(loop);
+ 163 | |           };
+ 164 | |           raf = requestAnimationFrame(loop);
+ 165 | |           return () => cancelAnimationFrame(raf);
+ 166 | |       }, []);
+ 167 | |   
+ 168 | |       useEffect(() => {
+ 169 | |           if (!state.isBreak || !state.breakStartedAt || state.breakSoundPlayed) return;
+ 170 | |           if (Date.now() - state.breakStartedAt < state.breakAllowedMs) return;
+ 171 | |   
+ 172 | |           audioRef.current?.play().catch((e: unknown) => console.error("Sound play failed", e));
+ 173 | |           setState((s: { breakSoundPlayed?: boolean } | unknown) => ({ ...(s && typeof s === 'object' ? s : {}), breakSoundPlayed: true }));
+ 174 | |       }, [
+ 175 | |           now,
+ 176 | |           state.isBreak,
+ 177 | |           state.breakStartedAt,
+ 178 | |           state.breakAllowedMs,
+ 179 | |           state.breakSoundPlayed,
+ 180 | |           setState,
+ 181 | |       ]);
+ 182 | |   
+ 183 | |       const activeTask = tasks?.find((t: import('../../core/domain/models').AppTask) => t.status === "doing");
+ 184 | |       const clockStyle = settings.clockStyle || "counter";
+ 185 | |   
+ 186 | |       const running = state.runningSince != null;
+ 187 | |       const currentMs =
+ 188 | |           state.elapsed +
+ 189 | |           (running && !state.isBreak && state.runningSince ? now - state.runningSince : 0);
+ 190 | |   
+ 191 | |       const content = getClockContent({
+ 192 | |           activeTask,
+ 193 | |           allowStopwatchWithoutTask: settings.allowStopwatchWithoutTask ?? false,
+ 194 | |           clockStyle,
+ 195 | |           currentMs,
+ 196 | |           state,
+ 197 | |           running
+ 198 | |       });
+ 199 | |   
+ 200 | |   
+ 201 | |   
+ 202 | |       useMiniTrackerKeybindings(settings.keybindingRestoreApp, setIsDimmed);
+ 203 | |   
+ 204 | |       const baseOpacity =
+ 205 | |           settings.trackerOpacity !== undefined
+ 206 | |               ? settings.trackerOpacity / 100
+ 207 | |               : OPACITY_HOVER;
+ 208 | |       const hoverReduction =
+ 209 | |           settings.trackerHoverReduction !== undefined
+ 210 | |               ? settings.trackerHoverReduction / 100
+ 211 | |               : OPACITY_DIM;
+ 212 | |       const dimmedOpacity =
+ 213 | |           settings.trackerDimmedOpacity !== undefined
+ 214 | |               ? settings.trackerDimmedOpacity / 100
+ 215 | |               : OPACITY_DIM;
+ 216 | |   
+ 217 | |       let currentOpacity = baseOpacity;
+ 218 | |       if (isDimmed) {
+ 219 | |           currentOpacity = dimmedOpacity;
+ 220 | |       } else if (isHovered) {
+ 221 | |           currentOpacity = Math.max(0, baseOpacity - hoverReduction);
+ 222 | |       }
+ 223 | |   
+ 224 | |       return (
+ 225 | |           <div
+ 226 | |               onDoubleClick={handleDoubleClick}
+ 227 | |               onMouseEnter={() => setIsHovered(true)}
+ 228 | |               onMouseLeave={() => setIsHovered(false)}
+ 229 | |               style={getMiniTrackerContainerStyle(currentOpacity, settings.trackerShowBorder ?? true)}
+ 230 | |               title="Double-click to restore main window"
+ 231 | |           >
+ 232 | |               {content}
+ 233 | |           </div>
+ 234 | |       );
+ 235 | `-> }
+     `----
+  help: Consider splitting it into smaller functions.
+
+  ! eslint(max-lines-per-function): The function `StatusCell` has too many lines (120). Maximum allowed is 100.
+     ,-[src/screens/do/distraction-log/status-cell.tsx:19:8]
+  18 |     
+  19 | ,-> export function StatusCell({
+  20 | |       value,
+  21 | |       statuses,
+  22 | |       open,
+  23 | |       onClose,
+  24 | |       onChange,
+  25 | |       onAdd,
+  26 | |   }: StatusCellProps) {
+  27 | |       const current = statuses.find((s) => s.id === value);
+  28 | |       const popRef = React.useRef<HTMLDivElement>(null);
+  29 | |       const [addingStatus, setAddingStatus] = React.useState(false);
+  30 | |       const [newLabel, setNewLabel] = React.useState("");
+  31 | |       const [newColor, setNewColor] = React.useState("var(--tag-purple)");
+  32 | |   
+  33 | |       React.useEffect(() => {
+  34 | |           if (!open) return;
+  35 | |           const onDoc = (e: PointerEvent) => {
+  36 | |               if (popRef.current && !popRef.current.contains(e.target instanceof Node ? e.target : null)) onClose();
+  37 | |           };
+  38 | |           setTimeout(() => document.addEventListener("pointerdown", onDoc), 0);
+  39 | |           return () => document.removeEventListener("pointerdown", onDoc);
+  40 | |       }, [open, onClose]);
+  41 | |   
+  42 | |       return (
+  43 | |           <>
+  44 | |               <span
+  45 | |                   className="status-chip"
+  46 | |                   style={
+  47 | |                       current
+  48 | |                           ? {
+  49 | |                                 background: hexAlpha(current.color, OPACITY_FAINT),
+  50 | |                                 color: current.color,
+  51 | |                                 borderColor: hexAlpha(current.color, OPACITY_MUTED),
+  52 | |                             }
+  53 | |                           : { color: "var(--fg-dim)" }
+  54 | |                   }
+  55 | |               >
+  56 | |                   {current ? current.label : <span className="dim">select…</span>}
+  57 | |               </span>
+  58 | |               {open && (
+  59 | |                   <div
+  60 | |                       className="dlog-status-pop"
+  61 | |                       ref={popRef}
+  62 | |                       onPointerDown={(e) => e.stopPropagation()} // eslint-disable-line jsx-a11y/no-static-element-interactions
+  63 | |                   >
+  64 | |                       {statuses.map((s: DistractionStatus) => (
+  65 | |                           <button
+  66 | |                               key={s.id}
+  67 | |                               className="dlog-status-opt"
+  68 | |                               onClick={() => onChange(s.id)}
+  69 | |                           >
+  70 | |                               <span
+  71 | |                                   className="status-chip"
+  72 | |                                   style={{
+  73 | |                                       background: hexAlpha(s.color, OPACITY_FAINT),
+  74 | |                                       color: s.color,
+  75 | |                                       borderColor: hexAlpha(s.color, OPACITY_MUTED),
+  76 | |                                   }}
+  77 | |                               >
+  78 | |                                   {s.label}
+  79 | |                               </span>
+  80 | |                           </button>
+  81 | |                       ))}
+  82 | |                       <div className="dlog-status-sep">─ ─ ─ ─ ─ ─ ─ ─ ─</div>
+  83 | |                       {addingStatus ? (
+  84 | |                           <div className="dlog-status-new">
+  85 | |                               <input
+  86 | |                                   ref={(r) => { if (r && addingStatus) r.focus(); }}
+  87 | |                                   className="dlog-status-new-input"
+  88 | |                                   placeholder="status name…"
+  89 | |                                   value={newLabel}
+  90 | |                                   onChange={(e) => setNewLabel(e.target.value)}
+  91 | |                                   onKeyDown={(e) => {
+  92 | |                                       if (e.key === "Enter") {
+  93 | |                                           onAdd(newLabel.trim(), newColor);
+  94 | |                                           setNewLabel("");
+  95 | |                                           setAddingStatus(false);
+  96 | |                                       } else if (e.key === "Escape") {
+  97 | |                                           setAddingStatus(false);
+  98 | |                                           setNewLabel("");
+  99 | |                                       }
+ 100 | |                                   }}
+ 101 | |                               />
+ 102 | |                               <div className="dlog-status-colors">
+ 103 | |                                   {[
+ 104 | |                                       "var(--tag-red)",
+ 105 | |                                       "var(--tag-yellow)",
+ 106 | |                                       "var(--tag-green)",
+ 107 | |                                       "var(--tag-purple)",
+ 108 | |                                       "var(--tag-gold)",
+ 109 | |                                       "#9bb0d4",
+ 110 | |                                   ].map((c) => (
+ 111 | |                                       <button
+ 112 | |                                           key={c}
+ 113 | |                                           className={`dlog-status-color ${newColor === c ? "is-selected" : ""}`}
+ 114 | |                                           style={{
+ 115 | |                                               background: hexAlpha(c, OPACITY_SELECTED_BG),
+ 116 | |                                               borderColor: c,
+ 117 | |                                               color: c,
+ 118 | |                                           }}
+ 119 | |                                           onClick={() => setNewColor(c)}
+ 120 | |                                       >
+ 121 | |                                           ●
+ 122 | |                                       </button>
+ 123 | |                                   ))}
+ 124 | |                               </div>
+ 125 | |                           </div>
+ 126 | |                       ) : (
+ 127 | |                           <button
+ 128 | |                               className="dlog-status-opt dlog-status-add"
+ 129 | |                               onClick={() => setAddingStatus(true)}
+ 130 | |                           >
+ 131 | |                               <span className="bracket">+</span> add status type
+ 132 | |                           </button>
+ 133 | |                       )}
+ 134 | |                   </div>
+ 135 | |               )}
+ 136 | |           </>
+ 137 | |       );
+ 138 | `-> }
+     `----
+  help: Consider splitting it into smaller functions.
+
+  ! eslint(complexity): function `InspectorPane` has a complexity of 23. Maximum allowed is 15.
+     ,-[src/components/inspector-pane/index.tsx:22:8]
+  21 |     
+  22 | ,-> export function InspectorPane({
+  23 | |       inspectorState,
+  24 | |       onClose,
+  25 | |       tasks,
+  26 | |       setTasks,
+  27 | |       events,
+  28 | |       setEvents,
+  29 | |   }: InspectorPaneProps) {
+  30 | |       const paneRef = React.useRef<HTMLDivElement>(null);
+  31 | |       const [calendars] = useCalendars();
+  32 | |   
+  33 | |       const [activeState, setActiveState] = React.useState<{ type: string; id: string } | null>(null);
+  34 | |       React.useEffect(() => {
+  35 | |           if (inspectorState) setActiveState(inspectorState);
+  36 | |       }, [inspectorState]);
+  37 | |   
+  38 | |       const currentState = inspectorState || activeState;
+  39 | |       const currentTask = currentState?.type === "task" ? tasks.find((t) => t.id === currentState.id) : undefined;
+  40 | |       const currentEvent = currentState?.type === "event" ? (events.find((e) => e.id === currentState.id) || events.find((e) => e.id === currentState.id.split("_")[0])) : undefined;
+  41 | |       const currentItem = currentTask || currentEvent || null;
+  42 | |       const isCurrentTask = !!currentTask;
+  43 | |   
+  44 | |       const isReadOnlyCalendar = React.useMemo(() => {
+  45 | |           if (!currentEvent) return false;
+  46 | |           const calId = currentEvent.googleCalendarId || "primary";
+  47 | |           const cal = calendars.find((c) => c.id === calId);
+  48 | |           return cal && (cal.accessRole === "reader" || cal.accessRole === "freeBusyReader");
+  49 | |       }, [currentEvent, calendars]);
+  50 | |   
+  51 | |       const title = getInspectorTitle(currentTask, currentEvent, tasks);
+  52 | |       const isOpen = !!(inspectorState && currentItem);
+  53 | |   
+  54 | |       const updateTask = React.useCallback((id: string, updates: Partial<AppTask>) =>
+  55 | |           setTasks((ts) => ts.map((t) => t.id === id ? { ...t, ...updates, isDraft: false } : t)), [setTasks]);
+  56 | |   
+  57 | |       const updateEvent = React.useCallback((id: string, updates: Partial<AppEvent>) =>
+  58 | |           setEvents((es) => es.map((e) => e.id === id ? { ...e, ...updates, isDraft: false } : e)), [setEvents]);
+  59 | |   
+  60 | |       const handleTitleChange = React.useCallback((newTitle: string) => {
+  61 | |           if (!currentItem) return;
+  62 | |           if (isCurrentTask) updateTask(currentItem.id, { title: newTitle });
+  63 | |           else updateEvent(currentItem.id, { title: newTitle });
+  64 | |       }, [currentItem, isCurrentTask, updateTask, updateEvent]);
+  65 | |   
+  66 | |       const handleDescChange = React.useCallback((desc: string) => {
+  67 | |           if (isReadOnlyCalendar || !currentItem) return;
+  68 | |           if (isCurrentTask) updateTask(currentItem.id, { description: desc });
+  69 | |           else updateEvent(currentItem.id, { description: desc });
+  70 | |       }, [currentItem, isCurrentTask, isReadOnlyCalendar, updateTask, updateEvent]);
+  71 | |   
+  72 | |       const onPaneDelete = React.useCallback(() => {
+  73 | |           if (!currentItem) return;
+  74 | |           if (isCurrentTask) {
+  75 | |               setTasks((ts) => ts.filter((t) => t.id !== currentItem.id));
+  76 | |               setEvents((es) => es.filter((e) => e.taskId !== currentItem.id));
+  77 | |           } else {
+  78 | |               setEvents((es) => es.filter((e) => e.id !== currentItem.id));
+  79 | |           }
+  80 | |           onClose();
+  81 | |       }, [currentItem, isCurrentTask, setTasks, setEvents, onClose]);
+  82 | |   
+  83 | |       const onPaneClose = React.useCallback(() => {
+  84 | |           if (!(inspectorState && currentItem && currentItem.isDraft)) {
+  85 | |               onClose();
+  86 | |               return;
+  87 | |           }
+  88 | |   
+  89 | |           if (isCurrentTask) {
+  90 | |               setTasks((ts) => {
+  91 | |                   const t = ts.find((x) => x.id === currentItem.id);
+  92 | |                   if (t && t.isDraft) {
+  93 | |                       setEvents((es) => es.filter((e) => e.taskId !== currentItem.id));
+  94 | |                       return ts.filter((x) => x.id !== currentItem.id);
+  95 | |                   }
+  96 | |                   return ts;
+  97 | |               });
+  98 | |           } else {
+  99 | |               setEvents((es) => {
+ 100 | |                   const e = es.find((x) => x.id === currentItem.id);
+ 101 | |                   if (e && e.isDraft) return es.filter((x) => x.id !== currentItem.id);
+ 102 | |                   return es;
+ 103 | |               });
+ 104 | |           }
+ 105 | |           onClose();
+ 106 | |       }, [inspectorState, currentItem, isCurrentTask, setTasks, setEvents, onClose]);
+ 107 | |   
+ 108 | |   
+ 109 | |   
+ 110 | |       React.useEffect(() => {
+ 111 | |           function handleClickOutside(e: PointerEvent) {
+ 112 | |               if (
+ 113 | |                   inspectorState &&
+ 114 | |                   paneRef.current &&
+ 115 | |                   !paneRef.current.contains(e.target instanceof Node ? e.target : null)
+ 116 | |               ) {
+ 117 | |                   onPaneClose();
+ 118 | |               }
+ 119 | |           }
+ 120 | |           document.addEventListener("pointerdown", handleClickOutside);
+ 121 | |           return () => document.removeEventListener("pointerdown", handleClickOutside);
+ 122 | |       }, [inspectorState, onPaneClose]);
+ 123 | |   
+ 124 | |       return (
+ 125 | |           <div
+ 126 | |               ref={paneRef}
+ 127 | |               className={`inspector-pane ${isOpen ? "is-open" : ""}`}
+ 128 | |           >
+ 129 | |               {currentItem && (
+ 130 | |                   <React.Fragment key={currentItem.id}>
+ 131 | |                       <InspectorPaneHeader handleClose={onPaneClose} handleDelete={onPaneDelete} isReadOnlyCalendar={isReadOnlyCalendar ?? false} />
+ 132 | |                       <div className="inspector-body" style={{ paddingTop: 0 }}>
+ 133 | |                           <div
+ 134 | |                               className="inspector-field"
+ 135 | |                               style={{ marginTop: "24px", marginBottom: "4px" }}
+ 136 | |                           >
+ 137 | |                               <TitleInput
+ 138 | |                                   value={title || ""}
+ 139 | |                                   onChange={handleTitleChange}
+ 140 | |                                   disabled={Boolean(currentEvent?.taskId) || isReadOnlyCalendar}
+ 141 | |                                   onEnter={onPaneClose}
+ 142 | |                                   style={{
+ 143 | |                                       fontSize: "24px",
+ 144 | |                                       fontWeight: "normal",
+ 145 | |                                       border: "none",
+ 146 | |                                       background: "transparent",
+ 147 | |                                       padding: "0",
+ 148 | |                                       outline: "none",
+ 149 | |                                       width: "100%",
+ 150 | |                                       color: "var(--fg)",
+ 151 | |                                   }}
+ 152 | |                                   autoFocus={Boolean(currentTask?.isDraft)}
+ 153 | |                               />
+ 154 | |                           </div>
+ 155 | |                           <div
+ 156 | |                               className="inspector-field"
+ 157 | |                               style={{
+ 158 | |                                   flexDirection: "column",
+ 159 | |                                   alignItems: "flex-start",
+ 160 | |                               }}
+ 161 | |                           >
+ 162 | |                               <DescriptionInput
+ 163 | |                                   value={(currentEvent?.description) || ""}
+ 164 | |                                   onChange={handleDescChange}
+ 165 | |                               />
+ 166 | |                           </div>
+ 167 | |   
+ 168 | |                           {isReadOnlyCalendar && (
+ 169 | |                               <div className="inspector-field" style={{color: "var(--tag-red)", fontSize: "0.85em", marginTop: "8px"}}>
+ 170 | |                                   This event belongs to a read-only calendar and cannot be modified.
+ 171 | |                               </div>
+ 172 | |                           )}
+ 173 | |   
+ 174 | |                           {currentTask ? (
+ 175 | |                               <TaskInspector 
+ 176 | |                                   task={currentTask} 
+ 177 | |                                   updateTask={updateTask} 
+ 178 | |                               />
+ 179 | |                           ) : currentEvent ? (
+ 180 | |                               <EventInspector 
+ 181 | |                                   event={currentEvent} 
+ 182 | |                                   tasks={tasks}
+ 183 | |                                   calendars={calendars}
+ 184 | |                                   updateEvent={updateEvent}
+ 185 | |                                   isReadOnlyCalendar={isReadOnlyCalendar ?? false}
+ 186 | |                               />
+ 187 | |                           ) : null}
+ 188 | |                       </div>
+ 189 | |                   </React.Fragment>
+ 190 | |               )}
+ 191 | |           </div>
+ 192 | |       );
+ 193 | `-> }
+ 194 |     
+     `----
+
+  ! eslint(max-lines-per-function): The function `InspectorPane` has too many lines (172). Maximum allowed is 100.
+     ,-[src/components/inspector-pane/index.tsx:22:8]
+  21 |     
+  22 | ,-> export function InspectorPane({
+  23 | |       inspectorState,
+  24 | |       onClose,
+  25 | |       tasks,
+  26 | |       setTasks,
+  27 | |       events,
+  28 | |       setEvents,
+  29 | |   }: InspectorPaneProps) {
+  30 | |       const paneRef = React.useRef<HTMLDivElement>(null);
+  31 | |       const [calendars] = useCalendars();
+  32 | |   
+  33 | |       const [activeState, setActiveState] = React.useState<{ type: string; id: string } | null>(null);
+  34 | |       React.useEffect(() => {
+  35 | |           if (inspectorState) setActiveState(inspectorState);
+  36 | |       }, [inspectorState]);
+  37 | |   
+  38 | |       const currentState = inspectorState || activeState;
+  39 | |       const currentTask = currentState?.type === "task" ? tasks.find((t) => t.id === currentState.id) : undefined;
+  40 | |       const currentEvent = currentState?.type === "event" ? (events.find((e) => e.id === currentState.id) || events.find((e) => e.id === currentState.id.split("_")[0])) : undefined;
+  41 | |       const currentItem = currentTask || currentEvent || null;
+  42 | |       const isCurrentTask = !!currentTask;
+  43 | |   
+  44 | |       const isReadOnlyCalendar = React.useMemo(() => {
+  45 | |           if (!currentEvent) return false;
+  46 | |           const calId = currentEvent.googleCalendarId || "primary";
+  47 | |           const cal = calendars.find((c) => c.id === calId);
+  48 | |           return cal && (cal.accessRole === "reader" || cal.accessRole === "freeBusyReader");
+  49 | |       }, [currentEvent, calendars]);
+  50 | |   
+  51 | |       const title = getInspectorTitle(currentTask, currentEvent, tasks);
+  52 | |       const isOpen = !!(inspectorState && currentItem);
+  53 | |   
+  54 | |       const updateTask = React.useCallback((id: string, updates: Partial<AppTask>) =>
+  55 | |           setTasks((ts) => ts.map((t) => t.id === id ? { ...t, ...updates, isDraft: false } : t)), [setTasks]);
+  56 | |   
+  57 | |       const updateEvent = React.useCallback((id: string, updates: Partial<AppEvent>) =>
+  58 | |           setEvents((es) => es.map((e) => e.id === id ? { ...e, ...updates, isDraft: false } : e)), [setEvents]);
+  59 | |   
+  60 | |       const handleTitleChange = React.useCallback((newTitle: string) => {
+  61 | |           if (!currentItem) return;
+  62 | |           if (isCurrentTask) updateTask(currentItem.id, { title: newTitle });
+  63 | |           else updateEvent(currentItem.id, { title: newTitle });
+  64 | |       }, [currentItem, isCurrentTask, updateTask, updateEvent]);
+  65 | |   
+  66 | |       const handleDescChange = React.useCallback((desc: string) => {
+  67 | |           if (isReadOnlyCalendar || !currentItem) return;
+  68 | |           if (isCurrentTask) updateTask(currentItem.id, { description: desc });
+  69 | |           else updateEvent(currentItem.id, { description: desc });
+  70 | |       }, [currentItem, isCurrentTask, isReadOnlyCalendar, updateTask, updateEvent]);
+  71 | |   
+  72 | |       const onPaneDelete = React.useCallback(() => {
+  73 | |           if (!currentItem) return;
+  74 | |           if (isCurrentTask) {
+  75 | |               setTasks((ts) => ts.filter((t) => t.id !== currentItem.id));
+  76 | |               setEvents((es) => es.filter((e) => e.taskId !== currentItem.id));
+  77 | |           } else {
+  78 | |               setEvents((es) => es.filter((e) => e.id !== currentItem.id));
+  79 | |           }
+  80 | |           onClose();
+  81 | |       }, [currentItem, isCurrentTask, setTasks, setEvents, onClose]);
+  82 | |   
+  83 | |       const onPaneClose = React.useCallback(() => {
+  84 | |           if (!(inspectorState && currentItem && currentItem.isDraft)) {
+  85 | |               onClose();
+  86 | |               return;
+  87 | |           }
+  88 | |   
+  89 | |           if (isCurrentTask) {
+  90 | |               setTasks((ts) => {
+  91 | |                   const t = ts.find((x) => x.id === currentItem.id);
+  92 | |                   if (t && t.isDraft) {
+  93 | |                       setEvents((es) => es.filter((e) => e.taskId !== currentItem.id));
+  94 | |                       return ts.filter((x) => x.id !== currentItem.id);
+  95 | |                   }
+  96 | |                   return ts;
+  97 | |               });
+  98 | |           } else {
+  99 | |               setEvents((es) => {
+ 100 | |                   const e = es.find((x) => x.id === currentItem.id);
+ 101 | |                   if (e && e.isDraft) return es.filter((x) => x.id !== currentItem.id);
+ 102 | |                   return es;
+ 103 | |               });
+ 104 | |           }
+ 105 | |           onClose();
+ 106 | |       }, [inspectorState, currentItem, isCurrentTask, setTasks, setEvents, onClose]);
+ 107 | |   
+ 108 | |   
+ 109 | |   
+ 110 | |       React.useEffect(() => {
+ 111 | |           function handleClickOutside(e: PointerEvent) {
+ 112 | |               if (
+ 113 | |                   inspectorState &&
+ 114 | |                   paneRef.current &&
+ 115 | |                   !paneRef.current.contains(e.target instanceof Node ? e.target : null)
+ 116 | |               ) {
+ 117 | |                   onPaneClose();
+ 118 | |               }
+ 119 | |           }
+ 120 | |           document.addEventListener("pointerdown", handleClickOutside);
+ 121 | |           return () => document.removeEventListener("pointerdown", handleClickOutside);
+ 122 | |       }, [inspectorState, onPaneClose]);
+ 123 | |   
+ 124 | |       return (
+ 125 | |           <div
+ 126 | |               ref={paneRef}
+ 127 | |               className={`inspector-pane ${isOpen ? "is-open" : ""}`}
+ 128 | |           >
+ 129 | |               {currentItem && (
+ 130 | |                   <React.Fragment key={currentItem.id}>
+ 131 | |                       <InspectorPaneHeader handleClose={onPaneClose} handleDelete={onPaneDelete} isReadOnlyCalendar={isReadOnlyCalendar ?? false} />
+ 132 | |                       <div className="inspector-body" style={{ paddingTop: 0 }}>
+ 133 | |                           <div
+ 134 | |                               className="inspector-field"
+ 135 | |                               style={{ marginTop: "24px", marginBottom: "4px" }}
+ 136 | |                           >
+ 137 | |                               <TitleInput
+ 138 | |                                   value={title || ""}
+ 139 | |                                   onChange={handleTitleChange}
+ 140 | |                                   disabled={Boolean(currentEvent?.taskId) || isReadOnlyCalendar}
+ 141 | |                                   onEnter={onPaneClose}
+ 142 | |                                   style={{
+ 143 | |                                       fontSize: "24px",
+ 144 | |                                       fontWeight: "normal",
+ 145 | |                                       border: "none",
+ 146 | |                                       background: "transparent",
+ 147 | |                                       padding: "0",
+ 148 | |                                       outline: "none",
+ 149 | |                                       width: "100%",
+ 150 | |                                       color: "var(--fg)",
+ 151 | |                                   }}
+ 152 | |                                   autoFocus={Boolean(currentTask?.isDraft)}
+ 153 | |                               />
+ 154 | |                           </div>
+ 155 | |                           <div
+ 156 | |                               className="inspector-field"
+ 157 | |                               style={{
+ 158 | |                                   flexDirection: "column",
+ 159 | |                                   alignItems: "flex-start",
+ 160 | |                               }}
+ 161 | |                           >
+ 162 | |                               <DescriptionInput
+ 163 | |                                   value={(currentEvent?.description) || ""}
+ 164 | |                                   onChange={handleDescChange}
+ 165 | |                               />
+ 166 | |                           </div>
+ 167 | |   
+ 168 | |                           {isReadOnlyCalendar && (
+ 169 | |                               <div className="inspector-field" style={{color: "var(--tag-red)", fontSize: "0.85em", marginTop: "8px"}}>
+ 170 | |                                   This event belongs to a read-only calendar and cannot be modified.
+ 171 | |                               </div>
+ 172 | |                           )}
+ 173 | |   
+ 174 | |                           {currentTask ? (
+ 175 | |                               <TaskInspector 
+ 176 | |                                   task={currentTask} 
+ 177 | |                                   updateTask={updateTask} 
+ 178 | |                               />
+ 179 | |                           ) : currentEvent ? (
+ 180 | |                               <EventInspector 
+ 181 | |                                   event={currentEvent} 
+ 182 | |                                   tasks={tasks}
+ 183 | |                                   calendars={calendars}
+ 184 | |                                   updateEvent={updateEvent}
+ 185 | |                                   isReadOnlyCalendar={isReadOnlyCalendar ?? false}
+ 186 | |                               />
+ 187 | |                           ) : null}
+ 188 | |                       </div>
+ 189 | |                   </React.Fragment>
+ 190 | |               )}
+ 191 | |           </div>
+ 192 | |       );
+ 193 | `-> }
+ 194 |     
+     `----
+  help: Consider splitting it into smaller functions.
+
+  ! eslint(max-params): Function 'resolveDropTarget' has too many parameters (5). Maximum allowed is 4.
+    ,-[src/screens/plan/drag-helpers.tsx:55:34]
+ 54 | 
+ 55 | export function resolveDropTarget(el: Element | null, _x: number, y: number, task?: AppTask | null, event?: AppEvent | null): PlanDragTarget | null {
+    :                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 56 |     if (!el) return null;
+    `----
+  help: This rule enforces a maximum number of parameters allowed in function definitions.
+
+  ! eslint(max-lines-per-function): The function `PlanScreen` has too many lines (154). Maximum allowed is 100.
+     ,-[src/screens/plan/PlanScreen.tsx:28:8]
+  27 |     
+  28 | ,-> export function PlanScreen() {
+  29 | |   
+  30 | |       // Data state (persisted)
+  31 | |       const [tasks, setTasks] = useTasks();
+  32 | |       const [events, setEvents] = useEvents();
+  33 | |       // Clean up empty items
+  34 | |       useCleanupDrafts(tasks, setTasks, setEvents);
+  35 | |   
+  36 | |       // UI state — task list
+  37 | |       const [query, setQuery] = useTaskQuery();
+  38 | |       const [filters, setFilters] = useTaskFilters();
+  39 | |       const [sort, setSort] = useTaskSort();
+  40 | |   
+  41 | |       // UI state — calendar
+  42 | |       const [settings] = useSettings();
+  43 | |       const [view, setView] = React.useState<"month" | "week">(
+  44 | |           settings.defaultCalendarView || "month",
+  45 | |       );
+  46 | |       const [anchor, setAnchor] = React.useState(new Date(TODAY));
+  47 | |       const [timelineDate, setTimelineDate] = React.useState(new Date(TODAY));
+  48 | |   
+  49 | |       // Event filters
+  50 | |       const [calFilter, setCalFilter] = useCalFilters();
+  51 | |       const [calSort, setCalSort] = useCalSort();
+  52 | |       const [timeFilter, setTimeFilter] = useTimeFilters();
+  53 | |       const [timeSort, setTimeSort] = useTimeSort();
+  54 | |   
+  55 | |       const { hydratedEvents, getEventFilterValues } = usePlanEvents(tasks, events, anchor);
+  56 | |   
+  57 | |   
+  58 | |       // Inspector state
+  59 | |       const [inspectorState, setInspectorState] = React.useState<{ type: string, id: string } | null>(null); // { type: 'task', id } or { type: 'event', id }
+  60 | |   
+  61 | |   
+  62 | |   
+  63 | |       const { createEvent, onAddTask, onAddEvent, onResizeEvent, onMoveEvent, onDeleteTask } = usePlanActions(timelineDate, setInspectorState);
+  64 | |       const { onTaskDragStart, onEventDragStart, dragState, setDragState } = useDragAndDrop(timelineDate, setInspectorState, createEvent);
+  65 | |   
+  66 | |       return (
+  67 | |           <>
+  68 | |   
+  69 | |               <main className="main" style={{ position: "relative" }}>
+  70 | |                   <SplitPane
+  71 | |                       direction="horizontal"
+  72 | |                       defaultSize={360}
+  73 | |                       minSize={200}
+  74 | |                       snapThreshold={50}
+  75 | |                   >
+  76 | |                       <TaskListPane
+  77 | |                           tasks={tasks}
+  78 | |                           setTasks={setTasks}
+  79 | |                           filters={filters}
+  80 | |                           setFilters={setFilters}
+  81 | |                           sort={sort}
+  82 | |                           setSort={setSort}
+  83 | |                           query={query}
+  84 | |                           setQuery={setQuery}
+  85 | |                           onDragStart={onTaskDragStart}
+  86 | |                           activeDragId={dragState?.task?.id}
+  87 | |                           onAddTask={onAddTask}
+  88 | |                           onDeleteTask={onDeleteTask}
+  89 | |                       />
+  90 | |                       <div className="right-pane">
+  91 | |                           <SplitPane
+  92 | |                               direction="vertical"
+  93 | |                               defaultSize={450}
+  94 | |                               minSize={150}
+  95 | |                               snapThreshold={60}
+  96 | |                           >
+  97 | |                               <DateGrid
+  98 | |                                   view={view}
+  99 | |                                   setView={(v: "month" | "week") => setView(v)}
+ 100 | |                                   anchor={anchor}
+ 101 | |                                   setAnchor={setAnchor}
+ 102 | |                                   events={hydratedEvents}
+ 103 | |                                   filter={calFilter}
+ 104 | |                                   sort={calSort}
+ 105 | |                                   filterMenu={
+ 106 | |                                       <FilterSortButtons
+ 107 | |                                           filters={calFilter}
+ 108 | |                                           setFilters={setCalFilter}
+ 109 | |                                           sort={calSort}
+ 110 | |                                           setSort={setCalSort}
+ 111 | |                                           columns={PLAN_EVENT_FILTER_COLUMNS}
+ 112 | |                                           getValuesForColumn={getEventFilterValues}
+ 113 | |                                           sortOptions={PLAN_EVENT_SORT_OPTIONS}
+ 114 | |                                           align="right"
+ 115 | |                                       />
+ 116 | |                                   }
+ 117 | |                                   today={TODAY}
+ 118 | |                                   dragState={dragState}
+ 119 | |                                   onEventDragStart={onEventDragStart}
+ 120 | |                                   onAddEvent={onAddEvent}
+ 121 | |                               />
+ 122 | |                               <DayTimeline<PlanDragState>
+ 123 | |                                   events={hydratedEvents}
+ 124 | |                                   filter={timeFilter}
+ 125 | |                                   sort={timeSort}
+ 126 | |                                   filterMenu={
+ 127 | |                                       <FilterSortButtons
+ 128 | |                                           filters={timeFilter}
+ 129 | |                                           setFilters={setTimeFilter}
+ 130 | |                                           sort={timeSort}
+ 131 | |                                           setSort={setTimeSort}
+ 132 | |                                           columns={PLAN_EVENT_FILTER_COLUMNS}
+ 133 | |                                           getValuesForColumn={getEventFilterValues}
+ 134 | |                                           sortOptions={PLAN_EVENT_SORT_OPTIONS}
+ 135 | |                                           align="right"
+ 136 | |                                       />
+ 137 | |                                   }
+ 138 | |                                   today={TODAY}
+ 139 | |                                   timelineDate={timelineDate}
+ 140 | |                                   setTimelineDate={setTimelineDate}
+ 141 | |                                   dragState={dragState}
+ 142 | |                                   setDragState={setDragState}
+ 143 | |                                   onResizeEvent={onResizeEvent}
+ 144 | |                                   onMoveEvent={onMoveEvent}
+ 145 | |                                   onEventClick={(ev: AppEvent) =>
+ 146 | |                                       setInspectorState({
+ 147 | |                                           type: "event",
+ 148 | |                                           id: ev.id,
+ 149 | |                                       })
+ 150 | |                                   }
+ 151 | |                                   onAddEvent={onAddEvent}
+ 152 | |                                   onDropToTime={() => {}}
+ 153 | |                               />
+ 154 | |                           </SplitPane>
+ 155 | |                       </div>
+ 156 | |                   </SplitPane>
+ 157 | |   
+ 158 | |                   <InspectorPane
+ 159 | |                       inspectorState={inspectorState}
+ 160 | |                       onClose={() => setInspectorState(null)}
+ 161 | |                       tasks={tasks}
+ 162 | |                       setTasks={setTasks}
+ 163 | |                       events={events}
+ 164 | |                       setEvents={setEvents}
+ 165 | |                   />
+ 166 | |               </main>
+ 167 | |   
+ 168 | |               {dragState && (dragState.task || dragState.event) && (
+ 169 | |                   <DragGhost
+ 170 | |                       task={dragState.task}
+ 171 | |                       event={dragState.event}
+ 172 | |                       x={dragState.pointerX}
+ 173 | |                       y={dragState.pointerY}
+ 174 | |                       ghostStyle="bracket"
+ 175 | |                   />
+ 176 | |               )}
+ 177 | |   
+ 178 | |   
+ 179 | |           </>
+ 180 | |       );
+ 181 | `-> }
+ 182 |     
+     `----
+  help: Consider splitting it into smaller functions.
+
+  ! eslint(max-params): Function has too many parameters (5). Maximum allowed is 4.
+    ,-[src/core/sync/engine/Poller.ts:19:16]
+ 18 |     
+ 19 | ,->     constructor(
+ 20 | |           taskSync: TaskSynchronizer,
+ 21 | |           eventSync: EventSynchronizer,
+ 22 | |           pusher: Pusher,
+ 23 | |           getSettings: () => Partial<import('../../store/settingsSchema').AppSettings>,
+ 24 | |           hasAuth: () => boolean
+ 25 | `->     ) {
+ 26 |             this.taskSync = taskSync;
+    `----
+  help: This rule enforces a maximum number of parameters allowed in function definitions.
+
+  ! eslint(max-lines-per-function): The function `useTaskCanvasActions` has too many lines (165). Maximum allowed is 100.
+     ,-[src/screens/graph/use-task-canvas-actions.ts:5:8]
+   4 |     
+   5 | ,-> export function useTaskCanvasActions(
+   6 | |       setTasks: (updater: (prev: Task[]) => Task[]) => void,
+   7 | |       screenToFlowPosition: (position: { x: number; y: number }) => { x: number; y: number }
+   8 | |   ) {
+   9 | |       const onNodesChange = useCallback(
+  10 | |           (changes: NodeChange[]) => {
+  11 | |               const positionUpdates = new Map();
+  12 | |   
+  13 | |               for (const change of changes) {
+  14 | |                   if (change.type === "position" && change.position)
+  15 | |                       positionUpdates.set(change.id, change.position);
+  16 | |               }
+  17 | |               
+  18 | |               if (positionUpdates.size === 0) return;
+  19 | |   
+  20 | |               setTasks((prev) =>
+  21 | |                   prev.map((t) => {
+  22 | |                       const newPos = positionUpdates.get(t.id);
+  23 | |                       if (!newPos) return t;
+  24 | |   
+  25 | |                       return {
+  26 | |                           ...t,
+  27 | |                           canvasX: newPos.x,
+  28 | |                           canvasY: newPos.y,
+  29 | |                       };
+  30 | |                   })
+  31 | |               );
+  32 | |           },
+  33 | |           [setTasks],
+  34 | |       );
+  35 | |   
+  36 | |       const isValidConnection = useCallback((connection: Connection | Edge) => {
+  37 | |           if (
+  38 | |               connection.sourceHandle === "child" &&
+  39 | |               connection.targetHandle === "parent"
+  40 | |           )
+  41 | |               return true;
+  42 | |           if (
+  43 | |               connection.sourceHandle === "dependent" &&
+  44 | |               connection.targetHandle === "dependency"
+  45 | |           )
+  46 | |               return true;
+  47 | |           return false;
+  48 | |       }, []);
+  49 | |   
+  50 | |       const onConnect = useCallback(
+  51 | |           (connection: Connection) => {
+  52 | |               if (!isValidConnection(connection)) return;
+  53 | |   
+  54 | |               setTasks((prev) =>
+  55 | |                   prev.map((t) => {
+  56 | |                       // connecting source (parent) bottom to target (child) top
+  57 | |                       if (
+  58 | |                           connection.target === t.id &&
+  59 | |                           connection.targetHandle === "parent" &&
+  60 | |                           connection.sourceHandle === "child"
+  61 | |                       ) {
+  62 | |                           return { ...t, parent_task: connection.source };
+  63 | |                       }
+  64 | |                       // connecting source (dependency) right to target (dependent) left
+  65 | |                       if (
+  66 | |                           connection.target === t.id &&
+  67 | |                           connection.targetHandle === "dependency" &&
+  68 | |                           connection.sourceHandle === "dependent"
+  69 | |                       ) {
+  70 | |                           const deps = t.dependencies || [];
+  71 | |                           if (!deps.includes(connection.source)) {
+  72 | |                               return {
+  73 | |                                   ...t,
+  74 | |                                   dependencies: [...deps, connection.source],
+  75 | |                               };
+  76 | |                           }
+  77 | |                       }
+  78 | |                       return t;
+  79 | |                   }),
+  80 | |               );
+  81 | |           },
+  82 | |           [setTasks, isValidConnection],
+  83 | |       );
+  84 | |   
+  85 | |       const onNodesDelete = useCallback(
+  86 | |           (deletedNodes: Node[]) => {
+  87 | |               const deletedNodeIds = new Set(deletedNodes.map((n) => n.id));
+  88 | |               setTasks((prev) =>
+  89 | |                   prev.map((t) =>
+  90 | |                       deletedNodeIds.has(t.id) ? { ...t, onCanvas: false } : t
+  91 | |                   )
+  92 | |               );
+  93 | |           },
+  94 | |           [setTasks]
+  95 | |       );
+  96 | |   
+  97 | |       const onEdgesDelete = useCallback(
+  98 | |           (deletedEdges: Edge[]) => {
+  99 | |               setTasks((prev) => {
+ 100 | |                   let updated = [...prev];
+ 101 | |                   for (const edge of deletedEdges) {
+ 102 | |                       if (edge.targetHandle === "parent" && edge.sourceHandle === "child") {
+ 103 | |                           // The connection from parent to this child was removed
+ 104 | |                           updated = updated.map((t) =>
+ 105 | |                               t.id === edge.target ? { ...t, parent_task: null } : t
+ 106 | |                           );
+ 107 | |                       }
+ 108 | |                       if (edge.targetHandle === "dependency" && edge.sourceHandle === "dependent") {
+ 109 | |                           // The dependency was removed
+ 110 | |                           updated = updated.map((t) =>
+ 111 | |                               t.id === edge.target
+ 112 | |                                   ? {
+ 113 | |                                         ...t,
+ 114 | |                                         dependencies: (t.dependencies || []).filter(
+ 115 | |                                             (dep) => dep !== edge.source
+ 116 | |                                         ),
+ 117 | |                                     }
+ 118 | |                                   : t
+ 119 | |                           );
+ 120 | |                       }
+ 121 | |                   }
+ 122 | |                   return updated;
+ 123 | |               });
+ 124 | |           },
+ 125 | |           [setTasks]
+ 126 | |       );
+ 127 | |   
+ 128 | |       const onDoubleClick = useCallback(
+ 129 | |           (e: React.MouseEvent) => {
+ 130 | |               if (!(e.target instanceof HTMLElement)) return;
+ 131 | |               if (e.target.closest(".react-flow__node")) return; // Do not create task if clicking on an existing node
+ 132 | |   
+ 133 | |               // Project screen coordinates to flow coordinates
+ 134 | |               const position = screenToFlowPosition({
+ 135 | |                   x: e.clientX,
+ 136 | |                   y: e.clientY,
+ 137 | |               });
+ 138 | |   
+ 139 | |               const id = `t${Date.now()}`;
+ 140 | |               const newTask: Task = {
+ 141 | |                   id,
+ 142 | |                   title: "New Task",
+ 143 | |                   status: "todo",
+ 144 | |                   priority: 1,
+ 145 | |                   tags: [],
+ 146 | |                   subtasks: [],
+ 147 | |                   parent_task: null,
+ 148 | |                   dependencies: [],
+ 149 | |                   est: 60,
+ 150 | |                   added: new Date().toISOString(),
+ 151 | |                   onCanvas: true,
+ 152 | |                   canvasX: position.x,
+ 153 | |                   canvasY: position.y,
+ 154 | |               };
+ 155 | |   
+ 156 | |               setTasks((ts) => [...ts, newTask]);
+ 157 | |           },
+ 158 | |           [setTasks, screenToFlowPosition],
+ 159 | |       );
+ 160 | |   
+ 161 | |       return {
+ 162 | |           onNodesChange,
+ 163 | |           isValidConnection,
+ 164 | |           onConnect,
+ 165 | |           onNodesDelete,
+ 166 | |           onEdgesDelete,
+ 167 | |           onDoubleClick,
+ 168 | |       };
+ 169 | `-> }
+     `----
+  help: Consider splitting it into smaller functions.
+
+  ! eslint(max-lines-per-function): The function `SegmentedControl` has too many lines (109). Maximum allowed is 100.
+     ,-[src/components/inputs/SegmentedControl.tsx:13:8]
+  12 |     
+  13 | ,-> export function SegmentedControl<T>({
+  14 | |       options,
+  15 | |       value,
+  16 | |       onChange,
+  17 | |   }: SegmentedControlProps<T>) {
+  18 | |       const containerRef = React.useRef<HTMLDivElement>(null);
+  19 | |       const [thumbStyle, setThumbStyle] = React.useState({
+  20 | |           left: 0,
+  21 | |           top: 0,
+  22 | |           width: 0,
+  23 | |           height: 0,
+  24 | |           opacity: 0,
+  25 | |           init: false,
+  26 | |       });
+  27 | |   
+  28 | |       React.useLayoutEffect(() => {
+  29 | |           const updateThumb = () => {
+  30 | |               if (!containerRef.current) return;
+  31 | |               const activeBtn = containerRef.current.querySelector(
+  32 | |                   'button[data-active="true"]',
+  33 | |               );
+  34 | |               if (activeBtn instanceof HTMLButtonElement) {
+  35 | |                   setThumbStyle({
+  36 | |                       left: activeBtn.offsetLeft,
+  37 | |                       top: activeBtn.offsetTop,
+  38 | |                       width: activeBtn.offsetWidth,
+  39 | |                       height: activeBtn.offsetHeight,
+  40 | |                       opacity: 1,
+  41 | |                       init: true,
+  42 | |                   });
+  43 | |               } else {
+  44 | |                   setThumbStyle((prev) => ({ ...prev, opacity: 0, init: true }));
+  45 | |               }
+  46 | |           };
+  47 | |   
+  48 | |           updateThumb();
+  49 | |   
+  50 | |           if (typeof ResizeObserver !== "undefined" && containerRef.current) {
+  51 | |               const ro = new ResizeObserver(updateThumb);
+  52 | |               ro.observe(containerRef.current);
+  53 | |               return () => ro.disconnect();
+  54 | |           }
+  55 | |       }, [value, options]);
+  56 | |   
+  57 | |       return (
+  58 | |           <div
+  59 | |               ref={containerRef}
+  60 | |               style={{
+  61 | |                   display: "inline-flex",
+  62 | |                   position: "relative",
+  63 | |                   background: "var(--bg-app)",
+  64 | |                   padding: "3px",
+  65 | |                   borderRadius: "8px",
+  66 | |                   border: "1px solid var(--border)",
+  67 | |                   userSelect: "none",
+  68 | |                   flexWrap: "wrap",
+  69 | |                   gap: "2px",
+  70 | |                   zIndex: 0,
+  71 | |               }}
+  72 | |           >
+  73 | |               <div
+  74 | |                   style={{
+  75 | |                       position: "absolute",
+  76 | |                       background: "var(--bg-surface)",
+  77 | |                       borderRadius: "5px",
+  78 | |                       boxShadow:
+  79 | |                           "0 1px 3px rgba(0,0,0,0.12), 0 1px 1px rgba(0,0,0,0.04)",
+  80 | |                       transition: thumbStyle.init
+  81 | |                           ? "all 0.15s cubic-bezier(0.1, 0.9, 0.2, 1)"
+  82 | |                           : "none",
+  83 | |                       left: thumbStyle.left,
+  84 | |                       top: thumbStyle.top,
+  85 | |                       width: thumbStyle.width,
+  86 | |                       height: thumbStyle.height,
+  87 | |                       opacity: thumbStyle.opacity,
+  88 | |                       zIndex: -1,
+  89 | |                   }}
+  90 | |               />
+  91 | |               {options.map((opt) => (
+  92 | |                   <button
+  93 | |                       type="button"
+  94 | |                       key={String(opt.value)}
+  95 | |                       data-active={opt.value === value}
+  96 | |                       onClick={() => onChange(opt.value)}
+  97 | |                       data-cuelume-toggle
+  98 | |                       style={{
+  99 | |                           appearance: "none",
+ 100 | |                           background: "transparent",
+ 101 | |                           border: "none",
+ 102 | |                           borderRadius: "5px",
+ 103 | |                           padding: "6px 14px",
+ 104 | |                           fontSize: "13px",
+ 105 | |                           cursor: "pointer",
+ 106 | |                           color:
+ 107 | |                               opt.value === value ? "var(--fg)" : "var(--fg-dim)",
+ 108 | |                           fontWeight: opt.value === value ? FONT_WEIGHT_MEDIUM : FONT_WEIGHT_REGULAR,
+ 109 | |                           transition:
+ 110 | |                               "color 0.15s cubic-bezier(0.1, 0.9, 0.2, 1)",
+ 111 | |                           flex: "1 1 auto",
+ 112 | |                           textAlign: "center",
+ 113 | |                           whiteSpace: "nowrap",
+ 114 | |                       }}
+ 115 | |                   >
+ 116 | |                       {opt.label}
+ 117 | |                   </button>
+ 118 | |               ))}
+ 119 | |           </div>
+ 120 | |       );
+ 121 | `-> }
+     `----
+  help: Consider splitting it into smaller functions.
+
+  ! eslint(max-params): Function 'getEventClassNames' has too many parameters (5). Maximum allowed is 4.
+    ,-[src/components/day-timeline/EventBlock.tsx:15:28]
+ 14 | 
+ 15 | function getEventClassNames(event: AppEvent, pri: string | number | null | undefined, compact: boolean, isGhost: boolean, isFloating: boolean): string {
+    :                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 16 |     const classNames = ["day-event", `ev-${event.type}`];
+    `----
+  help: This rule enforces a maximum number of parameters allowed in function definitions.
+
+  ! eslint(max-lines-per-function): The function `EventBlock` has too many lines (160). Maximum allowed is 100.
+     ,-[src/components/day-timeline/EventBlock.tsx:25:8]
+  24 |     
+  25 | ,-> export function EventBlock<T extends import("./types").DragState = import("./types").DragState>({
+  26 | |       event,
+  27 | |       task,
+  28 | |       lane,
+  29 | |       lanes,
+  30 | |       onResize,
+  31 | |       onMove,
+  32 | |       onEventClick,
+  33 | |   }: EventBlockProps<T>) {
+  34 | |       const [dragOffset, setDragOffset] = useState<number | null>(null);
+  35 | |   
+  36 | |       const title = event.title;
+  37 | |       const pri = event.priority;
+  38 | |   
+  39 | |       const onResizeStart = (edge: "top" | "bottom") => (e: React.PointerEvent<HTMLDivElement>) => {
+  40 | |           e.stopPropagation();
+  41 | |           e.preventDefault();
+  42 | |           const startY = e.clientY;
+  43 | |           const startStart = event.start;
+  44 | |           const startEnd = event.end || 0;
+  45 | |           const move = (ev: PointerEvent) => {
+  46 | |               const dy = ev.clientY - startY;
+  47 | |               const dm = Math.round(dy / PX_PER_MIN / SNAP_MIN) * SNAP_MIN;
+  48 | |               if (edge === "bottom") {
+  49 | |                   const newEnd = Math.max(
+  50 | |                       startStart + SNAP_MIN,
+  51 | |                       Math.min(HOURS_PER_DAY * MINUTES_IN_HOUR, startEnd + dm),
+  52 | |                   );
+  53 | |                   onResize(event.id, startStart, newEnd);
+  54 | |               } else {
+  55 | |                   const newStart = Math.max(
+  56 | |                       0,
+  57 | |                       Math.min(startEnd - SNAP_MIN, startStart + dm),
+  58 | |                   );
+  59 | |                   onResize(event.id, newStart, startEnd);
+  60 | |               }
+  61 | |           };
+  62 | |           const up = () => {
+  63 | |               window.removeEventListener("pointermove", move);
+  64 | |               window.removeEventListener("pointerup", up);
+  65 | |           };
+  66 | |           window.addEventListener("pointermove", move);
+  67 | |           window.addEventListener("pointerup", up);
+  68 | |       };
+  69 | |   
+  70 | |       const onBodyDown = (e: React.PointerEvent<HTMLDivElement>) => {
+  71 | |           if (!(e.target instanceof Element)) return;
+  72 | |           if (e.target.closest(".day-event-handle")) return;
+  73 | |           if (e.button !== 0) return;
+  74 | |           e.preventDefault();
+  75 | |           const startY = e.clientY;
+  76 | |           const startStart = event.start || 0;
+  77 | |           const startEnd = event.end || 0;
+  78 | |           let moved = false;
+  79 | |           let finalDm = 0;
+  80 | |           const move = (ev: PointerEvent) => {
+  81 | |               const dy = ev.clientY - startY;
+  82 | |               if (!moved && Math.abs(dy) < DRAG_THRESHOLD_PX) return;
+  83 | |               moved = true;
+  84 | |               const dm = Math.round(dy / PX_PER_MIN / SNAP_MIN) * SNAP_MIN;
+  85 | |               const minDm = -startStart;
+  86 | |               const maxDm = HOURS_PER_DAY * MINUTES_IN_HOUR - startEnd;
+  87 | |               finalDm = Math.max(minDm, Math.min(maxDm, dm));
+  88 | |               setDragOffset(finalDm);
+  89 | |           };
+  90 | |           const up = () => {
+  91 | |               window.removeEventListener("pointermove", move);
+  92 | |               window.removeEventListener("pointerup", up);
+  93 | |               if (!moved) {
+  94 | |                   if (onEventClick) onEventClick(event);
+  95 | |                   return;
+  96 | |               }
+  97 | |               setDragOffset(null);
+  98 | |               if (finalDm !== 0) {
+  99 | |                   onMove(
+ 100 | |                       event.id,
+ 101 | |                       startStart + finalDm,
+ 102 | |                       startStart + finalDm + (startEnd - startStart),
+ 103 | |                   );
+ 104 | |               }
+ 105 | |           };
+ 106 | |           window.addEventListener("pointermove", move);
+ 107 | |           window.addEventListener("pointerup", up);
+ 108 | |       };
+ 109 | |   
+ 110 | |       const renderBlock = (start: number, end: number, isGhost: boolean, isFloating: boolean) => {
+ 111 | |           const top = start * PX_PER_MIN;
+ 112 | |           const height = (end - start) * PX_PER_MIN;
+ 113 | |           const compact = height < COMPACT_EVENT_HEIGHT_PX;
+ 114 | |           
+ 115 | |           const classNames = getEventClassNames(event, pri, compact, isGhost, isFloating);
+ 116 | |   
+ 117 | |           const style = {
+ 118 | |               top: `${top}px`,
+ 119 | |               height: `${Math.max(height, MIN_EVENT_HEIGHT_PX)}px`,
+ 120 | |               left: `calc(56px + ((100% - 56px) / ${lanes}) * ${lane})`,
+ 121 | |               width: `calc(((100% - 56px) / ${lanes}) - 2px)`,
+ 122 | |           };
+ 123 | |   
+ 124 | |           const hasTags = !compact && event.type === "plan" && task && (task.tags || []).length > 0;
+ 125 | |   
+ 126 | |           return (
+ 127 | |               <div
+ 128 | |                   className={classNames}
+ 129 | |                   style={style}
+ 130 | |                   onPointerDown={isGhost ? undefined : onBodyDown}
+ 131 | |                   key={isGhost ? "ghost" : "main"}
+ 132 | |               >
+ 133 | |                   <div
+ 134 | |                       className="day-event-handle day-event-handle-top"
+ 135 | |                       onPointerDown={isGhost ? undefined : onResizeStart("top")}
+ 136 | |                   />
+ 137 | |                   <div className="day-event-inner">
+ 138 | |                       <div className="day-event-title">
+ 139 | |                           {pri !== null && pri !== undefined && (
+ 140 | |                               <span className={`pri pri-${pri}`}>●</span>
+ 141 | |                           )}
+ 142 | |                           {title}
+ 143 | |                       </div>
+ 144 | |                       <div className="day-event-time">
+ 145 | |                           {PAD2(Math.floor(start / MINUTES_IN_HOUR))}:{PAD2(start % MINUTES_IN_HOUR)} –{" "}
+ 146 | |                           {PAD2(Math.floor(end / MINUTES_IN_HOUR))}:{PAD2(end % MINUTES_IN_HOUR)}
+ 147 | |                       </div>
+ 148 | |                       {hasTags && (
+ 149 | |                           <div className="day-event-tags">
+ 150 | |                               {(task.tags || []).map((t) => (
+ 151 | |                                   <span key={t} className="day-event-tag">
+ 152 | |                                       #{t}
+ 153 | |                                   </span>
+ 154 | |                               ))}
+ 155 | |                           </div>
+ 156 | |                       )}
+ 157 | |                   </div>
+ 158 | |                   <div
+ 159 | |                       className="day-event-handle day-event-handle-bottom"
+ 160 | |                       onPointerDown={
+ 161 | |                           isGhost ? undefined : onResizeStart("bottom")
+ 162 | |                       }
+ 163 | |                   >
+ 164 | |                       <span className="day-event-handle-grip">═</span>
+ 165 | |                   </div>
+ 166 | |               </div>
+ 167 | |           );
+ 168 | |       };
+ 169 | |   
+ 170 | |       if (dragOffset !== null) {
+ 171 | |           return (
+ 172 | |               <Fragment>
+ 173 | |                   {renderBlock(event.start || 0, event.end || 0, true, false)}
+ 174 | |                   {renderBlock(
+ 175 | |                       (event.start || 0) + dragOffset,
+ 176 | |                       (event.end || 0) + dragOffset,
+ 177 | |                       false,
+ 178 | |                       true,
+ 179 | |                   )}
+ 180 | |               </Fragment>
+ 181 | |           );
+ 182 | |       }
+ 183 | |       return renderBlock(event.start || 0, event.end || 0, false, false);
+ 184 | `-> }
+     `----
+  help: Consider splitting it into smaller functions.
+
+  ! eslint(max-params): Function has too many parameters (5). Maximum allowed is 4.
+    ,-[src/core/store/repositories.ts:27:16]
+ 26 |     
+ 27 | ,->     constructor(
+ 28 | |           key: string,
+ 29 | |           initial: T,
+ 30 | |           parser?: (saved: unknown) => T,
+ 31 | |           interceptor?: (next: T, prev?: T) => T,
+ 32 | |           onDelta?: (result: T) => void
+ 33 | `->     ) {
+ 34 |             this.key = key;
+    `----
+  help: This rule enforces a maximum number of parameters allowed in function definitions.
+
+  ! eslint(max-lines-per-function): The function `TaskListPane` has too many lines (174). Maximum allowed is 100.
+     ,-[src/components/tasklist/index.tsx:26:8]
+  25 |     
+  26 | ,-> export function TaskListPane({
+  27 | |       tasks = [],
+  28 | |       setTasks,
+  29 | |       filters = [],
+  30 | |       setFilters,
+  31 | |       sort,
+  32 | |       setSort,
+  33 | |       query = "",
+  34 | |       setQuery,
+  35 | |       onDragStart,
+  36 | |       activeDragId,
+  37 | |       onAddTask,
+  38 | |       onDeleteTask,
+  39 | |       footer,
+  40 | |   }: TaskListPaneProps) {
+  41 | |       const updateTask = (id: string, updates: Partial<AppTask>) =>
+  42 | |           setTasks((ts) =>
+  43 | |               ts.map((t) => (t.id === id ? { ...t, ...updates } : t)),
+  44 | |           );
+  45 | |       const deleteTask = (id: string) => {
+  46 | |           if (onDeleteTask) {
+  47 | |               onDeleteTask(id);
+  48 | |           } else {
+  49 | |               setTasks((ts) => ts.filter((t) => t.id !== id));
+  50 | |           }
+  51 | |       };
+  52 | |   
+  53 | |       const allTags = React.useMemo(() => {
+  54 | |           const s = new Set<string>();
+  55 | |           tasks.forEach((t) => (t.tags || []).forEach((tag) => s.add(tag)));
+  56 | |           return Array.from(s).toSorted();
+  57 | |       }, [tasks]);
+  58 | |   
+  59 | |       const filtered = React.useMemo(() => {
+  60 | |           let xs = tasks;
+  61 | |           for (const f of filters) {
+  62 | |               if (!f.column || (!f.value && f.value !== 0)) continue;
+  63 | |               xs = xs.filter((t) => {
+  64 | |                   let match = false;
+  65 | |                   const values = Array.isArray(f.value) ? f.value : [f.value];
+  66 | |                   if (values.length === 0) return true;
+  67 | |                   
+  68 | |                   if (f.column === "status") {
+  69 | |                       match = values.includes(t.status || "");
+  70 | |                   } else if (f.column === "priority") {
+  71 | |                       match = values.includes(t.priority || 0) || values.includes(String(t.priority));
+  72 | |                   } else if (f.column === "tag") {
+  73 | |                       match = values.some((v) => (t.tags || []).includes(String(v)));
+  74 | |                   }
+  75 | |                   return f.operator === "is not" ? !match : match;
+  76 | |               });
+  77 | |           }
+  78 | |           if (query.trim()) {
+  79 | |               const fuse = new Fuse(xs, {
+  80 | |                   keys: ["title", "tags"],
+  81 | |                   threshold: 0.4,
+  82 | |               });
+  83 | |               xs = fuse.search(query).map((result) => result.item);
+  84 | |           }
+  85 | |           const cmp: Record<string, (a: AppTask, b: AppTask) => number> = {
+  86 | |               priority: (a, b) => Number(b.priority || 0) - Number(a.priority || 0),
+  87 | |               due: (a, b) => (a.due || "9999").localeCompare(b.due || "9999"),
+  88 | |               est: (a, b) => (a.est || 0) - (b.est || 0),
+  89 | |               title: (a, b) => a.title.localeCompare(b.title),
+  90 | |               added: () => 0,
+  91 | |           };
+  92 | |           return xs.toSorted(cmp[sort] || (() => 0));
+  93 | |       }, [tasks, filters, sort, query]);
+  94 | |   
+  95 | |       const handleAddTask = () => {
+  96 | |           onAddTask(computeFilterDefaults(filters));
+  97 | |       };
+  98 | |   
+  99 | |       return (
+ 100 | |           <aside className="task-pane">
+ 101 | |               <header className="task-pane-hd">
+ 102 | |                   <SearchBar value={query} onChange={setQuery} />
+ 103 | |                   <div
+ 104 | |                       className="task-pane-controls"
+ 105 | |                       style={{
+ 106 | |                           display: "flex",
+ 107 | |                           gap: "8px",
+ 108 | |                           alignItems: "center",
+ 109 | |                           flexWrap: "wrap",
+ 110 | |                           width: "100%",
+ 111 | |                       }}
+ 112 | |                   >
+ 113 | |                       <FilterSortButtons
+ 114 | |                           filters={filters}
+ 115 | |                           setFilters={setFilters}
+ 116 | |                           sort={sort}
+ 117 | |                           setSort={setSort}
+ 118 | |                           columns={[
+ 119 | |                               { id: "status", label: "Status" },
+ 120 | |                               { id: "priority", label: "Priority" },
+ 121 | |                               { id: "tag", label: "Tag" },
+ 122 | |                           ]}
+ 123 | |                           getValuesForColumn={(col: string) => {
+ 124 | |                               if (col === "status")
+ 125 | |                                   return ["todo", "next-up", "doing", "done"];
+ 126 | |                               if (col === "priority") return ["0", "1", "2", "3", "4"];
+ 127 | |                               if (col === "tag") return allTags;
+ 128 | |                               return [];
+ 129 | |                           }}
+ 130 | |                           sortOptions={[
+ 131 | |                               { id: "priority", label: "Priority" },
+ 132 | |                               { id: "due", label: "Due Date" },
+ 133 | |                               { id: "est", label: "Estimate" },
+ 134 | |                               { id: "title", label: "Title" },
+ 135 | |                               { id: "added", label: "Date Added" },
+ 136 | |                           ]}
+ 137 | |                       />
+ 138 | |   
+ 139 | |                       <button
+ 140 | |                           style={{
+ 141 | |                               marginLeft: "auto",
+ 142 | |                               background: "var(--bg-surface)",
+ 143 | |                               border: "1px solid var(--border)",
+ 144 | |                               color: "var(--fg)",
+ 145 | |                               borderRadius: "4px",
+ 146 | |                               cursor: "pointer",
+ 147 | |                               padding: "4px 6px",
+ 148 | |                               display: "flex",
+ 149 | |                               alignItems: "center",
+ 150 | |                               justifyContent: "center",
+ 151 | |                           }}
+ 152 | |                           title="Add Task"
+ 153 | |                           onClick={handleAddTask}
+ 154 | |                       >
+ 155 | |                           <Icon name="add_task" size={16} />
+ 156 | |                       </button>
+ 157 | |                   </div>
+ 158 | |               </header>
+ 159 | |   
+ 160 | |               <div
+ 161 | |                   className="task-list"
+ 162 | |                   onDoubleClick={(e) => {
+ 163 | |                       if (!(e.target instanceof Element)) return;
+ 164 | |                       const target = e.target;
+ 165 | |                       if (
+ 166 | |                           !target.closest(".task-row") &&
+ 167 | |                           !target.closest("button")
+ 168 | |                       ) {
+ 169 | |                           handleAddTask();
+ 170 | |                       }
+ 171 | |                   }}
+ 172 | |               >
+ 173 | |                   {filtered.length === 0 ? (
+ 174 | |                       <div className="task-empty">
+ 175 | |                           <span className="dim">
+ 176 | |                               {tasks.length === 0
+ 177 | |                                   ? "no tasks exist."
+ 178 | |                                   : "no tasks match."}
+ 179 | |                           </span>
+ 180 | |                       </div>
+ 181 | |                   ) : (
+ 182 | |                       filtered.map((t) => (
+ 183 | |                           <TaskRow
+ 184 | |                               key={t.id}
+ 185 | |                               task={t}
+ 186 | |                               onDragStart={onDragStart}
+ 187 | |                               dragging={activeDragId === t.id}
+ 188 | |                               updateTask={updateTask}
+ 189 | |                               deleteTask={deleteTask}
+ 190 | |                               filters={filters}
+ 191 | |                           />
+ 192 | |                       ))
+ 193 | |                   )}
+ 194 | |               </div>
+ 195 | |   
+ 196 | |               {footer}
+ 197 | |           </aside>
+ 198 | |       );
+ 199 | `-> }
+     `----
+  help: Consider splitting it into smaller functions.
+
+  ! eslint(max-lines-per-function): The function `NotesList` has too many lines (107). Maximum allowed is 100.
+     ,-[src/screens/do/tips-notes.tsx:82:8]
+  81 |     
+  82 | ,-> export function NotesList() {
+  83 | |       const [notes, setNotes] = useNotes();
+  84 | |       const [toast, setToast] = React.useState<string | null>(null);
+  85 | |       const [adding, setAdding] = React.useState(false);
+  86 | |       const [draft, setDraft] = React.useState("");
+  87 | |   
+  88 | |       const openInObsidian = (note: AppNote) => {
+  89 | |           // Mocked — would normally fire obsidian:// deep link
+  90 | |           setToast(`would open obsidian://${note.vault}/${note.path}`);
+  91 | |           setTimeout(() => setToast(null), TIP_DURATION_MS);
+  92 | |       };
+  93 | |       const remove = (id: string) => setNotes((ns) => ns.filter((n) => n.id !== id));
+  94 | |       const addNote = () => {
+  95 | |           const title = draft.trim();
+  96 | |           if (!title) {
+  97 | |               setAdding(false);
+  98 | |               return;
+  99 | |           }
+ 100 | |           const id = `n${Date.now()}`;
+ 101 | |           setNotes((ns) => [
+ 102 | |               ...ns,
+ 103 | |               {
+ 104 | |                   id,
+ 105 | |                   title,
+ 106 | |                   vault: "work",
+ 107 | |                   path: `${title.toLowerCase().replace(/\s+/g, "-")}.md`,
+ 108 | |               },
+ 109 | |           ]);
+ 110 | |           setDraft("");
+ 111 | |           setAdding(false);
+ 112 | |       };
+ 113 | |   
+ 114 | |       return (
+ 115 | |           <div className="notes">
+ 116 | |               <ul className="notes-list">
+ 117 | |                   {notes.map((n) => (
+ 118 | |                       <li key={String(n.id)} className="notes-row">
+ 119 | |                           <button
+ 120 | |                               className="notes-link"
+ 121 | |                               onClick={() => openInObsidian(n)}
+ 122 | |                           >
+ 123 | |                               <span className="notes-icon">◈</span>
+ 124 | |                               <span className="notes-title">{String(n.title)}</span>
+ 125 | |                               <span className="notes-path">
+ 126 | |                                   obsidian://{String(n.vault)}/{String(n.path)}
+ 127 | |                               </span>
+ 128 | |                               <span className="notes-arrow">↗</span>
+ 129 | |                           </button>
+ 130 | |                           <button
+ 131 | |                               className="notes-x"
+ 132 | |                               onClick={() => remove(String(n.id))}
+ 133 | |                               title="Remove"
+ 134 | |                           >
+ 135 | |                               ×
+ 136 | |                           </button>
+ 137 | |                       </li>
+ 138 | |                   ))}
+ 139 | |                   <li className="notes-row notes-row-add">
+ 140 | |                       {adding ? (
+ 141 | |                           <div
+ 142 | |                               style={{
+ 143 | |                                   display: "flex",
+ 144 | |                                   width: "100%",
+ 145 | |                                   alignItems: "center",
+ 146 | |                                   padding: "6px 4px",
+ 147 | |                                   gap: "10px",
+ 148 | |                               }}
+ 149 | |                           >
+ 150 | |                               <span className="notes-icon">+</span>
+ 151 | |                               <input
+ 152 | |                                   ref={(r) => { if (r && adding) r.focus(); }}
+ 153 | |                                   className="tips-input"
+ 154 | |                                   placeholder="note title…"
+ 155 | |                                   value={draft}
+ 156 | |                                   onChange={(e) => setDraft(e.target.value)}
+ 157 | |                                   onBlur={addNote}
+ 158 | |                                   onKeyDown={(e) => {
+ 159 | |                                       if (e.key === "Enter") addNote();
+ 160 | |                                       if (e.key === "Escape") {
+ 161 | |                                           setAdding(false);
+ 162 | |                                           setDraft("");
+ 163 | |                                       }
+ 164 | |                                   }}
+ 165 | |                               />
+ 166 | |                           </div>
+ 167 | |                       ) : (
+ 168 | |                           <button
+ 169 | |                               className="notes-add-btn"
+ 170 | |                               onClick={() => setAdding(true)}
+ 171 | |                           >
+ 172 | |                               <span className="notes-icon">+</span> add note
+ 173 | |                           </button>
+ 174 | |                       )}
+ 175 | |                   </li>
+ 176 | |               </ul>
+ 177 | |               {toast && (
+ 178 | |                   <div className="notes-toast">
+ 179 | |                       <span className="bracket">▸</span> {toast}
+ 180 | |                       <span className="dim">
+ 181 | |                           {" "}
+ 182 | |                           (placeholder — not actually opening)
+ 183 | |                       </span>
+ 184 | |                   </div>
+ 185 | |               )}
+ 186 | |           </div>
+ 187 | |       );
+ 188 | `-> }
+     `----
+  help: Consider splitting it into smaller functions.
+
+  ! eslint(max-lines-per-function): The function `NotificationItem` has too many lines (115). Maximum allowed is 100.
+     ,-[src/core/utils/notifications.tsx:112:1]
+ 111 |     
+ 112 | ,-> function NotificationItem({
+ 113 | |       notification,
+ 114 | |       onDismiss,
+ 115 | |   }: {
+ 116 | |       notification: NotificationData;
+ 117 | |       onDismiss: () => void;
+ 118 | |   }) {
+ 119 | |       useEffect(() => {
+ 120 | |           if (notification.type !== "error") {
+ 121 | |               const timer = setTimeout(() => {
+ 122 | |                   onDismiss();
+ 123 | |               }, SYNC_POLL_INTERVAL_MS);
+ 124 | |               return () => clearTimeout(timer);
+ 125 | |           }
+ 126 | |       }, [notification.type, onDismiss]);
+ 127 | |   
+ 128 | |       const colors = getColors(notification.type);
+ 129 | |   
+ 130 | |       const handleClick = async () => {
+ 131 | |           try {
+ 132 | |               await navigator.clipboard.writeText(notification.message);
+ 133 | |               // Briefly flash the background to indicate successful copy
+ 134 | |               const el = document.getElementById(
+ 135 | |                   `notif-${notification.id}`,
+ 136 | |               );
+ 137 | |               if (el) {
+ 138 | |                   const oldBg = el.style.background;
+ 139 | |                   el.style.background = "rgba(255, 255, 255, 0.2)";
+ 140 | |                   setTimeout(() => {
+ 141 | |                       el.style.background = oldBg;
+ 142 | |                   }, ANIMATION_DELAY_MS);
+ 143 | |               }
+ 144 | |           } catch (err) {
+ 145 | |               console.error("Failed to copy notification:", err);
+ 146 | |           }
+ 147 | |       };
+ 148 | |   
+ 149 | |       return (
+ 150 | |           <button
+ 151 | |               onClick={handleClick}
+ 152 | |               onKeyDown={(e) => {
+ 153 | |                   if (e.key === 'Enter' || e.key === ' ') {
+ 154 | |                       e.preventDefault();
+ 155 | |                       handleClick();
+ 156 | |                   }
+ 157 | |               }}
+ 158 | |               id={`notif-${notification.id}`}
+ 159 | |               style={{
+ 160 | |                   fontFamily: "inherit",
+ 161 | |                   textAlign: "left",
+ 162 | |                   background: colors.bg,
+ 163 | |                   color: "#ffffff",
+ 164 | |                   padding: "12px 20px",
+ 165 | |                   borderRadius: "8px",
+ 166 | |                   fontSize: "0.95rem",
+ 167 | |                   fontWeight: 500,
+ 168 | |                   boxShadow:
+ 169 | |                       "0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2)",
+ 170 | |                   border: `1px solid ${colors.border}`,
+ 171 | |                   backdropFilter: "blur(8px)",
+ 172 | |                   WebkitBackdropFilter: "blur(8px)",
+ 173 | |                   pointerEvents: "auto", // Allow interacting with the notification if needed
+ 174 | |                   cursor: "pointer",
+ 175 | |                   transition: "background 0.15s ease",
+ 176 | |                   animation: notification.exiting
+ 177 | |                       ? "notify-fade-out-left 0.5s ease forwards"
+ 178 | |                       : "notify-slide-in-right 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+ 179 | |                   maxWidth: "350px",
+ 180 | |                   wordBreak: "break-word",
+ 181 | |                   overflow: "hidden",
+ 182 | |                   display: "flex",
+ 183 | |                   alignItems: "center",
+ 184 | |                   justifyContent: "space-between",
+ 185 | |                   gap: "12px",
+ 186 | |               }}
+ 187 | |               title="Click to copy"
+ 188 | |           >
+ 189 | |               <span style={{ flex: 1 }}>{notification.message}</span>
+ 190 | |               <button
+ 191 | |                   onClick={(e) => {
+ 192 | |                       e.stopPropagation();
+ 193 | |                       onDismiss();
+ 194 | |                   }}
+ 195 | |                   style={{
+ 196 | |                       background: "transparent",
+ 197 | |                       border: "none",
+ 198 | |                       color: "currentColor",
+ 199 | |                       cursor: "pointer",
+ 200 | |                       padding: "4px",
+ 201 | |                       opacity: 0.7,
+ 202 | |                       fontSize: "1.6rem",
+ 203 | |                       lineHeight: 1,
+ 204 | |                       display: "flex",
+ 205 | |                       alignItems: "center",
+ 206 | |                       justifyContent: "center",
+ 207 | |                       borderRadius: "4px",
+ 208 | |                   }}
+ 209 | |                   title="Dismiss"
+ 210 | |               >
+ 211 | |                   ×
+ 212 | |               </button>
+ 213 | |               <style>{`
+ 214 | |           @keyframes notify-slide-in-right {
+ 215 | |             from { opacity: 0; transform: translateX(50px) scale(0.95); }
+ 216 | |             to { opacity: 1; transform: translateX(0) scale(1); }
+ 217 | |           }
+ 218 | |           @keyframes notify-fade-out-left {
+ 219 | |             0% { opacity: 1; transform: translateX(0); max-height: 500px; padding-top: 12px; padding-bottom: 12px; margin-top: 0; border-width: 1px; }
+ 220 | |             40% { opacity: 0; transform: translateX(-30px); max-height: 500px; padding-top: 12px; padding-bottom: 12px; margin-top: 0; border-width: 1px; }
+ 221 | |             100% { opacity: 0; transform: translateX(-30px); max-height: 0; padding-top: 0; padding-bottom: 0; margin-top: -12px; border-width: 0; }
+ 222 | |           }
+ 223 | |         `}</style>
+ 224 | |           </button>
+ 225 | |       );
+ 226 | `-> }
+     `----
+  help: Consider splitting it into smaller functions.
+
+  ! eslint(max-lines-per-function): The function `TaskRow` has too many lines (125). Maximum allowed is 100.
+     ,-[src/components/tasklist/task-row.tsx:18:8]
+  17 |     
+  18 | ,-> export function TaskRow({
+  19 | |       task,
+  20 | |       onDragStart,
+  21 | |       dragging,
+  22 | |       updateTask,
+  23 | |       deleteTask,
+  24 | |       filters,
+  25 | |   }: TaskRowProps) {
+  26 | |       const [isExiting, setIsExiting] = useState(false);
+  27 | |       const [isChecking, setIsChecking] = useState(false);
+  28 | |   
+  29 | |       const willBeFilteredOut = (newStatus: string) => {
+  30 | |           return checkTaskAgainstFilters({ ...task, status: newStatus }, filters);
+  31 | |       };
+  32 | |   
+  33 | |       const handlePointerDown = (e: React.PointerEvent<HTMLDivElement> | React.MouseEvent<HTMLDivElement>) => {
+  34 | |           if (e.button !== 0) return;
+  35 | |           if (e.target instanceof Element && (
+  36 | |               e.target.closest(".task-row-subtask-toggle") ||
+  37 | |               e.target.closest(".task-row-actions") ||
+  38 | |               e.target.closest(".task-circle")
+  39 | |           ))
+  40 | |               return;
+  41 | |           onDragStart?.(e, task);
+  42 | |       };
+  43 | |   
+  44 | |       const dueStr = task.due ? dueLabel(task.due, TODAY) : "";
+  45 | |       const overdue =
+  46 | |           task.due && parseYMD(task.due) < TODAY && task.status !== "done";
+  47 | |   
+  48 | |       return (
+  49 | |           <div
+  50 | |               className={`task-row ${dragging ? "is-dragging" : ""} ${task.status === "done" ? "is-done" : ""} ${isExiting ? "is-exiting" : ""}`}
+  51 | |               onPointerDown={handlePointerDown}
+  52 | |           >
+  53 | |               <button
+  54 | |                   type="button"
+  55 | |                   className={`task-circle pri-bg-${task.priority}`}
+  56 | |                   style={{ border: "none", padding: 0, font: "inherit", color: "inherit" }}
+  57 | |                   onClick={(e) => {
+  58 | |                       e.stopPropagation();
+  59 | |                       const newStatus = task.status === "done" ? "todo" : "done";
+  60 | |                       const isRemoving = willBeFilteredOut(newStatus);
+  61 | |   
+  62 | |                       if (newStatus === "done") {
+  63 | |                           setIsChecking(true);
+  64 | |                           import("cuelume").then(({ play }) => play("success"));
+  65 | |                       } else {
+  66 | |                           import("cuelume").then(({ play }) => play("release"));
+  67 | |                       }
+  68 | |   
+  69 | |                       if (isRemoving) {
+  70 | |                           setIsExiting(true);
+  71 | |                           setTimeout(() => {
+  72 | |                               updateTask(task.id, { status: newStatus });
+  73 | |                               setIsChecking(false);
+  74 | |                               setIsExiting(false);
+  75 | |                           }, TRANSITION_DURATION_MS);
+  76 | |                           return;
+  77 | |                       }
+  78 | |   
+  79 | |                       updateTask(task.id, { status: newStatus });
+  80 | |                       if (newStatus === "todo") {
+  81 | |                           setIsChecking(false);
+  82 | |                       }
+  83 | |                   }}
+  84 | |                   title="Toggle Done"
+  85 | |                   aria-label={`Priority ${task.priority}`}
+  86 | |               >
+  87 | |                   {(task.status === "done" || isChecking) && (
+  88 | |                       <svg
+  89 | |                           className="task-circle-check"
+  90 | |                           viewBox="0 0 24 24"
+  91 | |                           fill="none"
+  92 | |                           stroke="currentColor"
+  93 | |                           strokeWidth="3"
+  94 | |                           strokeLinecap="round"
+  95 | |                           strokeLinejoin="round"
+  96 | |                       >
+  97 | |                           <polyline points="4 12 9 17 20 6"></polyline>
+  98 | |                       </svg>
+  99 | |                   )}
+ 100 | |               </button>
+ 101 | |               <div className="task-row-content">
+ 102 | |                   <div className="task-row-line1">
+ 103 | |                       <span className="task-row-title">{task.title}</span>
+ 104 | |                       {task.status === "doing" && (
+ 105 | |                           <span className="status-pill status-doing">doing</span>
+ 106 | |                       )}
+ 107 | |                       {task.status === "next-up" && (
+ 108 | |                           <span className="status-pill status-nextup">
+ 109 | |                               next up
+ 110 | |                           </span>
+ 111 | |                       )}
+ 112 | |   
+ 113 | |                       <div className="task-row-actions">
+ 114 | |                           <button
+ 115 | |                               onClick={(e) => {
+ 116 | |                                   e.stopPropagation();
+ 117 | |                                   if (e.shiftKey || confirm("Delete task?")) {
+ 118 | |                                       setIsExiting(true);
+ 119 | |                                       setTimeout(() => deleteTask(task.id), TRANSITION_DURATION_MS);
+ 120 | |                                   }
+ 121 | |                               }}
+ 122 | |                               title="Delete"
+ 123 | |                           >
+ 124 | |                               <span
+ 125 | |                                   className="material-symbols-outlined"
+ 126 | |                                   style={{
+ 127 | |                                       fontSize: "18px",
+ 128 | |                                       display: "flex",
+ 129 | |                                       alignItems: "center",
+ 130 | |                                       justifyContent: "center",
+ 131 | |                                   }}
+ 132 | |                               >
+ 133 | |                                   delete
+ 134 | |                               </span>
+ 135 | |                           </button>
+ 136 | |                       </div>
+ 137 | |                   </div>
+ 138 | |                   <TaskRowLine2 task={task} dueStr={dueStr} overdue={Boolean(overdue)} />
+ 139 | |               </div>
+ 140 | |           </div>
+ 141 | |       );
+ 142 | `-> }
+ 143 |     
+     `----
+  help: Consider splitting it into smaller functions.
+
+  ! eslint(max-lines-per-function): The function `DistractionLog` has too many lines (151). Maximum allowed is 100.
+     ,-[src/screens/do/distraction-log/index.tsx:20:8]
+  19 |     
+  20 | ,-> export function DistractionLog() {
+  21 | |       const [rows, setRows] = useDistractions();
+  22 | |       const [statuses, setStatuses] = useDistractionStatuses();
+  23 | |       const [columns, setColumns] = useDistractionColumns();
+  24 | |       const [editingCell, setEditingCell] = React.useState<EditingCell | null>(null);
+  25 | |       const [statusEditor, setStatusEditor] = React.useState<string | null>(null); // rowId
+  26 | |   
+  27 | |       const totalWidth = columns.reduce((sum: number, c: DistractionColumn) => sum + c.width, 0) + COMPACT_EVENT_HEIGHT_PX; // +40 for trailing action col
+  28 | |   
+  29 | |       const updateRow = (id: string, patch: Partial<DistractionRow>) => {
+  30 | |           setRows((rs: DistractionRow[]) => rs.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+  31 | |       };
+  32 | |       const deleteRow = (id: string) => {
+  33 | |           setRows((rs: DistractionRow[]) => rs.filter((r) => r.id !== id));
+  34 | |       };
+  35 | |       const addRow = () => {
+  36 | |           const now = new Date();
+  37 | |           const created = `${now.getFullYear()}-${PAD2(now.getMonth() + 1)}-${PAD2(now.getDate())}T${PAD2(now.getHours())}:${PAD2(now.getMinutes())}`;
+  38 | |           const id = `d${Date.now()}`;
+  39 | |           setRows((rs: DistractionRow[]) => [
+  40 | |               ...rs,
+  41 | |               { id, name: "", status: statuses[0]?.id || "", created },
+  42 | |           ]);
+  43 | |           setEditingCell({ rowId: id, colId: "name" });
+  44 | |       };
+  45 | |       const resizeCol = (colId: string, startWidth: number, startX: number) => (e: React.PointerEvent<HTMLSpanElement>) => {
+  46 | |           e.preventDefault();
+  47 | |           const onMove = (ev: PointerEvent) => {
+  48 | |               const dx = ev.clientX - startX;
+  49 | |               const newW = Math.max(MIN_COLUMN_WIDTH_PX, startWidth + dx);
+  50 | |               setColumns((cs: DistractionColumn[]) =>
+  51 | |                   cs.map((c) => (c.id === colId ? { ...c, width: newW } : c)),
+  52 | |               );
+  53 | |           };
+  54 | |           const onUp = () => {
+  55 | |               window.removeEventListener("pointermove", onMove);
+  56 | |               window.removeEventListener("pointerup", onUp);
+  57 | |           };
+  58 | |           window.addEventListener("pointermove", onMove);
+  59 | |           window.addEventListener("pointerup", onUp);
+  60 | |       };
+  61 | |   
+  62 | |       const addStatus = (label: string, color: string) => {
+  63 | |           if (!label) return undefined;
+  64 | |           const id =
+  65 | |               label.toLowerCase().replace(/\s+/g, "-") +
+  66 | |               "-" +
+  67 | |               Date.now().toString(BASE_36).slice(RESIZE_HANDLE_OFFSET_PX);
+  68 | |           setStatuses((ss: DistractionStatus[]) => [...ss, { id, label, color }]);
+  69 | |           return id;
+  70 | |       };
+  71 | |   
+  72 | |       return (
+  73 | |           <div className="dlog">
+  74 | |               <div className="dlog-scroll">
+  75 | |                   <div className="dlog-table" style={{ minWidth: totalWidth }}>
+  76 | |                       {/* Header row */}
+  77 | |                       <div className="dlog-row dlog-row-head">
+  78 | |                           {columns.map((col: DistractionColumn) => (
+  79 | |                               <div
+  80 | |                                   key={col.id}
+  81 | |                                   className="dlog-cell dlog-cell-head"
+  82 | |                                   style={{ width: col.width }}
+  83 | |                               >
+  84 | |                                   <span className="dlog-cell-head-icon">
+  85 | |                                       {colIcon(col.type)}
+  86 | |                                   </span>
+  87 | |                                   <span className="dlog-cell-head-label">
+  88 | |                                       {col.label}
+  89 | |                                   </span>
+  90 | |                                   <span
+  91 | |                                       className="dlog-col-resize"
+  92 | |                                       onPointerDown={(e) =>
+  93 | |                                           resizeCol(
+  94 | |                                               col.id,
+  95 | |                                               col.width,
+  96 | |                                               e.clientX,
+  97 | |                                           )(e)
+  98 | |                                       }
+  99 | |                                       title="Drag to resize"
+ 100 | |                                   >
+ 101 | |                                       │
+ 102 | |                                   </span>
+ 103 | |                               </div>
+ 104 | |                           ))}
+ 105 | |                           <div className="dlog-cell dlog-cell-head dlog-cell-actions">
+ 106 | |                               <span className="dim">·</span>
+ 107 | |                           </div>
+ 108 | |                       </div>
+ 109 | |   
+ 110 | |                       {/* Data rows */}
+ 111 | |                       {rows.length === 0 && (
+ 112 | |                           <div className="dlog-row dlog-row-empty">
+ 113 | |                               <span className="dim">
+ 114 | |                                   no distractions logged. nice.
+ 115 | |                               </span>
+ 116 | |                           </div>
+ 117 | |                       )}
+ 118 | |                       {rows.map((row: DistractionRow) => (
+ 119 | |                           <DLogRow
+ 120 | |                               key={String(row.id)}
+ 121 | |                               row={row}
+ 122 | |                               columns={columns}
+ 123 | |                               statuses={statuses}
+ 124 | |                               editingCell={editingCell}
+ 125 | |                               setEditingCell={setEditingCell}
+ 126 | |                               statusEditor={statusEditor}
+ 127 | |                               setStatusEditor={setStatusEditor}
+ 128 | |                               updateRow={updateRow}
+ 129 | |                               deleteRow={deleteRow}
+ 130 | |                               addStatus={addStatus}
+ 131 | |                           />
+ 132 | |                       ))}
+ 133 | |   
+ 134 | |                       {/* Add row */}
+ 135 | |                       <button className="dlog-row dlog-row-add" onClick={addRow}>
+ 136 | |                           <span className="dlog-add-icon">+</span>
+ 137 | |                           <span className="dlog-add-label">add distraction</span>
+ 138 | |                       </button>
+ 139 | |                   </div>
+ 140 | |               </div>
+ 141 | |   
+ 142 | |               <div className="dlog-foot">
+ 143 | |                   <span className="dim">
+ 144 | |                       {rows.length} {rows.length === 1 ? "row" : "rows"}
+ 145 | |                   </span>
+ 146 | |                   <span className="dlog-foot-sep">·</span>
+ 147 | |                   {statuses.map((s: DistractionStatus) => (
+ 148 | |                       <span key={String(s.id)} className="dlog-foot-stat">
+ 149 | |                           <span
+ 150 | |                               className="status-chip"
+ 151 | |                               style={{
+ 152 | |                                   background: hexAlpha(s.color, OPACITY_FAINT),
+ 153 | |                                   color: s.color,
+ 154 | |                                   borderColor: hexAlpha(s.color, OPACITY_MUTED),
+ 155 | |                               }}
+ 156 | |                           >
+ 157 | |                               {s.label}
+ 158 | |                           </span>
+ 159 | |                           <span className="dim">
+ 160 | |                               {" "}
+ 161 | |                               {rows.filter((r: DistractionRow) => r.status === s.id).length}
+ 162 | |                           </span>
+ 163 | |                       </span>
+ 164 | |                   ))}
+ 165 | |                   <span className="dlog-foot-spacer" />
+ 166 | |                   <span className="dim">tip: drag column edges to resize</span>
+ 167 | |               </div>
+ 168 | |           </div>
+ 169 | |       );
+ 170 | `-> }
+     `----
+  help: Consider splitting it into smaller functions.
+
+  ! eslint(max-lines-per-function): The function `LoginScreen` has too many lines (165). Maximum allowed is 100.
+     ,-[src/screens/login/LoginScreen.tsx:5:8]
+   4 |     
+   5 | ,-> export function LoginScreen() {
+   6 | |       const { loginWithGoogle } = useAuth();
+   7 | |   
+   8 | |       return (
+   9 | |           <div className="app">
+  10 | |               <LoginTitleBar />
+  11 | |               <div
+  12 | |                   style={{
+  13 | |                       display: "flex",
+  14 | |                       flex: 1,
+  15 | |                       justifyContent: "center",
+  16 | |                       alignItems: "center",
+  17 | |                       flexDirection: "column",
+  18 | |                       background:
+  19 | |                           "radial-gradient(circle at top, var(--bg-surface-hover) 0%, var(--bg) 60%)",
+  20 | |                       color: "var(--fg)",
+  21 | |                       fontFamily: "var(--sans)",
+  22 | |                   }}
+  23 | |               >
+  24 | |                   <div
+  25 | |                       style={{
+  26 | |                           background: "rgba(24, 20, 16, 0.6)",
+  27 | |                           backdropFilter: "blur(12px)",
+  28 | |                           WebkitBackdropFilter: "blur(12px)",
+  29 | |                           padding: "3.5rem 4.5rem",
+  30 | |                           borderRadius: "24px",
+  31 | |                           border: "1px solid var(--border)",
+  32 | |                           boxShadow:
+  33 | |                               "0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 0 1px inset rgba(255,255,255,0.03)",
+  34 | |                           textAlign: "center",
+  35 | |                           display: "flex",
+  36 | |                           flexDirection: "column",
+  37 | |                           alignItems: "center",
+  38 | |                           gap: "2rem",
+  39 | |                           animation:
+  40 | |                               "fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+  41 | |                       }}
+  42 | |                   >
+  43 | |                       <div>
+  44 | |                           <h1
+  45 | |                               style={{
+  46 | |                                   margin: "0 0 0.75rem 0",
+  47 | |                                   fontSize: "3rem",
+  48 | |                                   fontWeight: 700,
+  49 | |                                   letterSpacing: "-0.02em",
+  50 | |                                   background:
+  51 | |                                       "linear-gradient(135deg, var(--fg) 0%, var(--accent) 100%)",
+  52 | |                                   WebkitBackgroundClip: "text",
+  53 | |                                   WebkitTextFillColor: "transparent",
+  54 | |                               }}
+  55 | |                           >
+  56 | |                               Taskroot
+  57 | |                           </h1>
+  58 | |                           <p
+  59 | |                               style={{
+  60 | |                                   margin: 0,
+  61 | |                                   color: "var(--fg-muted)",
+  62 | |                                   fontSize: "1.15rem",
+  63 | |                                   fontWeight: 400,
+  64 | |                               }}
+  65 | |                           >
+  66 | |                               Focus on what matters.
+  67 | |                           </p>
+  68 | |                       </div>
+  69 | |   
+  70 | |                       <button
+  71 | |                           onClick={loginWithGoogle}
+  72 | |                           style={{
+  73 | |                               marginTop: "0.5rem",
+  74 | |                               padding: "0.9rem 2rem",
+  75 | |                               fontSize: "1.05rem",
+  76 | |                               fontWeight: 500,
+  77 | |                               cursor: "pointer",
+  78 | |                               background: "var(--bg-surface)",
+  79 | |                               color: "var(--fg)",
+  80 | |                               border: "1px solid var(--border-strong)",
+  81 | |                               borderRadius: "10px",
+  82 | |                               boxShadow: "var(--shadow-btn-hover)",
+  83 | |                               display: "flex",
+  84 | |                               alignItems: "center",
+  85 | |                               gap: "0.85rem",
+  86 | |                               transition:
+  87 | |                                   "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+  88 | |                               outline: "none",
+  89 | |                           }}
+  90 | |                           onMouseOver={(e) => {
+  91 | |                               e.currentTarget.style.transform =
+  92 | |                                   "translateY(-2px)";
+  93 | |                               e.currentTarget.style.borderColor =
+  94 | |                                   "var(--accent-line)";
+  95 | |                               e.currentTarget.style.background =
+  96 | |                                   "var(--bg-surface-hover)";
+  97 | |                               e.currentTarget.style.boxShadow =
+  98 | |                                   "0 8px 20px rgba(0, 0, 0, 0.4)";
+  99 | |                           }}
+ 100 | |                           onFocus={(e) => {
+ 101 | |                               e.currentTarget.style.transform =
+ 102 | |                                   "translateY(-2px)";
+ 103 | |                               e.currentTarget.style.borderColor =
+ 104 | |                                   "var(--accent-line)";
+ 105 | |                               e.currentTarget.style.background =
+ 106 | |                                   "var(--bg-surface-hover)";
+ 107 | |                               e.currentTarget.style.boxShadow =
+ 108 | |                                   "0 8px 20px rgba(0, 0, 0, 0.4)";
+ 109 | |                           }}
+ 110 | |                           onMouseOut={(e) => {
+ 111 | |                               e.currentTarget.style.transform = "translateY(0)";
+ 112 | |                               e.currentTarget.style.borderColor =
+ 113 | |                                   "var(--border-strong)";
+ 114 | |                               e.currentTarget.style.background =
+ 115 | |                                   "var(--bg-surface)";
+ 116 | |                               e.currentTarget.style.boxShadow =
+ 117 | |                                   "var(--shadow-btn-hover)";
+ 118 | |                           }}
+ 119 | |                           onBlur={(e) => {
+ 120 | |                               e.currentTarget.style.transform = "translateY(0)";
+ 121 | |                               e.currentTarget.style.borderColor =
+ 122 | |                                   "var(--border-strong)";
+ 123 | |                               e.currentTarget.style.background =
+ 124 | |                                   "var(--bg-surface)";
+ 125 | |                               e.currentTarget.style.boxShadow =
+ 126 | |                                   "var(--shadow-btn-hover)";
+ 127 | |                           }}
+ 128 | |                           onMouseDown={(e) => {
+ 129 | |                               e.currentTarget.style.transform = "translateY(1px)";
+ 130 | |                               e.currentTarget.style.boxShadow =
+ 131 | |                                   "var(--shadow-btn)";
+ 132 | |                           }}
+ 133 | |                       >
+ 134 | |                           <svg
+ 135 | |                               width="20"
+ 136 | |                               height="20"
+ 137 | |                               viewBox="0 0 24 24"
+ 138 | |                               fill="currentColor"
+ 139 | |                           >
+ 140 | |                               <path
+ 141 | |                                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+ 142 | |                                   fill="#4285F4"
+ 143 | |                               />
+ 144 | |                               <path
+ 145 | |                                   d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+ 146 | |                                   fill="#34A853"
+ 147 | |                               />
+ 148 | |                               <path
+ 149 | |                                   d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+ 150 | |                                   fill="#FBBC05"
+ 151 | |                               />
+ 152 | |                               <path
+ 153 | |                                   d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+ 154 | |                                   fill="#EA4335"
+ 155 | |                               />
+ 156 | |                           </svg>
+ 157 | |                           Continue with Google
+ 158 | |                       </button>
+ 159 | |                   </div>
+ 160 | |                   <style>{`
+ 161 | |             @keyframes fade-in-up {
+ 162 | |               from { opacity: 0; transform: translateY(24px); }
+ 163 | |               to { opacity: 1; transform: translateY(0); }
+ 164 | |             }
+ 165 | |           `}</style>
+ 166 | |               </div>
+ 167 | |           </div>
+ 168 | |       );
+ 169 | `-> }
+     `----
+  help: Consider splitting it into smaller functions.
+
+  ! eslint(max-lines-per-function): The function `GraphScreen` has too many lines (137). Maximum allowed is 100.
+     ,-[src/screens/graph/GraphScreen.tsx:13:8]
+  12 |     
+  13 | ,-> export function GraphScreen() {
+  14 | |       const [tasks, setTasks] = useTasks();
+  15 | |   
+  16 | |       const [query, setQuery] = useTaskQuery();
+  17 | |       const [filters, setFilters] = useTaskFilters();
+  18 | |       const [sort, setSort] = useTaskSort();
+  19 | |   
+  20 | |       const moveFilteredToCanvas = () => {
+  21 | |           let xs = tasks;
+  22 | |           for (const f of filters) {
+  23 | |               if (!f.column || (!f.value && f.value !== 0)) continue;
+  24 | |               xs = xs.filter((t: AppTask) => {
+  25 | |                   let match = false;
+  26 | |                   const values = Array.isArray(f.value) ? f.value : [f.value];
+  27 | |                   if (values.length === 0) return true;
+  28 | |                   
+  29 | |                   if (f.column === "status") match = values.includes(t.status || "");
+  30 | |                   else if (f.column === "priority")
+  31 | |                       match = values.includes(t.priority || 0) || values.includes(String(t.priority));
+  32 | |                   else if (f.column === "tag")
+  33 | |                       match = values.some(v => (t.tags || []).includes(String(v)));
+  34 | |                   return f.operator === "is not" ? !match : match;
+  35 | |               });
+  36 | |           }
+  37 | |           if (query.trim()) {
+  38 | |               const q = query.toLowerCase();
+  39 | |               xs = xs.filter(
+  40 | |                   (t: AppTask) =>
+  41 | |                       t.title.toLowerCase().includes(q) ||
+  42 | |                       (t.tags || []).some((tag) => tag.toLowerCase().includes(q)),
+  43 | |               );
+  44 | |           }
+  45 | |   
+  46 | |           const idsToMove = new Set(xs.map((t: AppTask) => t.id));
+  47 | |   
+  48 | |           setTasks((prev: AppTask[]) => {
+  49 | |               let layoutIndex = 0;
+  50 | |               return prev.map((t: AppTask) => {
+  51 | |                   if (!idsToMove.has(t.id) || t.onCanvas)
+  52 | |                       return t;
+  53 | |   
+  54 | |                   const newT = {
+  55 | |                       ...t,
+  56 | |                       onCanvas: true,
+  57 | |                       canvasX: (layoutIndex % DRAG_THRESHOLD_PX) * GRAPH_NODE_WIDTH_PX,
+  58 | |                       canvasY: Math.floor(layoutIndex / DRAG_THRESHOLD_PX) * ANIMATION_DELAY_MS,
+  59 | |                   };
+  60 | |                   layoutIndex++;
+  61 | |                   return newT;
+  62 | |               });
+  63 | |           });
+  64 | |       };
+  65 | |   
+  66 | |       const footer = (
+  67 | |           <div
+  68 | |               style={{
+  69 | |                   padding: "12px",
+  70 | |                   borderTop: "1px solid var(--border)",
+  71 | |                   background: "var(--bg-surface)",
+  72 | |               }}
+  73 | |           >
+  74 | |               <button
+  75 | |                   onClick={moveFilteredToCanvas}
+  76 | |                   style={{
+  77 | |                       width: "100%",
+  78 | |                       padding: "8px",
+  79 | |                       background: "var(--accent)",
+  80 | |                       color: "var(--bg)",
+  81 | |                       border: "none",
+  82 | |                       borderRadius: "4px",
+  83 | |                       cursor: "pointer",
+  84 | |                       fontWeight: "bold",
+  85 | |                   }}
+  86 | |               >
+  87 | |                   Move to canvas
+  88 | |               </button>
+  89 | |           </div>
+  90 | |       );
+  91 | |   
+  92 | |       return (
+  93 | |           <>
+  94 | |               <main className="main">
+  95 | |                   <SplitPane
+  96 | |                       direction="horizontal"
+  97 | |                       defaultSize={360}
+  98 | |                       minSize={200}
+  99 | |                       snapThreshold={50}
+ 100 | |                   >
+ 101 | |                       <TaskListPane
+ 102 | |                           tasks={tasks}
+ 103 | |                           setTasks={setTasks}
+ 104 | |                           filters={filters}
+ 105 | |                           setFilters={setFilters}
+ 106 | |                           sort={sort}
+ 107 | |                           setSort={setSort}
+ 108 | |                           query={query}
+ 109 | |                           setQuery={setQuery}
+ 110 | |                           onDragStart={() => {}}
+ 111 | |                           onAddTask={(defaults: Partial<AppTask> = {}) => {
+ 112 | |                               const id = `t${Date.now()}`;
+ 113 | |                               setTasks((ts: AppTask[]) => [
+ 114 | |                                   {
+ 115 | |                                       id,
+ 116 | |                                       title: "New Task",
+ 117 | |                                       status: "todo",
+ 118 | |                                       priority: 1,
+ 119 | |                                       tags: [],
+ 120 | |                                       subtasks: [],
+ 121 | |                                       parent_task: null,
+ 122 | |                                       dependencies: [],
+ 123 | |                                       est: 60,
+ 124 | |                                       added: new Date().toISOString(),
+ 125 | |                                       ...defaults,
+ 126 | |                                   },
+ 127 | |                                   ...ts,
+ 128 | |                               ]);
+ 129 | |                           }}
+ 130 | |                           onDeleteTask={(id: string) =>
+ 131 | |                               setTasks((ts: AppTask[]) => ts.filter((t) => t.id !== id))
+ 132 | |                           }
+ 133 | |                           footer={footer}
+ 134 | |                       />
+ 135 | |                       <div
+ 136 | |                           className="right-pane"
+ 137 | |                           style={{
+ 138 | |                               position: "relative",
+ 139 | |                               width: "100%",
+ 140 | |                               height: "100%",
+ 141 | |                           }}
+ 142 | |                       >
+ 143 | |                           <TaskCanvas tasks={tasks} setTasks={setTasks} />
+ 144 | |                       </div>
+ 145 | |                   </SplitPane>
+ 146 | |               </main>
+ 147 | |           </>
+ 148 | |       );
+ 149 | `-> }
+     `----
+  help: Consider splitting it into smaller functions.
+
+  ! eslint(max-lines-per-function): The function `Kanban` has too many lines (115). Maximum allowed is 100.
+     ,-[src/screens/do/kanban.tsx:19:8]
+  18 |     
+  19 | ,-> export function Kanban() {
+  20 | |       const [tasks, setTasks] = useTasks();
+  21 | |       const [drag, setDrag] = React.useState<{ taskId: string; x: number; y: number; overCol: string | null } | null>(null);
+  22 | |   
+  23 | |       const onTaskDown = (task: AppTask) => (e: React.PointerEvent<HTMLDivElement>) => {
+  24 | |           if (e.button !== 0) return;
+  25 | |           e.preventDefault();
+  26 | |           const start = { x: e.clientX, y: e.clientY };
+  27 | |           let active = false;
+  28 | |           const move = (ev: PointerEvent) => {
+  29 | |               if (
+  30 | |                   !active &&
+  31 | |                   Math.hypot(ev.clientX - start.x, ev.clientY - start.y) < DRAG_START_THRESHOLD_PX
+  32 | |               )
+  33 | |                   return;
+  34 | |               active = true;
+  35 | |               const el = document.elementFromPoint(ev.clientX, ev.clientY);
+  36 | |               const colEl = el instanceof Element ? el.closest("[data-kanban-col]") : null;
+  37 | |               setDrag({
+  38 | |                   taskId: task.id,
+  39 | |                   x: ev.clientX,
+  40 | |                   y: ev.clientY,
+  41 | |                   overCol: colEl instanceof HTMLElement ? (colEl.dataset?.kanbanCol || null) : null,
+  42 | |               });
+  43 | |           };
+  44 | |           const up = (ev: PointerEvent) => {
+  45 | |               window.removeEventListener("pointermove", move);
+  46 | |               window.removeEventListener("pointerup", up);
+  47 | |               if (active) {
+  48 | |                   const el = document.elementFromPoint(ev.clientX, ev.clientY);
+  49 | |                   const colEl = el instanceof Element ? el.closest("[data-kanban-col]") : null;
+  50 | |                   if (
+  51 | |                       colEl instanceof HTMLElement &&
+  52 | |                       colEl.dataset.kanbanCol !== task.status
+  53 | |                   ) {
+  54 | |                       setTasks((ts: AppTask[]) =>
+  55 | |                           ts.map((t) =>
+  56 | |                               t.id === task.id
+  57 | |                                   ? {
+  58 | |                                         ...t,
+  59 | |                                         status: colEl.dataset.kanbanCol,
+  60 | |                                     }
+  61 | |                                   : t,
+  62 | |                           ),
+  63 | |                       );
+  64 | |                   }
+  65 | |               }
+  66 | |               setDrag(null);
+  67 | |           };
+  68 | |           window.addEventListener("pointermove", move);
+  69 | |           window.addEventListener("pointerup", up);
+  70 | |       };
+  71 | |   
+  72 | |       return (
+  73 | |           <div className="kanban">
+  74 | |               <div className="kanban-cols">
+  75 | |                   {KANBAN_COLUMNS.map((col) => {
+  76 | |                       const colTasks = tasks.filter((t) => t.status === col.id);
+  77 | |                       const isOver = drag?.overCol === col.id;
+  78 | |                       return (
+  79 | |                           <div
+  80 | |                               key={col.id}
+  81 | |                               data-kanban-col={col.id}
+  82 | |                               className={`kanban-col ${col.accent ? "is-accent" : ""} ${col.dim ? "is-dim" : ""} ${isOver ? "is-drag-over" : ""}`}
+  83 | |                           >
+  84 | |                               <header className="kanban-col-hd">
+  85 | |                                   <span className="bracket">
+  86 | |                                       {col.accent ? "▸" : "◇"}
+  87 | |                                   </span>
+  88 | |                                   <span className="kanban-col-name">
+  89 | |                                       {col.label}
+  90 | |                                   </span>
+  91 | |                                   <span className="kanban-col-count">
+  92 | |                                       {colTasks.length}
+  93 | |                                   </span>
+  94 | |                               </header>
+  95 | |                               <div className="kanban-col-body">
+  96 | |                                   {colTasks.length === 0 ? (
+  97 | |                                       <div className="kanban-col-empty">
+  98 | |                                           <span className="dim">
+  99 | |                                               {isOver ? "▸ drop here" : "—"}
+ 100 | |                                           </span>
+ 101 | |                                       </div>
+ 102 | |                                   ) : (
+ 103 | |                                       colTasks.map((task) => (
+ 104 | |                                           <KanbanCard
+ 105 | |                                               key={task.id}
+ 106 | |                                               task={task}
+ 107 | |                                               onPointerDown={onTaskDown(task)}
+ 108 | |                                               dragging={drag?.taskId === task.id}
+ 109 | |                                           />
+ 110 | |                                       ))
+ 111 | |                                   )}
+ 112 | |                               </div>
+ 113 | |                           </div>
+ 114 | |                       );
+ 115 | |                   })}
+ 116 | |               </div>
+ 117 | |   
+ 118 | |               {drag && (
+ 119 | |                   <div
+ 120 | |                       className="kanban-ghost"
+ 121 | |                       style={{ left: drag.x + GHOST_OFFSET_X, top: drag.y - GHOST_OFFSET_Y }}
+ 122 | |                   >
+ 123 | |                       <div
+ 124 | |                           className={`task-circle pri-bg-${tasks.find((t) => t.id === drag.taskId)?.priority}`}
+ 125 | |                       />
+ 126 | |                       <span className="kanban-ghost-title">
+ 127 | |                           {tasks.find((t) => t.id === drag.taskId)?.title}
+ 128 | |                       </span>
+ 129 | |                   </div>
+ 130 | |               )}
+ 131 | |           </div>
+ 132 | |       );
+ 133 | `-> }
+ 134 |     
+     `----
+  help: Consider splitting it into smaller functions.
+
+Found 33 warnings and 0 errors.
+Finished in 98ms on 166 files with 227 rules using 24 threads.

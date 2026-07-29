@@ -29,7 +29,7 @@ export interface SettingRendererProps {
     setSettings: React.Dispatch<React.SetStateAction<AppSettings>>;
 }
 
-const SelectSetting = ({ setting, val, settings, setSettings }: SettingRendererProps) => {
+export const SelectSetting = ({ setting, val, settings, setSettings }: SettingRendererProps) => {
     if (setting.type !== "select") return null;
     return (
         <div style={{ display: "flex", gap: "12px", alignItems: "center", color: "var(--fg)" }}>
@@ -47,7 +47,7 @@ const SelectSetting = ({ setting, val, settings, setSettings }: SettingRendererP
     );
 };
 
-const TimeSetting = ({ setting, val, settings, setSettings }: SettingRendererProps) => (
+export const TimeSetting = ({ setting, val, settings, setSettings }: SettingRendererProps) => (
     <div style={{ display: "flex", gap: "12px", alignItems: "center", color: "var(--fg)" }}>
         <TimeInput
             value={typeof val === "number" ? minToTime(val) : "00:00"}
@@ -56,7 +56,7 @@ const TimeSetting = ({ setting, val, settings, setSettings }: SettingRendererPro
     </div>
 );
 
-const NumberSetting = ({ setting, val, settings, setSettings }: SettingRendererProps) => {
+export const NumberSetting = ({ setting, val, settings, setSettings }: SettingRendererProps) => {
     if (setting.type !== "number") return null;
     return (
         <div style={{ display: "flex", gap: "12px", alignItems: "center", color: "var(--fg)" }}>
@@ -70,30 +70,23 @@ const NumberSetting = ({ setting, val, settings, setSettings }: SettingRendererP
     );
 };
 
-const CheckboxSetting = ({ setting, val, setSettings }: SettingRendererProps) => (
+export const CheckboxSetting = ({ setting, val, setSettings }: SettingRendererProps) => (
     <ToggleSwitch
         checked={Boolean(val)}
         onChange={(checked) => setSettings((prev: AppSettings) => ({ ...prev, [setting.id]: checked }))}
     />
 );
 
-const KeybindingSetting = ({ setting, val, settings, setSettings }: SettingRendererProps) => (
+export const KeybindingSetting = ({ setting, val, settings, setSettings }: SettingRendererProps) => (
     <KeybindingInput
         value={typeof val === "string" || typeof val === "number" ? String(val) : ""}
         onChange={(v) => setSettings({ ...settings, [setting.id]: v })}
     />
 );
 
-const CustomSetting = ({ setting, settings, setSettings }: SettingRendererProps) => {
+export const CustomSetting = ({ setting, settings, setSettings }: SettingRendererProps) => {
     if (setting.type !== "custom") return null;
     return setting.render?.({ settings, setSettings }) || null;
 };
 
-export const SETTING_RENDERERS: Record<string, React.FC<SettingRendererProps>> = {
-    select: SelectSetting,
-    time: TimeSetting,
-    number: NumberSetting,
-    checkbox: CheckboxSetting,
-    keybinding: KeybindingSetting,
-    custom: CustomSetting,
-};
+

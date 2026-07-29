@@ -3,7 +3,7 @@ import type { AppTask, AppEvent } from "../../../../core/domain/models";
 import { sortTasksForSelection } from "./sortTasksForSelection";
 import "./TaskSelector.css";
 
-export const ANIMATION_DELAY_MS = 150;
+
 
 
 interface TaskSelectorProps {

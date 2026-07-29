@@ -1,11 +1,11 @@
 import { BASE_36 } from "../../core/utils/constants";
 import { useState } from "react";
 import { api } from "../../core/store/api";
-import { useAuth } from "../../core/auth/AuthContext";
+import { useAuth } from "../../core/auth/useAuth";
+
 import { useTasks } from "../../core/store/hooks";
 
-export const MAX_DISPLAY_ITEMS = 6;
-export const MAX_SEARCH_RESULTS = 10;
+
 
 
 

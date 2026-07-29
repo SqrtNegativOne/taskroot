@@ -5,9 +5,8 @@ import { SplitPane } from "../../components/split-pane";
 import { TaskCanvas } from "./TaskCanvas";
 import type { AppTask } from "../../core/domain/models";
 
-export const ANIMATION_DELAY_MS = 150;
-export const DRAG_THRESHOLD_PX = 4;
-export const GRAPH_NODE_WIDTH_PX = 250;
+
+
 
 
 export function GraphScreen() {

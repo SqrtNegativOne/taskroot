@@ -1,0 +1,450 @@
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ,-[src/components/day-timeline/components/TimeGridBackground.tsx:7:14]
+ 6 | 
+ 7 | export const GUTTER_SIZE_MINUTES = 15;
+   :              ^^^^^^^^^^^^^^^^^^^
+ 8 | 
+   `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ,-[src/components/inspector-pane/inspector-task.tsx:6:14]
+ 5 | 
+ 6 | export const DRAG_THRESHOLD_PX = 4;
+   :              ^^^^^^^^^^^^^^^^^
+ 7 | 
+   `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ,-[src/screens/do/distraction-log/status-cell.tsx:5:14]
+ 4 | 
+ 5 | export const OPACITY_SELECTED_BG = 0.22;
+   :              ^^^^^^^^^^^^^^^^^^^
+ 6 | export const OPACITY_MUTED = 0.6;
+   `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ,-[src/screens/do/distraction-log/status-cell.tsx:6:14]
+ 5 | export const OPACITY_SELECTED_BG = 0.22;
+ 6 | export const OPACITY_MUTED = 0.6;
+   :              ^^^^^^^^^^^^^
+ 7 | export const OPACITY_FAINT = 0.18;
+   `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ,-[src/screens/do/distraction-log/status-cell.tsx:7:14]
+ 6 | export const OPACITY_MUTED = 0.6;
+ 7 | export const OPACITY_FAINT = 0.18;
+   :              ^^^^^^^^^^^^^
+ 8 | 
+   `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ,-[src/screens/do/stopwatch/TaskSelector/TaskSelector.tsx:6:14]
+ 5 | 
+ 6 | export const ANIMATION_DELAY_MS = 150;
+   :              ^^^^^^^^^^^^^^^^^^
+ 7 | 
+   `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ,-[src/components/inspector-pane/inspector-shared.tsx:5:14]
+ 4 | 
+ 5 | export const OPACITY_DISABLED = 0.3;
+   :              ^^^^^^^^^^^^^^^^
+ 6 | 
+   `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+    ,-[src/components/inspector-pane/inspector-shared.tsx:27:17]
+ 26 | 
+ 27 | export function minToTime(m: number): string {
+    :                 ^^^^^^^^^
+ 28 |     if (typeof m !== "number" || isNaN(m)) return "";
+    `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+    ,-[src/components/inspector-pane/inspector-shared.tsx:34:17]
+ 33 | 
+ 34 | export function timeToMin(t: string): number {
+    :                 ^^^^^^^^^
+ 35 |     if (!t) return 0;
+    `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+    ,-[src/components/inspector-pane/inspector-shared.tsx:40:17]
+ 39 | 
+ 40 | export function getInspectorTitle(currentTask: AppTask | undefined, currentEvent: AppEvent | undefined, tasks: AppTask[]): string {
+    :                 ^^^^^^^^^^^^^^^^^
+ 41 |     if (currentTask) return currentTask.title || "";
+    `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ,-[src/screens/plan/date-grid/day-cell.tsx:5:14]
+ 4 | 
+ 5 | export const OPACITY_FADED = 0.4;
+   :              ^^^^^^^^^^^^^
+ 6 | 
+   `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+    ,-[src/screens/do/distraction-log/index.tsx:10:14]
+  9 | 
+ 10 | export const OPACITY_MUTED = 0.6;
+    :              ^^^^^^^^^^^^^
+ 11 | export const OPACITY_FAINT = 0.18;
+    `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+    ,-[src/screens/do/distraction-log/index.tsx:11:14]
+ 10 | export const OPACITY_MUTED = 0.6;
+ 11 | export const OPACITY_FAINT = 0.18;
+    :              ^^^^^^^^^^^^^
+ 12 | export const RESIZE_HANDLE_OFFSET_PX = -4;
+    `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+    ,-[src/screens/do/distraction-log/index.tsx:12:14]
+ 11 | export const OPACITY_FAINT = 0.18;
+ 12 | export const RESIZE_HANDLE_OFFSET_PX = -4;
+    :              ^^^^^^^^^^^^^^^^^^^^^^^
+ 13 | export const MIN_COLUMN_WIDTH_PX = 80;
+    `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+    ,-[src/screens/do/distraction-log/index.tsx:13:14]
+ 12 | export const RESIZE_HANDLE_OFFSET_PX = -4;
+ 13 | export const MIN_COLUMN_WIDTH_PX = 80;
+    :              ^^^^^^^^^^^^^^^^^^^
+ 14 | export const COMPACT_EVENT_HEIGHT_PX = 40;
+    `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+    ,-[src/screens/do/distraction-log/index.tsx:14:14]
+ 13 | export const MIN_COLUMN_WIDTH_PX = 80;
+ 14 | export const COMPACT_EVENT_HEIGHT_PX = 40;
+    :              ^^^^^^^^^^^^^^^^^^^^^^^
+ 15 | 
+    `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ,-[src/components/day-timeline/EventBlock.tsx:8:14]
+ 7 | 
+ 8 | export const MIN_EVENT_HEIGHT_PX = 18;
+   :              ^^^^^^^^^^^^^^^^^^^
+ 9 | export const COMPACT_EVENT_HEIGHT_PX = 40;
+   `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+    ,-[src/components/day-timeline/EventBlock.tsx:9:14]
+  8 | export const MIN_EVENT_HEIGHT_PX = 18;
+  9 | export const COMPACT_EVENT_HEIGHT_PX = 40;
+    :              ^^^^^^^^^^^^^^^^^^^^^^^
+ 10 | export const DRAG_THRESHOLD_PX = 4;
+    `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+    ,-[src/components/day-timeline/EventBlock.tsx:10:14]
+  9 | export const COMPACT_EVENT_HEIGHT_PX = 40;
+ 10 | export const DRAG_THRESHOLD_PX = 4;
+    :              ^^^^^^^^^^^^^^^^^
+ 11 | 
+    `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+    ,-[src/components/day-timeline/EventBlock.tsx:13:14]
+ 12 | 
+ 13 | export const EV_WIDTH_PERCENT = 80;
+    :              ^^^^^^^^^^^^^^^^
+ 14 | 
+    `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+    ,-[src/core/auth/AuthContext.tsx:85:14]
+ 84 | 
+ 85 | export const useAuth = () => useContext(AuthContext);
+    :              ^^^^^^^
+    `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ,-[src/components/inputs/SegmentedControl.tsx:3:14]
+ 2 | 
+ 3 | export const FONT_WEIGHT_REGULAR = 400;
+   :              ^^^^^^^^^^^^^^^^^^^
+ 4 | export const FONT_WEIGHT_MEDIUM = 500;
+   `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ,-[src/components/inputs/SegmentedControl.tsx:4:14]
+ 3 | export const FONT_WEIGHT_REGULAR = 400;
+ 4 | export const FONT_WEIGHT_MEDIUM = 500;
+   :              ^^^^^^^^^^^^^^^^^^
+ 5 | 
+   `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ,-[src/screens/minitracker/MiniTrackerScreen.tsx:6:14]
+ 5 | 
+ 6 | export const OPACITY_DIM = 0.2;
+   :              ^^^^^^^^^^^
+ 7 | export const OPACITY_HOVER = 0.8;
+   `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ,-[src/screens/minitracker/MiniTrackerScreen.tsx:7:14]
+ 6 | export const OPACITY_DIM = 0.2;
+ 7 | export const OPACITY_HOVER = 0.8;
+   :              ^^^^^^^^^^^^^
+ 8 | 
+   `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ,-[src/components/tasklist/task-row.tsx:6:14]
+ 5 | 
+ 6 | export const TRANSITION_DURATION_MS = 400;
+   :              ^^^^^^^^^^^^^^^^^^^^^^
+ 7 | 
+   `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ,-[src/screens/plan/date-grid/calendar-header.tsx:5:14]
+ 4 | 
+ 5 | export const ANIMATION_DELAY_MS = 150;
+   :              ^^^^^^^^^^^^^^^^^^
+ 6 | 
+   `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ,-[src/screens/settings/SettingActions.tsx:7:14]
+ 6 | 
+ 7 | export const MAX_DISPLAY_ITEMS = 6;
+   :              ^^^^^^^^^^^^^^^^^
+ 8 | export const MAX_SEARCH_RESULTS = 10;
+   `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ,-[src/screens/settings/SettingActions.tsx:8:14]
+ 7 | export const MAX_DISPLAY_ITEMS = 6;
+ 8 | export const MAX_SEARCH_RESULTS = 10;
+   :              ^^^^^^^^^^^^^^^^^^
+ 9 | 
+   `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Move your component(s) to a separate file.
+    ,-[src/screens/settings/SettingRenderers.tsx:32:7]
+ 31 | 
+ 32 | const SelectSetting = ({ setting, val, settings, setSettings }: SettingRendererProps) => {
+    :       ^^^^^^^^^^^^^
+ 33 |     if (setting.type !== "select") return null;
+    `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Move your component(s) to a separate file.
+    ,-[src/screens/settings/SettingRenderers.tsx:50:7]
+ 49 | 
+ 50 | const TimeSetting = ({ setting, val, settings, setSettings }: SettingRendererProps) => (
+    :       ^^^^^^^^^^^
+ 51 |     <div style={{ display: "flex", gap: "12px", alignItems: "center", color: "var(--fg)" }}>
+    `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Move your component(s) to a separate file.
+    ,-[src/screens/settings/SettingRenderers.tsx:59:7]
+ 58 | 
+ 59 | const NumberSetting = ({ setting, val, settings, setSettings }: SettingRendererProps) => {
+    :       ^^^^^^^^^^^^^
+ 60 |     if (setting.type !== "number") return null;
+    `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Move your component(s) to a separate file.
+    ,-[src/screens/settings/SettingRenderers.tsx:73:7]
+ 72 | 
+ 73 | const CheckboxSetting = ({ setting, val, setSettings }: SettingRendererProps) => (
+    :       ^^^^^^^^^^^^^^^
+ 74 |     <ToggleSwitch
+    `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Move your component(s) to a separate file.
+    ,-[src/screens/settings/SettingRenderers.tsx:80:7]
+ 79 | 
+ 80 | const KeybindingSetting = ({ setting, val, settings, setSettings }: SettingRendererProps) => (
+    :       ^^^^^^^^^^^^^^^^^
+ 81 |     <KeybindingInput
+    `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Move your component(s) to a separate file.
+    ,-[src/screens/settings/SettingRenderers.tsx:87:7]
+ 86 | 
+ 87 | const CustomSetting = ({ setting, settings, setSettings }: SettingRendererProps) => {
+    :       ^^^^^^^^^^^^^
+ 88 |     if (setting.type !== "custom") return null;
+    `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+    ,-[src/screens/plan/date-grid/index.tsx:19:14]
+ 18 | 
+ 19 | export const DAYS_IN_CALENDAR_GRID = 42;
+    :              ^^^^^^^^^^^^^^^^^^^^^
+ 20 | export const DAYS_IN_THREE_WEEKS = 21;
+    `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+    ,-[src/screens/plan/date-grid/index.tsx:20:14]
+ 19 | export const DAYS_IN_CALENDAR_GRID = 42;
+ 20 | export const DAYS_IN_THREE_WEEKS = 21;
+    :              ^^^^^^^^^^^^^^^^^^^
+ 21 | export const DAYS_IN_WEEK = 7;
+    `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+    ,-[src/screens/plan/date-grid/index.tsx:21:14]
+ 20 | export const DAYS_IN_THREE_WEEKS = 21;
+ 21 | export const DAYS_IN_WEEK = 7;
+    :              ^^^^^^^^^^^^
+ 22 | 
+    `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ,-[src/screens/plan/drag-helpers.tsx:6:14]
+ 5 | 
+ 6 | export const MAX_RECURRENCES = 8;
+   :              ^^^^^^^^^^^^^^^
+ 7 | export const FONT_SIZE_SMALL = 14;
+   `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ,-[src/screens/plan/drag-helpers.tsx:7:14]
+ 6 | export const MAX_RECURRENCES = 8;
+ 7 | export const FONT_SIZE_SMALL = 14;
+   :              ^^^^^^^^^^^^^^^
+ 8 | 
+   `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+    ,-[src/screens/plan/drag-helpers.tsx:55:17]
+ 54 | 
+ 55 | export function resolveDropTarget(el: Element | null, _x: number, y: number, task?: AppTask | null, event?: AppEvent | null): PlanDragTarget | null {
+    :                 ^^^^^^^^^^^^^^^^^
+ 56 |     if (!el) return null;
+    `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+    ,-[src/core/utils/notifications.tsx:9:14]
+  8 | 
+  9 | export const DEBOUNCE_DELAY_MS = 600;
+    :              ^^^^^^^^^^^^^^^^^
+ 10 | export const ID_LENGTH = 9;
+    `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+    ,-[src/core/utils/notifications.tsx:10:14]
+  9 | export const DEBOUNCE_DELAY_MS = 600;
+ 10 | export const ID_LENGTH = 9;
+    :              ^^^^^^^^^
+ 11 | export const SYNC_POLL_INTERVAL_MS = 5000;
+    `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+    ,-[src/core/utils/notifications.tsx:11:14]
+ 10 | export const ID_LENGTH = 9;
+ 11 | export const SYNC_POLL_INTERVAL_MS = 5000;
+    :              ^^^^^^^^^^^^^^^^^^^^^
+ 12 | export const ANIMATION_DELAY_MS = 150;
+    `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+    ,-[src/core/utils/notifications.tsx:12:14]
+ 11 | export const SYNC_POLL_INTERVAL_MS = 5000;
+ 12 | export const ANIMATION_DELAY_MS = 150;
+    :              ^^^^^^^^^^^^^^^^^^
+ 13 | 
+    `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+    ,-[src/core/utils/notifications.tsx:31:17]
+ 30 | 
+ 31 | export function useNotification() {
+    :                 ^^^^^^^^^^^^^^^
+ 32 |     return useContext(NotificationContext);
+    `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ,-[src/components/inputs/TagsInput.tsx:3:14]
+ 2 | 
+ 3 | export const SUCCESS_STATUS_CODE = 200;
+   :              ^^^^^^^^^^^^^^^^^^^
+ 4 | 
+   `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ,-[src/components/split-pane.tsx:3:14]
+ 2 | 
+ 3 | export const SPLIT_PANE_THRESHOLD_PX = 50;
+   :              ^^^^^^^^^^^^^^^^^^^^^^^
+ 4 | export const SIDEBAR_DEFAULT_WIDTH_PX = 360;
+   `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ,-[src/components/split-pane.tsx:4:14]
+ 3 | export const SPLIT_PANE_THRESHOLD_PX = 50;
+ 4 | export const SIDEBAR_DEFAULT_WIDTH_PX = 360;
+   :              ^^^^^^^^^^^^^^^^^^^^^^^^
+ 5 | 
+   `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ,-[src/screens/do/tips-notes.tsx:5:14]
+ 4 | 
+ 5 | export const TIP_DURATION_MS = 2200;
+   :              ^^^^^^^^^^^^^^^
+ 6 | 
+   `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ,-[src/screens/graph/TaskNode.tsx:5:14]
+ 4 | 
+ 5 | export const OPACITY_MUTED = 0.6;
+   :              ^^^^^^^^^^^^^
+ 6 | 
+   `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+    ,-[src/screens/wrap/WrapScreen.tsx:9:14]
+  8 | 
+  9 | export const MINUTES_IN_22_HOURS = 1320;
+    :              ^^^^^^^^^^^^^^^^^^^
+ 10 | export const DEFAULT_WORKDAY_MINUTES = 480;
+    `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+    ,-[src/screens/wrap/WrapScreen.tsx:10:14]
+  9 | export const MINUTES_IN_22_HOURS = 1320;
+ 10 | export const DEFAULT_WORKDAY_MINUTES = 480;
+    :              ^^^^^^^^^^^^^^^^^^^^^^^
+ 11 | 
+    `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+   ,-[src/screens/graph/GraphScreen.tsx:8:14]
+ 7 | 
+ 8 | export const ANIMATION_DELAY_MS = 150;
+   :              ^^^^^^^^^^^^^^^^^^
+ 9 | export const DRAG_THRESHOLD_PX = 4;
+   `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+    ,-[src/screens/graph/GraphScreen.tsx:9:14]
+  8 | export const ANIMATION_DELAY_MS = 150;
+  9 | export const DRAG_THRESHOLD_PX = 4;
+    :              ^^^^^^^^^^^^^^^^^
+ 10 | export const GRAPH_NODE_WIDTH_PX = 250;
+    `----
+
+  x react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+    ,-[src/screens/graph/GraphScreen.tsx:10:14]
+  9 | export const DRAG_THRESHOLD_PX = 4;
+ 10 | export const GRAPH_NODE_WIDTH_PX = 250;
+    :              ^^^^^^^^^^^^^^^^^^^
+ 11 | 
+    `----
+
+Found 0 warnings and 56 errors.
+Finished in 140ms on 167 files with 1 rules using 24 threads.

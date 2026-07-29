@@ -10,7 +10,7 @@ import {
     SETTINGS_TABS,
 } from "../../core/store/settingsSchema";
 
-import { SETTING_RENDERERS } from "./SettingRenderers";
+import { SETTING_RENDERERS } from "./settingRegistry";
 
 export function SettingsScreen() {
     const [activeTab, setActiveTab] = useState("general");

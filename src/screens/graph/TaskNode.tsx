@@ -2,7 +2,7 @@
 import { Handle, Position } from "@xyflow/react";
 import type { AppTask as Task } from "../../core/domain/models";
 
-export const OPACITY_MUTED = 0.6;
+
 
 
 export interface TaskNodeProps {

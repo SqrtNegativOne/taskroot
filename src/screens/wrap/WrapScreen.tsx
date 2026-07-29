@@ -6,8 +6,8 @@ import { WrapTimelineStep } from "./WrapTimelineStep";
 import { WrapReflectionStep, type ReflectionAnswers } from "./WrapReflectionStep";
 import "./wrap.css";
 
-export const MINUTES_IN_22_HOURS = 1320;
-export const DEFAULT_WORKDAY_MINUTES = 480;
+const MINUTES_IN_22_HOURS = 1320;
+const DEFAULT_WORKDAY_MINUTES = 480;
 
 
 function calculateUntrackedTime(logEvents: HydratedEvent[], wake: number, sleep: number) {

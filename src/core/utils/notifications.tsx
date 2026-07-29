@@ -6,10 +6,9 @@ import React, {
     useEffect,
 } from "react";
 
-export const DEBOUNCE_DELAY_MS = 600;
-export const ID_LENGTH = 9;
-export const SYNC_POLL_INTERVAL_MS = 5000;
-export const ANIMATION_DELAY_MS = 150;
+const DEBOUNCE_DELAY_MS = 600;
+
+
 
 export type NotificationType = "info" | "error" | "success";
 
@@ -28,9 +27,7 @@ const NotificationContext = createContext<NotificationContextType>({
     notify: () => {},
 });
 
-export function useNotification() {
-    return useContext(NotificationContext);
-}
+
 
 export function NotificationProvider({
     children,

@@ -5,12 +5,12 @@ import { PX_PER_MIN, SNAP_MIN } from "./types";
 import type { EventBlockProps } from "./types";
 import type { AppEvent } from "../../core/domain/models";
 
-export const MIN_EVENT_HEIGHT_PX = 18;
-export const COMPACT_EVENT_HEIGHT_PX = 40;
-export const DRAG_THRESHOLD_PX = 4;
+const MIN_EVENT_HEIGHT_PX = 18;
 
 
-export const EV_WIDTH_PERCENT = 80;
+
+
+const EV_WIDTH_PERCENT = 80;
 
 function getEventClassNames(event: AppEvent, pri: string | number | null | undefined, compact: boolean, isGhost: boolean, isFloating: boolean): string {
     const classNames = ["day-event", `ev-${event.type}`];

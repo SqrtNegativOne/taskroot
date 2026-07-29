@@ -16,9 +16,9 @@ import { filterEvents, sortEvents } from "../../../core/domain/filters";
 import type { HydratedEvent } from "../../../core/domain/events";
 import type { AppFilter } from "../../../core/domain/models";
 
-export const DAYS_IN_CALENDAR_GRID = 42;
-export const DAYS_IN_THREE_WEEKS = 21;
-export const DAYS_IN_WEEK = 7;
+const DAYS_IN_CALENDAR_GRID = 42;
+const DAYS_IN_THREE_WEEKS = 21;
+
 
 
 export function DateGrid({

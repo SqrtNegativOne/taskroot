@@ -1,7 +1,11 @@
 import React from "react";
 import type { AppEvent, AppTask } from "../../core/domain/models";
 import { isDateString } from "../../core/domain/models";
-import { RepeatSelect, minToTime, timeToMin, LabeledToggle } from "./inspector-shared";
+import { minToTime } from "./inspector-utils";
+import { timeToMin } from "./inspector-utils";
+import { RepeatSelect, LabeledToggle } from "./inspector-shared";
+
+
 import "./inspector.css";
 
 interface EventInspectorProps {

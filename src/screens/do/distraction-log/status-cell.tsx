@@ -2,9 +2,9 @@ import React from "react";
 import type { DistractionStatus } from "../../../core/store/repositories";
 import { hexAlpha } from "./utils";
 
-export const OPACITY_SELECTED_BG = 0.22;
-export const OPACITY_MUTED = 0.6;
-export const OPACITY_FAINT = 0.18;
+const OPACITY_SELECTED_BG = 0.22;
+
+
 
 
 export interface StatusCellProps {

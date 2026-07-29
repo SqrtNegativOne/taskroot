@@ -2,7 +2,7 @@ import React from "react";
 
 import { useNotes, useTips } from "../../core/store/hooks";
 
-export const TIP_DURATION_MS = 2200;
+const TIP_DURATION_MS = 2200;
 
 
 

@@ -1,6 +1,6 @@
 import React from "react";
 
-export const SUCCESS_STATUS_CODE = 200;
+const SUCCESS_STATUS_CODE = 200;
 
 
 export interface TagsInputProps {

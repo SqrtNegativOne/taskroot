@@ -3,7 +3,7 @@ import { TODAY, parseYMD, durationLabel, dueLabel } from "../../core/store/data"
 import type { AppTask, AppFilter } from "../../core/domain/models";
 import { checkTaskAgainstFilters } from "./filters";
 
-export const TRANSITION_DURATION_MS = 400;
+const TRANSITION_DURATION_MS = 400;
 
 
 export interface TaskRowProps {

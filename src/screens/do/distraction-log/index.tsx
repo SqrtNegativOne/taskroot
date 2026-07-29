@@ -7,11 +7,9 @@ import { DLogRow } from "./row";
 import type { EditingCell } from "./types";
 import { colIcon, hexAlpha } from "./utils";
 
-export const OPACITY_MUTED = 0.6;
-export const OPACITY_FAINT = 0.18;
-export const RESIZE_HANDLE_OFFSET_PX = -4;
-export const MIN_COLUMN_WIDTH_PX = 80;
-export const COMPACT_EVENT_HEIGHT_PX = 40;
+
+
+
 
 
 // Distraction log — Notion-like table.

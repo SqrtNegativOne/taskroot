@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
 
-export const SPLIT_PANE_THRESHOLD_PX = 50;
-export const SIDEBAR_DEFAULT_WIDTH_PX = 360;
+const SPLIT_PANE_THRESHOLD_PX = 50;
+const SIDEBAR_DEFAULT_WIDTH_PX = 360;
 
 
 function useSplitPane(direction: "horizontal" | "vertical", defaultSize: number, snapThreshold: number) {

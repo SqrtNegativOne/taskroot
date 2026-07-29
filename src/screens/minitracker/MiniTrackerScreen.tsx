@@ -3,8 +3,8 @@ import "@fontsource-variable/roboto-mono";
 import { useTasks, useStopwatch, useSettings } from "../../core/store/hooks";
 import { CLOCK_STRATEGIES } from "../../core/domain/clock-strategies";
 
-export const OPACITY_DIM = 0.2;
-export const OPACITY_HOVER = 0.8;
+const OPACITY_DIM = 0.2;
+const OPACITY_HOVER = 0.8;
 
 
 

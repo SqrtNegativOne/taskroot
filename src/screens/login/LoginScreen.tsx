@@ -1,5 +1,6 @@
 
-import { useAuth } from "../../core/auth/AuthContext";
+import { useAuth } from "../../core/auth/useAuth";
+
 import { LoginTitleBar } from "../../components/shell";
 
 export function LoginScreen() {

@@ -2,7 +2,7 @@ import React from "react";
 import { useState, useEffect, useRef } from "react";
 import { Icon } from "../../../components/icon";
 
-export const ANIMATION_DELAY_MS = 150;
+
 
 
 export function CalendarHeader({

@@ -3,7 +3,7 @@ import React from "react";
 import type { AppTask } from "../../core/domain/models";
 import { TaskStatusSelect } from "./inspector-shared";
 
-export const DRAG_THRESHOLD_PX = 4;
+
 
 
 interface TaskInspectorProps {

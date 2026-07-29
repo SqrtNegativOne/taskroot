@@ -3,7 +3,8 @@ import React, { useState, useRef } from 'react';
 import { useEvents, useCalendars } from "../../core/store/hooks";
 import type { AppTask, AppEvent } from "../../core/domain/models";
 import { ymd } from "../../core/store/data";
-import { resolveDropTarget } from "./drag-helpers";
+import { resolveDropTarget } from "./drag-utils";
+
 import type { PlanDragState } from "./drag-helpers";
 
 export const MIN_POLL_INTERVAL_MINUTES = 5;

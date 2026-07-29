@@ -2,7 +2,7 @@ import React from "react";
 import { ymd, hhmmShort, PAD2, sameDay } from "../../../core/store/data";
 import type { HydratedEvent } from "../../../core/domain/events";
 
-export const OPACITY_FADED = 0.4;
+const OPACITY_FADED = 0.4;
 
 
 export function DayCell({

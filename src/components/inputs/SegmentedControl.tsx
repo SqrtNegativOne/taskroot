@@ -1,7 +1,7 @@
 import React from "react";
 
-export const FONT_WEIGHT_REGULAR = 400;
-export const FONT_WEIGHT_MEDIUM = 500;
+const FONT_WEIGHT_REGULAR = 400;
+const FONT_WEIGHT_MEDIUM = 500;
 
 
 export interface SegmentedControlProps<T> {

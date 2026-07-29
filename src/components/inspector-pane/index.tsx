@@ -5,7 +5,9 @@ import { useCalendars } from "../../core/store/hooks";
 import { TitleInput, DescriptionInput } from "../inputs";
 import { TaskInspector } from "./inspector-task";
 import { EventInspector } from "./inspector-event";
-import { getInspectorTitle, InspectorPaneHeader } from "./inspector-shared";
+import { getInspectorTitle } from "./inspector-utils";
+import { InspectorPaneHeader } from "./inspector-shared";
+
 import "./inspector.css";
 
 interface InspectorPaneProps {

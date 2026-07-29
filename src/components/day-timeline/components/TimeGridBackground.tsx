@@ -4,7 +4,7 @@ import { PX_PER_MIN } from "../types";
 import { PAD2 } from "../../../core/store/data";
 import { useCurrentTime } from "../hooks/useCurrentTime";
 
-export const GUTTER_SIZE_MINUTES = 15;
+const GUTTER_SIZE_MINUTES = 15;
 
 
 interface TimeGridBackgroundProps {

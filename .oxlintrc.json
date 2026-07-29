@@ -26,7 +26,7 @@
     "eqeqeq": "error",
     "no-var": "error",
     "prefer-const": "error",
-    // "no-console": "warn", It's fine.
+    // "no-console": "warn",; It's fine.
     "react/no-unstable-nested-components": "error",
     "vitest/no-focused-tests": "error",
     

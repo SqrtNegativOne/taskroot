@@ -1,5 +1,4 @@
 # Taskroot Architecture & Guide for AI Agents
-
 **CRITICAL**: When you modify the architecture, tech stack, or file structure of this project, you MUST update this `AGENTS.md` file to reflect the new state. Always verify if the information here is outdated and update any old information if needed.
 
 Taskroot is a web-based and desktop task management app focusing on planning, executing, and resting. It is built as a Single Page Application (SPA) that can run in a browser or as a native desktop app via Electron.
@@ -65,6 +64,8 @@ Taskroot is a web-based and desktop task management app focusing on planning, ex
     - Use extraction (creating new, smaller functions) and inversion of control (early returns).
   - The ideal number of arguments for a function is zero (niladic). Next comes one (monadic), followed closely by two (dyadic). Three arguments (triadic) should be avoided where possible. More than three (polyadic) requires very special justification—and then shouldn’t be used anyway.
 - Don't name files or folders with generic names like `utils` or `helpers`. That could literally mean anything!
+- Don't use generic names, like suffixing a function or class with `Manager`, `Controller`, `Helper`, or `Service`.
 - After implementing any changes, run `bun oxlint`, and fix all errors and warnings. If you are unsure about a warning, ask for clarification in the code review.
-- If `bun run build` gives you a warning, fix it. Never be silent about warnings; always inform the user about them.
 - When you have too much inter-dependent state (e.g., toggling the stopwatch needs to know about selectorOpen, running, currentMs, timeLogs, etc.), consider useReducer.
+- ALWAYS run `bun oxlint`, `npm run test`, and `bun run build` before committing. If any of these fail or give you a warning, fix the issue before committing.
+- If `bun run build` gives you a warning, fix it. Never be silent about warnings; always inform the user about them.

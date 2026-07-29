@@ -17,7 +17,7 @@ export interface TaskListPaneProps {
     query: string;
     setQuery: (q: string) => void;
     onDragStart?: (e: React.PointerEvent<HTMLElement> | React.MouseEvent<HTMLElement>, task: AppTask) => void;
-    activeDragId?: string | null;
+    activeDragId?: string;
     onAddTask: (defaults?: Partial<AppTask>) => void;
     onDeleteTask?: (id: string) => void;
     footer?: React.ReactNode;

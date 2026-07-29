@@ -19,10 +19,10 @@ type BaseEvent = {
 // The populated output type for the UI
 export type HydratedEvent = BaseEvent & {
     type: string;
-    taskId?: string | null; // only if it's a plan
+    taskId?: string; // only if it's a plan
     title: string;
     category?: string;
-    priority?: string | number | null;
+    priority?: string | number;
     isDone: boolean;
     tags?: string[];
     task?: AppTask; // The raw task object if needed by the UI
@@ -41,7 +41,7 @@ export function hydrateEvents(
             return {
                 ...ev,
                 title: task ? task.title : "Unknown Task",
-                priority: task ? task.priority : null,
+                priority: task ? task.priority : undefined,
                 isDone: task ? task.status === "done" : false,
                 task,
             };

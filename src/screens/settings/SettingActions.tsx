@@ -89,8 +89,7 @@ export function ImportTasksButton({ settings }: { settings: Partial<import('../.
                             priority: 1,
                             tags: [],
                             subtasks: [],
-                            parent_task: null,
-                            dependency: null,
+
                             est:
                                 settings.defaultTaskDuration === 0 ||
                                 settings.defaultTaskDuration === undefined

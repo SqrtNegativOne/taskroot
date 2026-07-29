@@ -11,7 +11,7 @@ export interface AppTask {
     readonly priority?: number | string;
     readonly tags?: readonly string[];
     readonly subtasks?: readonly { readonly done: boolean; readonly [key: string]: unknown }[];
-    readonly parent_task?: string | null;
+    readonly parent_task?: string;
     readonly dependencies?: readonly string[];
     readonly est?: number;
     readonly added?: string;
@@ -38,7 +38,7 @@ export interface AppEvent {
     id: string;
     googleEventId?: string;
     googleCalendarId?: string;
-    taskId?: string | null;
+    taskId?: string;
     title: string;
     date: DateString;
     start: number;

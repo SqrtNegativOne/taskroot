@@ -1,4 +1,5 @@
 import type { AppEvent, AppTask } from "./models";
+import { modernizeColor } from "../utils/colors";
 
 type BaseEvent = {
     id: string;
@@ -39,7 +40,7 @@ export function hydrateEvents(
 ): HydratedEvent[] {
     return events.map((ev) => {
         const cal = ev.googleCalendarId ? calendars.find(c => c.id === ev.googleCalendarId) : calendars.find(c => c.summary === ev.category);
-        const color = cal?.backgroundColor;
+        const color = cal?.backgroundColor ? modernizeColor(cal.backgroundColor) : undefined;
         if (ev.type === "plan") {
             const task = tasks.find((t) => t.id === ev.taskId);
             return {

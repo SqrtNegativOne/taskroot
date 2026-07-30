@@ -29,6 +29,7 @@ export function TaskSelector({
     const [visible, setVisible] = useState(false);
     const [isClosing, setIsClosing] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
+    const [selectedIndex, setSelectedIndex] = useState(0);
     const searchInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -62,6 +63,19 @@ export function TaskSelector({
         [pendingTasks, events, searchQuery]
     );
 
+    useEffect(() => {
+        setSelectedIndex(0);
+    }, [searchQuery, sortedTasks]);
+
+    useEffect(() => {
+        if (visible) {
+            const el = document.querySelector('.modern-task-item.is-selected');
+            if (el) {
+                el.scrollIntoView({ block: "nearest" });
+            }
+        }
+    }, [selectedIndex, visible]);
+
     if (!visible && !isClosing) return;
 
     const needsBlur = !activeTask && !allowNoTask;
@@ -93,10 +107,22 @@ export function TaskSelector({
                             onChange={(e) => setSearchQuery(e.target.value)}
                             onKeyDown={(e) => {
                                 if (e.key === "Enter" && sortedTasks.length > 0) {
-                                    startWithTask(sortedTasks[0].id);
+                                    startWithTask(sortedTasks[selectedIndex]?.id || sortedTasks[0].id);
                                 } else if (e.key === "Escape") {
                                     setSearchQuery("");
                                     e.stopPropagation();
+                                } else if (e.key === "ArrowDown") {
+                                    e.preventDefault();
+                                    if (sortedTasks.length > 0) {
+                                        setSelectedIndex((prev) => (prev + 1) % sortedTasks.length);
+                                        import("cuelume").then(({ play }) => play("tick"));
+                                    }
+                                } else if (e.key === "ArrowUp") {
+                                    e.preventDefault();
+                                    if (sortedTasks.length > 0) {
+                                        setSelectedIndex((prev) => (prev - 1 + sortedTasks.length) % sortedTasks.length);
+                                        import("cuelume").then(({ play }) => play("tick"));
+                                    }
                                 }
                             }}
                         />
@@ -109,6 +135,8 @@ export function TaskSelector({
                             <TaskSearchResults
                                 sortedTasks={sortedTasks}
                                 startWithTask={startWithTask}
+                                selectedIndex={selectedIndex}
+                                setSelectedIndex={setSelectedIndex}
                             />
                         </div>
                     </div>
@@ -121,9 +149,13 @@ export function TaskSelector({
 function TaskSearchResults({
     sortedTasks,
     startWithTask,
+    selectedIndex,
+    setSelectedIndex,
 }: {
     sortedTasks: AppTask[];
     startWithTask: (id: string) => void;
+    selectedIndex: number;
+    setSelectedIndex: (idx: number) => void;
 }) {
     if (sortedTasks.length === 0) {
         return <div className="task-selector-no-results">No tasks match your search.</div>;
@@ -131,11 +163,17 @@ function TaskSearchResults({
 
     return (
         <>
-            {sortedTasks.map((t) => (
+            {sortedTasks.map((t, idx) => (
                 <button
                     type="button"
                     key={t.id}
-                    className="modern-task-item"
+                    className={`modern-task-item ${idx === selectedIndex ? "is-selected" : ""}`}
+                    onPointerEnter={() => {
+                        if (selectedIndex !== idx) {
+                            setSelectedIndex(idx);
+                            import("cuelume").then(({ play }) => play("tick"));
+                        }
+                    }}
                     onClick={() => startWithTask(t.id)}
                 >
                     {t.title}

@@ -84,11 +84,6 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    scrollbar-width: none;
-}
-
-.modern-task-list::-webkit-scrollbar {
-    display: none;
 }
 
 .modern-task-item {
@@ -108,7 +103,8 @@
     text-shadow: 0 2px 4px rgba(0,0,0,0.5);
 }
 
-.modern-task-item:hover {
+.modern-task-item:hover,
+.modern-task-item.is-selected {
     color: var(--accent);
     transform: scale(1.05);
 }

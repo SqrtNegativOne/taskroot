@@ -10,4 +10,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onDeepLink: (callback: (route: string) => void) => ipcRenderer.on('deep-link', (_event, route) => callback(route)),
   setSnapThreshold: (threshold: number) => ipcRenderer.send('set-snap-threshold', threshold),
   onSnapped: (callback: () => void) => ipcRenderer.on('minitracker-snapped', () => callback()),
+  onHover: (callback: (isHovering: boolean) => void) => {
+    ipcRenderer.removeAllListeners('minitracker-hover');
+    ipcRenderer.on('minitracker-hover', (_event, isHovering) => callback(isHovering));
+  },
 });

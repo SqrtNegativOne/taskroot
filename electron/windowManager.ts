@@ -45,6 +45,8 @@ class WindowManager {
             transparent: true,
             alwaysOnTop: true,
             skipTaskbar: true,
+            maximizable: false,
+            minimizable: false,
             webPreferences: {
                 preload: PRELOAD_PATH,
                 nodeIntegration: false,
@@ -59,6 +61,22 @@ class WindowManager {
                 e.preventDefault();
             }
         });
+
+        let isHovered = false;
+        const hoverInterval = setInterval(() => {
+            if (!this.miniWin || this.miniWin.isDestroyed()) {
+                clearInterval(hoverInterval);
+                return;
+            }
+            const point = screen.getCursorScreenPoint();
+            const bounds = this.miniWin.getBounds();
+            const hover = point.x >= bounds.x && point.x <= bounds.x + bounds.width &&
+                          point.y >= bounds.y && point.y <= bounds.y + bounds.height;
+            if (hover !== isHovered) {
+                isHovered = hover;
+                this.miniWin.webContents.send("minitracker-hover", hover);
+            }
+        }, 100);
 
         let moveTimeout: NodeJS.Timeout | undefined = undefined;
         this.miniWin.on("move", () => {

@@ -25,7 +25,7 @@ html, body {
     container-type: size;
 }
 
-.minitracker-container:hover {
+.minitracker-container.is-hovering {
     opacity: var(--hover-opacity, 0.6);
 }
 

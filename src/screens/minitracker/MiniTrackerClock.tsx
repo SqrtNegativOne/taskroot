@@ -46,8 +46,16 @@ export function MiniTrackerClock({
         suffix = `left for ${taskName}`;
     }
 
+    const fullText = `${data.primaryText} ${suffix}`;
+    const textLength = fullText.length;
+
+    const style: React.CSSProperties & Record<string, string | number> = {
+        color: data.color || "inherit",
+        "--text-length": textLength,
+    };
+
     return (
-        <div style={{ color: data.color || "inherit" }}>
+        <div style={style}>
             <span style={{ fontWeight: "normal" }}>{data.primaryText}</span>
             {" "}
             {suffix}

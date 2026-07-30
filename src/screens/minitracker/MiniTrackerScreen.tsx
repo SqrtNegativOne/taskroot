@@ -96,7 +96,7 @@ function useMiniTrackerStyles(settings: AppSettings, isDimmed: boolean): React.C
         "--base-opacity": isDimmed ? dimmedOpacity : baseOpacity,
         "--hover-opacity": isDimmed ? dimmedOpacity : Math.max(0, baseOpacity - hoverReduction),
         "--tracker-font-size": settings.trackerFontSize === "dynamic" 
-            ? "12cqmin" 
+            ? "min(70cqh, calc(130cqw / var(--text-length, 20)))"
             : (settings.trackerFontSize ? `${settings.trackerFontSize}px` : "15px")
     };
     return style;
@@ -108,6 +108,13 @@ export function MiniTrackerScreen() {
     const [settings] = useSettings();
     const [now, setNow] = useState(Date.now());
     const [isDimmed, setIsDimmed] = useState(false);
+    const [isHovering, setIsHovering] = useState(false);
+
+    useEffect(() => {
+        if (window.electronAPI?.onHover) {
+            window.electronAPI.onHover(setIsHovering);
+        }
+    }, []);
 
     useEffect(() => {
         document.documentElement.style.background = "transparent";
@@ -160,7 +167,7 @@ export function MiniTrackerScreen() {
     const showBorder = settings.trackerShowBorder ?? true;
     return (
         <div
-            className={`minitracker-container ${showBorder ? "show-border" : ""}`}
+            className={`minitracker-container ${showBorder ? "show-border" : ""} ${isHovering ? "is-hovering" : ""}`}
             onDoubleClick={handleDoubleClick}
             style={style}
             title="Double-click to restore main window"

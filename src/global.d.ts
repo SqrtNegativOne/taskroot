@@ -17,6 +17,7 @@ declare global {
         shutdownPC: () => void;
         setSnapThreshold: (threshold: number) => void;
         onSnapped: (callback: () => void) => void;
+        onHover: (callback: (isHovering: boolean) => void) => void;
     }
 
     interface Window {

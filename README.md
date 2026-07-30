@@ -31,3 +31,6 @@ Taskroot registers the `taskroot://` protocol to allow external apps or scripts 
 import os
 os.startfile('taskroot://wrap')
 ```
+
+# Known bugs
+If you fling the mini tracker window around, its window size increases. Also, it highly stutters. I can't fix the former issue without breaking resizing and the latter issue without removing flinging, sorry. Might be a problem with electron or with me idk

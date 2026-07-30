@@ -1,12 +1,12 @@
-.app-do { height: auto; min-height: 100vh; grid-template-rows: auto 1fr; }
-.app-do { overflow-y: visible; }
-html:has(.app-do), html:has(.app-do) body {
-  height: auto; min-height: 100vh; overflow: visible;
-}
-
 .do-main {
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
+  height: 100%;
+}
+
+body.modal-open .do-main {
+  overflow-y: hidden;
 }
 
 /* ── Collapsible sections ────────────────────────────────────────────── */

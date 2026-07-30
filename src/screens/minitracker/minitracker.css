@@ -15,8 +15,7 @@ html, body {
     justify-content: center;
     font-size: var(--tracker-font-size, 15px);
     user-select: none;
-    -webkit-app-region: drag;
-    cursor: default;
+    cursor: move;
     padding: 16px;
     box-sizing: border-box;
     text-align: center;

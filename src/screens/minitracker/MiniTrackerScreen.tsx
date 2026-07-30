@@ -108,13 +108,6 @@ export function MiniTrackerScreen() {
     const [settings] = useSettings();
     const [now, setNow] = useState(Date.now());
     const [isDimmed, setIsDimmed] = useState(false);
-    const [isHovering, setIsHovering] = useState(false);
-
-    useEffect(() => {
-        if (window.electronAPI?.onHover) {
-            window.electronAPI.onHover(setIsHovering);
-        }
-    }, []);
 
     useEffect(() => {
         document.documentElement.style.background = "transparent";
@@ -164,12 +157,37 @@ export function MiniTrackerScreen() {
         }
     }, []);
 
+    const handlePointerDown = React.useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+        if (e.button !== 0) return;
+        const target = e.currentTarget;
+        target.setPointerCapture(e.pointerId);
+
+        window.electronAPI?.startDrag?.(e.clientX, e.clientY);
+
+        let dragging = true;
+        const tick = () => {
+            if (!dragging) return;
+            window.electronAPI?.dragTick?.();
+            requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+
+        const onPointerUp = () => {
+            dragging = false;
+            target.releasePointerCapture(e.pointerId);
+            target.removeEventListener("pointerup", onPointerUp);
+            window.electronAPI?.endDrag?.();
+        };
+        target.addEventListener("pointerup", onPointerUp);
+    }, []);
+
     const showBorder = settings.trackerShowBorder ?? true;
     return (
         <div
-            className={`minitracker-container ${showBorder ? "show-border" : ""} ${isHovering ? "is-hovering" : ""}`}
+            className={`minitracker-container ${showBorder ? "show-border" : ""}`}
             onDoubleClick={handleDoubleClick}
-            style={style}
+            onPointerDown={handlePointerDown}
+            style={style as React.CSSProperties}
             title="Double-click to restore main window"
         >
             <MiniTrackerClock

@@ -18,6 +18,9 @@ declare global {
         setSnapThreshold: (threshold: number) => void;
         onSnapped: (callback: () => void) => void;
         onHover: (callback: (isHovering: boolean) => void) => void;
+        startDrag: (offsetX: number, offsetY: number) => void;
+        dragTo: (screenX: number, screenY: number) => void;
+        endDrag: (vx: number, vy: number) => void;
     }
 
     interface Window {

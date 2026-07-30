@@ -14,4 +14,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.removeAllListeners('minitracker-hover');
     ipcRenderer.on('minitracker-hover', (_event, isHovering) => callback(isHovering));
   },
+  startDrag: (offsetX: number, offsetY: number) => ipcRenderer.send('window-start-drag', offsetX, offsetY),
+  dragTick: () => ipcRenderer.send('window-drag-tick'),
+  endDrag: () => ipcRenderer.send('window-end-drag'),
 });

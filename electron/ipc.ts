@@ -54,4 +54,16 @@ export function setupIpcHandlers() {
     ipcMain.on("set-snap-threshold", (event, threshold) => {
         windowManager.snapThreshold = threshold;
     });
+
+    ipcMain.on("window-start-drag", (event, offsetX, offsetY) => {
+        windowManager.startDrag(offsetX, offsetY);
+    });
+
+    ipcMain.on("window-drag-tick", (event) => {
+        windowManager.dragTick();
+    });
+
+    ipcMain.on("window-end-drag", (event) => {
+        windowManager.endDrag();
+    });
 }

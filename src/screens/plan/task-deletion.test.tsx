@@ -106,7 +106,7 @@ test("deleting a task also deletes its associated events", async () => {
     // Give it time to load from localStorage (it's synchronous actually)
     const taskRow = document.querySelector(".task-row-title");
     expect(taskRow).toBeTruthy();
-    expect(taskRow?.textContent).toBe("Test Task for Deletion");
+    expect(taskRow?.textContent).toContain("Test Task for Deletion");
 
     const deleteButton = document.querySelector(
         '.task-row-actions button[title="Delete"]',

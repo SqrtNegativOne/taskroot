@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import type { AppTask, AppEvent } from "../../../../core/domain/models";
 import { sortTasksForSelection } from "./sortTasksForSelection";
+import { useTasks } from "../../../../core/store/hooks";
 import "./TaskSelector.css";
 
 
@@ -31,14 +32,21 @@ export function TaskSelector({
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedIndex, setSelectedIndex] = useState(0);
     const searchInputRef = useRef<HTMLInputElement>(null);
+    const [, setTasks] = useTasks();
+
+    const updateTask = (id: string, updates: Partial<AppTask>) => {
+        setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, ...updates } : t)));
+    };
 
     useEffect(() => {
         if (selectorOpen) {
             setVisible(true);
             setIsClosing(false);
             setSearchQuery("");
+            document.body.classList.add("modal-open");
         } else if (visible) {
             setIsClosing(true);
+            document.body.classList.remove("modal-open");
             const timer = setTimeout(() => {
                 setVisible(false);
                 setIsClosing(false);
@@ -46,6 +54,13 @@ export function TaskSelector({
             return () => clearTimeout(timer);
         }
     }, [selectorOpen, visible]);
+
+    // Cleanup class on unmount
+    useEffect(() => {
+        return () => {
+            document.body.classList.remove("modal-open");
+        };
+    }, []);
 
     useEffect(() => {
         if (selectorOpen && searchInputRef.current) {
@@ -137,6 +152,7 @@ export function TaskSelector({
                                 startWithTask={startWithTask}
                                 selectedIndex={selectedIndex}
                                 setSelectedIndex={setSelectedIndex}
+                                updateTask={updateTask}
                             />
                         </div>
                     </div>
@@ -151,11 +167,13 @@ function TaskSearchResults({
     startWithTask,
     selectedIndex,
     setSelectedIndex,
+    updateTask,
 }: {
     sortedTasks: AppTask[];
     startWithTask: (id: string) => void;
     selectedIndex: number;
     setSelectedIndex: (idx: number) => void;
+    updateTask: (id: string, updates: Partial<AppTask>) => void;
 }) {
     if (sortedTasks.length === 0) {
         return <div className="task-selector-no-results">No tasks match your search.</div>;
@@ -164,21 +182,89 @@ function TaskSearchResults({
     return (
         <>
             {sortedTasks.map((t, idx) => (
-                <button
-                    type="button"
+                <TaskSelectorItem
                     key={t.id}
-                    className={`modern-task-item ${idx === selectedIndex ? "is-selected" : ""}`}
-                    onPointerEnter={() => {
-                        if (selectedIndex !== idx) {
-                            setSelectedIndex(idx);
-                            import("cuelume").then(({ play }) => play("tick"));
-                        }
-                    }}
-                    onClick={() => startWithTask(t.id)}
-                >
-                    {t.title}
-                </button>
+                    task={t}
+                    idx={idx}
+                    selectedIndex={selectedIndex}
+                    setSelectedIndex={setSelectedIndex}
+                    startWithTask={startWithTask}
+                    updateTask={updateTask}
+                />
             ))}
         </>
+    );
+}
+
+function TaskSelectorItem({
+    task,
+    idx,
+    selectedIndex,
+    setSelectedIndex,
+    startWithTask,
+    updateTask,
+}: {
+    task: AppTask;
+    idx: number;
+    selectedIndex: number;
+    setSelectedIndex: (idx: number) => void;
+    startWithTask: (id: string) => void;
+    updateTask: (id: string, updates: Partial<AppTask>) => void;
+}) {
+    const [isExiting, setIsExiting] = useState(false);
+    const [isChecking, setIsChecking] = useState(false);
+
+    return (
+        <div
+            className={`modern-task-item ${idx === selectedIndex ? "is-selected" : ""} ${isExiting ? "is-exiting" : ""}`}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+                if (e.key === "Enter") startWithTask(task.id);
+            }}
+            onPointerEnter={() => {
+                if (selectedIndex !== idx) {
+                    setSelectedIndex(idx);
+                    import("cuelume").then(({ play }) => play("tick"));
+                }
+            }}
+            onClick={() => startWithTask(task.id)}
+            style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+        >
+            <button
+                type="button"
+                className={`task-circle pri-bg-${task.priority}`}
+                style={{ border: "none", padding: 0, font: "inherit", color: "inherit", flexShrink: 0, marginRight: "12px", display: "flex", alignItems: "center", justifyContent: "center" }}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    if (isExiting) return;
+                    setIsChecking(true);
+                    setIsExiting(true);
+                    import("cuelume").then(({ play }) => play("success"));
+                    setTimeout(() => {
+                        updateTask(task.id, { status: "done" });
+                    }, 400); // 400ms is fade out duration
+                }}
+                title="Toggle Done"
+                aria-label={`Complete ${task.title}`}
+            >
+                {isChecking && (
+                    <svg
+                        className="task-circle-check"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                    >
+                        <polyline points="4 12 9 17 20 6"></polyline>
+                    </svg>
+                )}
+            </button>
+            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {task.title}
+            </span>
+        </div>
     );
 }

@@ -75,7 +75,7 @@
     font-size: 0.74em;
     line-height: 1.25;
     padding: 1px 4px 1px 5px;
-    color: var(--fg-muted);
+    color: white;
     border-left: 2px solid var(--fg-dimmer);
     background: var(--bg-surface);
     overflow: hidden;
@@ -87,15 +87,15 @@
   .day-cell-event:hover {
     filter: brightness(1.15);
   }
-  .day-cell-event.ev-plan { border-left-color: var(--accent); background: var(--accent-soft); color: var(--fg); }
+  .day-cell-event.ev-plan { border-left-color: var(--accent); background: var(--accent-soft); color: white; }
   .day-cell-event.ev-meeting { border-left-color: var(--fg-dim); background: var(--bg-surface); }
   .day-cell-event.pri-bar-0 { border-left-color: #6a7c92; }
   .day-cell-event.pri-bar-1 { border-left-color: #719379; }
   .day-cell-event.pri-bar-2 { border-left-color: #b59864; }
   .day-cell-event.pri-bar-3 { border-left-color: #c47e68; }
   .day-cell-event.pri-bar-4 { border-left-color: #c96b7f; }
-  .day-cell-event.is-done { color: var(--fg-dim); text-decoration: line-through; opacity: 0.75; border-left-color: var(--border); background: var(--bg-hover); }
-  .day-cell-event-time { color: var(--fg-dim); flex-shrink: 0; font-variant-numeric: tabular-nums; }
+  .day-cell-event.is-done { color: white; text-decoration: line-through; opacity: 0.75; border-left-color: var(--border); background: var(--bg-hover); }
+  .day-cell-event-time { color: white; flex-shrink: 0; font-variant-numeric: tabular-nums; }
   .day-cell-event-title { overflow: hidden; text-overflow: ellipsis; }
   .day-cell-more {
     font-size: 0.7em;

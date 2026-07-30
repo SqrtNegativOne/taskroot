@@ -1,6 +1,8 @@
 import React from "react";
-import { ymd, hhmmShort, PAD2, sameDay } from "../../../core/store/data";
+import { ymd, hhmmShort, PAD2, sameDay, parseYMD } from "../../../core/store/data";
 import type { HydratedEvent } from "../../../core/domain/events";
+import { Icon } from "../../../components/icon";
+import { MINUTES_IN_HOUR } from "../../../core/utils/constants";
 
 const OPACITY_FADED = 0.4;
 
@@ -81,6 +83,17 @@ function EventItem({
     const title = ev.title;
     const pri = ev.priority;
     const isDone = ev.isDone;
+    
+    let isPastDue = false;
+    if (ev.type === 'plan' && !ev.isDone) {
+        const date = parseYMD(ev.date);
+        const end = ev.end || 0;
+        date.setHours(Math.floor(end / MINUTES_IN_HOUR), end % MINUTES_IN_HOUR, 0, 0);
+        if (date.getTime() < Date.now()) {
+            isPastDue = true;
+        }
+    }
+    
     return (
         <div
             className={`day-cell-event ev-${ev.type} ${pri !== undefined ? `pri-bar-${pri}` : ""} ${isDone ? "is-done" : ""}`}
@@ -99,7 +112,12 @@ function EventItem({
                     {hhmmShort(ev.start)}
                 </span>
             )}
-            <span className="day-cell-event-title">{title}</span>
+            <span className="day-cell-event-title" style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                {isPastDue && (
+                    <Icon name="warning" size={12} style={{ flexShrink: 0, color: 'var(--p0)' }} />
+                )}
+                {title}
+            </span>
         </div>
     );
 }

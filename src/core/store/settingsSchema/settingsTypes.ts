@@ -29,6 +29,7 @@ export interface AppSettings {
     trackerDimmedOpacity: number;
     trackerShowBorder: boolean;
     trackerSnapThreshold: number;
+    trackerFontSize: number | "dynamic";
 }
 
 export type SettingType =

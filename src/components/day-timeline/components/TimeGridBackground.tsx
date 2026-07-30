@@ -9,10 +9,12 @@ const GUTTER_SIZE_MINUTES = 15;
 
 interface TimeGridBackgroundProps {
     isToday: boolean;
+    showLabels?: boolean;
 }
 
 export const TimeGridBackground = memo(function TimeGridBackground({
     isToday,
+    showLabels = true,
 }: TimeGridBackgroundProps) {
     const nowMin = useCurrentTime();
 
@@ -27,16 +29,18 @@ export const TimeGridBackground = memo(function TimeGridBackground({
                         height: `${MINUTES_IN_HOUR * PX_PER_MIN}px`,
                     }}
                 >
-                    <span
-                        className="day-hour-label"
-                        style={{
-                            opacity: isToday && Math.abs(h * MINUTES_IN_HOUR - nowMin) < GUTTER_SIZE_MINUTES ? 0 : 1,
-                        }}
-                    >
-                        {PAD2(h)}:00
-                    </span>
+                    {showLabels && (
+                        <span
+                            className="day-hour-label"
+                            style={{
+                                opacity: isToday && Math.abs(h * MINUTES_IN_HOUR - nowMin) < GUTTER_SIZE_MINUTES ? 0 : 1,
+                            }}
+                        >
+                            {PAD2(h)}:00
+                        </span>
+                    )}
                     <div className="day-hour-line" />
-                    <div className="day-hour-half" />
+                    <div className="day-hour-half" style={!showLabels ? { left: '8px' } : undefined} />
                 </div>
             ))}
         </>

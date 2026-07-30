@@ -222,6 +222,23 @@ const SETTINGS_CONFIG: Record<string, Record<string, ConfigItem[]>> = {
                 defaultValue: true,
             },
             {
+                id: "trackerFontSize",
+                label: "Font Size",
+                keywords: ["tracker", "font", "size", "text", "scale", "dynamic"],
+                type: "select",
+                defaultValue: "dynamic",
+                options: [
+                    { value: "dynamic", label: "Dynamic" },
+                    { value: 12, label: "12px" },
+                    { value: 16, label: "16px" },
+                    { value: 20, label: "20px" },
+                    { value: 24, label: "24px" },
+                    { value: 32, label: "32px" },
+                    { value: 48, label: "48px" },
+                    { value: 64, label: "64px" },
+                ],
+            },
+            {
                 id: "trackerOpacity",
                 label: "Base Opacity (%)",
                 description:

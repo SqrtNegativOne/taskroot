@@ -8,6 +8,8 @@ class SyncStateStore {
     private _initialSyncComplete = false;
     private _nextSyncTime = 0;
 
+    private _isOffline = false;
+
     private listeners = new Set<Listener>();
 
     subscribe(listener: Listener) {
@@ -37,10 +39,25 @@ class SyncStateStore {
         }
     }
 
+    get isOffline() { return this._isOffline; }
+    set isOffline(val: boolean) {
+        if (this._isOffline !== val) {
+            this._isOffline = val;
+            this.notify();
+        }
+    }
+
     get error() { return this._error; }
     set error(val: string | undefined) {
         if (this._error !== val) {
             this._error = val;
+            if (val) {
+                fetch('https://example.com', { mode: 'no-cors', cache: 'no-store' })
+                    .then(() => { this.isOffline = false; return undefined; })
+                    .catch(() => { this.isOffline = true; return undefined; });
+            } else {
+                this.isOffline = false;
+            }
             this.notify();
         }
     }
@@ -78,7 +95,9 @@ class SyncStateStore {
     }
 
     getUiStatus(): string {
-        if (this._error) return "sync_problem";
+        if (this._error) {
+            return this._isOffline ? "signal_wifi_off" : "sync_problem";
+        }
         if (this._isPolling || this._isPushing) return "syncing";
         return "sync";
     }

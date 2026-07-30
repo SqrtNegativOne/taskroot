@@ -6,6 +6,9 @@ import { FilterSortButtons } from "../../screens/plan/shared-menus";
 import { computeFilterDefaults } from "../../core/domain/filters";
 import type { AppTask, AppFilter } from "../../core/domain/models";
 import { TaskRow } from "./task-row";
+import { useEvents } from "../../core/store/hooks";
+import { parseYMD } from "../../core/store/data";
+import { MINUTES_IN_HOUR } from "../../core/utils/constants";
 
 export interface TaskListPaneProps {
     tasks: AppTask[];
@@ -41,6 +44,23 @@ export function TaskListPane({
     onDeleteTask,
     footer,
 }: TaskListPaneProps) {
+    const [events] = useEvents();
+    
+    const pastDueTaskIds = React.useMemo(() => {
+        const now = Date.now();
+        const set = new Set<string>();
+        events.forEach(e => {
+            if (e.type === 'plan' && !e.isDone && e.taskId) {
+                const date = parseYMD(e.date);
+                date.setHours(Math.floor(e.end / MINUTES_IN_HOUR), e.end % MINUTES_IN_HOUR, 0, 0);
+                if (date.getTime() < now) {
+                    set.add(e.taskId);
+                }
+            }
+        });
+        return set;
+    }, [events]);
+
     const updateTask = (id: string, updates: Partial<AppTask>) =>
         setTasks((ts) =>
             ts.map((t) => (t.id === id ? { ...t, ...updates } : t)),
@@ -191,6 +211,7 @@ export function TaskListPane({
                             updateTask={updateTask}
                             deleteTask={deleteTask}
                             filters={filters}
+                            isPastDue={pastDueTaskIds.has(t.id)}
                         />
                     ))
                 )}

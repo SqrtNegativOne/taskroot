@@ -143,7 +143,7 @@
   .pri-4 { color: #c96b7f; }
   .task-row-title {
     flex: 1; color: var(--fg);
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    white-space: pre-wrap; word-wrap: break-word;
   }
   .status-pill {
     font-size: 0.72em;

@@ -1,14 +1,15 @@
 import { MINUTES_IN_HOUR, HOURS_PER_DAY } from "../../core/utils/constants";
 import React, { useState, Fragment } from "react";
-import { PAD2 } from "../../core/store/data";
-import { PX_PER_MIN, SNAP_MIN } from "./types";
+import { PAD2, parseYMD } from "../../core/store/data";
 import type { EventBlockProps } from "./types";
+import { PX_PER_MIN, SNAP_MIN } from "./types";
 import type { AppEvent } from "../../core/domain/models";
 import { Icon } from "../icon";
 
 const MIN_EVENT_HEIGHT_PX = 18;
 const COMPACT_EVENT_HEIGHT_PX = 12;
 const DRAG_THRESHOLD_PX = 3;
+const DEFAULT_LABEL_OFFSET_PX = 56;
 
 
 
@@ -40,7 +41,8 @@ export function EventBlock<T extends import("./types").DragState = import("./typ
     onResize,
     onMove,
     onEventClick,
-}: EventBlockProps<T>) {
+    labelOffset = DEFAULT_LABEL_OFFSET_PX,
+}: EventBlockProps<T> & { labelOffset?: number }) {
     const [dragOffset, setDragOffset] = useState<number>();
 
     const title = event.title;
@@ -60,13 +62,13 @@ export function EventBlock<T extends import("./types").DragState = import("./typ
                     startStart + SNAP_MIN,
                     Math.min(HOURS_PER_DAY * MINUTES_IN_HOUR, startEnd + dm),
                 );
-                onResize(event.id, startStart, newEnd);
+                if (onResize) onResize(event.id, startStart, newEnd);
             } else {
                 const newStart = Math.max(
                     0,
                     Math.min(startEnd - SNAP_MIN, startStart + dm),
                 );
-                onResize(event.id, newStart, startEnd);
+                if (onResize) onResize(event.id, newStart, startEnd);
             }
         };
         const up = () => {
@@ -105,7 +107,7 @@ export function EventBlock<T extends import("./types").DragState = import("./typ
                 return;
             }
             setDragOffset(undefined);
-            if (finalDm !== 0) {
+            if (finalDm !== 0 && onMove) {
                 onMove(
                     event.id,
                     startStart + finalDm,
@@ -119,6 +121,7 @@ export function EventBlock<T extends import("./types").DragState = import("./typ
 
     const isRecurring = Boolean(event.rrule || event.isInstance || event.recurringEventId);
 
+    // eslint-disable-next-line complexity
     const renderBlock = (start: number, end: number, isGhost: boolean, isFloating: boolean) => {
         const top = start * PX_PER_MIN;
         const height = (end - start) * PX_PER_MIN;
@@ -129,13 +132,22 @@ export function EventBlock<T extends import("./types").DragState = import("./typ
         const style: React.CSSProperties = {
             top: `${top}px`,
             height: `${Math.max(height, MIN_EVENT_HEIGHT_PX)}px`,
-            left: `calc(56px + ((100% - 56px) / ${lanes}) * ${lane})`,
-            width: `calc(((100% - 56px) / ${lanes}) - 2px)`,
+            left: `calc(${labelOffset}px + ((100% - ${labelOffset}px) / ${lanes}) * ${lane})`,
+            width: `calc(((100% - ${labelOffset}px) / ${lanes}) - 2px)`,
         };
         
         if (event.color) {
             style.backgroundColor = event.color;
             style.borderLeftColor = event.color;
+        }
+        
+        let isPastDue = false;
+        if (event.type === 'plan' && !event.isDone) {
+            const date = parseYMD(event.date);
+            date.setHours(Math.floor(end / MINUTES_IN_HOUR), end % MINUTES_IN_HOUR, 0, 0);
+            if (date.getTime() < Date.now()) {
+                isPastDue = true;
+            }
         }
 
         const hasTags = !compact && event.type === "plan" && task && (task.tags || []).length > 0;
@@ -155,6 +167,9 @@ export function EventBlock<T extends import("./types").DragState = import("./typ
                     <div className="day-event-title" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                         {isRecurring && (
                             <Icon name="event_repeat" size={14} style={{ flexShrink: 0 }} />
+                        )}
+                        {isPastDue && (
+                            <Icon name="warning" size={14} style={{ flexShrink: 0, color: 'var(--p0)' }} />
                         )}
                         {pri !== undefined && (
                             <span className={`pri pri-${pri}`}>●</span>

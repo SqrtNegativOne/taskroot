@@ -3,6 +3,8 @@ import "@fontsource-variable/roboto-mono";
 import { useTasks, useStopwatch, useSettings } from "../../core/store/hooks";
 import "./minitracker.css";
 import { MiniTrackerClock } from "./MiniTrackerClock";
+import type { StopwatchState } from "../../core/domain/clock-strategies/types";
+import type { AppSettings } from "../../core/store/settingsSchema";
 
 const OPACITY_DIM = 0.2;
 const OPACITY_HOVER = 0.8;
@@ -51,22 +53,65 @@ const handleDoubleClick = () => {
 };
 
 
+function useBreakSound(state: StopwatchState, setState: React.Dispatch<React.SetStateAction<StopwatchState>>, now: number) {
+    const audioRef = React.useRef<HTMLAudioElement | null>(null);
+
+    useEffect(() => {
+        if (!audioRef.current) {
+            audioRef.current = new Audio("/wine-glass-alarm.ogg");
+        }
+    }, []);
+
+    useEffect(() => {
+        if (!state.isBreak || !state.breakStartedAt || state.breakSoundPlayed) return;
+        if (Date.now() - state.breakStartedAt < state.breakAllowedMs) return;
+
+        audioRef.current?.play().catch((e: unknown) => console.error("Sound play failed", e));
+        setState((s) => ({ ...s, breakSoundPlayed: true }));
+    }, [
+        now,
+        state.isBreak,
+        state.breakStartedAt,
+        state.breakAllowedMs,
+        state.breakSoundPlayed,
+        setState,
+    ]);
+}
+
+function useMiniTrackerStyles(settings: AppSettings, isDimmed: boolean): React.CSSProperties {
+    const baseOpacity =
+        settings.trackerOpacity !== undefined
+            ? settings.trackerOpacity / 100
+            : OPACITY_HOVER;
+    const hoverReduction =
+        settings.trackerHoverReduction !== undefined
+            ? settings.trackerHoverReduction / 100
+            : OPACITY_DIM;
+    const dimmedOpacity =
+        settings.trackerDimmedOpacity !== undefined
+            ? settings.trackerDimmedOpacity / 100
+            : OPACITY_DIM;
+
+    const style: React.CSSProperties & Record<string, string | number> = {
+        "--base-opacity": isDimmed ? dimmedOpacity : baseOpacity,
+        "--hover-opacity": isDimmed ? dimmedOpacity : Math.max(0, baseOpacity - hoverReduction),
+        "--tracker-font-size": settings.trackerFontSize === "dynamic" 
+            ? "12cqmin" 
+            : (settings.trackerFontSize ? `${settings.trackerFontSize}px` : "15px")
+    };
+    return style;
+}
+
 export function MiniTrackerScreen() {
     const [state, setState] = useStopwatch();
     const [tasks] = useTasks();
     const [settings] = useSettings();
     const [now, setNow] = useState(Date.now());
-    const [isHovered, setIsHovered] = useState(false);
     const [isDimmed, setIsDimmed] = useState(false);
-    const audioRef = React.useRef<HTMLAudioElement | null>(null);
 
     useEffect(() => {
         document.documentElement.style.background = "transparent";
         document.body.style.background = "transparent";
-
-        if (!audioRef.current) {
-            audioRef.current = new Audio("/wine-glass-alarm.ogg");
-        }
 
         return () => {
             document.documentElement.style.background = "";
@@ -84,21 +129,7 @@ export function MiniTrackerScreen() {
         return () => cancelAnimationFrame(raf);
     }, []);
 
-    useEffect(() => {
-        if (!state.isBreak || !state.breakStartedAt || state.breakSoundPlayed) return;
-        if (Date.now() - state.breakStartedAt < state.breakAllowedMs) return;
-
-        audioRef.current?.play().catch((e: unknown) => console.error("Sound play failed", e));
-        setState((s) => ({ ...s, breakSoundPlayed: true }));
-    }, [
-        now,
-        state.isBreak,
-        state.breakStartedAt,
-        state.breakAllowedMs,
-        state.breakSoundPlayed,
-        setState,
-    ]);
-
+    useBreakSound(state, setState, now);
     const activeTask = tasks?.find((t: import('../../core/domain/models').AppTask) => t.status === "doing");
     const clockStyle = settings.clockStyle || "counter";
 
@@ -110,25 +141,7 @@ export function MiniTrackerScreen() {
 
     useMiniTrackerKeybindings(settings.keybindingRestoreApp, setIsDimmed);
 
-    const baseOpacity =
-        settings.trackerOpacity !== undefined
-            ? settings.trackerOpacity / 100
-            : OPACITY_HOVER;
-    const hoverReduction =
-        settings.trackerHoverReduction !== undefined
-            ? settings.trackerHoverReduction / 100
-            : OPACITY_DIM;
-    const dimmedOpacity =
-        settings.trackerDimmedOpacity !== undefined
-            ? settings.trackerDimmedOpacity / 100
-            : OPACITY_DIM;
-
-    let currentOpacity = baseOpacity;
-    if (isDimmed) {
-        currentOpacity = dimmedOpacity;
-    } else if (isHovered) {
-        currentOpacity = Math.max(0, baseOpacity - hoverReduction);
-    }
+    const style = useMiniTrackerStyles(settings, isDimmed);
 
     useEffect(() => {
         if (window.electronAPI?.setSnapThreshold) {
@@ -149,9 +162,7 @@ export function MiniTrackerScreen() {
         <div
             className={`minitracker-container ${showBorder ? "show-border" : ""}`}
             onDoubleClick={handleDoubleClick}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-            style={{ opacity: currentOpacity }}
+            style={style}
             title="Double-click to restore main window"
         >
             <MiniTrackerClock

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { TODAY, parseYMD, durationLabel, dueLabel } from "../../core/store/data";
 import type { AppTask, AppFilter } from "../../core/domain/models";
 import { checkTaskAgainstFilters } from "./filters";
+import { Icon } from "../icon";
 
 const TRANSITION_DURATION_MS = 400;
 
@@ -13,6 +14,7 @@ export interface TaskRowProps {
     updateTask: (id: string, updates: Partial<AppTask>) => void;
     deleteTask: (id: string) => void;
     filters: AppFilter[];
+    isPastDue?: boolean;
 }
 
 export function TaskRow({
@@ -22,6 +24,7 @@ export function TaskRow({
     updateTask,
     deleteTask,
     filters,
+    isPastDue,
 }: TaskRowProps) {
     const [isExiting, setIsExiting] = useState(false);
     const [isChecking, setIsChecking] = useState(false);
@@ -100,7 +103,12 @@ export function TaskRow({
             </button>
             <div className="task-row-content">
                 <div className="task-row-line1">
-                    <span className="task-row-title">{task.title}</span>
+                    <span className="task-row-title">
+                        {isPastDue && task.status !== "done" && (
+                            <Icon name="warning" size={14} style={{ marginRight: '4px', color: 'var(--p0)', verticalAlign: 'middle' }} />
+                        )}
+                        {task.title}
+                    </span>
                     {task.status === "doing" && (
                         <span className="status-pill status-doing">doing</span>
                     )}

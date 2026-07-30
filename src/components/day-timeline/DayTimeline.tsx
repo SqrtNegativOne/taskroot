@@ -1,20 +1,10 @@
-import { MINUTES_IN_HOUR, HOURS_PER_DAY } from "../../core/utils/constants";
-import { useMemo } from "react";
-import { ymd, sameDay } from "../../core/store/data";
-import type { HydratedEvent } from "../../core/domain/events";
-import { PX_PER_MIN } from "./types";
+import React, { useMemo } from "react";
+import { ymd, sameDay, addDays } from "../../core/store/data";
 import type { DayTimelineProps, DragState } from "./types";
-import { EventBlock } from "./EventBlock";
-import { layoutEvents } from "./layout";
-import { filterEvents, sortEvents } from "../../core/domain/filters";
 
 import { useCurrentTimeScroll } from "./hooks/useCurrentTimeScroll";
-import { useEventCreation } from "./hooks/useEventCreation";
 import { TimelineHeader } from "./components/TimelineHeader";
-import { TimeGridBackground } from "./components/TimeGridBackground";
-import { CurrentTimeLine } from "./components/CurrentTimeLine";
-import { CreationPreview } from "./components/CreationPreview";
-import { DropPreview } from "./components/DropPreview";
+import { DayColumn } from "./components/DayColumn";
 
 export function DayTimeline<T extends DragState = DragState>({
     events,
@@ -33,27 +23,13 @@ export function DayTimeline<T extends DragState = DragState>({
 }: DayTimelineProps<T>) {
     const viewDate = timelineDate || today;
     const isToday = sameDay(viewDate, today);
-
-    const { containerRef, createPreview, onGridPointerDown } = useEventCreation(viewDate, onAddEvent);
     const scrollRef = useCurrentTimeScroll();
 
-    const laid = useMemo(() => {
-        let todayEvents = events.filter((e: HydratedEvent) => {
-            const cellDate = ymd(viewDate);
-            const inRange = e.endDate
-                ? cellDate >= e.date && cellDate <= e.endDate
-                : e.date === cellDate;
-            return inRange && !e.isAllDay;
-        });
+    const [numDays, setNumDays] = React.useState(1);
 
-        todayEvents = filterEvents(todayEvents, filter);
-        todayEvents = sortEvents(todayEvents, sort);
-
-        return layoutEvents(todayEvents);
-    }, [events, viewDate, filter, sort]);
-
-    const dropPreview =
-        dragState?.target?.kind === "day-time" ? dragState.target : undefined;
+    const dates = useMemo(() => {
+        return Array.from({ length: numDays }, (_, i) => addDays(viewDate, i));
+    }, [numDays, viewDate]);
 
     return (
         <section className="day-pane">
@@ -63,37 +39,29 @@ export function DayTimeline<T extends DragState = DragState>({
                 today={today}
                 setTimelineDate={setTimelineDate}
                 filterMenu={filterMenu}
+                numDays={numDays}
+                setNumDays={setNumDays}
             />
 
             <div className="day-scroll" ref={scrollRef}>
-                <div
-                    className="day-grid"
-                    ref={containerRef}
-                    style={{ height: `${HOURS_PER_DAY * MINUTES_IN_HOUR * PX_PER_MIN}px` }}
-                    data-drop-kind="day-time"
-                    onPointerDown={onGridPointerDown}
-                >
-                    <TimeGridBackground isToday={isToday} />
-                    <CurrentTimeLine isToday={isToday} />
-
-                    {/* Events */}
-                    {laid.map(({ event, lane, lanes }) => (
-                        <EventBlock
-                            key={event.id}
-                            event={event}
-                            task={event.task}
-                            lane={lane}
-                            lanes={lanes}
-                            onResize={onResizeEvent}
-                            onMove={onMoveEvent}
+                <div style={{ display: 'flex', flexDirection: 'row', width: '100%' }}>
+                    {dates.map((d, i) => (
+                        <DayColumn
+                            key={ymd(d)}
+                            date={d}
+                            today={today}
+                            events={events}
+                            filter={filter || []}
+                            sort={sort || ""}
                             dragState={dragState}
                             setDragState={setDragState}
+                            onResizeEvent={onResizeEvent}
+                            onMoveEvent={onMoveEvent}
                             onEventClick={onEventClick}
+                            onAddEvent={onAddEvent}
+                            showTimeLabels={i === 0}
                         />
                     ))}
-
-                    <CreationPreview preview={createPreview} />
-                    <DropPreview target={dropPreview} />
                 </div>
             </div>
         </section>

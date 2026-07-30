@@ -1,10 +1,11 @@
-import { BrowserWindow } from "electron";
+import { BrowserWindow, screen } from "electron";
 import { PRELOAD_PATH, ICON_PATH } from "./constants.js";
 
 class WindowManager {
     public win: BrowserWindow | undefined = undefined;
     public miniWin: BrowserWindow | undefined = undefined;
     public isQuitting = false;
+    public snapThreshold = 2;
     private mainUrl = "";
     private miniWindowUrl = "";
 
@@ -57,6 +58,39 @@ class WindowManager {
             if (!this.isQuitting) {
                 e.preventDefault();
             }
+        });
+
+        let moveTimeout: NodeJS.Timeout | undefined = undefined;
+        this.miniWin.on("move", () => {
+            if (moveTimeout) clearTimeout(moveTimeout);
+            
+            moveTimeout = setTimeout(() => {
+                if (!this.miniWin || this.miniWin.isDestroyed()) return;
+                const bounds = this.miniWin.getBounds();
+                const display = screen.getDisplayMatching(bounds);
+                const workArea = display.workArea;
+                const threshold = this.snapThreshold;
+
+                let newX = bounds.x;
+                let newY = bounds.y;
+
+                if (Math.abs(newX - workArea.x) <= threshold) {
+                    newX = workArea.x;
+                } else if (Math.abs(newX + bounds.width - (workArea.x + workArea.width)) <= threshold) {
+                    newX = workArea.x + workArea.width - bounds.width;
+                }
+
+                if (Math.abs(newY - workArea.y) <= threshold) {
+                    newY = workArea.y;
+                } else if (Math.abs(newY + bounds.height - (workArea.y + workArea.height)) <= threshold) {
+                    newY = workArea.y + workArea.height - bounds.height;
+                }
+
+                if (newX !== bounds.x || newY !== bounds.y) {
+                    this.miniWin.setPosition(newX, newY);
+                    this.miniWin.webContents.send("minitracker-snapped");
+                }
+            }, 100);
         });
 
         this.miniWin.on("closed", () => {

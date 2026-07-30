@@ -1,0 +1,22 @@
+.minitracker-container {
+    width: 100vw;
+    height: 100vh;
+    background: rgb(24, 24, 24);
+    transition: opacity 0.2s ease;
+    color: var(--fg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    user-select: none;
+    -webkit-app-region: drag;
+    cursor: default;
+    padding: 16px;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+.minitracker-container.show-border {
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}

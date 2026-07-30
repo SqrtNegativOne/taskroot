@@ -160,7 +160,7 @@ export function PlanScreen() {
                     onClose={() => setInspectorState(undefined)}
                     tasks={tasks}
                     setTasks={setTasks}
-                    events={events}
+                    events={hydratedEvents}
                     setEvents={setEvents}
                 />
             </main>

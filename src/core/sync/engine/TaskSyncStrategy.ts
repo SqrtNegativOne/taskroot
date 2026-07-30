@@ -1,4 +1,4 @@
-import { AbstractSynchronizer } from "./AbstractSynchronizer";
+import type { ISyncStrategy } from "./Synchronizer";
 import type { ISyncEngineContext, SyncQueueItem } from "./types";
 import { SyncAction, SyncType } from "./types";
 import type { ITasksAPI } from "../task-api/types";
@@ -6,36 +6,32 @@ import type { AppTask } from "../../domain/models";
 import { resolveConflict } from "./conflict-resolver";
 import { computeTaskDeltaActions } from "./task-differ";
 
-export class TaskSynchronizer extends AbstractSynchronizer<AppTask> {
+export class TaskSyncStrategy implements ISyncStrategy<AppTask> {
+    private context: ISyncEngineContext;
     private tasksAPI: ITasksAPI;
 
     constructor(context: ISyncEngineContext, tasksAPI: ITasksAPI) {
-        super(context);
+        this.context = context;
         this.tasksAPI = tasksAPI;
     }
 
-    // Maintained for backward compatibility with Poller
-    pollTasks() {
-        return this.poll();
-    }
-
-    protected isSyncEnabled(): boolean {
+    isSyncEnabled(): boolean {
         return this.context.getSettings().enableTasksSync !== false;
     }
 
-    protected getLocalStoreKey(): string {
+    getLocalStoreKey(): string {
         return "tasks";
     }
 
-    protected updatePrevMapSnapshot(items: AppTask[]): void {
+    updatePrevMapSnapshot(items: AppTask[]): void {
         this.context.updatePrevTasksMap(items);
     }
 
-    protected async fetchRemoteItems(): Promise<unknown[] | undefined> {
+    async fetchRemoteItems(): Promise<unknown[] | undefined> {
         return await this.tasksAPI.fetchTasks();
     }
 
-    protected processSingleRemoteItem(
+    processSingleRemoteItem(
         remote: gapi.client.tasks.Task,
         _localItemsArray: AppTask[],
         localItemsMap: Map<string, AppTask>
@@ -64,7 +60,7 @@ export class TaskSynchronizer extends AbstractSynchronizer<AppTask> {
         return resolveConflict(standardizedRemote, existingLocalTask, localItemsMap);
     }
 
-    protected processQueueItem(q: SyncQueueItem, tasksMap: Map<string, AppTask>): boolean {
+    processQueueItem(q: SyncQueueItem, tasksMap: Map<string, AppTask>): boolean {
         if (q.type !== SyncType.Task) return false;
         let updated = false;
 
@@ -86,10 +82,6 @@ export class TaskSynchronizer extends AbstractSynchronizer<AppTask> {
     }
 
     computeDelta(newTasks: AppTask[]) {
-        this.computeTasksDelta(newTasks);
-    }
-
-    computeTasksDelta(newTasks: AppTask[]) {
         const actions = computeTaskDeltaActions(newTasks, this.context.prevTasksMap);
         for (const action of actions) {
             this.context.pushQueue.push(action);

@@ -66,7 +66,11 @@ export function useDragAndDrop(
     };
 
     const onEventDragStart = (e: React.PointerEvent<Element> | React.MouseEvent<Element, MouseEvent>, eventToMove: AppEvent, task?: AppTask) => {
-        if (!canEditEvent(eventToMove, calendars)) return setInspectorState({ type: "event", id: eventToMove.id });
+        if (!canEditEvent(eventToMove, calendars)) {
+            e.preventDefault();
+            e.stopPropagation();
+            return setInspectorState({ type: "event", id: eventToMove.id });
+        }
         e.preventDefault();
         e.stopPropagation();
 

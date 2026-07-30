@@ -50,4 +50,8 @@ export function setupIpcHandlers() {
     ipcMain.on("window-restore-main", () => {
         windowManager.restoreOrCreateMainWindow();
     });
+
+    ipcMain.on("set-snap-threshold", (event, threshold) => {
+        windowManager.snapThreshold = threshold;
+    });
 }

@@ -253,6 +253,16 @@ const SETTINGS_CONFIG: Record<string, Record<string, ConfigItem[]>> = {
                 min: 0,
                 max: 100,
             },
+            {
+                id: "trackerSnapThreshold",
+                label: "Edge Snap Threshold (px)",
+                description: "How close to the edge (in pixels) the window needs to be to snap.",
+                keywords: ["tracker", "snap", "edge", "threshold", "pixels"],
+                type: "number",
+                defaultValue: 2,
+                min: 0,
+                max: 100,
+            },
         ],
     },
 };

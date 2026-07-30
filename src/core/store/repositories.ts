@@ -12,7 +12,7 @@ export interface DistractionColumn { id: string; label: string; width: number; t
 export interface StopwatchState { elapsed: number; runningSince?: number; isBreak: boolean; breakAllowedMs: number; breakStartedAt?: number; breakSoundPlayed: boolean; }
 export type TimeLog = AppEvent;
 export interface RestItem { id: string; title: string; type: string; checked?: boolean; }
-export interface CalendarData { id: string; summary: string; active: boolean; accessRole?: string; }
+export interface CalendarData { id: string; summary: string; active: boolean; accessRole?: string; backgroundColor?: string; foregroundColor?: string; }
 export interface TestKeyData { count: number; }
 
 const isUpdater = <T>(v: T | ((prev: T) => T)): v is ((prev: T) => T) => typeof v === "function";
@@ -119,12 +119,12 @@ function parseSettings(parsed: unknown): AppSettings {
 }
 
 function onTasksDelta(result: AppTask[]) {
-    taskSync.computeTasksDelta(result);
+    taskSync.computeDelta(result);
     pusher.trigger();
 }
 
 function onEventsDelta(result: AppEvent[]) {
-    eventSync.computeEventsDelta(result);
+    eventSync.computeDelta(result);
     pusher.trigger();
 }
 

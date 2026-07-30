@@ -1,8 +1,8 @@
 import { MS_PER_SECOND, MINUTES_IN_HOUR } from "../../utils/constants";
 import { syncState } from "../SyncState";
-import { TaskSynchronizer } from "./TaskSynchronizer";
-import { EventSynchronizer } from "./EventSynchronizer";
+import type { Synchronizer } from "./Synchronizer";
 import { Pusher } from "./Pusher";
+import type { AppTask, AppEvent } from "../../domain/models";
 
 export const MIN_POLL_INTERVAL_MINUTES = 5;
 export const LONG_PRESS_DELAY_MS = 1500;
@@ -10,15 +10,15 @@ export const LONG_PRESS_DELAY_MS = 1500;
 
 export class Poller {
     private pollInterval: ReturnType<typeof setInterval> | undefined = undefined;
-    private taskSync: TaskSynchronizer;
-    private eventSync: EventSynchronizer;
+    private taskSync: Synchronizer<AppTask>;
+    private eventSync: Synchronizer<AppEvent>;
     private pusher: Pusher;
     private getSettings: () => Partial<import('../../store/settingsSchema').AppSettings>;
     private hasAuth: () => boolean;
 
     constructor(
-        taskSync: TaskSynchronizer,
-        eventSync: EventSynchronizer,
+        taskSync: Synchronizer<AppTask>,
+        eventSync: Synchronizer<AppEvent>,
         pusher: Pusher,
         options: {
             getSettings: () => Partial<import('../../store/settingsSchema').AppSettings>;
@@ -82,8 +82,8 @@ export class Poller {
         syncState.error = undefined;
 
         try {
-            await this.taskSync.pollTasks();
-            await this.eventSync.pollEvents();
+            await this.taskSync.poll();
+            await this.eventSync.poll();
             this.pusher.trigger();
         } catch (e: unknown) {
             console.error("Poller poll error:", e);

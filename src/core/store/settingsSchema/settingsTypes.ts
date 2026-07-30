@@ -28,6 +28,7 @@ export interface AppSettings {
     trackerHoverReduction: number;
     trackerDimmedOpacity: number;
     trackerShowBorder: boolean;
+    trackerSnapThreshold: number;
 }
 
 export type SettingType =

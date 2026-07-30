@@ -3,9 +3,10 @@ import React from "react";
 export interface DescriptionInputProps {
     value: string | undefined | null;
     onChange: (val: string) => void;
+    disabled?: boolean;
 }
 
-export function DescriptionInput({ value, onChange }: DescriptionInputProps) {
+export function DescriptionInput({ value, onChange, disabled }: DescriptionInputProps) {
     const [editing, setEditing] = React.useState(false);
     const [localValue, setLocalValue] = React.useState(value);
 
@@ -17,16 +18,20 @@ export function DescriptionInput({ value, onChange }: DescriptionInputProps) {
         return (
             <button
                 type="button"
+                disabled={disabled}
                 onKeyDown={(e) => {
+                    if (disabled) return;
                     if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
                         setEditing(true);
                     }
                 }}
-                onClick={() => setEditing(true)}
+                onClick={() => {
+                    if (!disabled) setEditing(true);
+                }}
                 style={{
                     minHeight: "24px",
-                    cursor: "text",
+                    cursor: disabled ? "not-allowed" : "text",
                     padding: "0",
                     color: value ? "var(--fg)" : "var(--fg-dim)",
                     borderRadius: "4px",

@@ -1,16 +1,18 @@
 import { storeRegistry } from "../store/storeRegistry";
 import { syncState } from "./SyncState";
-import { TaskSynchronizer } from "./engine/TaskSynchronizer";
-import { EventSynchronizer } from "./engine/EventSynchronizer";
+import { Synchronizer } from "./engine/Synchronizer";
+import { TaskSyncStrategy } from "./engine/TaskSyncStrategy";
+import { EventSyncStrategy } from "./engine/EventSyncStrategy";
 import { Pusher } from "./engine/Pusher";
 import { Poller } from "./engine/Poller";
 
 import { GoogleAuthManager } from "./auth/TokenBouncer";
 import { GoogleCalendarAPI } from "./calendar-api/GoogleCalendarAPI";
 import { GoogleTasksAPI } from "./task-api/GoogleTasksAPI";
+import type { AppTask, AppEvent } from "../domain/models";
 
-const prevTasksMap = new Map<string, import('../domain/models').AppTask>();
-const prevEventsMap = new Map<string, import('../domain/models').AppEvent>();
+const prevTasksMap = new Map<string, AppTask>();
+const prevEventsMap = new Map<string, AppEvent>();
 
 function getSettings() {
     return storeRegistry.getLocalData("settings") || { enableCalendarSync: true, enableTasksSync: true };
@@ -21,11 +23,11 @@ const context = {
     setLocalData: storeRegistry.setLocalData,
     prevTasksMap,
     prevEventsMap,
-    updatePrevTasksMap: (tasks: import('../domain/models').AppTask[]) => {
+    updatePrevTasksMap: (tasks: AppTask[]) => {
         prevTasksMap.clear();
         for (const t of tasks) prevTasksMap.set(t.id, { ...t });
     },
-    updatePrevEventsMap: (events: import('../domain/models').AppEvent[]) => {
+    updatePrevEventsMap: (events: AppEvent[]) => {
         prevEventsMap.clear();
         for (const e of events) prevEventsMap.set(e.id, { ...e });
     },
@@ -39,8 +41,11 @@ const googleAuth = new GoogleAuthManager();
 export const calendarApi = new GoogleCalendarAPI(googleAuth);
 export const tasksApi = new GoogleTasksAPI(googleAuth);
 
-export const taskSync: TaskSynchronizer = new TaskSynchronizer(context, tasksApi);
-export const eventSync: EventSynchronizer = new EventSynchronizer(context, calendarApi);
+const taskStrategy = new TaskSyncStrategy(context, tasksApi);
+export const taskSync = new Synchronizer<AppTask>(context, taskStrategy);
+
+const eventStrategy = new EventSyncStrategy(context, calendarApi);
+export const eventSync = new Synchronizer<AppEvent>(context, eventStrategy);
 
 export const pusher: Pusher = new Pusher(taskSync, eventSync, getSettings);
 

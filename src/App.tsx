@@ -23,6 +23,7 @@ import { StatsScreen } from "./screens/stats/StatsScreen";
 import { RecapScreen } from "./screens/recap/RecapScreen";
 import { MiniTrackerScreen } from "./screens/minitracker/MiniTrackerScreen";
 import { AppLayout } from "./components/AppLayout";
+import { LoginTitleBar } from "./components/shell";
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
     const { user, loading } = useAuth();
@@ -42,7 +43,16 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
         return <>{children}</>;
     }
 
-    if (loading) return <div>Loading...</div>;
+    if (loading) {
+        return (
+            <div className="app">
+                <LoginTitleBar />
+                <div style={{ display: "flex", flex: 1, justifyContent: "center", alignItems: "center" }}>
+                    Loading...
+                </div>
+            </div>
+        );
+    }
     
     const hasGoogleToken = !!localStorage.getItem("google_access_token");
 
@@ -133,18 +143,9 @@ function GlobalSyncLoading({ syncMessage }: { syncMessage: string | null }) {
         return null;
     }
     return (
-        <div
-            style={{
-                display: "flex",
-                height: "100vh",
-                justifyContent: "center",
-                alignItems: "center",
-                flexDirection: "column",
-                background: "var(--bg)",
-                color: "var(--fg)",
-                fontFamily: "var(--sans)",
-            }}
-        >
+        <div className="app">
+            <LoginTitleBar />
+            <div style={{ display: "flex", flex: 1, justifyContent: "center", alignItems: "center", flexDirection: "column", background: "var(--bg)", color: "var(--fg)", fontFamily: "var(--sans)" }}>
             <div
                 style={{
                     width: "40px",
@@ -169,6 +170,7 @@ function GlobalSyncLoading({ syncMessage }: { syncMessage: string | null }) {
             to { transform: rotate(360deg); }
           }
         `}</style>
+            </div>
         </div>
     );
 }

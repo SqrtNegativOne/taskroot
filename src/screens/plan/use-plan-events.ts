@@ -2,6 +2,7 @@ import React from "react";
 import type { AppTask, AppEvent } from "../../core/domain/models";
 import { expandEventsForView } from "../../core/domain/rrule-utils";
 import { hydrateEvents } from "../../core/domain/events";
+import { useCalendars } from "../../core/store/hooks";
 
 export const PLAN_EVENT_FILTER_COLUMNS = [
     { id: "type", label: "Type" },
@@ -30,9 +31,11 @@ export function usePlanEvents(tasks: AppTask[], events: AppEvent[], anchor: Date
         return expandEventsForView(events, start, end);
     }, [events, anchor]);
 
+    const [calendars] = useCalendars();
+
     const hydratedEvents = React.useMemo(() => {
-        return hydrateEvents(visibleEvents, tasks);
-    }, [visibleEvents, tasks]);
+        return hydrateEvents(visibleEvents, tasks, calendars);
+    }, [visibleEvents, tasks, calendars]);
 
     const getEventFilterValues = React.useCallback(
         (col: string) => {

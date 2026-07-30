@@ -5,8 +5,8 @@
 }
 
 .task-selector-backdrop.with-blur {
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(4px);
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(12px);
 }
 
 .task-selector-overlay {
@@ -21,7 +21,7 @@
 }
 
 .task-selector-empty-msg {
-    color: var(--fg-dim);
+    color: var(--fg-muted);
     font-size: 24px;
     pointer-events: auto;
     text-align: center;
@@ -48,7 +48,7 @@
 }
 
 .modern-task-input::placeholder {
-    color: var(--fg-dim);
+    color: var(--fg-muted);
     opacity: 0.5;
 }
 
@@ -60,7 +60,7 @@
     height: 1px;
     width: 100px;
     transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1), background 0.4s ease;
-    background: linear-gradient(90deg, transparent, var(--fg-dim), transparent);
+    background: linear-gradient(90deg, transparent, var(--fg-muted), transparent);
     position: relative;
 }
 
@@ -72,7 +72,7 @@
     width: 4px;
     height: 4px;
     border-radius: 50%;
-    background: var(--fg-dim);
+    background: var(--fg-muted);
     position: absolute;
     transition: background 0.4s ease;
 }
@@ -94,7 +94,7 @@
 .modern-task-item {
     cursor: pointer;
     font-size: 18px;
-    color: var(--fg-dim);
+    color: var(--fg);
     padding: 8px 16px;
     transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     text-align: center;
@@ -105,15 +105,16 @@
     border: none;
     background: none;
     display: block;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
 }
 
 .modern-task-item:hover {
-    color: var(--fg);
+    color: var(--accent);
     transform: scale(1.05);
 }
 
 .task-selector-no-results {
-    color: var(--fg-dim);
+    color: var(--fg-muted);
     font-size: 16px;
     margin-top: 16px;
 }

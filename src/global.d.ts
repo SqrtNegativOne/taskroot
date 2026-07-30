@@ -15,6 +15,8 @@ declare global {
         restoreMainWindow: () => void;
         onDeepLink: (callback: (route: string) => void) => void;
         shutdownPC: () => void;
+        setSnapThreshold: (threshold: number) => void;
+        onSnapped: (callback: () => void) => void;
     }
 
     interface Window {

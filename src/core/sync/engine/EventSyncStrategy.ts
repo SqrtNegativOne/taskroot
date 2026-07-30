@@ -1,4 +1,4 @@
-import { AbstractSynchronizer } from "./AbstractSynchronizer";
+import type { ISyncStrategy } from "./Synchronizer";
 import type { ISyncEngineContext, SyncQueueItem } from "./types";
 import { SyncAction, SyncType } from "./types";
 import type { ICalendarAPI } from "../calendar-api/types";
@@ -6,39 +6,35 @@ import type { AppEvent, AppTask } from "../../domain/models";
 import { resolveConflict } from "./conflict-resolver";
 import { computeEventDeltaActions } from "./event-differ";
 
-export class EventSynchronizer extends AbstractSynchronizer<AppEvent> {
+export class EventSyncStrategy implements ISyncStrategy<AppEvent> {
+    private context: ISyncEngineContext;
     private calendarAPI: ICalendarAPI;
 
     constructor(context: ISyncEngineContext, calendarAPI: ICalendarAPI) {
-        super(context);
+        this.context = context;
         this.calendarAPI = calendarAPI;
     }
 
-    // Alias for backward compatibility
-    pollEvents() {
-        return this.poll();
-    }
-
-    protected isSyncEnabled(): boolean {
+    isSyncEnabled(): boolean {
         return this.context.getSettings().enableCalendarSync !== false;
     }
 
-    protected getLocalStoreKey(): string {
+    getLocalStoreKey(): string {
         return "events";
     }
 
-    protected updatePrevMapSnapshot(items: AppEvent[]): void {
+    updatePrevMapSnapshot(items: AppEvent[]): void {
         this.context.updatePrevEventsMap(items);
     }
 
-    protected async fetchRemoteItems(): Promise<unknown[] | undefined> {
+    async fetchRemoteItems(): Promise<unknown[] | undefined> {
         const timeMin = new Date();
         timeMin.setMonth(timeMin.getMonth() - 1);
         const timeMax = new Date();
         timeMax.setMonth(timeMax.getMonth() + 2);
 
         const calendars = await this.calendarAPI.fetchCalendars();
-        const prevCalendars = this.context.getLocalData<{id: string, summary: string, accessRole: string, active: boolean}[]>("calendars") || [];
+        const prevCalendars = this.context.getLocalData<{id: string, summary: string, accessRole: string, active: boolean, backgroundColor?: string, foregroundColor?: string}[]>("calendars") || [];
         this.context.setLocalData(
             "calendars",
             calendars.map((c) => {
@@ -47,7 +43,9 @@ export class EventSynchronizer extends AbstractSynchronizer<AppEvent> {
                     id: c.id, 
                     summary: c.summary, 
                     accessRole: c.accessRole, 
-                    active: prev ? prev.active : true 
+                    active: prev ? prev.active : true,
+                    backgroundColor: c.backgroundColor,
+                    foregroundColor: c.foregroundColor
                 };
             }),
         );
@@ -72,7 +70,7 @@ export class EventSynchronizer extends AbstractSynchronizer<AppEvent> {
         return allRemoteEvents;
     }
 
-    protected processSingleRemoteItem(
+    processSingleRemoteItem(
         remote: AppEvent | { id: string, _deleted?: boolean, updatedAt?: number },
         _localItemsArray: AppEvent[],
         localItemsMap: Map<string, AppEvent>
@@ -81,7 +79,7 @@ export class EventSynchronizer extends AbstractSynchronizer<AppEvent> {
         return resolveConflict(remote, existingLocalEvent, localItemsMap);
     }
 
-    protected processQueueItem(q: SyncQueueItem, eventsMap: Map<string, AppEvent>): boolean {
+    processQueueItem(q: SyncQueueItem, eventsMap: Map<string, AppEvent>): boolean {
         if (q.type !== SyncType.Event) return false;
         let updated = false;
 
@@ -103,10 +101,6 @@ export class EventSynchronizer extends AbstractSynchronizer<AppEvent> {
     }
 
     computeDelta(newEvents: AppEvent[]) {
-        this.computeEventsDelta(newEvents);
-    }
-
-    computeEventsDelta(newEvents: AppEvent[]) {
         const calendars = this.context.getLocalData<{id: string, summary: string}[]>("calendars") || [];
         const actions = computeEventDeltaActions(newEvents, this.context.prevEventsMap, calendars);
         for (const action of actions) {

@@ -8,4 +8,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   closeWindow: () => ipcRenderer.send('window-close'),
   restoreMainWindow: () => ipcRenderer.send('window-restore-main'),
   onDeepLink: (callback: (route: string) => void) => ipcRenderer.on('deep-link', (_event, route) => callback(route)),
+  setSnapThreshold: (threshold: number) => ipcRenderer.send('set-snap-threshold', threshold),
+  onSnapped: (callback: () => void) => ipcRenderer.on('minitracker-snapped', () => callback()),
 });

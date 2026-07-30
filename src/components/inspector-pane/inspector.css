@@ -95,8 +95,12 @@
 .inspector-field input:focus, .inspector-field select:focus {
   border-color: var(--accent); outline: none;
 }
-.inspector-field input:disabled {
-  opacity: 0.5; cursor: not-allowed;
+.inspector-pane input:disabled,
+.inspector-pane select:disabled,
+.inspector-pane textarea:disabled,
+.inspector-pane button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed !important;
 }
 
 .inspector-row {

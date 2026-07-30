@@ -96,6 +96,7 @@ function InspectorPaneContent({
                     <DescriptionInput
                         value={(currentEvent?.description) || ""}
                         onChange={handleDescChange}
+                        disabled={isReadOnlyCalendar}
                     />
                 </div>
 

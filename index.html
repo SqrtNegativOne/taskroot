@@ -10,14 +10,39 @@
   <body>
     <div id="root">
       <style>
-        body { margin: 0; background-color: #2c2d2d; color: #ececed; font-family: ui-sans-serif, system-ui, sans-serif; }
-        .preloader { display: flex; height: 100vh; justify-content: center; align-items: center; flex-direction: column; }
+        body { margin: 0; background-color: #2c2d2d; color: #ececed; font-family: ui-sans-serif, system-ui, sans-serif; overflow: hidden; height: 100vh; }
+        .app { display: grid; grid-template-rows: auto 1fr; height: 100vh; background: #2c2d2d; }
+        
+        .topbar { display: flex; align-items: center; justify-content: space-between; padding: 10px 18px; border-bottom: 1px dashed #4a4b4c; background: linear-gradient(180deg, #323334, #2c2d2d); user-select: none; position: relative; z-index: 1000; }
+        .drag-region { position: absolute; inset: 0; -webkit-app-region: drag; z-index: 0; }
+        .window-controls { display: flex; position: absolute; top: 0; right: 0; height: 100%; -webkit-app-region: no-drag; }
+        .win-btn { width: 46px; height: 100%; border: none; padding: 0; background: transparent; color: inherit; display: inline-flex; align-items: center; justify-content: center; cursor: default; }
+        .win-btn:hover { background-color: rgba(128, 128, 128, 0.2); }
+        .win-btn.close:hover { background-color: #e81123; color: white; }
+
+        .preloader { display: flex; flex: 1; justify-content: center; align-items: center; flex-direction: column; }
         .spinner { width: 40px; height: 40px; border: 3px solid #4a4b4c; border-top-color: #f1b390; border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
       </style>
-      <div class="preloader">
-        <div class="spinner"></div>
-        <div style="margin-top: 16px; color: #7f8182; font-size: 0.9rem;">Starting app...</div>
+      <div class="app">
+        <header class="topbar">
+          <div class="drag-region"></div>
+          <div class="window-controls">
+            <button class="win-btn minimize" onclick="window.electronAPI?.minimizeWindow?.()" title="Minimize">
+              <svg width="10" height="10" viewBox="0 0 10 10"><path d="M 1,5 h 8" stroke="currentColor" stroke-width="1"></path></svg>
+            </button>
+            <button class="win-btn maximize" onclick="window.electronAPI?.maximizeWindow?.()" title="Maximize">
+              <svg width="10" height="10" viewBox="0 0 10 10"><rect x="1.5" y="1.5" width="7" height="7" fill="none" stroke="currentColor" stroke-width="1"></rect></svg>
+            </button>
+            <button class="win-btn close" onclick="window.electronAPI?.closeWindow?.()" title="Close">
+              <svg width="10" height="10" viewBox="0 0 10 10"><path d="M 1.5,1.5 l 7,7 M 8.5,1.5 l -7,7" stroke="currentColor" stroke-width="1"></path></svg>
+            </button>
+          </div>
+        </header>
+        <div class="preloader">
+          <div class="spinner"></div>
+          <div style="margin-top: 16px; color: #7f8182; font-size: 0.9rem;">Starting app...</div>
+        </div>
       </div>
     </div>
     <script type="module" src="/src/main.tsx"></script>

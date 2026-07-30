@@ -1,18 +1,18 @@
 import { SyncQueue } from "./SyncQueue";
-import { TaskSynchronizer } from "./TaskSynchronizer";
-import { EventSynchronizer } from "./EventSynchronizer";
+import type { Synchronizer } from "./Synchronizer";
 import { SyncType } from "./types";
 import { syncState } from "../SyncState";
+import type { AppTask, AppEvent } from "../../domain/models";
 
 export class Pusher {
     private pushQueue = new SyncQueue();
-    private taskSync: TaskSynchronizer;
-    private eventSync: EventSynchronizer;
+    private taskSync: Synchronizer<AppTask>;
+    private eventSync: Synchronizer<AppEvent>;
     private getSettings: () => Partial<import('../../store/settingsSchema').AppSettings>;
 
     constructor(
-        taskSync: TaskSynchronizer,
-        eventSync: EventSynchronizer,
+        taskSync: Synchronizer<AppTask>,
+        eventSync: Synchronizer<AppEvent>,
         getSettings: () => Partial<import('../../store/settingsSchema').AppSettings>
     ) {
         this.taskSync = taskSync;

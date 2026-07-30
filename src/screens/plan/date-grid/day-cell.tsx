@@ -88,6 +88,7 @@ function EventItem({
             style={{
                 cursor: "grab",
                 opacity: dragState?.event?.id === ev.id ? OPACITY_FADED : 1,
+                ...(ev.color ? { backgroundColor: ev.color, borderLeftColor: ev.color } : {})
             }}
             onPointerDown={(e) =>
                 onEventDragStart && onEventDragStart(e, ev, ev.task)

@@ -32,12 +32,12 @@ export class GoogleCalendarAPI implements ICalendarAPI {
         return data.items || [];
     }
 
-    async fetchCalendars(): Promise<{id: string, summary: string, accessRole?: string}[]> {
+    async fetchCalendars(): Promise<{id: string, summary: string, accessRole?: string, backgroundColor?: string, foregroundColor?: string}[]> {
         const def = [{ id: "primary", summary: "Primary Calendar", accessRole: "owner" }];
         if (!this.authManager.getToken()) return def;
         const res = await this.fetchWithAuth("users/me/calendarList");
         if (!res.ok) { console.warn(`Failed to fetch calendars`); return def; }
-        const data: { items?: {id: string, summary: string, accessRole?: string}[] } = await res.json();
+        const data: { items?: {id: string, summary: string, accessRole?: string, backgroundColor?: string, foregroundColor?: string}[] } = await res.json();
         return data.items || def;
     }
 

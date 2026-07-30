@@ -1,105 +1,27 @@
 import React, { useState, useEffect } from "react";
 import "@fontsource-variable/roboto-mono";
 import { useTasks, useStopwatch, useSettings } from "../../core/store/hooks";
-import { CLOCK_STRATEGIES } from "../../core/domain/clock-strategies";
+import "./minitracker.css";
+import { MiniTrackerClock } from "./MiniTrackerClock";
 
 const OPACITY_DIM = 0.2;
 const OPACITY_HOVER = 0.8;
 
-
-
-function getMiniTrackerContainerStyle(currentOpacity: number, showBorder: boolean): React.CSSProperties {
-    return {
-        width: "100vw",
-        height: "100vh",
-        background: "rgb(24, 24, 24)",
-        opacity: currentOpacity,
-        boxShadow: showBorder ? "inset 0 0 0 2px rgba(255, 255, 255, 0.3)" : "none",
-        border: showBorder ? "1px solid rgba(255, 255, 255, 0.15)" : "none",
-        transition: "opacity 0.2s ease",
-        color: "var(--fg)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontFamily: "'Roboto Mono', monospace",
-        fontSize: "15px",
-        userSelect: "none",
-        // @ts-expect-error valid electron property
-        WebkitAppRegion: "drag", // allows dragging the window
-        cursor: "default",
-        padding: "16px",
-        boxSizing: "border-box",
-        textAlign: "center",
-    };
-}
-function isRestoreShortcut(e: KeyboardEvent, keybindingRestoreApp: string | undefined) {
+function isRestoreShortcut(e: KeyboardEvent, keybindingRestoreApp: string | undefined): boolean {
     const kb = keybindingRestoreApp || "Ctrl+Alt+R";
     const parts = kb.split("+");
     const key = parts.pop();
-    const needsCtrl = parts.includes("Ctrl");
-    const needsAlt = parts.includes("Alt");
-    const needsShift = parts.includes("Shift");
-    const needsMeta = parts.includes("Meta");
-
-    const keyMatch =
-        e.key.toUpperCase() === key?.toUpperCase() ||
-        (e.key === " " && key === "Space");
-        
-    return e.ctrlKey === needsCtrl &&
-           e.altKey === needsAlt &&
-           e.shiftKey === needsShift &&
-           e.metaKey === needsMeta &&
+    const keyMatch = e.key.toUpperCase() === key?.toUpperCase() || (e.key === " " && key === "Space");
+    
+    return e.ctrlKey === parts.includes("Ctrl") && 
+           e.altKey === parts.includes("Alt") && 
+           e.shiftKey === parts.includes("Shift") && 
+           e.metaKey === parts.includes("Meta") && 
            keyMatch;
 }
 
-function isDimShortcut(e: KeyboardEvent) {
-    return e.key.toLowerCase() === "h" &&
-           !e.ctrlKey &&
-           !e.altKey &&
-           !e.metaKey &&
-           !e.shiftKey;
-}
-
-function getClockContent(options: {
-    activeTask: { title: string } | undefined | null;
-    allowStopwatchWithoutTask: boolean;
-    clockStyle: string;
-    currentMs: number;
-    state: import("../../core/domain/clock-strategies/types").StopwatchState;
-    running: boolean;
-}) {
-    const { activeTask, allowStopwatchWithoutTask, clockStyle, currentMs, state, running } = options;
-    if (!activeTask && !allowStopwatchWithoutTask)
-        return <div style={{ color: "var(--fg-dim)" }}>No active task.</div>;
-    
-    const taskName = activeTask ? activeTask.title : "Work session";
-    const strategy = CLOCK_STRATEGIES[clockStyle] || CLOCK_STRATEGIES.counter;
-    
-    const optionsObj: import("../../core/domain/clock-strategies").ReadonlyStopwatchContext = {
-        currentMs,
-        running,
-        state,
-        isPristine: false,
-    };
-    const data = strategy.getDisplayData(optionsObj);
-
-    if (data.secondaryText === "TRACKING PAUSED")
-        return <div style={{ color: data.color }}>TRACKING PAUSED</div>;
-
-    let suffix = taskName;
-    if (data.secondaryText === "BREAK" || data.secondaryText === "LONG_BREAK") {
-        suffix = "left in break";
-    } else if (data.secondaryText === "WORK") {
-        suffix = `left for ${taskName}`;
-    }
-
-    return (
-        <div style={{ color: data.color || "inherit" }}>
-            <span style={{ fontWeight: "normal" }}>{data.primaryText}</span>
-            {" "}
-            {suffix}
-        </div>
-    );
+function isDimShortcut(e: KeyboardEvent): boolean {
+    return e.key.toLowerCase() === "h" && !e.ctrlKey && !e.altKey && !e.metaKey && !e.shiftKey;
 }
 
 function useMiniTrackerKeybindings(
@@ -113,10 +35,9 @@ function useMiniTrackerKeybindings(
                 if (window.electronAPI?.restoreMainWindow) {
                     window.electronAPI.restoreMainWindow();
                 }
-            }
-
-            if (isDimShortcut(e))
+            } else if (isDimShortcut(e)) {
                 setIsDimmed((prev) => !prev);
+            }
         };
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
@@ -128,6 +49,7 @@ const handleDoubleClick = () => {
     if (window.electronAPI?.restoreMainWindow)
         window.electronAPI.restoreMainWindow();
 };
+
 
 export function MiniTrackerScreen() {
     const [state, setState] = useStopwatch();
@@ -185,16 +107,6 @@ export function MiniTrackerScreen() {
         state.elapsed +
         (running && !state.isBreak && state.runningSince ? now - state.runningSince : 0);
 
-    const content = getClockContent({
-        activeTask,
-        allowStopwatchWithoutTask: settings.allowStopwatchWithoutTask ?? false,
-        clockStyle,
-        currentMs,
-        state,
-        running
-    });
-
-
 
     useMiniTrackerKeybindings(settings.keybindingRestoreApp, setIsDimmed);
 
@@ -218,15 +130,38 @@ export function MiniTrackerScreen() {
         currentOpacity = Math.max(0, baseOpacity - hoverReduction);
     }
 
+    useEffect(() => {
+        if (window.electronAPI?.setSnapThreshold) {
+            window.electronAPI.setSnapThreshold(settings.trackerSnapThreshold ?? 2);
+        }
+    }, [settings.trackerSnapThreshold]);
+
+    useEffect(() => {
+        if (window.electronAPI?.onSnapped) {
+            window.electronAPI.onSnapped(() => {
+                import("cuelume").then(({ play }) => play("toggle"));
+            });
+        }
+    }, []);
+
+    const showBorder = settings.trackerShowBorder ?? true;
     return (
         <div
+            className={`minitracker-container ${showBorder ? "show-border" : ""}`}
             onDoubleClick={handleDoubleClick}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
-            style={getMiniTrackerContainerStyle(currentOpacity, settings.trackerShowBorder ?? true)}
+            style={{ opacity: currentOpacity }}
             title="Double-click to restore main window"
         >
-            {content}
+            <MiniTrackerClock
+                activeTask={activeTask}
+                allowStopwatchWithoutTask={settings.allowStopwatchWithoutTask ?? false}
+                clockStyle={clockStyle}
+                currentMs={currentMs}
+                state={state}
+                running={running}
+            />
         </div>
     );
 }

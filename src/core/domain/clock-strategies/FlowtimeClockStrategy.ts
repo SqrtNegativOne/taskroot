@@ -1,12 +1,12 @@
 import { MINUTES_IN_HOUR, MS_PER_SECOND } from "../../utils/constants";
-import { ClockStrategy } from "./ClockStrategy";
+import type { ClockStrategy } from "./ClockStrategy";
 import type { ReadonlyStopwatchContext, ClockDisplayData, ClockActionEffect } from "./types";
 import { splitTime } from "./utils";
 import { PAD2 } from "../../../core/store/data";
 
 const DEFAULT_FLOWTIME_BREAK_DIVISOR = 5;
 
-export class FlowtimeClockStrategy extends ClockStrategy {
+export class FlowtimeClockStrategy implements ClockStrategy {
     getDisplayData({ currentMs = 0, isPristine, state }: ReadonlyStopwatchContext): ClockDisplayData {
         if (state.isBreak && state.breakStartedAt) {
             const breakRemainingMs = state.breakAllowedMs - (Date.now() - state.breakStartedAt);

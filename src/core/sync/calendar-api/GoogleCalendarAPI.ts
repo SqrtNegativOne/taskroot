@@ -74,11 +74,31 @@ export class GoogleCalendarAPI implements ICalendarAPI {
             return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(Math.floor(mins / MINUTES_IN_HOUR))}:${pad(mins % MINUTES_IN_HOUR)}:00`;
         };
         const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        
+        let startObj: gapi.client.calendar.EventDateTime;
+        let endObj: gapi.client.calendar.EventDateTime;
+
+        if (localEvent.isAllDay) {
+            const dStr = localEvent.date;
+            let endDStr = localEvent.endDate;
+            if (!endDStr) {
+                const parts = dStr.split("-").map(Number);
+                const dt = new Date(parts[0], parts[1] - 1, parts[2] + 1);
+                endDStr = `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
+            }
+            startObj = { date: dStr };
+            endObj = { date: endDStr };
+        } else {
+            startObj = { dateTime: dtStr(localEvent.date, localEvent.start), timeZone };
+            endObj = { dateTime: dtStr(localEvent.date, localEvent.end), timeZone };
+        }
+
         return {
             summary: (task ? task.title : localEvent.title) || "Taskroot Event",
-            start: { dateTime: dtStr(localEvent.date, localEvent.start), timeZone },
-            end: { dateTime: dtStr(localEvent.date, localEvent.end), timeZone },
+            start: startObj,
+            end: endObj,
             description: localEvent.description || "",
+            transparency: localEvent.type === "info" ? "transparent" : "opaque",
             extendedProperties: {
                 private: {
                     taskrootEventId: localEvent.id,
@@ -99,14 +119,14 @@ export class GoogleCalendarAPI implements ICalendarAPI {
                 updatedAt: new Date(googleEvent.updated || 0).getTime(),
             };
         }
-        const { date, start, end } = extractEventTime(googleEvent);
+        const { date, endDate, start, end, isAllDay } = extractEventTime(googleEvent);
         const { taskId, id, type } = extractEventMetadata(googleEvent);
         const rrule = parseRecurrenceRule(googleEvent.recurrence);
 
         return {
             id: id || "", googleEventId: googleEvent.id, googleCalendarId: calendarId, taskId,
-            title: googleEvent.summary || "Untitled Event", date: date || "", start: start || 0, end: end || 0, type,
-            category: calendarSummary, rrule,
+            title: googleEvent.summary || "Untitled Event", date: date || "", endDate, start: start || 0, end: end || 0, type,
+            category: calendarSummary, rrule, isAllDay,
             updatedAt: googleEvent.updated ? new Date(googleEvent.updated).getTime() : Date.now(),
         };
     }
@@ -119,35 +139,32 @@ function extractEventTime(googleEvent: gapi.client.calendar.Event) {
         return {
             date: `${startDt.getFullYear()}-${pad(startDt.getMonth() + 1)}-${pad(startDt.getDate())}`,
             start: startDt.getHours() * MINUTES_IN_HOUR + startDt.getMinutes(),
-            end: (endDt.getDate() !== startDt.getDate() && endDt.getTime() > startDt.getTime()) ? HOURS_PER_DAY * MINUTES_IN_HOUR : endDt.getHours() * MINUTES_IN_HOUR + endDt.getMinutes()
+            end: (endDt.getDate() !== startDt.getDate() && endDt.getTime() > startDt.getTime()) ? HOURS_PER_DAY * MINUTES_IN_HOUR : endDt.getHours() * MINUTES_IN_HOUR + endDt.getMinutes(),
+            isAllDay: false
         };
     }
     return googleEvent.start?.date 
-        ? { date: googleEvent.start.date, start: 0, end: HOURS_PER_DAY * MINUTES_IN_HOUR } 
-        : { date: undefined, start: undefined, end: undefined };
+        ? { date: googleEvent.start.date, endDate: googleEvent.end?.date, start: 0, end: HOURS_PER_DAY * MINUTES_IN_HOUR, isAllDay: true } 
+        : { date: undefined, endDate: undefined, start: undefined, end: undefined, isAllDay: false };
 }
 
 function getEventId(googleEvent: gapi.client.calendar.Event) {
     const priv = googleEvent.extendedProperties?.private;
-    const desc = googleEvent.description || "";
     if (priv?.taskrootEventId) return priv.taskrootEventId;
-    const match = desc.match(/Taskroot Event ID: (e[0-9a-zA-Z-]+)/);
-    if (match) return match[1];
     return googleEvent.id || "";
 }
 
 function getEventTaskId(googleEvent: gapi.client.calendar.Event) {
     const priv = googleEvent.extendedProperties?.private;
-    const desc = googleEvent.description || "";
     if (priv?.taskId) return priv.taskId;
-    const match = desc.match(/Task ID: (t\d+)/);
-    return match ? match[1] : undefined;
+    return undefined;
 }
 
 function extractEventMetadata(googleEvent: gapi.client.calendar.Event) {
     const taskId = getEventTaskId(googleEvent);
     const id = getEventId(googleEvent);
-    const type = googleEvent.extendedProperties?.private?.type || (taskId ? "plan" : (googleEvent.start?.date ? "info" : "busy"));
+    const defaultType = googleEvent.transparency === "transparent" ? "info" : "busy";
+    const type = googleEvent.extendedProperties?.private?.type || (taskId ? "plan" : defaultType);
     return { taskId, id, type };
 }
 

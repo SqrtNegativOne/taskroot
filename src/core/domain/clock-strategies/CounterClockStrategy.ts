@@ -1,8 +1,8 @@
-import { ClockStrategy } from "./ClockStrategy";
+import type { ClockStrategy } from "./ClockStrategy";
 import type { ReadonlyStopwatchContext, ClockDisplayData, ClockActionEffect } from "./types";
 import { splitTime } from "./utils";
 
-export class CounterClockStrategy extends ClockStrategy {
+export class CounterClockStrategy implements ClockStrategy {
     getDisplayData({ currentMs = 0, isPristine }: ReadonlyStopwatchContext): ClockDisplayData {
         const { m } = splitTime(currentMs);
         return {

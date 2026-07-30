@@ -1,5 +1,5 @@
 import { MINUTES_IN_HOUR, MS_PER_SECOND } from "../../utils/constants";
-import { ClockStrategy } from "./ClockStrategy";
+import type { ClockStrategy } from "./ClockStrategy";
 import type { ReadonlyStopwatchContext, ClockDisplayData, ClockActionEffect } from "./types";
 import { PAD2 } from "../../../core/store/data";
 
@@ -8,7 +8,7 @@ export const POMODORO_BREAK_THRESHOLD = 30;
 export const MIN_POLL_INTERVAL_MINUTES = 5;
 export const MAX_RETRIES = 3;
 
-export class GuzeyClockStrategy extends ClockStrategy {
+export class GuzeyClockStrategy implements ClockStrategy {
     getDisplayData({ state }: ReadonlyStopwatchContext): ClockDisplayData {
         const now = new Date();
         const h = now.getHours();

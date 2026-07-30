@@ -93,7 +93,10 @@ export class GoogleTasksAPI implements ITasksAPI {
         const due = parseGoogleTaskDue(googleTask.due);
         const base = getGoogleTaskBase(googleTask);
 
-        if (existing) return { ...existing, ...base, due: due || existing.due };
+        if (existing) {
+            const status = existing.status === "doing" && base.status === "todo" ? "doing" : base.status;
+            return { ...existing, ...base, status, due: due || existing.due };
+        }
         return {
             id, ...base, priority: 1, tags: [], subtasks: [], parent_task: undefined, est: 0,
             added: new Date().toISOString(), isDraft: false, due,

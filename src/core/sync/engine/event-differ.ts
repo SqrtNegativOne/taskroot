@@ -8,6 +8,8 @@ function processSingleEventDelta(
     actions: SyncQueueItem[],
     calendars: { id: string; summary: string }[]
 ) {
+    if (event.type === "log") return;
+
     if (!prev) {
         if (!event.googleEventId) {
             actions.push({ type: SyncType.Event, action: SyncAction.Create, item: event });
@@ -62,6 +64,7 @@ export function computeEventDeltaActions(
     }
 
     for (const [id, prev] of prevEventsMap.entries()) {
+        if (prev.type === "log") continue;
         if (!newEventsMap.has(id) && prev.googleEventId) {
             actions.push({
                 type: SyncType.Event,

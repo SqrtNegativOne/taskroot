@@ -43,6 +43,7 @@ export interface AppEvent {
     date: DateString;
     start: number;
     end: number;
+    isAllDay?: boolean;
     type: string;
     category?: string;
     rrule?: string;

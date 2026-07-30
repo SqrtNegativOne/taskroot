@@ -1,5 +1,5 @@
 export * from "./types";
-import { ClockStrategy } from "./ClockStrategy";
+import type { ClockStrategy } from "./ClockStrategy";
 import { CounterClockStrategy } from "./CounterClockStrategy";
 import { FlowtimeClockStrategy } from "./FlowtimeClockStrategy";
 import { GuzeyClockStrategy } from "./GuzeyClockStrategy";

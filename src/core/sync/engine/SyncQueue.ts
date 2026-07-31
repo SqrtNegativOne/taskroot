@@ -28,14 +28,90 @@ export class SyncQueue {
         }
     }
 
+    // oxlint-disable-next-line eslint/complexity
+    private handleTransition(
+        transition: string, 
+        item: SyncQueueItem, 
+        existingIndices: number[],
+        indices: { create: number, update: number, move: number }
+    ) {
+        const removeAllExisting = () => {
+            for (const idx of [...existingIndices].toSorted((a, b) => b - a)) {
+                this.queue.splice(idx, 1);
+            }
+       };
+
+        switch (transition) {
+            case "create->create":
+            case "update->create":
+            case "move->create":
+            case "move+update->create":
+                console.warn("Attempted to recreate an item that already exists in the queue.");
+                return;
+            case "delete->create":
+                removeAllExisting();
+                this.queue.push(item);
+                break;
+
+            case "create->update":
+                this.queue[indices.create].item = item.item;
+                break;
+            case "update->update":
+                this.queue[indices.update] = item;
+                break;
+            case "move->update":
+                this.queue[indices.move].item = item.item;
+                this.queue.push(item);
+                break;
+            case "move+update->update":
+                this.queue[indices.move].item = item.item;
+                this.queue.splice(indices.update, 1);
+                this.queue.push(item);
+                break;
+            case "delete->update":
+                console.warn("Attempted to update a deleted item. Ignoring.");
+                return;
+
+            case "create->move":
+                this.queue[indices.create].item = item.item;
+                break;
+            case "update->move":
+                this.queue[indices.update].item = item.item;
+                this.queue.push(item);
+                break;
+            case "move->move":
+                this.queue[indices.move] = item;
+                break;
+            case "move+update->move":
+                this.queue[indices.update].item = item.item;
+                this.queue[indices.move] = item;
+                break;
+            case "delete->move":
+                console.warn("Attempted to move a deleted item. Ignoring.");
+                return;
+
+            case "create->delete":
+                removeAllExisting();
+                break;
+            case "update->delete":
+            case "move->delete":
+            case "move+update->delete":
+                removeAllExisting();
+                if (item.googleId) this.queue.push(item);
+                break;
+            case "delete->delete":
+                return;
+        }
+    }
+
     push(item: SyncQueueItem) {
 
-        const existingIndex = this.queue.findIndex(
-            (q) => q.type === item.type && q.item?.id === item.item?.id
-        );
+        const existingIndices = this.queue
+            .map((q, index) => (q.type === item.type && q.item?.id === item.item?.id ? index : -1))
+            .filter((index) => index !== -1);
 
         // Brand new action
-        if (existingIndex === -1) {
+        if (existingIndices.length === 0) {
             if (item.action === SyncAction.Delete && !item.googleId) {
                 // This item wasn't synced to Google yet, so we don't even need to add a delete action for it.
                 return;
@@ -45,41 +121,27 @@ export class SyncQueue {
             return;
         }
 
-        const existingAction = this.queue[existingIndex].action;
-        const incomingAction = item.action;
-        const transition = `${existingAction}->${incomingAction}`;
+        // Determine existing state
+        let existingState = "";
+        const indices = { create: -1, update: -1, move: -1, delete: -1 };
 
-        switch (transition) {
-            case `${SyncAction.Create}->${SyncAction.Create}`:
-            case `${SyncAction.Update}->${SyncAction.Create}`:
-                return;
-            case `${SyncAction.Delete}->${SyncAction.Create}`:
-                this.queue[existingIndex] = item;
-                break;
-
-            case `${SyncAction.Create}->${SyncAction.Update}`:
-                this.queue[existingIndex].item = item.item;
-                break;
-            case `${SyncAction.Update}->${SyncAction.Update}`:
-                this.queue[existingIndex] = item;
-                break;
-            case `${SyncAction.Delete}->${SyncAction.Update}`:
-                console.warn("Attempted to update a deleted item. Ignoring.");
-                return;
-
-            case `${SyncAction.Create}->${SyncAction.Delete}`:
-                this.queue.splice(existingIndex, 1);
-                break;
-            case `${SyncAction.Update}->${SyncAction.Delete}`:
-                if (item.googleId) {
-                    this.queue[existingIndex] = item;
-                } else {
-                    this.queue.splice(existingIndex, 1);
-                }
-                break;
-            case `${SyncAction.Delete}->${SyncAction.Delete}`:
-                return;
+        for (const index of existingIndices) {
+            const action = this.queue[index].action;
+            if (action === SyncAction.Create) indices.create = index;
+            if (action === SyncAction.Update) indices.update = index;
+            if (action === SyncAction.Move) indices.move = index;
+            if (action === SyncAction.Delete) indices.delete = index;
         }
+
+        if (indices.create !== -1) existingState = "create";
+        else if (indices.delete !== -1) existingState = "delete";
+        else if (indices.update !== -1 && indices.move !== -1) existingState = "move+update";
+        else if (indices.update !== -1) existingState = "update";
+        else if (indices.move !== -1) existingState = "move";
+        
+        const transition = `${existingState}->${item.action}`;
+        
+        this.handleTransition(transition, item, existingIndices, indices);
 
         this.save();
     }

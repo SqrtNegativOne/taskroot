@@ -86,4 +86,49 @@ describe("SyncQueue", () => {
         expect(items[0].action).toBe(SyncAction.Create);
         expect(items[0].item.title).toBe("Task 1 Updated");
     });
+    it("should handle Move+Update correctly (ensuring Update is pushed to end of queue)", () => {
+        const queue = new SyncQueue();
+        const eventItem = { id: "1", title: "Original Title", type: "event" } as const;
+        const eventUpdated = { ...eventItem, title: "New Title" } as const;
+        
+        queue.push({
+            type: SyncType.Event,
+            action: SyncAction.Update,
+            item: eventItem,
+            googleId: "g1",
+            calendarId: "cal1"
+        });
+
+        queue.push({
+            type: SyncType.Event,
+            action: SyncAction.Move,
+            item: eventItem,
+            googleId: "g1",
+            calendarId: "cal1",
+            destinationCalendarId: "cal2"
+        });
+
+        // The queue should now have [Update, Move]
+        expect(queue.length).toBe(2);
+        
+        // Pushing a new Update
+        queue.push({
+            type: SyncType.Event,
+            action: SyncAction.Update,
+            item: eventUpdated,
+            googleId: "g1",
+            calendarId: "cal2"
+        });
+        
+        // The queue should now have [Move, Update] (Update pushed to the end)
+        expect(queue.length).toBe(2);
+        const items = queue.getItems();
+        
+        expect(items[0].action).toBe(SyncAction.Move);
+        expect(items[0].item.title).toBe("New Title"); // Move payload updated
+        
+        expect(items[1].action).toBe(SyncAction.Update);
+        expect(items[1].item.title).toBe("New Title"); // The new Update action
+        expect(items[1].calendarId).toBe("cal2");
+    });
 });

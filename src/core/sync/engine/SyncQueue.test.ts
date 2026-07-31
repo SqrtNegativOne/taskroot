@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { SyncQueue } from "./SyncQueue";
 import { SyncAction, SyncType } from "./types";
-import type { AppTask } from "../../domain/models";
+import type { AppTask, AppEvent } from "../../domain/models";
 
 describe("SyncQueue", () => {
     beforeEach(() => {
@@ -88,8 +88,17 @@ describe("SyncQueue", () => {
     });
     it("should handle Move+Update correctly (ensuring Update is pushed to end of queue)", () => {
         const queue = new SyncQueue();
-        const eventItem = { id: "1", title: "Original Title", type: "event" } as const;
-        const eventUpdated = { ...eventItem, title: "New Title" } as const;
+        const eventItem: AppEvent = { 
+            id: "1", 
+            title: "Original Title", 
+            type: "event",
+            date: "2023-10-10",
+            start: 1000,
+            end: 1100,
+            createdAt: 0,
+            updatedAt: 0
+        };
+        const eventUpdated: AppEvent = { ...eventItem, title: "New Title" };
         
         queue.push({
             type: SyncType.Event,

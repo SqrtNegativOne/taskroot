@@ -11,8 +11,8 @@ import { GoogleCalendarAPI } from "./calendar-api/GoogleCalendarAPI";
 import { GoogleTasksAPI } from "./task-api/GoogleTasksAPI";
 import type { AppTask, AppEvent } from "../domain/models";
 
-const prevTasksMap = new Map<string, AppTask>();
-const prevEventsMap = new Map<string, AppEvent>();
+const oldTasksMap = new Map<string, AppTask>();
+const oldEventsMap = new Map<string, AppEvent>();
 
 function getSettings() {
     return storeRegistry.getLocalData("settings") || { enableCalendarSync: true, enableTasksSync: true };
@@ -21,15 +21,15 @@ function getSettings() {
 const context = {
     getLocalData: storeRegistry.getLocalData,
     setLocalData: storeRegistry.setLocalData,
-    prevTasksMap,
-    prevEventsMap,
-    updatePrevTasksMap: (tasks: AppTask[]) => {
-        prevTasksMap.clear();
-        for (const t of tasks) prevTasksMap.set(t.id, { ...t });
+    oldTasksMap,
+    oldEventsMap,
+    updateOldTasksMap: (tasks: AppTask[]) => {
+        oldTasksMap.clear();
+        for (const t of tasks) oldTasksMap.set(t.id, { ...t });
     },
-    updatePrevEventsMap: (events: AppEvent[]) => {
-        prevEventsMap.clear();
-        for (const e of events) prevEventsMap.set(e.id, { ...e });
+    updateOldEventsMap: (events: AppEvent[]) => {
+        oldEventsMap.clear();
+        for (const e of events) oldEventsMap.set(e.id, { ...e });
     },
     getSettings,
     get pushQueue(): import('./engine/SyncQueue').SyncQueue { return pusher.queue; },

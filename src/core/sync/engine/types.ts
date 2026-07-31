@@ -32,10 +32,10 @@ export type SyncQueueItem =
 export interface ISyncEngineContext {
     getLocalData: <T = unknown>(key: string) => T;
     setLocalData: <T = unknown>(key: string, data: T) => void;
-    prevTasksMap: Map<string, AppTask>;
-    prevEventsMap: Map<string, AppEvent>;
-    updatePrevTasksMap: (tasks: AppTask[]) => void;
-    updatePrevEventsMap: (events: AppEvent[]) => void;
+    oldTasksMap: Map<string, AppTask>;
+    oldEventsMap: Map<string, AppEvent>;
+    updateOldTasksMap: (tasks: AppTask[]) => void;
+    updateOldEventsMap: (events: AppEvent[]) => void;
     getSettings: () => Record<string, unknown>;
     pushQueue: import('./SyncQueue').SyncQueue;
     notifyError: (msg: string) => void;

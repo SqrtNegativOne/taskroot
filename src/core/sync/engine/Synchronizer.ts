@@ -3,11 +3,11 @@ import type { ISyncEngineContext, SyncQueueItem } from "./types";
 export interface ISyncStrategy<T extends { id: string }> {
     isSyncEnabled(): boolean;
     getLocalStoreKey(): string;
-    updatePrevMapSnapshot(items: T[]): void;
+    updateOldMapSnapshot(items: T[]): void;
     fetchRemoteItems(): Promise<unknown[] | undefined>;
     processSingleRemoteItem(remote: unknown, localItemsArray: T[], localItemsMap: Map<string, T>): boolean;
     processQueueItem(q: SyncQueueItem, localItemsMap: Map<string, T>): boolean;
-    computeDelta(newItems: T[]): void;
+    computeDelta(currentItems: T[]): void;
     processPushItem(item: SyncQueueItem): Promise<void>;
 }
 
@@ -28,7 +28,7 @@ export class Synchronizer<T extends { id: string }> {
         if (!this.isSyncEnabled()) return;
 
         const localItems = this.context.getLocalData<T[]>(this.strategy.getLocalStoreKey());
-        this.strategy.updatePrevMapSnapshot(localItems);
+        this.strategy.updateOldMapSnapshot(localItems);
 
         const remoteItems = await this.strategy.fetchRemoteItems();
         if (!remoteItems) return;
@@ -49,7 +49,7 @@ export class Synchronizer<T extends { id: string }> {
         if (updated) {
             const newItems = Array.from(localItemsMap.values());
             this.context.setLocalData(this.strategy.getLocalStoreKey(), newItems);
-            this.strategy.updatePrevMapSnapshot(newItems);
+            this.strategy.updateOldMapSnapshot(newItems);
         }
     }
 
@@ -63,8 +63,8 @@ export class Synchronizer<T extends { id: string }> {
         return updated;
     }
 
-    computeDelta(newItems: T[]) {
-        this.strategy.computeDelta(newItems);
+    computeDelta(currentItems: T[]) {
+        this.strategy.computeDelta(currentItems);
     }
 
     processPushItem(item: SyncQueueItem) {

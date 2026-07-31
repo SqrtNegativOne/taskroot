@@ -3,6 +3,7 @@ import { TODAY, parseYMD, durationLabel, dueLabel } from "../../core/store/data"
 import type { AppTask, AppFilter } from "../../core/domain/models";
 import { checkTaskAgainstFilters } from "./filters";
 import { Icon } from "../icon";
+import { TaskCircle } from "../task-circle";
 
 const TRANSITION_DURATION_MS = 400;
 
@@ -53,10 +54,9 @@ export function TaskRow({
             className={`task-row ${dragging ? "is-dragging" : ""} ${task.status === "done" ? "is-done" : ""} ${isExiting ? "is-exiting" : ""}`}
             onPointerDown={handlePointerDown}
         >
-            <button
-                type="button"
-                className={`task-circle pri-bg-${task.priority}`}
-                style={{ border: "none", padding: 0, font: "inherit", color: "inherit" }}
+            <TaskCircle
+                priority={task.priority}
+                isDoneOrChecking={task.status === "done" || isChecking}
                 onClick={(e) => {
                     e.stopPropagation();
                     const newStatus = task.status === "done" ? "todo" : "done";
@@ -84,23 +84,7 @@ export function TaskRow({
                         setIsChecking(false);
                     }
                 }}
-                title="Toggle Done"
-                aria-label={`Priority ${task.priority}`}
-            >
-                {(task.status === "done" || isChecking) && (
-                    <svg
-                        className="task-circle-check"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="3"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                    >
-                        <polyline points="4 12 9 17 20 6"></polyline>
-                    </svg>
-                )}
-            </button>
+            />
             <div className="task-row-content">
                 <div className="task-row-line1">
                     <span className="task-row-title">

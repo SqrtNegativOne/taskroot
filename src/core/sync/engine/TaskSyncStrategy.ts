@@ -23,8 +23,8 @@ export class TaskSyncStrategy implements ISyncStrategy<AppTask> {
         return "tasks";
     }
 
-    updatePrevMapSnapshot(items: AppTask[]): void {
-        this.context.updatePrevTasksMap(items);
+    updateOldMapSnapshot(items: AppTask[]): void {
+        this.context.updateOldTasksMap(items);
     }
 
     async fetchRemoteItems(): Promise<unknown[] | undefined> {
@@ -81,12 +81,12 @@ export class TaskSyncStrategy implements ISyncStrategy<AppTask> {
         return updated;
     }
 
-    computeDelta(newTasks: AppTask[]) {
-        const actions = computeTaskDeltaActions(newTasks, this.context.prevTasksMap);
+    computeDelta(currentTasks: AppTask[]) {
+        const actions = computeTaskDeltaActions(currentTasks, this.context.oldTasksMap);
         for (const action of actions) {
             this.context.pushQueue.push(action);
         }
-        this.context.updatePrevTasksMap(newTasks);
+        this.context.updateOldTasksMap(currentTasks);
     }
 
     private actionHandlers: Record<string, (item: SyncQueueItem) => Promise<void>> = {
@@ -99,7 +99,7 @@ export class TaskSyncStrategy implements ISyncStrategy<AppTask> {
                 if (idx !== -1) {
                     tasks[idx] = { ...tasks[idx], googleId: gid };
                     this.context.setLocalData("tasks", tasks);
-                    this.context.updatePrevTasksMap(tasks);
+                    this.context.updateOldTasksMap(tasks);
                 } else {
                     await this.tasksAPI.deleteTask(gid);
                 }

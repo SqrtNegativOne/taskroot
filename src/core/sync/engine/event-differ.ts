@@ -3,50 +3,49 @@ import type { SyncQueueItem } from "./types";
 import type { AppEvent } from "../../domain/models";
 
 function processSingleEventDelta(
-    event: AppEvent,
-    prev: AppEvent | undefined,
+    currentEvent: AppEvent,
+    oldEvent: AppEvent | undefined,
     actions: SyncQueueItem[],
     calendars: { id: string; summary: string }[]
 ) {
-    if (event.type === "log") return;
+    if (currentEvent.type === "log") return;
 
-    if (!prev) {
-        if (!event.googleId && !event.isDraft && event.title && event.title.trim() !== "") {
-            actions.push({ type: SyncType.Event, action: SyncAction.Create, item: event });
+    if (!oldEvent) {
+        if (!currentEvent.googleId && !currentEvent.isDraft && currentEvent.title && currentEvent.title.trim() !== "") {
+            actions.push({ type: SyncType.Event, action: SyncAction.Create, item: currentEvent });
         }
         return;
     }
 
-    if (!(event.updatedAt && prev.updatedAt && event.updatedAt > prev.updatedAt)) {
+    if (!(currentEvent.updatedAt && oldEvent.updatedAt && currentEvent.updatedAt > oldEvent.updatedAt))
         return;
-    }
 
-    let targetCalendarId = prev.googleCalendarId || "primary";
-    if (event.category) {
-        const cal = calendars.find((c) => c.summary === event.category);
+    let targetCalendarId = oldEvent.googleCalendarId || "primary";
+    if (currentEvent.category) {
+        const cal = calendars.find((c) => c.summary === currentEvent.category);
         if (cal) targetCalendarId = cal.id;
     }
 
-    if (prev.googleCalendarId && prev.googleCalendarId !== targetCalendarId) {
-        if (prev.googleId) {
+    if (oldEvent.googleCalendarId && oldEvent.googleCalendarId !== targetCalendarId) {
+        if (oldEvent.googleId) {
             actions.push({
                 type: SyncType.Event,
                 action: SyncAction.Delete,
-                item: prev,
-                googleId: prev.googleId,
-                calendarId: prev.googleCalendarId,
+                item: oldEvent,
+                googleId: oldEvent.googleId,
+                calendarId: oldEvent.googleCalendarId,
             });
         }
-        if (event.title && event.title.trim() !== "") {
-            actions.push({ type: SyncType.Event, action: SyncAction.Create, item: event });
+        if (currentEvent.title && currentEvent.title.trim() !== "") {
+            actions.push({ type: SyncType.Event, action: SyncAction.Create, item: currentEvent });
         }
     } else {
-        if (event.title && event.title.trim() !== "") {
+        if (currentEvent.title && currentEvent.title.trim() !== "") {
             actions.push({
                 type: SyncType.Event,
                 action: SyncAction.Update,
-                item: event,
-                googleId: event.googleId,
+                item: currentEvent,
+                googleId: currentEvent.googleId,
                 calendarId: targetCalendarId,
             });
         }
@@ -54,26 +53,25 @@ function processSingleEventDelta(
 }
 
 export function computeEventDeltaActions(
-    newEvents: AppEvent[],
-    prevEventsMap: Map<string, AppEvent>,
+    currentEvents: AppEvent[],
+    oldEventsMap: Map<string, AppEvent>,
     calendars: { id: string; summary: string }[]
 ): SyncQueueItem[] {
     const actions: SyncQueueItem[] = [];
-    const newEventsMap = new Map(newEvents.map((e) => [e.id, e]));
+    const currentEventsMap = new Map(currentEvents.map((e) => [e.id, e]));
 
-    for (const event of newEvents) {
-        processSingleEventDelta(event, prevEventsMap.get(event.id), actions, calendars);
-    }
+    for (const event of currentEvents)
+        processSingleEventDelta(event, oldEventsMap.get(event.id), actions, calendars);
 
-    for (const [id, prev] of prevEventsMap.entries()) {
-        if (prev.type === "log") continue;
-        if (!newEventsMap.has(id)) {
+    for (const [id, oldEvent] of oldEventsMap.entries()) {
+        if (oldEvent.type === "log") continue;
+        if (!currentEventsMap.has(id)) {
             actions.push({
                 type: SyncType.Event,
                 action: SyncAction.Delete,
-                item: prev,
-                googleId: prev.googleId,
-                calendarId: prev.googleCalendarId || "primary",
+                item: oldEvent,
+                googleId: oldEvent.googleId,
+                calendarId: oldEvent.googleCalendarId || "primary",
             });
         }
     }

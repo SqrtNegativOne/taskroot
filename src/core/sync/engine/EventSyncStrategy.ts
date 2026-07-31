@@ -23,8 +23,8 @@ export class EventSyncStrategy implements ISyncStrategy<AppEvent> {
         return "events";
     }
 
-    updatePrevMapSnapshot(items: AppEvent[]): void {
-        this.context.updatePrevEventsMap(items);
+    updateOldMapSnapshot(items: AppEvent[]): void {
+        this.context.updateOldEventsMap(items);
     }
 
     async fetchRemoteItems(): Promise<unknown[] | undefined> {
@@ -100,13 +100,13 @@ export class EventSyncStrategy implements ISyncStrategy<AppEvent> {
         return updated;
     }
 
-    computeDelta(newEvents: AppEvent[]) {
+    computeDelta(currentEvents: AppEvent[]) {
         const calendars = this.context.getLocalData<{id: string, summary: string}[]>("calendars") || [];
-        const actions = computeEventDeltaActions(newEvents, this.context.prevEventsMap, calendars);
+        const actions = computeEventDeltaActions(currentEvents, this.context.oldEventsMap, calendars);
         for (const action of actions) {
             this.context.pushQueue.push(action);
         }
-        this.context.updatePrevEventsMap(newEvents);
+        this.context.updateOldEventsMap(currentEvents);
     }
 
     private actionHandlers: Record<string, (item: SyncQueueItem, tasks: AppTask[]) => Promise<void>> = {
@@ -128,7 +128,7 @@ export class EventSyncStrategy implements ISyncStrategy<AppEvent> {
                         googleCalendarId: res.calendarId,
                     };
                     this.context.setLocalData("events", events);
-                    this.context.updatePrevEventsMap(events);
+                    this.context.updateOldEventsMap(events);
                 } else {
                     await this.calendarAPI.deleteEvent(res.id, res.calendarId);
                 }

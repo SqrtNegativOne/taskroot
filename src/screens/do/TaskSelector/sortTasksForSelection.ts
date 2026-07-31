@@ -1,6 +1,6 @@
-import { MINUTES_IN_HOUR } from "../../../../core/utils/constants";
-import type { AppTask, AppEvent } from "../../../../core/domain/models";
-import { ymd } from "../../../../core/store/data";
+import { MINUTES_IN_HOUR } from "../../../core/utils/constants";
+import type { AppTask, AppEvent } from "../../../core/domain/models";
+import { ymd } from "../../../core/store/data";
 
 export function sortTasksForSelection(
     pendingTasks: AppTask[],

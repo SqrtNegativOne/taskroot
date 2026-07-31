@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useEvents, useStopwatch } from "../../../core/store/hooks";
-import { TaskSelector } from "./TaskSelector";
+import { TaskSelector } from "../TaskSelector";
 import { useStopwatchKeyboard } from "./useStopwatchKeyboard";
 import { ActiveTaskDisplay } from "./ActiveTaskDisplay";
 import { useStopwatchEngine } from "./useStopwatchEngine";

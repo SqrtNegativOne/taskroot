@@ -9,7 +9,8 @@ export type SyncType = (typeof SyncType)[keyof typeof SyncType];
 export const SyncAction = {
     Create: "create",
     Update: "update",
-    Delete: "delete"
+    Delete: "delete",
+    Move: "move"
 } as const;
 export type SyncAction = (typeof SyncAction)[keyof typeof SyncAction];
 
@@ -27,6 +28,7 @@ export type SyncQueueItem =
           item: AppEvent;
           googleId?: string;
           calendarId?: string;
+          destinationCalendarId?: string;
       };
 
 export interface ISyncEngineContext {

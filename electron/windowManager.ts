@@ -1,5 +1,5 @@
 
-import { BrowserWindow, screen } from "electron";
+import { BrowserWindow, screen, type Rectangle } from "electron";
 import { PRELOAD_PATH, ICON_PATH } from "./constants.js";
 
 const DEFAULT_SNAP_DISTANCE = 30;
@@ -9,6 +9,14 @@ const MILLISECONDS_IN_SECOND = 1000.0;
 const FRAME_TIME = 16;
 const FULL_PERCENTAGE = 100.0;
 const STOP_VELOCITY_THRESHOLD = 5;
+
+const clamp = (val: number, min: number, max: number) => Math.max(min, Math.min(val, max));
+
+const defaultWebPreferences = {
+    preload: PRELOAD_PATH,
+    nodeIntegration: false,
+    contextIsolation: true,
+};
 
 class WindowManager {
     public win?: BrowserWindow;
@@ -68,11 +76,7 @@ class WindowManager {
             minimizable: false,
             resizable: true,
             skipTaskbar: true,
-            webPreferences: {
-                preload: PRELOAD_PATH,
-                nodeIntegration: false,
-                contextIsolation: true,
-            },
+            webPreferences: defaultWebPreferences,
         });
 
         this.miniWin.loadURL(this.miniWindowUrl);
@@ -92,11 +96,19 @@ class WindowManager {
         });
     }
 
-    startDrag(offsetX: number, offsetY: number) {
+    private get isMiniWinReady() {
+        return this.miniWin && !this.miniWin.isDestroyed();
+    }
+
+    private stopSlide() {
         if (this.slideTimer) {
             clearInterval(this.slideTimer);
             this.slideTimer = undefined;
         }
+    }
+
+    startDrag(offsetX: number, offsetY: number) {
+        this.stopSlide();
         this.clickOffsetX = offsetX;
         this.clickOffsetY = offsetY;
         this.dragHistory = [];
@@ -107,7 +119,7 @@ class WindowManager {
     }
 
     dragTick() {
-        if (!this.miniWin || this.miniWin.isDestroyed()) return;
+        if (!this.isMiniWinReady) return;
         
         const point = screen.getCursorScreenPoint();
         const newX = point.x - this.clickOffsetX;
@@ -121,87 +133,71 @@ class WindowManager {
         const w = this.dragStartBounds.width;
         const h = this.dragStartBounds.height;
         const snapped = this.applySnapping(newX, newY, w, h);
-        this.miniWin.setBounds({ x: snapped.x, y: snapped.y, width: w, height: h });
+        this.miniWin?.setBounds({ x: snapped.x, y: snapped.y, width: w, height: h });
     }
 
     endDrag() {
-        if (!this.miniWin || this.miniWin.isDestroyed()) return;
-        
-        if (this.dragHistory.length < 2) return;
+        if (!this.isMiniWinReady || this.dragHistory.length < 2) return;
         
         const first = this.dragHistory[0];
         const last = this.dragHistory[this.dragHistory.length - 1];
         
         const dt = Math.max(1, last.time - first.time);
-        // Average velocity pixels per second
-        let vx = ((last.x - first.x) / dt) * MILLISECONDS_IN_SECOND;
-        let vy = ((last.y - first.y) / dt) * MILLISECONDS_IN_SECOND;
+        const vx = ((last.x - first.x) / dt) * MILLISECONDS_IN_SECOND;
+        const vy = ((last.y - first.y) / dt) * MILLISECONDS_IN_SECOND;
         
         this.dragHistory = []; // Reset history
-        
-        if (this.slideTimer) {
-            clearInterval(this.slideTimer);
-            this.slideTimer = undefined;
-        }
+        this.stopSlide();
 
-        const bounds = this.miniWin.getBounds();
+        const bounds = this.miniWin?.getBounds();
+        if (bounds) {
+            this.startSlideAnimation(bounds, { vx, vy });
+        }
+    }
+
+    private startSlideAnimation(bounds: Rectangle, velocity: { vx: number, vy: number }) {
         let preciseX = bounds.x;
         let preciseY = bounds.y;
+        let { vx, vy } = velocity;
+        const w = this.dragStartBounds.width;
+        const h = this.dragStartBounds.height;
         
         this.slideTimer = setInterval(() => {
-            if (!this.miniWin || this.miniWin.isDestroyed()) {
-                if (this.slideTimer) clearInterval(this.slideTimer);
+            if (!this.isMiniWinReady) {
+                this.stopSlide();
                 return;
             }
             
             preciseX += vx / (MILLISECONDS_IN_SECOND / FRAME_TIME);
             preciseY += vy / (MILLISECONDS_IN_SECOND / FRAME_TIME);
             
-            let newX = preciseX;
-            let newY = preciseY;
-            
             const slowdownMultiplier = (FULL_PERCENTAGE - this.slidingAnimationSlowdown) / FULL_PERCENTAGE;
             vx *= slowdownMultiplier;
             vy *= slowdownMultiplier;
             
-            const w = this.dragStartBounds.width;
-            const h = this.dragStartBounds.height;
-            const snapped = this.applySnapping(newX, newY, w, h);
+            const snapped = this.applySnapping(preciseX, preciseY, w, h);
             
             // Hard clamp during slide to prevent sliding off screen
             const currentDisplay = screen.getDisplayMatching({ x: snapped.x, y: snapped.y, width: w, height: h });
             const workArea = currentDisplay.workArea;
             
-            if (snapped.x < workArea.x) {
-                snapped.x = workArea.x;
-            } else if (snapped.x + w > workArea.x + workArea.width) {
-                snapped.x = workArea.x + workArea.width - w;
-            }
+            const newX = clamp(snapped.x, workArea.x, workArea.x + workArea.width - w);
+            const newY = clamp(snapped.y, workArea.y, workArea.y + workArea.height - h);
             
-            if (snapped.y < workArea.y) {
-                snapped.y = workArea.y;
-            } else if (snapped.y + h > workArea.y + workArea.height) {
-                snapped.y = workArea.y + workArea.height - h;
-            }
-            
-            if (snapped.x !== newX) {
+            if (newX !== preciseX) {
                 vx = 0;
-                preciseX = snapped.x;
+                preciseX = newX;
             }
-            if (snapped.y !== newY) {
+            if (newY !== preciseY) {
                 vy = 0;
-                preciseY = snapped.y;
+                preciseY = newY;
             }
-            
-            newX = snapped.x;
-            newY = snapped.y;
             
             if (Math.abs(vx) < STOP_VELOCITY_THRESHOLD && Math.abs(vy) < STOP_VELOCITY_THRESHOLD) {
-                if (this.slideTimer) clearInterval(this.slideTimer);
-                this.slideTimer = undefined;
+                this.stopSlide();
             }
             
-            this.miniWin.setBounds({ x: newX, y: newY, width: w, height: h });
+            this.miniWin?.setBounds({ x: newX, y: newY, width: w, height: h });
         }, FRAME_TIME);
     }
     
@@ -239,11 +235,7 @@ class WindowManager {
             show: false,
             backgroundColor: "#2c2d2d",
             icon: ICON_PATH,
-            webPreferences: {
-                preload: PRELOAD_PATH,
-                nodeIntegration: false,
-                contextIsolation: true,
-            },
+            webPreferences: defaultWebPreferences,
             autoHideMenuBar: true,
         });
 

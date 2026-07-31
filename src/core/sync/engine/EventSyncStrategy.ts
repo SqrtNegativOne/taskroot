@@ -93,7 +93,7 @@ export class EventSyncStrategy implements ISyncStrategy<AppEvent> {
                 }
             }
             updated = true;
-        } else if ((q.action === SyncAction.Update || q.action === SyncAction.Create) && q.item && q.item.id) {
+        } else if ((q.action === SyncAction.Update || q.action === SyncAction.Create || q.action === SyncAction.Move) && q.item && q.item.id) {
             eventsMap.set(q.item.id, q.item);
             updated = true;
         }
@@ -159,6 +159,14 @@ export class EventSyncStrategy implements ISyncStrategy<AppEvent> {
                     taskOrEvent.calendarId,
                 );
             }
+        },
+        [SyncAction.Move]: async (taskOrEvent) => {
+            if (taskOrEvent.type !== SyncType.Event || !taskOrEvent.googleId || !taskOrEvent.calendarId || !taskOrEvent.destinationCalendarId) return;
+            await this.calendarAPI.moveEvent(
+                taskOrEvent.googleId,
+                taskOrEvent.calendarId,
+                taskOrEvent.destinationCalendarId
+            );
         }
     };
 

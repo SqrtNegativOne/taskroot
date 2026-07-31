@@ -4,7 +4,7 @@ import type { AppTask, AppEvent } from "../../domain/models";
 export interface ICalendarAPI {
     fetchEvents(timeMin: string, timeMax: string, calendarId?: string): Promise<gapi.client.calendar.Event[] | undefined>;
     fetchCalendars(): Promise<{id: string, summary: string, accessRole?: string, backgroundColor?: string, foregroundColor?: string}[]>;
-    createEvent(localEvent: AppEvent, tasks: AppTask[], calendarId?: string): Promise<{ id: string, calendarId: string }>;
+    createEvent(localEvent: AppEvent, tasks: AppTask[], calendarId?: string): Promise<{ googleId: string, calendarId: string }>;
     updateEvent(googleId: string, localEvent: AppEvent, tasks: AppTask[], calendarId?: string): Promise<void>;
     moveEvent(googleId: string, sourceCalendarId: string, destinationCalendarId: string): Promise<void>;
     deleteEvent(googleId: string, calendarId?: string): Promise<void>;

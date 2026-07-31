@@ -36,10 +36,18 @@ export type HydratedEvent = BaseEvent & {
 export function hydrateEvents(
     events: AppEvent[],
     tasks: AppTask[],
-    calendars: { id: string; summary: string; backgroundColor?: string; foregroundColor?: string }[] = [],
+    calendars: { id: string; summary: string; backgroundColor?: string; foregroundColor?: string; primary?: boolean }[] = [],
 ): HydratedEvent[] {
     return events.map((ev) => {
-        const cal = ev.googleCalendarId ? calendars.find(c => c.id === ev.googleCalendarId) : calendars.find(c => c.summary === ev.category);
+        let calId = ev.googleCalendarId;
+        if (calId === "primary") {
+            const primaryCal = calendars.find(c => c.primary);
+            if (primaryCal) calId = primaryCal.id;
+        }
+        let cal = calId ? calendars.find(c => c.id === calId) : (ev.category ? calendars.find(c => c.summary === ev.category) : undefined);
+        if (!cal) {
+            cal = calendars.find(c => c.primary) || calendars[0];
+        }
         const color = cal?.backgroundColor ? modernizeColor(cal.backgroundColor) : undefined;
         if (ev.type === "plan") {
             const task = tasks.find((t) => t.id === ev.taskId);
@@ -55,7 +63,7 @@ export function hydrateEvents(
             // Info, Busy, Log, etc.
             return {
                 ...ev,
-                title: ev.title || "Untitled",
+                title: ev.title || "",
                 isDone: false,
                 color,
             };

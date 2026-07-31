@@ -6,7 +6,7 @@ import {
     DayTimeline,
     } from "../../components/day-timeline";
 
-import { InspectorPane } from "../../components/inspector-pane";
+import { InspectorPane, type InspectorState } from "../../components/inspector-pane";
 import type { AppEvent } from "../../core/domain/models";
 
 import { DragGhost, type PlanDragState } from "./drag-helpers";
@@ -23,15 +23,12 @@ import { TaskListPane } from "../../components/tasklist";
 import { SplitPane } from "../../components/split-pane";
 import { FilterSortButtons } from "./shared-menus/index";
 import { usePlanEvents, PLAN_EVENT_FILTER_COLUMNS, PLAN_EVENT_SORT_OPTIONS } from "./use-plan-events";
-import { useCleanupDrafts } from "./use-cleanup-drafts";
 
 export function PlanScreen() {
 
     // Data state (persisted)
     const [tasks, setTasks] = useTasks();
     const [events, setEvents] = useEvents();
-    // Clean up empty items
-    useCleanupDrafts(tasks, setTasks, setEvents);
 
     // UI state — task list
     const [query, setQuery] = useTaskQuery();
@@ -56,7 +53,7 @@ export function PlanScreen() {
 
 
     // Inspector state
-    const [inspectorState, setInspectorState] = React.useState<{ type: string, id: string }>(); // { type: 'task', id } or { type: 'event', id }
+    const [inspectorState, setInspectorState] = React.useState<InspectorState>();
 
 
 

@@ -12,7 +12,7 @@ export function computeTaskDeltaActions(
     for (const currentTask of currentTasks) {
         const oldTask = oldTasksMap.get(currentTask.id);
         if (!oldTask) {
-            if (!currentTask.googleId && !currentTask.isDraft && currentTask.title && currentTask.title.trim() !== "") {
+            if (!currentTask.googleId && currentTask.title && currentTask.title.trim() !== "") {
                 actions.push({
                     type: SyncType.Task,
                     action: SyncAction.Create,
@@ -27,7 +27,7 @@ export function computeTaskDeltaActions(
             oldTask.updatedAt &&
             currentTask.updatedAt > oldTask.updatedAt
         ) {
-            if (!currentTask.isDraft && currentTask.title && currentTask.title.trim() !== "") {
+            if (currentTask.title && currentTask.title.trim() !== "") {
                 actions.push({
                     type: SyncType.Task,
                     action: SyncAction.Update,

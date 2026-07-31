@@ -3,6 +3,7 @@ import React from 'react';
 import { useTasks, useEvents, useSettings, useCalendars } from "../../core/store/hooks";
 import type { AppTask, AppEvent } from "../../core/domain/models";
 import { ymd } from "../../core/store/data";
+import type { InspectorState } from "../../components/inspector-pane";
 
 export const MAX_DISPLAY_ITEMS = 6;
 export const ID_LENGTH = 9;
@@ -14,11 +15,11 @@ const generateEventId = () => `e${Date.now()}-${Math.random().toString(ID_RADIX)
 
 const createDefaultTask = (defaults: Partial<AppTask>, defaultDuration: number): AppTask => ({
     id: `t${Date.now()}`, title: "", status: "todo", priority: 1, tags: [], subtasks: [],
-    est: defaultDuration || 0, added: new Date().toISOString(), isDraft: true, ...defaults
+    est: defaultDuration || 0, added: new Date().toISOString(), ...defaults
 });
 
 const createDefaultEvent = (date: Date, start: number, end: number, isAllDay: boolean): AppEvent => ({
-    id: generateEventId(), title: "", date: ymd(date), endDate: ymd(date), start, end, type: isAllDay ? "info" : "busy", isAllDay, isDraft: true
+    id: generateEventId(), title: "", date: ymd(date), endDate: ymd(date), start, end, type: isAllDay ? "info" : "busy", isAllDay
 });
 
 export const canEditEvent = (ev: AppEvent | undefined, calendars: readonly {id: string, accessRole?: string}[]) => {
@@ -29,7 +30,7 @@ export const canEditEvent = (ev: AppEvent | undefined, calendars: readonly {id: 
 
 export function usePlanActions(
     timelineDate: Date, 
-    setInspectorState: React.Dispatch<React.SetStateAction<{ type: string, id: string } | undefined>>
+    setInspectorState: React.Dispatch<React.SetStateAction<InspectorState | undefined>>
 ) {
     const [, setTasks] = useTasks();
     const [events, setEvents] = useEvents();
@@ -37,23 +38,28 @@ export function usePlanActions(
     const [calendars] = useCalendars();
 
     const createEvent = (task: AppTask, overrides: Partial<AppEvent>) => {
+        const defaultCal = calendars.find(c => c.primary)?.id || "primary";
+        const calData = calendars.find(c => c.id === defaultCal);
         setEvents(prev => [...prev, {
             id: generateEventId(), taskId: task.id, date: ymd(timelineDate), endDate: ymd(timelineDate),
-            start: 0, end: MINUTES_IN_HOUR, type: "plan", isAllDay: false, title: task.title, ...overrides
+            start: 0, end: MINUTES_IN_HOUR, type: "plan", isAllDay: false, title: task.title, 
+            googleCalendarId: defaultCal, category: calData?.summary || "", ...overrides
         }]);
     };
 
     const onAddTask = (defaults: Partial<AppTask> = {}) => {
         const newTask = createDefaultTask(defaults, settings.defaultTaskDuration || 0);
-        setTasks(ts => [newTask, ...ts]);
-        setInspectorState({ type: "task", id: newTask.id });
+        setInspectorState({ type: "new_task", draft: newTask });
     };
 
     const onAddEvent = (dateArg: Date | string, startArg?: number, endArg?: number) => {
         const start = typeof startArg === "number" ? startArg : ID_LENGTH * MINUTES_IN_HOUR;
         const newEvent = createDefaultEvent(dateArg instanceof Date ? dateArg : timelineDate, start, typeof endArg === "number" ? endArg : start + MINUTES_IN_HOUR, typeof startArg !== "number");
-        setEvents(es => [...es, newEvent]);
-        setInspectorState({ type: "event", id: newEvent.id });
+        const defaultCal = calendars.find(c => c.primary)?.id || "primary";
+        const calData = calendars.find(c => c.id === defaultCal);
+        newEvent.googleCalendarId = defaultCal;
+        if (calData) newEvent.category = calData.summary;
+        setInspectorState({ type: "new_event", draft: newEvent });
     };
 
     const onResizeEvent = (id: string, start: number, end: number) => {

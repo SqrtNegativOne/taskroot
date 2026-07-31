@@ -34,7 +34,7 @@ export class EventSyncStrategy implements ISyncStrategy<AppEvent> {
         timeMax.setMonth(timeMax.getMonth() + 2);
 
         const calendars = await this.calendarAPI.fetchCalendars();
-        const prevCalendars = this.context.getLocalData<{id: string, summary: string, accessRole: string, active: boolean, backgroundColor?: string, foregroundColor?: string}[]>("calendars") || [];
+        const prevCalendars = this.context.getLocalData<{id: string, summary: string, accessRole: string, active: boolean, backgroundColor?: string, foregroundColor?: string, primary?: boolean}[]>("calendars") || [];
         this.context.setLocalData(
             "calendars",
             calendars.map((c) => {
@@ -45,7 +45,8 @@ export class EventSyncStrategy implements ISyncStrategy<AppEvent> {
                     accessRole: c.accessRole, 
                     active: prev ? prev.active : true,
                     backgroundColor: c.backgroundColor,
-                    foregroundColor: c.foregroundColor
+                    foregroundColor: c.foregroundColor,
+                    primary: c.primary
                 };
             }),
         );
@@ -124,13 +125,13 @@ export class EventSyncStrategy implements ISyncStrategy<AppEvent> {
                 if (idx !== -1) {
                     events[idx] = {
                         ...events[idx],
-                        googleId: res.id,
+                        googleId: res.googleId,
                         googleCalendarId: res.calendarId,
                     };
                     this.context.setLocalData("events", events);
                     this.context.updateOldEventsMap(events);
                 } else {
-                    await this.calendarAPI.deleteEvent(res.id, res.calendarId);
+                    await this.calendarAPI.deleteEvent(res.googleId, res.calendarId);
                 }
             }
         },

@@ -6,6 +6,7 @@ import { ymd } from "../../core/store/data";
 import { resolveDropTarget } from "./drag-utils";
 
 import type { PlanDragState } from "./drag-helpers";
+import type { InspectorState } from "../../components/inspector-pane";
 
 export const MIN_POLL_INTERVAL_MINUTES = 5;
 export const ID_LENGTH = 9;
@@ -38,7 +39,7 @@ export const setupPointerDrag = (
 
 export function useDragAndDrop(
     timelineDate: Date,
-    setInspectorState: React.Dispatch<React.SetStateAction<{ type: string, id: string } | undefined>>,
+    setInspectorState: React.Dispatch<React.SetStateAction<InspectorState | undefined>>,
     createEvent: (task: AppTask, overrides: Partial<AppEvent>) => void
 ) {
     const [, setEvents] = useEvents();

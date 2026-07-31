@@ -2,15 +2,18 @@ import React from "react";
 import type { AppEvent, AppTask } from "../../core/domain/models";
 import { useCalendars } from "../../core/store/hooks";
 import type { CalendarData } from "../../core/store/repositories";
-import { TitleInput, DescriptionInput } from "../inputs";
-import { TaskInspector } from "./inspector-task";
-import { EventInspector } from "./inspector-event";
 import { getInspectorTitle } from "./inspector-utils";
-import { InspectorPaneHeader } from "./inspector-shared";
+import { InspectorPaneContent } from "./inspector-content";
 import "./inspector.css";
 
+export type InspectorState = 
+    | { type: "task"; id: string }
+    | { type: "event"; id: string }
+    | { type: "new_task"; draft: AppTask }
+    | { type: "new_event"; draft: AppEvent };
+
 interface InspectorPaneProps {
-    inspectorState?: { type: string; id: string };
+    inspectorState?: InspectorState;
     onClose: () => void;
     tasks: AppTask[];
     setTasks: React.Dispatch<React.SetStateAction<AppTask[]>>;
@@ -19,111 +22,33 @@ interface InspectorPaneProps {
 }
 
 function useCurrentItem(
-    inspectorState: { type: string; id: string } | undefined,
-    activeState: { type: string; id: string } | undefined,
+    currentState: InspectorState | undefined,
     tasks: AppTask[],
-    events: AppEvent[]
+    events: AppEvent[],
+    draftItem: AppTask | AppEvent | undefined
 ) {
-    const currentState = inspectorState || activeState;
-    const currentTask = currentState?.type === "task" ? tasks.find((t) => t.id === currentState.id) : undefined;
-    const currentEvent = currentState?.type === "event" ? (events.find((e) => e.id === currentState.id) || events.find((e) => e.id === currentState.id.split("_")[0])) : undefined;
-    const currentItem = currentTask || currentEvent;
-    return { currentTask, currentEvent, currentItem, isCurrentTask: !!currentTask };
-}
-interface InspectorPaneContentProps {
-    currentItem: AppTask | AppEvent;
-    currentTask?: AppTask;
-    currentEvent?: AppEvent;
-    isReadOnlyCalendar: boolean;
-    title?: string;
-    tasks: AppTask[];
-    calendars: CalendarData[];
-    onPaneClose: () => void;
-    onPaneDelete: () => void;
-    handleTitleChange: (t: string) => void;
-    handleDescChange: (d: string) => void;
-    updateTask: (id: string, updates: Partial<AppTask>) => void;
-    updateEvent: (id: string, updates: Partial<AppEvent>) => void;
-}
-function InspectorPaneContent({
-    currentItem,
-    currentTask,
-    currentEvent,
-    isReadOnlyCalendar,
-    title,
-    tasks,
-    calendars,
-    onPaneClose,
-    onPaneDelete,
-    handleTitleChange,
-    handleDescChange,
-    updateTask,
-    updateEvent,
-}: InspectorPaneContentProps) {
-    return (
-        <React.Fragment key={currentItem.id}>
-            <InspectorPaneHeader handleClose={onPaneClose} handleDelete={onPaneDelete} isReadOnlyCalendar={isReadOnlyCalendar} />
-            <div className="inspector-body" style={{ paddingTop: 0 }}>
-                <div
-                    className="inspector-field"
-                    style={{ marginTop: "24px", marginBottom: "4px" }}
-                >
-                    <TitleInput
-                        value={title || ""}
-                        onChange={handleTitleChange}
-                        disabled={Boolean(currentEvent?.taskId) || isReadOnlyCalendar}
-                        onEnter={onPaneClose}
-                        style={{
-                            fontSize: "24px",
-                            fontWeight: "normal",
-                            border: "none",
-                            background: "transparent",
-                            padding: "0",
-                            outline: "none",
-                            width: "100%",
-                            color: "var(--fg)",
-                        }}
-                        autoFocus={Boolean(currentTask?.isDraft)}
-                    />
-                </div>
-                <div
-                    className="inspector-field"
-                    style={{
-                        flexDirection: "column",
-                        alignItems: "flex-start",
-                    }}
-                >
-                    <DescriptionInput
-                        value={(currentEvent?.description) || ""}
-                        onChange={handleDescChange}
-                        disabled={isReadOnlyCalendar}
-                    />
-                </div>
+    if (!currentState) return { isCurrentTask: false, isNew: false };
 
-                {isReadOnlyCalendar && (
-                    <div className="inspector-field" style={{color: "var(--tag-red)", fontSize: "0.85em", marginTop: "8px"}}>
-                        This event belongs to a read-only calendar and cannot be modified.
-                    </div>
-                )}
-
-                {currentTask ? (
-                    <TaskInspector 
-                        task={currentTask} 
-                        updateTask={updateTask} 
-                    />
-                ) : currentEvent ? (
-                    <EventInspector 
-                        event={currentEvent} 
-                        tasks={tasks}
-                        calendars={calendars}
-                        updateEvent={updateEvent}
-                        isReadOnlyCalendar={isReadOnlyCalendar}
-                    />
-                ) : undefined}
-            </div>
-        </React.Fragment>
-    );
+    switch (currentState.type) {
+        case "new_task": {
+            const taskDraft = (draftItem && "status" in draftItem) ? draftItem : undefined;
+            return { currentTask: taskDraft, currentEvent: undefined, currentItem: draftItem, isCurrentTask: true, isNew: true };
+        }
+        case "new_event": {
+            const eventDraft = (draftItem && "date" in draftItem) ? draftItem : undefined;
+            return { currentTask: undefined, currentEvent: eventDraft, currentItem: draftItem, isCurrentTask: false, isNew: true };
+        }
+        case "task": {
+            const currentTask = tasks.find((t) => t.id === currentState.id);
+            return { currentTask, currentEvent: undefined, currentItem: currentTask, isCurrentTask: true, isNew: false };
+        }
+        case "event": {
+            const currentEvent = events.find((e) => e.id === currentState.id) || events.find((e) => e.id === currentState.id.split("_")[0]);
+            return { currentTask: undefined, currentEvent, currentItem: currentEvent, isCurrentTask: false, isNew: false };
+        }
+    }
 }
+
 export function InspectorPane({
     inspectorState,
     onClose,
@@ -135,16 +60,27 @@ export function InspectorPane({
     const paneRef = React.useRef<HTMLDivElement>(null);
     const [calendars] = useCalendars();
 
-    const [activeState, setActiveState] = React.useState<{ type: string; id: string }>();
+    const [activeState, setActiveState] = React.useState<InspectorState>();
+    const [draftItem, setDraftItem] = React.useState<AppTask | AppEvent>();
+    const draftRef = React.useRef<AppTask | AppEvent | undefined>();
+
     React.useEffect(() => {
+        if (inspectorState?.type === "new_task" || inspectorState?.type === "new_event") {
+            setDraftItem(inspectorState.draft);
+            draftRef.current = inspectorState.draft;
+        } else if (!inspectorState) {
+            setDraftItem(undefined);
+            draftRef.current = undefined;
+        }
         if (inspectorState) setActiveState(inspectorState);
     }, [inspectorState]);
 
-    const { currentTask, currentEvent, currentItem, isCurrentTask } = useCurrentItem(inspectorState, activeState, tasks, events);
+    const currentState = inspectorState || activeState;
+    const { currentTask, currentEvent, currentItem, isCurrentTask, isNew } = useCurrentItem(currentState, tasks, events, draftItem);
 
     const isReadOnlyCalendar = React.useMemo(() => {
         if (!currentEvent) return false;
-        const calId = currentEvent.googleCalendarId || "primary";
+        const calId = currentEvent.googleCalendarId || calendars.find((c: CalendarData) => c.primary)?.id || "primary";
         const cal = calendars.find((c: CalendarData) => c.id === calId);
         return Boolean(cal && (cal.accessRole === "reader" || cal.accessRole === "freeBusyReader"));
     }, [currentEvent, calendars]);
@@ -152,11 +88,29 @@ export function InspectorPane({
     const title = getInspectorTitle(currentTask, currentEvent, tasks);
     const isOpen = !!(inspectorState && currentItem);
 
-    const updateTask = React.useCallback((id: string, updates: Partial<AppTask>) =>
-        setTasks((ts) => ts.map((t) => t.id === id ? { ...t, ...updates, isDraft: false } : t)), [setTasks]);
+    const updateTask = React.useCallback((id: string, updates: Partial<AppTask>) => {
+        if (isNew && draftRef.current && draftRef.current.id === id) {
+            if ("status" in draftRef.current) {
+                const next: AppTask = { ...draftRef.current, ...updates };
+                draftRef.current = next;
+                setDraftItem(next);
+            }
+        } else {
+            setTasks((ts) => ts.map((t) => t.id === id ? { ...t, ...updates } : t));
+        }
+    }, [setTasks, isNew]);
 
-    const updateEvent = React.useCallback((id: string, updates: Partial<AppEvent>) =>
-        setEvents((es) => es.map((e) => e.id === id ? { ...e, ...updates, isDraft: false } : e)), [setEvents]);
+    const updateEvent = React.useCallback((id: string, updates: Partial<AppEvent>) => {
+        if (isNew && draftRef.current && draftRef.current.id === id) {
+            if ("date" in draftRef.current) {
+                const next: AppEvent = { ...draftRef.current, ...updates };
+                draftRef.current = next;
+                setDraftItem(next);
+            }
+        } else {
+            setEvents((es) => es.map((e) => e.id === id ? { ...e, ...updates } : e));
+        }
+    }, [setEvents, isNew]);
 
     const handleTitleChange = React.useCallback((newTitle: string) => {
         if (!currentItem) return;
@@ -172,6 +126,10 @@ export function InspectorPane({
 
     const onPaneDelete = React.useCallback(() => {
         if (!currentItem) return;
+        if (isNew) {
+            onClose();
+            return;
+        }
         if (isCurrentTask) {
             setTasks((ts) => ts.filter((t) => t.id !== currentItem.id));
             setEvents((es) => es.filter((e) => e.taskId !== currentItem.id));
@@ -179,32 +137,25 @@ export function InspectorPane({
             setEvents((es) => es.filter((e) => e.id !== currentItem.id && e.id !== currentItem.id.split("_")[0]));
         }
         onClose();
-    }, [currentItem, isCurrentTask, setTasks, setEvents, onClose]);
+    }, [currentItem, isCurrentTask, isNew, setTasks, setEvents, onClose]);
 
     const onPaneClose = React.useCallback(() => {
-        if (!(inspectorState && currentItem && currentItem.isDraft)) {
-            onClose();
-            return;
+        if (document.activeElement instanceof HTMLElement) {
+            document.activeElement.blur();
         }
-
-        if (isCurrentTask) {
-            setTasks((ts) => {
-                const t = ts.find((x) => x.id === currentItem.id);
-                if (t && t.isDraft) {
-                    setEvents((es) => es.filter((e) => e.taskId !== currentItem.id));
-                    return ts.filter((x) => x.id !== currentItem.id);
+        
+        const draft = draftRef.current;
+        if (isNew && draft) {
+            if (draft.title && draft.title.trim() !== "") {
+                if ("status" in draft) {
+                    setTasks((ts) => [draft, ...ts]);
+                } else if ("date" in draft) {
+                    setEvents((es) => [...es, draft]);
                 }
-                return ts;
-            });
-        } else {
-            setEvents((es) => {
-                const e = es.find((x) => x.id === currentItem.id);
-                if (e && e.isDraft) return es.filter((x) => x.id !== currentItem.id);
-                return es;
-            });
+            }
         }
         onClose();
-    }, [inspectorState, currentItem, isCurrentTask, setTasks, setEvents, onClose]);
+    }, [isNew, setTasks, setEvents, onClose]);
 
     React.useEffect(() => {
         function handleClickOutside(e: PointerEvent) {
@@ -240,6 +191,7 @@ export function InspectorPane({
                     handleDescChange={handleDescChange}
                     updateTask={updateTask}
                     updateEvent={updateEvent}
+                    isNew={isNew}
                 />
             )}
         </div>

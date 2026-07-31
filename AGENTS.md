@@ -18,19 +18,19 @@ Taskroot is a web-based and desktop task management app focusing on planning, ex
 
 ## Project Structure (`src/`)
 
-- `src/screens/plan/`: Components for the Plan screen (`PlanScreen.tsx`, `date-grid.tsx`, `shared-menus/` directory, `drag-helpers.tsx`, `use-drag-and-drop.ts`, `use-plan-actions.ts`).
-- `src/screens/do/`: Components for the Do screen (`DoScreen.tsx`, `RestScreen.tsx`, `TaskSelector.tsx`, `kanban.tsx`, `stopwatch.tsx`, `distraction-log/` directory, `tips-notes.tsx`, `useStopwatchKeyboard.ts`).
+- `src/screens/plan/`: Components for the Plan screen (`PlanScreen.tsx`, `date-grid/` directory, `shared-menus/` directory, `drag-helpers.tsx`, `drag-utils.ts`, `use-drag-and-drop.ts`, `use-plan-actions.ts`, `use-plan-events.ts`).
+- `src/screens/do/`: Components for the Do screen (`DoScreen.tsx`, `rest/` directory, `TaskSelector/` directory, `kanban.tsx`, `stopwatch/` directory, `distraction-log/` directory, `tips-notes.tsx`).
 - `src/screens/login/`: Components for the login page (`LoginScreen.tsx`).
-- `src/screens/settings/`: Components for the settings screen (`SettingsScreen.tsx`, `SettingActions.tsx`, `SettingRenderers.tsx`, `settings.css`).
+- `src/screens/settings/`: Components for the settings screen (`SettingsScreen.tsx`, `SettingActions.tsx`, `SettingRenderers.tsx`, `settingRegistry.ts`, `settings.css`).
 - `src/screens/minitracker/`: Components for the mini tracker window (`MiniTrackerScreen.tsx`).
 - `src/screens/graph/`, `src/screens/recap/`, `src/screens/stats/`, `src/screens/wrap/`: Other specialized screens.
-- `src/components/`: Shared UI components used across multiple screens (e.g., `shell.tsx`, `collapsible.tsx`, `tasklist.tsx`, `split-pane.tsx`, `search-bar.tsx`, `icon.tsx`, `day-timeline/`, `inputs/`, `inspector-pane/`).
+- `src/components/`: Shared UI components used across multiple screens (e.g., `AppLayout.tsx`, `shell/` directory, `collapsible.tsx`, `tasklist/` directory, `split-pane.tsx`, `search-bar.tsx`, `icon.tsx`, `day-timeline/`, `inputs/`, `inspector-pane/`).
 - `src/core/`: Core business logic, context providers, and data layer, categorized by responsibility:
-  - `sync/`: External sync & third-party APIs (`index.ts`, `SyncState.ts`, `GoogleCalendarAPI.ts`, `GoogleTasksAPI.ts`, and the `engine/` subdirectory containing `SyncQueue.ts`, `TaskSynchronizer.ts`, `EventSynchronizer.ts`, `Pusher.ts`, `Poller.ts`, and `types.ts` for modular sync processing).
-  - `store/`: State management & persistence (`hooks.ts`, `repositories.ts`, `storeRegistry.ts`, `api.ts`, `data.tsx`, `settingsSchema.tsx`).
-  - `domain/`: Business logic & transformations (`events.ts`, `filters.ts`, `rrule-utils.ts`, `models.ts`).
-  - `auth/`: Authentication (`AuthContext.tsx`, `googleAuthUtils.ts`, `TokenBouncer.ts`).
-  - `utils/`: App-wide utilities (`logger.ts`, `notifications.tsx`).
+  - `sync/`: External sync & third-party APIs (`index.ts`, `SyncState.ts`, `calendar-api/` directory, `task-api/` directory, `auth/` directory, and the `engine/` subdirectory containing `SyncQueue.ts`, `Synchronizer.ts`, `TaskSyncStrategy.ts`, `EventSyncStrategy.ts`, `Pusher.ts`, `Poller.ts`, etc. for modular sync processing).
+  - `store/`: State management & persistence (`hooks.ts`, `repositories.ts`, `storeRegistry.ts`, `api.ts`, `data.ts`, `settingsSchema/` directory).
+  - `domain/`: Business logic & transformations (`clock-strategies/` directory, `events.ts`, `filters.ts`, `rrule-utils.ts`, `models.ts`).
+  - `auth/`: Authentication (`AuthContext.tsx`, `googleAuthUtils.ts`, `context.ts`, `useAuth.ts`).
+  - `utils/`: App-wide utilities (`logger.ts`, `notifications.tsx`, `colors.ts`, `constants.ts`).
 - `src/App.tsx`: The root application component. Orchestrates routing, authentication bypass for dev, and global sync contexts.
 
 *Note: Test files are co-located with their respective modules (e.g., `*.test.tsx`, `*.test.ts`).*
@@ -42,7 +42,7 @@ Taskroot is a web-based and desktop task management app focusing on planning, ex
 - **Drag and Drop**: Managed natively via pointer events (`pointerdown`, `pointermove`, `pointerup`) instead of the HTML5 Drag & Drop API for finer control and custom ghost elements.
 - **Time Logging**: Stopwatch sessions (Axleless, Flowtime, Guzey) are logged to the `time_logs` store, optionally associated with a task.
 - **MiniTracker**: When the main Electron window is minimized or closed, a frameless transparent window (`miniWin`) opens to show the timer in a compact form, using the `/?minitracker=true` route. **CRITICAL:** There should be NO buttons on the mini tracker window. Restoring the app or other actions should be done via keyboard shortcuts.
-- **Settings Schema**: When adding settings to `settingsSchema.ts`, if a setting is self-explanatory, do NOT include a `description` property. Do not have subheadings (`section`) unless the related settings you are clumping in them are very similar.
+- **Settings Schema**: When adding settings to `settingsSchema/settingsSchema.tsx`, if a setting is self-explanatory, do NOT include a `description` property. Do not have subheadings (`section`) unless the related settings you are clumping in them are very similar.
 
 ## Style (Important)
 - Prefer inline exports over bottom exports.

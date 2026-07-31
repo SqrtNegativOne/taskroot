@@ -12,7 +12,7 @@ export interface DistractionColumn { id: string; label: string; width: number; t
 export interface StopwatchState { elapsed: number; runningSince?: number; isBreak: boolean; breakAllowedMs: number; breakStartedAt?: number; breakSoundPlayed: boolean; }
 export type TimeLog = AppEvent;
 export interface RestItem { id: string; title: string; type: string; checked?: boolean; }
-export interface CalendarData { id: string; summary: string; active: boolean; accessRole?: string; backgroundColor?: string; foregroundColor?: string; }
+export interface CalendarData { id: string; summary: string; active: boolean; accessRole?: string; backgroundColor?: string; foregroundColor?: string; primary?: boolean; }
 export interface TestKeyData { count: number; }
 
 const isUpdater = <T>(v: T | ((prev: T) => T)): v is ((prev: T) => T) => typeof v === "function";
@@ -155,7 +155,7 @@ export const repos = {
     calSort: new Repository<string>("calSort", "time"),
     timeFilters: new Repository<import('../domain/models').AppFilter[]>("timeFilters", []),
     timeSort: new Repository<string>("timeSort", "time"),
-    calendars: new Repository<CalendarData[]>("calendars", [{ id: "primary", summary: "Primary", active: true }])
+    calendars: new Repository<CalendarData[]>("calendars", [{ id: "primary", summary: "Primary", active: true, primary: true }])
 } as const;
 
 export const VALID_STORE_KEYS = [

@@ -11,7 +11,7 @@ import "./inspector.css";
 interface EventInspectorProps {
     event: AppEvent;
     tasks: AppTask[];
-    calendars: { id: string, summary?: string, accessRole?: string }[];
+    calendars: { id: string, summary?: string, accessRole?: string, primary?: boolean }[];
     updateEvent: (id: string, updates: Partial<AppEvent>) => void;
     isReadOnlyCalendar: boolean;
 }
@@ -52,13 +52,13 @@ function EventTypeSelector({ event, tasks, updateEvent, isReadOnlyCalendar }: { 
     );
 }
 
-function EventCalendarSelector({ event, calendars, updateEvent, isReadOnlyCalendar }: { event: AppEvent, calendars: { id: string, summary?: string, accessRole?: string }[], updateEvent: (id: string, updates: Partial<AppEvent>) => void, isReadOnlyCalendar: boolean }) {
+function EventCalendarSelector({ event, calendars, updateEvent, isReadOnlyCalendar }: { event: AppEvent, calendars: { id: string, summary?: string, accessRole?: string, primary?: boolean }[], updateEvent: (id: string, updates: Partial<AppEvent>) => void, isReadOnlyCalendar: boolean }) {
     return (
         <div className="inspector-field inspector-field-group">
             <label htmlFor={`calendar-${event.id}`}>Calendar</label>
             <select
                 id={`calendar-${event.id}`}
-                value={event.googleCalendarId || "primary"}
+                value={event.googleCalendarId || calendars.find((c) => c.primary)?.id || "primary"}
                 disabled={isReadOnlyCalendar}
                 onChange={(e) => {
                     const cal = calendars.find((c) => c.id === e.target.value);

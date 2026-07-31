@@ -20,7 +20,9 @@ export class GoogleCalendarAPI implements ICalendarAPI {
         let res = await fetchWithTimeout(`https://www.googleapis.com/calendar/v3/${endpoint}`, getOpts(token));
         if (res.status === HTTP_UNAUTHORIZED) {
             if (!await this.authManager.refreshAccessToken()) throw new Error("Unauthorized");
-            res = await fetchWithTimeout(`https://www.googleapis.com/calendar/v3/${endpoint}`, getOpts(this.authManager.getToken() || ""));
+            const newToken = this.authManager.getToken();
+            if (!newToken) throw new Error("Unauthorized");
+            res = await fetchWithTimeout(`https://www.googleapis.com/calendar/v3/${endpoint}`, getOpts(newToken));
         }
         return res;
     }
@@ -32,12 +34,12 @@ export class GoogleCalendarAPI implements ICalendarAPI {
         return data.items || [];
     }
 
-    async fetchCalendars(): Promise<{id: string, summary: string, accessRole?: string, backgroundColor?: string, foregroundColor?: string}[]> {
-        const def = [{ id: "primary", summary: "Primary Calendar", accessRole: "owner" }];
+    async fetchCalendars(): Promise<{id: string, summary: string, accessRole?: string, backgroundColor?: string, foregroundColor?: string, primary?: boolean}[]> {
+        const def = [{ id: "primary", summary: "Primary Calendar", accessRole: "owner", primary: true }];
         if (!this.authManager.getToken()) return def;
         const res = await this.fetchWithAuth("users/me/calendarList");
         if (!res.ok) { console.warn(`Failed to fetch calendars`); return def; }
-        const data: { items?: {id: string, summary: string, accessRole?: string, backgroundColor?: string, foregroundColor?: string}[] } = await res.json();
+        const data: { items?: {id: string, summary: string, accessRole?: string, backgroundColor?: string, foregroundColor?: string, primary?: boolean}[] } = await res.json();
         return data.items || def;
     }
 
@@ -47,7 +49,8 @@ export class GoogleCalendarAPI implements ICalendarAPI {
         });
         if (!res.ok) throw new Error(`Failed to create event: ${res.status} ${await res.text()}`);
         const data: { id?: string } = await res.json();
-        return { id: data.id || "", calendarId };
+        if (!data.id) throw new Error("Event created but no ID returned");
+        return { googleId: data.id, calendarId };
     }
 
     async updateEvent(googleId: string, localEvent: AppEvent, tasks: AppTask[], calendarId = "primary") {
@@ -100,16 +103,16 @@ export class GoogleCalendarAPI implements ICalendarAPI {
         }
 
         return {
-            summary: localEvent.title || "",
+            summary: localEvent.title ?? "",
             start: startObj,
             end: endObj,
-            description: localEvent.description || "",
+            description: localEvent.description ?? "",
             transparency: localEvent.type === "info" ? "transparent" : "opaque",
             extendedProperties: {
                 private: {
                     taskrootEventId: localEvent.id,
                     ...(localEvent.taskId ? { taskId: localEvent.taskId } : {}),
-                    type: localEvent.type || "",
+                    type: localEvent.type ?? "",
                 },
             },
             ...(localEvent.rrule ? { recurrence: [`RRULE:${localEvent.rrule}`] } : {})
@@ -119,10 +122,12 @@ export class GoogleCalendarAPI implements ICalendarAPI {
     toLocalEvent(googleEvent: gapi.client.calendar.Event, calendarId = "primary", calendarSummary = "") {
         if (googleEvent.status === "cancelled") {
             const privateProps = googleEvent.extendedProperties?.private;
+            const id = (privateProps ? privateProps.taskrootEventId : undefined) || googleEvent.id;
+            if (!id) throw new Error("Cancelled Google event missing ID");
             return {
-                id: (privateProps ? privateProps.taskrootEventId : undefined) || googleEvent.id || "",
+                id,
                 _deleted: true,
-                updatedAt: new Date(googleEvent.updated || 0).getTime(),
+                updatedAt: googleEvent.updated ? new Date(googleEvent.updated).getTime() : 0,
             };
         }
         const { date, endDate, start, end, isAllDay } = extractEventTime(googleEvent);
@@ -130,8 +135,8 @@ export class GoogleCalendarAPI implements ICalendarAPI {
         const rrule = parseRecurrenceRule(googleEvent.recurrence);
 
         return {
-            id: id || "", googleId: googleEvent.id, googleCalendarId: calendarId, taskId,
-            title: googleEvent.summary || "", date: date || "", endDate, start: start || 0, end: end || 0, type,
+            id, googleId: googleEvent.id, googleCalendarId: calendarId, taskId,
+            title: googleEvent.summary ?? "", date, endDate, start, end, type,
             category: calendarSummary, rrule, isAllDay,
             updatedAt: googleEvent.updated ? new Date(googleEvent.updated).getTime() : Date.now(),
         };
@@ -149,15 +154,15 @@ function extractEventTime(googleEvent: gapi.client.calendar.Event) {
             isAllDay: false
         };
     }
-    return googleEvent.start?.date 
-        ? { date: googleEvent.start.date, endDate: googleEvent.end?.date, start: 0, end: HOURS_PER_DAY * MINUTES_IN_HOUR, isAllDay: true } 
-        : { date: undefined, endDate: undefined, start: undefined, end: undefined, isAllDay: false };
+    if (!googleEvent.start?.date) throw new Error("Google event missing time information");
+    return { date: googleEvent.start.date, endDate: googleEvent.end?.date, start: 0, end: HOURS_PER_DAY * MINUTES_IN_HOUR, isAllDay: true }; 
 }
 
 function getEventId(googleEvent: gapi.client.calendar.Event) {
     const priv = googleEvent.extendedProperties?.private;
     if (priv?.taskrootEventId) return priv.taskrootEventId;
-    return googleEvent.id || "";
+    if (!googleEvent.id) throw new Error("Google event missing ID");
+    return googleEvent.id;
 }
 
 function getEventTaskId(googleEvent: gapi.client.calendar.Event) {

@@ -49,7 +49,7 @@ export function WrapScreen() {
         .filter((e) => e.type === "log")
         .map((e) => ({
             id: e.id,
-            title: e.title || "Untitled",
+            title: e.title || "",
             date: e.date,
             start: e.start,
             end: e.end,

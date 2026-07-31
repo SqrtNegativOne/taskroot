@@ -9,7 +9,9 @@ export const MAX_RETRIES = 3;
 /// <reference types="gapi.client.tasks" />
 
 function extractLocalTaskId(googleTask: gapi.client.tasks.Task, existing?: AppTask): string {
-    return existing?.id || (googleTask.notes || "").match(/Taskroot Task ID: (t[0-9a-zA-Z-]+)/)?.[1] || googleTask.id || "";
+    const id = existing?.id || googleTask.notes?.match(/Taskroot Task ID: (t[0-9a-zA-Z-]+)/)?.[1] || googleTask.id;
+    if (!id) throw new Error("Google task missing ID");
+    return id;
 }
 
 function parseGoogleTaskDue(dueStr?: string): import("../../domain/models").DateString | undefined {
@@ -20,10 +22,11 @@ function parseGoogleTaskDue(dueStr?: string): import("../../domain/models").Date
 }
 
 function getGoogleTaskBase(googleTask: gapi.client.tasks.Task) {
+    if (!googleTask.id) throw new Error("Google task missing ID");
     return {
-        googleId: googleTask.id || "",
-        title: googleTask.title || "",
-        notes: googleTask.notes || "",
+        googleId: googleTask.id,
+        title: googleTask.title ?? "",
+        notes: googleTask.notes ?? "",
         status: googleTask.status === "completed" ? "done" as const : "todo" as const,
         updatedAt: googleTask.updated ? new Date(googleTask.updated).getTime() : Date.now(),
     };
@@ -42,7 +45,9 @@ export class GoogleTasksAPI implements ITasksAPI {
         let res = await fetchWithTimeout(`https://tasks.googleapis.com/tasks/v1/${endpoint}`, getOpts(token));
         if (res.status === HTTP_UNAUTHORIZED) {
             if (!await this.authManager.refreshAccessToken()) throw new Error("Unauthorized");
-            res = await fetchWithTimeout(`https://tasks.googleapis.com/tasks/v1/${endpoint}`, getOpts(this.authManager.getToken() || ""));
+            const newToken = this.authManager.getToken();
+            if (!newToken) throw new Error("Unauthorized");
+            res = await fetchWithTimeout(`https://tasks.googleapis.com/tasks/v1/${endpoint}`, getOpts(newToken));
         }
         return res;
     }
@@ -57,7 +62,7 @@ export class GoogleTasksAPI implements ITasksAPI {
             // eslint-disable-next-line no-await-in-loop
             const data: { items?: gapi.client.tasks.Task[], nextPageToken?: string } = await res.json();
             if (data.items) allTasks.push(...data.items);
-            pageToken = data.nextPageToken || "";
+            pageToken = data.nextPageToken ?? "";
         } while (pageToken);
         return allTasks;
     }
@@ -68,7 +73,8 @@ export class GoogleTasksAPI implements ITasksAPI {
         });
         if (!res.ok) throw new Error(`Failed to create task: ${res.status} ${await res.text()}`);
         const data: gapi.client.tasks.Task = await res.json();
-        return data.id || "";
+        if (!data.id) throw new Error("Task created but no ID returned");
+        return data.id;
     }
 
     async updateTask(googleId: string, localTask: AppTask, tasklistId = "@default") {
@@ -85,7 +91,9 @@ export class GoogleTasksAPI implements ITasksAPI {
 
     toLocalTask(googleTask: gapi.client.tasks.Task, existing: AppTask | undefined = undefined): AppTask | { id: string; _deleted: boolean; updatedAt: number; } {
         if (googleTask.deleted) {
-            return { id: existing?.id || googleTask.id || "", _deleted: true, updatedAt: new Date(googleTask.updated || 0).getTime() };
+            const id = existing?.id || googleTask.id;
+            if (!id) throw new Error("Deleted Google task missing ID");
+            return { id, _deleted: true, updatedAt: googleTask.updated ? new Date(googleTask.updated).getTime() : 0 };
         }
 
         const id = extractLocalTaskId(googleTask, existing);
@@ -105,7 +113,7 @@ export class GoogleTasksAPI implements ITasksAPI {
     toGoogleTask(localTask: AppTask): gapi.client.tasks.Task {
         return {
             title: localTask.title,
-            notes: localTask.notes?.includes(`Taskroot Task ID: ${localTask.id}`) ? localTask.notes : `Taskroot Task ID: ${localTask.id}\n${localTask.notes || ""}`,
+            notes: localTask.notes?.includes(`Taskroot Task ID: ${localTask.id}`) ? localTask.notes : `Taskroot Task ID: ${localTask.id}\n${localTask.notes ?? ""}`,
             status: localTask.status === "done" ? "completed" : "needsAction",
             ...(localTask.due ? { due: new Date(localTask.due).toISOString() } : {})
         };

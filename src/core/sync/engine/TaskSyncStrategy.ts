@@ -37,7 +37,7 @@ export class TaskSyncStrategy implements ISyncStrategy<AppTask> {
         localItemsMap: Map<string, AppTask>
     ): boolean {
         let localId: string | undefined = undefined;
-        const match = (remote.notes || "").match(
+        const match = remote.notes?.match(
             /Taskroot Task ID: (t[0-9a-zA-Z-]+)/,
         );
         if (match) {

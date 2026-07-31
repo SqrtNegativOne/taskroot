@@ -15,7 +15,7 @@ function getTargetCalendarId(
 }
 
 function handleCreation(currentEvent: AppEvent, actions: SyncQueueItem[]) {
-    const isValid = !currentEvent.googleId && !currentEvent.isDraft && currentEvent.title && currentEvent.title.trim() !== "";
+    const isValid = !currentEvent.googleId && currentEvent.title && currentEvent.title.trim() !== "";
     if (isValid)
         actions.push({ type: SyncType.Event, action: SyncAction.Create, item: currentEvent });
 }

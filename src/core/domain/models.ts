@@ -15,7 +15,6 @@ export interface AppTask {
     readonly dependencies?: readonly string[];
     readonly est?: number;
     readonly added?: string;
-    readonly isDraft?: boolean;
     readonly canvasX?: number;
     readonly canvasY?: number;
     readonly onCanvas?: boolean;

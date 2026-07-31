@@ -14,7 +14,7 @@ function extractLocalTaskId(googleTask: gapi.client.tasks.Task, existing?: AppTa
 
 function parseGoogleTaskDue(dueStr?: string): import("../../domain/models").DateString | undefined {
     const p = dueStr?.split("T")[0].split("-");
-    if (p?.length === MAX_RETRIES) {
+    if (p?.length === 3) {
         return `${Number(p[0])}-${Number(p[1])}-${Number(p[2])}`;
     }
     return undefined;
@@ -22,7 +22,7 @@ function parseGoogleTaskDue(dueStr?: string): import("../../domain/models").Date
 
 function getGoogleTaskBase(googleTask: gapi.client.tasks.Task) {
     return {
-        googleTaskId: googleTask.id || "",
+        googleId: googleTask.id || "",
         title: googleTask.title || "",
         notes: googleTask.notes || "",
         status: googleTask.status === "completed" ? "done" as const : "todo" as const,
@@ -72,15 +72,15 @@ export class GoogleTasksAPI implements ITasksAPI {
         return data.id || "";
     }
 
-    async updateTask(googleTaskId: string, localTask: AppTask, tasklistId = "@default") {
-        const res = await this.fetchWithAuth(`lists/${tasklistId}/tasks/${googleTaskId}`, {
+    async updateTask(googleId: string, localTask: AppTask, tasklistId = "@default") {
+        const res = await this.fetchWithAuth(`lists/${tasklistId}/tasks/${googleId}`, {
             method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(this.toGoogleTask(localTask))
         });
         if (!res.ok) throw new Error(`Failed to update task: ${res.status} ${await res.text()}`);
     }
 
-    async deleteTask(googleTaskId: string, tasklistId = "@default") {
-        const res = await this.fetchWithAuth(`lists/${tasklistId}/tasks/${googleTaskId}`, { method: "DELETE" });
+    async deleteTask(googleId: string, tasklistId = "@default") {
+        const res = await this.fetchWithAuth(`lists/${tasklistId}/tasks/${googleId}`, { method: "DELETE" });
         if (!res.ok) throw new Error(`Failed to delete task: ${res.status} ${await res.text()}`);
     }
 

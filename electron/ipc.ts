@@ -59,11 +59,11 @@ export function setupIpcHandlers() {
         windowManager.startDrag(offsetX, offsetY);
     });
 
-    ipcMain.on("window-drag-tick", (event) => {
+    ipcMain.on("window-drag-tick", (_event) => {
         windowManager.dragTick();
     });
 
-    ipcMain.on("window-end-drag", (event) => {
+    ipcMain.on("window-end-drag", (_event) => {
         windowManager.endDrag();
     });
 }

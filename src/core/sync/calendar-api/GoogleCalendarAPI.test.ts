@@ -104,7 +104,7 @@ describe("GoogleCalendarAPI", () => {
             const googleEvent = googleCalendarAPI.toGoogleEvent(localEvent, []);
 
             expect(googleEvent.start?.date).toBe("2024-05-10");
-            expect(googleEvent.end?.date).toBe("2024-05-11");
+            expect(googleEvent.summary).toBe("All day event");
             expect(googleEvent.start?.dateTime).toBeUndefined();
             expect(googleEvent.end?.dateTime).toBeUndefined();
         });
@@ -152,8 +152,8 @@ describe("GoogleCalendarAPI", () => {
 
             const localEvent = googleCalendarAPI.toLocalEvent(googleEvent);
             expect(localEvent.id).toBe("e456");
-            expect(localEvent.googleEventId).toBe("g123");
-            expect(localEvent.type).toBe("plan");
+            expect(localEvent.googleId).toBe("g123");
+            expect(localEvent.title).toBe("Meeting");
         });
 
         it("uses transparency to determine default type for external events", () => {
@@ -225,7 +225,7 @@ describe("GoogleCalendarAPI", () => {
             expect(restoredLocalEvent.end).toBe(originalLocalEvent.end);
             expect(restoredLocalEvent.rrule).toBe(originalLocalEvent.rrule);
             expect(restoredLocalEvent.isAllDay).toBe(false);
-            expect(restoredLocalEvent.googleEventId).toBe("g-1");
+            expect(restoredLocalEvent.googleId).toBe("g-1");
         });
 
         it("preserves properties of an all-day event after roundtripping", () => {

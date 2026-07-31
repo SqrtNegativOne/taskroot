@@ -65,7 +65,7 @@ describe("SyncQueue", () => {
         expect(queue.length).toBe(2);
     });
 
-    it("should not deduplicate Create and Update actions", () => {
+    it("should merge Update action into pending Create", () => {
         const queue = new SyncQueue();
         const task: AppTask = { id: "1", title: "Task 1" };
         
@@ -78,14 +78,12 @@ describe("SyncQueue", () => {
         queue.push({
             type: SyncType.Task,
             action: SyncAction.Update,
-            item: task
+            item: { ...task, title: "Task 1 Updated" }
         });
 
-        // The instruction says "If an Update action for Task A is already pending in the queue... replace".
-        // It does not specify merging Create and Update. So they should both be present.
-        expect(queue.length).toBe(2);
+        expect(queue.length).toBe(1);
         const items = queue.getItems();
         expect(items[0].action).toBe(SyncAction.Create);
-        expect(items[1].action).toBe(SyncAction.Update);
+        expect(items[0].item.title).toBe("Task 1 Updated");
     });
 });

@@ -187,7 +187,7 @@ export function MiniTrackerScreen() {
             className={`minitracker-container ${showBorder ? "show-border" : ""}`}
             onDoubleClick={handleDoubleClick}
             onPointerDown={handlePointerDown}
-            style={style as React.CSSProperties}
+            style={style satisfies React.CSSProperties}
             title="Double-click to restore main window"
         >
             <MiniTrackerClock

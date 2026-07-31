@@ -6,18 +6,16 @@ import type { AppTask, AppEvent } from "../../domain/models";
 
 export class Pusher {
     private pushQueue = new SyncQueue();
-    private taskSync: Synchronizer<AppTask>;
-    private eventSync: Synchronizer<AppEvent>;
-    private getSettings: () => Partial<import('../../store/settingsSchema').AppSettings>;
+    private synchronizers: Record<string, Synchronizer<unknown & { id: string }>> = {};
 
     constructor(
         taskSync: Synchronizer<AppTask>,
-        eventSync: Synchronizer<AppEvent>,
-        getSettings: () => Partial<import('../../store/settingsSchema').AppSettings>
+        eventSync: Synchronizer<AppEvent>
     ) {
-        this.taskSync = taskSync;
-        this.eventSync = eventSync;
-        this.getSettings = getSettings;
+        this.synchronizers = {
+            [SyncType.Task]: taskSync,
+            [SyncType.Event]: eventSync,
+        };
     }
 
     get queue() {
@@ -33,8 +31,6 @@ export class Pusher {
         if (this.pushQueue.length === 0) return;
         syncState.isPushing = true;
 
-        const settings = this.getSettings();
-
         while (this.pushQueue.length > 0) {
             const taskOrEvent = this.pushQueue.peek();
             if (!taskOrEvent) {
@@ -42,23 +38,15 @@ export class Pusher {
                 continue;
             }
             try {
-                if (taskOrEvent.type === SyncType.Task && settings.enableTasksSync === false) {
-                    this.pushQueue.shift();
+                const sync = this.synchronizers[taskOrEvent.type];
+                if (!sync || !sync.isSyncEnabled()) {
+                    this.pushQueue.remove(taskOrEvent);
                     continue;
                 }
-                if (taskOrEvent.type === SyncType.Event && settings.enableCalendarSync === false) {
-                    this.pushQueue.shift();
-                    continue;
-                }
-
-                if (taskOrEvent.type === SyncType.Task) {
-                    // eslint-disable-next-line no-await-in-loop
-                    await this.taskSync.processPushItem(taskOrEvent);
-                } else if (taskOrEvent.type === SyncType.Event) {
-                    // eslint-disable-next-line no-await-in-loop
-                    await this.eventSync.processPushItem(taskOrEvent);
-                }
-                this.pushQueue.shift();
+                
+                // eslint-disable-next-line no-await-in-loop
+                await sync.processPushItem(taskOrEvent);
+                this.pushQueue.remove(taskOrEvent);
             } catch (e: unknown) {
                 console.error("Push failed, keeping in queue", e);
                 syncState.error = e instanceof Error ? e.message : "Error syncing item to Google.";

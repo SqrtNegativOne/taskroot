@@ -18,14 +18,14 @@ export type SyncQueueItem =
           type: typeof SyncType.Task;
           action: SyncAction;
           item: AppTask;
-          id?: string;
+          googleId?: string;
           calendarId?: never;
       }
     | {
           type: typeof SyncType.Event;
           action: SyncAction;
           item: AppEvent;
-          id?: string;
+          googleId?: string;
           calendarId?: string;
       };
 

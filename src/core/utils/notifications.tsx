@@ -1,3 +1,6 @@
+/* eslint-disable jsx-a11y/click-events-have-key-events */
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
 import React, {
     createContext,
     useState,
@@ -154,10 +157,10 @@ function NotificationItem({
     };
 
     return (
-        <button
-            type="button"
+        <div
             onClick={handleClick}
             id={`notif-${notification.id}`}
+            role="alert"
             style={{
                 fontFamily: "inherit",
                 textAlign: "left",
@@ -223,6 +226,6 @@ function NotificationItem({
           100% { opacity: 0; transform: translateX(-30px); max-height: 0; padding-top: 0; padding-bottom: 0; margin-top: -12px; border-width: 0; }
         }
       `}</style>
-        </button>
+        </div>
     );
 }

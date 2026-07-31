@@ -11,7 +11,7 @@ function processSingleEventDelta(
     if (event.type === "log") return;
 
     if (!prev) {
-        if (!event.googleEventId) {
+        if (!event.googleId && !event.isDraft && event.title && event.title.trim() !== "") {
             actions.push({ type: SyncType.Event, action: SyncAction.Create, item: event });
         }
         return;
@@ -28,26 +28,28 @@ function processSingleEventDelta(
     }
 
     if (prev.googleCalendarId && prev.googleCalendarId !== targetCalendarId) {
-        if (prev.googleEventId) {
+        if (prev.googleId) {
             actions.push({
                 type: SyncType.Event,
                 action: SyncAction.Delete,
                 item: prev,
-                id: prev.googleEventId,
+                googleId: prev.googleId,
                 calendarId: prev.googleCalendarId,
             });
         }
-        actions.push({ type: SyncType.Event, action: SyncAction.Create, item: event });
-    } else if (event.googleEventId) {
-        actions.push({
-            type: SyncType.Event,
-            action: SyncAction.Update,
-            item: event,
-            id: event.googleEventId,
-            calendarId: targetCalendarId,
-        });
+        if (event.title && event.title.trim() !== "") {
+            actions.push({ type: SyncType.Event, action: SyncAction.Create, item: event });
+        }
     } else {
-        actions.push({ type: SyncType.Event, action: SyncAction.Create, item: event });
+        if (event.title && event.title.trim() !== "") {
+            actions.push({
+                type: SyncType.Event,
+                action: SyncAction.Update,
+                item: event,
+                googleId: event.googleId,
+                calendarId: targetCalendarId,
+            });
+        }
     }
 }
 
@@ -65,12 +67,12 @@ export function computeEventDeltaActions(
 
     for (const [id, prev] of prevEventsMap.entries()) {
         if (prev.type === "log") continue;
-        if (!newEventsMap.has(id) && prev.googleEventId) {
+        if (!newEventsMap.has(id)) {
             actions.push({
                 type: SyncType.Event,
                 action: SyncAction.Delete,
                 item: prev,
-                id: prev.googleEventId,
+                googleId: prev.googleId,
                 calendarId: prev.googleCalendarId || "primary",
             });
         }

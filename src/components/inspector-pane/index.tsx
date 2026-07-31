@@ -176,7 +176,7 @@ export function InspectorPane({
             setTasks((ts) => ts.filter((t) => t.id !== currentItem.id));
             setEvents((es) => es.filter((e) => e.taskId !== currentItem.id));
         } else {
-            setEvents((es) => es.filter((e) => e.id !== currentItem.id));
+            setEvents((es) => es.filter((e) => e.id !== currentItem.id && e.id !== currentItem.id.split("_")[0]));
         }
         onClose();
     }, [currentItem, isCurrentTask, setTasks, setEvents, onClose]);

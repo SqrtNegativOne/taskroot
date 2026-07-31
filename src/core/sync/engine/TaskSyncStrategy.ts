@@ -44,7 +44,7 @@ export class TaskSyncStrategy implements ISyncStrategy<AppTask> {
             localId = match[1];
         } else {
             for (const t of Array.from(localItemsMap.values())) {
-                if (t.googleTaskId === remote.id) {
+                if (t.googleId === remote.id) {
                     localId = t.id;
                     break;
                 }
@@ -66,9 +66,9 @@ export class TaskSyncStrategy implements ISyncStrategy<AppTask> {
 
         if (q.action === SyncAction.Delete) {
             if (q.item && q.item.id) tasksMap.delete(q.item.id);
-            if (q.id) {
+            if (q.googleId) {
                 for (const [key, task] of Array.from(tasksMap.entries())) {
-                    if (task.googleTaskId === q.id) {
+                    if (task.googleId === q.googleId) {
                         tasksMap.delete(key);
                     }
                 }
@@ -89,39 +89,47 @@ export class TaskSyncStrategy implements ISyncStrategy<AppTask> {
         this.context.updatePrevTasksMap(newTasks);
     }
 
-    async processPushItem(taskOrEvent: SyncQueueItem) {
-        if (taskOrEvent.type !== SyncType.Task) return;
-        if (taskOrEvent.action === SyncAction.Create) {
-            const gid = await this.tasksAPI.createTask(
-                taskOrEvent.item,
-            );
+    private actionHandlers: Record<string, (item: SyncQueueItem) => Promise<void>> = {
+        [SyncAction.Create]: async (taskOrEvent) => {
+            if (taskOrEvent.type !== SyncType.Task) return;
+            const gid = await this.tasksAPI.createTask(taskOrEvent.item);
             if (gid) {
                 const tasks = this.context.getLocalData<AppTask[]>("tasks");
-                const idx = tasks.findIndex(
-                    (t) => t.id === taskOrEvent.item.id,
-                );
+                const idx = tasks.findIndex((t) => t.id === taskOrEvent.item.id);
                 if (idx !== -1) {
-                    tasks[idx] = {
-                        ...tasks[idx],
-                        googleTaskId: gid,
-                    };
+                    tasks[idx] = { ...tasks[idx], googleId: gid };
                     this.context.setLocalData("tasks", tasks);
                     this.context.updatePrevTasksMap(tasks);
+                } else {
+                    await this.tasksAPI.deleteTask(gid);
                 }
             }
-        } else if (
-            taskOrEvent.action === SyncAction.Update &&
-            taskOrEvent.id
-        ) {
-            await this.tasksAPI.updateTask(
-                taskOrEvent.id,
-                taskOrEvent.item,
-            );
-        } else if (
-            taskOrEvent.action === SyncAction.Delete &&
-            taskOrEvent.id
-        ) {
-            await this.tasksAPI.deleteTask(taskOrEvent.id);
+        },
+        [SyncAction.Update]: async (taskOrEvent) => {
+            if (taskOrEvent.type !== SyncType.Task) return;
+            const tasks = this.context.getLocalData<AppTask[]>("tasks");
+            const currentTask = tasks.find((t) => t.id === taskOrEvent.item.id);
+            const gid = currentTask?.googleId || taskOrEvent.googleId;
+
+            if (gid) {
+                await this.tasksAPI.updateTask(gid, taskOrEvent.item);
+            }
+        },
+        [SyncAction.Delete]: async (taskOrEvent) => {
+            if (taskOrEvent.type !== SyncType.Task) return;
+            // If the item doesn't exist locally, tasks.find will be undefined.
+            // If deleted locally, we rely on taskOrEvent.googleId from the queue.
+            const gid = taskOrEvent.googleId;
+            
+            if (gid) {
+                await this.tasksAPI.deleteTask(gid);
+            }
         }
+    };
+
+    async processPushItem(taskOrEvent: SyncQueueItem) {
+        if (taskOrEvent.type !== SyncType.Task) return;
+        const handler = this.actionHandlers[taskOrEvent.action];
+        if (handler) await handler(taskOrEvent);
     }
 }

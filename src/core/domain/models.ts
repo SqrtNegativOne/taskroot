@@ -19,7 +19,7 @@ export interface AppTask {
     readonly canvasX?: number;
     readonly canvasY?: number;
     readonly onCanvas?: boolean;
-    readonly googleTaskId?: string;
+    readonly googleId?: string;
     readonly notes?: string;
     readonly due?: DateString;
     readonly _deleted?: boolean;
@@ -36,7 +36,7 @@ export interface AppFilter {
 
 export interface AppEvent {
     id: string;
-    googleEventId?: string;
+    googleId?: string;
     googleCalendarId?: string;
     taskId?: string;
     title: string;

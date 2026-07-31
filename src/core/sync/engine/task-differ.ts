@@ -12,7 +12,7 @@ export function computeTaskDeltaActions(
     for (const task of newTasks) {
         const prev = prevTasksMap.get(task.id);
         if (!prev) {
-            if (!task.googleTaskId && !task.isDraft) {
+            if (!task.googleId && !task.isDraft && task.title && task.title.trim() !== "") {
                 actions.push({
                     type: SyncType.Task,
                     action: SyncAction.Create,
@@ -27,30 +27,24 @@ export function computeTaskDeltaActions(
             prev.updatedAt &&
             task.updatedAt > prev.updatedAt
         ) {
-            if (task.googleTaskId) {
+            if (!task.isDraft && task.title && task.title.trim() !== "") {
                 actions.push({
                     type: SyncType.Task,
                     action: SyncAction.Update,
                     item: task,
-                    id: task.googleTaskId,
-                });
-            } else if (!task.isDraft) {
-                actions.push({
-                    type: SyncType.Task,
-                    action: SyncAction.Create,
-                    item: task,
+                    googleId: task.googleId,
                 });
             }
         }
     }
 
     for (const [id, prev] of prevTasksMap.entries()) {
-        if (!newTasksMap.has(id) && prev.googleTaskId) {
+        if (!newTasksMap.has(id)) {
             actions.push({
                 type: SyncType.Task,
                 action: SyncAction.Delete,
                 item: prev,
-                id: prev.googleTaskId,
+                googleId: prev.googleId,
             });
         }
     }

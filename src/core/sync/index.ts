@@ -47,7 +47,7 @@ export const taskSync = new Synchronizer<AppTask>(context, taskStrategy);
 const eventStrategy = new EventSyncStrategy(context, calendarApi);
 export const eventSync = new Synchronizer<AppEvent>(context, eventStrategy);
 
-export const pusher: Pusher = new Pusher(taskSync, eventSync, getSettings);
+export const pusher: Pusher = new Pusher(taskSync, eventSync);
 
 const hasAuth = () => !!googleAuth.getToken() || !!localStorage.getItem("google_refresh_token");
 export const poller: Poller = new Poller(taskSync, eventSync, pusher, { getSettings, hasAuth });

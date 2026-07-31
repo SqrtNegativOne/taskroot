@@ -85,9 +85,9 @@ export class EventSyncStrategy implements ISyncStrategy<AppEvent> {
 
         if (q.action === SyncAction.Delete) {
             if (q.item && q.item.id) eventsMap.delete(q.item.id);
-            if (q.id) {
+            if (q.googleId) {
                 for (const [key, event] of Array.from(eventsMap.entries())) {
-                    if (event.googleEventId === q.id) {
+                    if (event.googleId === q.googleId) {
                         eventsMap.delete(key);
                     }
                 }
@@ -109,13 +109,10 @@ export class EventSyncStrategy implements ISyncStrategy<AppEvent> {
         this.context.updatePrevEventsMap(newEvents);
     }
 
-    async processPushItem(taskOrEvent: SyncQueueItem) {
-        if (taskOrEvent.type !== SyncType.Event) return;
-        const tasks = this.context.getLocalData<AppTask[]>("tasks");
-        const targetCalendarId =
-            taskOrEvent.item.googleCalendarId || "primary";
-
-        if (taskOrEvent.action === SyncAction.Create) {
+    private actionHandlers: Record<string, (item: SyncQueueItem, tasks: AppTask[]) => Promise<void>> = {
+        [SyncAction.Create]: async (taskOrEvent, tasks) => {
+            if (taskOrEvent.type !== SyncType.Event) return;
+            const targetCalendarId = taskOrEvent.item.googleCalendarId || "primary";
             const res = await this.calendarAPI.createEvent(
                 taskOrEvent.item,
                 tasks,
@@ -123,37 +120,52 @@ export class EventSyncStrategy implements ISyncStrategy<AppEvent> {
             );
             if (res) {
                 const events = this.context.getLocalData<AppEvent[]>("events");
-                const idx = events.findIndex(
-                    (e) => e.id === taskOrEvent.item.id,
-                );
+                const idx = events.findIndex((e) => e.id === taskOrEvent.item.id);
                 if (idx !== -1) {
                     events[idx] = {
                         ...events[idx],
-                        googleEventId: res.id,
+                        googleId: res.id,
                         googleCalendarId: res.calendarId,
                     };
                     this.context.setLocalData("events", events);
                     this.context.updatePrevEventsMap(events);
+                } else {
+                    await this.calendarAPI.deleteEvent(res.id, res.calendarId);
                 }
             }
-        } else if (
-            taskOrEvent.action === SyncAction.Update &&
-            taskOrEvent.id
-        ) {
-            await this.calendarAPI.updateEvent(
-                taskOrEvent.id,
-                taskOrEvent.item,
-                tasks,
-                taskOrEvent.calendarId,
-            );
-        } else if (
-            taskOrEvent.action === SyncAction.Delete &&
-            taskOrEvent.id
-        ) {
-            await this.calendarAPI.deleteEvent(
-                taskOrEvent.id,
-                taskOrEvent.calendarId,
-            );
+        },
+        [SyncAction.Update]: async (taskOrEvent, tasks) => {
+            if (taskOrEvent.type !== SyncType.Event) return;
+            const events = this.context.getLocalData<AppEvent[]>("events");
+            const currentEvent = events.find((e) => e.id === taskOrEvent.item.id);
+            const gid = currentEvent?.googleId || taskOrEvent.googleId;
+
+            if (gid) {
+                await this.calendarAPI.updateEvent(
+                    gid,
+                    taskOrEvent.item,
+                    tasks,
+                    taskOrEvent.calendarId,
+                );
+            }
+        },
+        [SyncAction.Delete]: async (taskOrEvent) => {
+            if (taskOrEvent.type !== SyncType.Event) return;
+            // Delete actions always have taskOrEvent.googleId if they were queued correctly.
+            // If deleted before Create finished, it's handled in the Create block.
+            if (taskOrEvent.googleId) {
+                await this.calendarAPI.deleteEvent(
+                    taskOrEvent.googleId,
+                    taskOrEvent.calendarId,
+                );
+            }
         }
+    };
+
+    async processPushItem(taskOrEvent: SyncQueueItem) {
+        if (taskOrEvent.type !== SyncType.Event) return;
+        const tasks = this.context.getLocalData<AppTask[]>("tasks");
+        const handler = this.actionHandlers[taskOrEvent.action];
+        if (handler) await handler(taskOrEvent, tasks);
     }
 }

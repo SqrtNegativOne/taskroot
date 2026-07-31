@@ -1,25 +1,31 @@
+
 import { BrowserWindow, screen } from "electron";
 import { PRELOAD_PATH, ICON_PATH } from "./constants.js";
 
-const DEFAULT_SNAP_DISTANCE = 25;
+const DEFAULT_SNAP_DISTANCE = 30;
 const DEFAULT_SLIDING_SLOWDOWN = 15;
+const DRAG_START_BOUNDS = { width: 300, height: 100 };
+const MILLISECONDS_IN_SECOND = 1000.0;
+const FRAME_TIME = 16;
+const FULL_PERCENTAGE = 100.0;
+const STOP_VELOCITY_THRESHOLD = 5;
 
 class WindowManager {
     public win?: BrowserWindow;
     public miniWin?: BrowserWindow;
     public isQuitting = false;
-    public snapThreshold: number = 30;
+    public snapThreshold: number = DEFAULT_SNAP_DISTANCE;
     
     // Smooth custom drag state
     private clickOffsetX: number = 0;
     private clickOffsetY: number = 0;
     private dragHistory: {x: number, y: number, time: number}[] = [];
-    private dragStartBounds = { width: 300, height: 100 };
+    private dragStartBounds = DRAG_START_BOUNDS;
     private slideTimer?: NodeJS.Timeout;
     private mainUrl = "";
     private miniWindowUrl = "";
     
-    // Windhawk Slick Window Arrangement Settings
+    // Slick Window Arrangement Settings
     public snapWindowsDistance = DEFAULT_SNAP_DISTANCE;
     public slidingAnimationSlowdown = DEFAULT_SLIDING_SLOWDOWN;
 
@@ -53,8 +59,8 @@ class WindowManager {
         if (!this.miniWindowUrl) return;
 
         this.miniWin = new BrowserWindow({
-            width: 300,
-            height: 100,
+            width: DRAG_START_BOUNDS.width,
+            height: DRAG_START_BOUNDS.height,
             frame: false,
             transparent: true,
             alwaysOnTop: true,
@@ -128,8 +134,8 @@ class WindowManager {
         
         const dt = Math.max(1, last.time - first.time);
         // Average velocity pixels per second
-        let vx = ((last.x - first.x) / dt) * 1000.0;
-        let vy = ((last.y - first.y) / dt) * 1000.0;
+        let vx = ((last.x - first.x) / dt) * MILLISECONDS_IN_SECOND;
+        let vy = ((last.y - first.y) / dt) * MILLISECONDS_IN_SECOND;
         
         this.dragHistory = []; // Reset history
         
@@ -142,19 +148,14 @@ class WindowManager {
         let preciseX = bounds.x;
         let preciseY = bounds.y;
         
-        const frameTime = 16;
-        const MILLISECONDS_IN_SECOND = 1000.0;
-        const FULL_PERCENTAGE = 100.0;
-        const STOP_VELOCITY_THRESHOLD = 5;
-        
         this.slideTimer = setInterval(() => {
             if (!this.miniWin || this.miniWin.isDestroyed()) {
                 if (this.slideTimer) clearInterval(this.slideTimer);
                 return;
             }
             
-            preciseX += vx / (MILLISECONDS_IN_SECOND / frameTime);
-            preciseY += vy / (MILLISECONDS_IN_SECOND / frameTime);
+            preciseX += vx / (MILLISECONDS_IN_SECOND / FRAME_TIME);
+            preciseY += vy / (MILLISECONDS_IN_SECOND / FRAME_TIME);
             
             let newX = preciseX;
             let newY = preciseY;
@@ -201,7 +202,7 @@ class WindowManager {
             }
             
             this.miniWin.setBounds({ x: newX, y: newY, width: w, height: h });
-        }, frameTime);
+        }, FRAME_TIME);
     }
     
     private applySnapping(x: number, y: number, w: number, h: number) {

@@ -10,15 +10,19 @@ export function useCleanupDrafts(
         const validTasks = tasks.filter(
             (t) => t.isDraft || (t.title && t.title.trim() !== ""),
         );
-        if (validTasks.length !== tasks.length) {
+        const tasksChanged = validTasks.length !== tasks.length;
+        if (tasksChanged) {
             setTasks(validTasks);
-            setEvents((es: AppEvent[]) =>
-                es.filter((e: AppEvent) => {
-                    if (e.taskId)
-                        return validTasks.some((t: AppTask) => t.id === e.taskId);
-                    return e.isDraft || (e.title && e.title.trim() !== "");
-                }),
-            );
         }
+
+        setEvents((es: AppEvent[]) => {
+            const validEvents = es.filter((e: AppEvent) => {
+                if (e.taskId)
+                    return validTasks.some((t: AppTask) => t.id === e.taskId);
+                return e.isDraft || (e.title && e.title.trim() !== "");
+            });
+            if (validEvents.length !== es.length) return validEvents;
+            return es;
+        });
     }, [setTasks, setEvents, tasks]);
 }

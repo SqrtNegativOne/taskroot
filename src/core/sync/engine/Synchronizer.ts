@@ -20,8 +20,12 @@ export class Synchronizer<T extends { id: string }> {
         this.strategy = strategy;
     }
 
+    isSyncEnabled(): boolean {
+        return this.strategy.isSyncEnabled();
+    }
+
     async poll() {
-        if (!this.strategy.isSyncEnabled()) return;
+        if (!this.isSyncEnabled()) return;
 
         const localItems = this.context.getLocalData<T[]>(this.strategy.getLocalStoreKey());
         this.strategy.updatePrevMapSnapshot(localItems);

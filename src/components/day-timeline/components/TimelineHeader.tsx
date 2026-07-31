@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { addDays } from "../../../core/store/data";
 import { Icon } from "../../icon";
 
+// eslint-disable-next-line no-magic-numbers
 const NUM_DAYS_OPTIONS = [1, 2, 3, 4, 5, 6, 7];
 
 interface TimelineHeaderProps {

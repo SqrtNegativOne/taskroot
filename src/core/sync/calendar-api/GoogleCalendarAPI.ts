@@ -50,20 +50,26 @@ export class GoogleCalendarAPI implements ICalendarAPI {
         return { id: data.id || "", calendarId };
     }
 
-    async updateEvent(googleEventId: string, localEvent: AppEvent, tasks: AppTask[], calendarId = "primary") {
-        const res = await this.fetchWithAuth(`calendars/${encodeURIComponent(calendarId)}/events/${googleEventId}`, {
+    async updateEvent(googleId: string, localEvent: AppEvent, tasks: AppTask[], calendarId = "primary") {
+        const res = await this.fetchWithAuth(`calendars/${encodeURIComponent(calendarId)}/events/${googleId}`, {
             method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(this.toGoogleEvent(localEvent, tasks))
         });
         if (!res.ok) throw new Error(`Failed to update event: ${res.status} ${await res.text()}`);
     }
 
-    async deleteEvent(googleEventId: string, calendarId = "primary") {
-        const res = await this.fetchWithAuth(`calendars/${encodeURIComponent(calendarId)}/events/${googleEventId}`, { method: "DELETE" });
+    async moveEvent(googleId: string, sourceCalendarId: string, destinationCalendarId: string) {
+        const res = await this.fetchWithAuth(`calendars/${encodeURIComponent(sourceCalendarId)}/events/${googleId}/move?destination=${encodeURIComponent(destinationCalendarId)}`, {
+            method: "POST"
+        });
+        if (!res.ok) throw new Error(`Failed to move event: ${res.status} ${await res.text()}`);
+    }
+
+    async deleteEvent(googleId: string, calendarId = "primary") {
+        const res = await this.fetchWithAuth(`calendars/${encodeURIComponent(calendarId)}/events/${googleId}`, { method: "DELETE" });
         if (!res.ok) throw new Error(`Failed to delete event: ${res.status} ${await res.text()}`);
     }
 
-    toGoogleEvent(localEvent: AppEvent, tasks: AppTask[]): gapi.client.calendar.Event {
-        const task = localEvent.taskId ? tasks.find((t) => t.id === localEvent.taskId) : undefined;
+    toGoogleEvent(localEvent: AppEvent, _tasks: AppTask[]): gapi.client.calendar.Event {
         const dtStr = (date: string, mins: number) => {
             const parts = date.split("-").map(Number);
             const y = parts[0];
@@ -94,7 +100,7 @@ export class GoogleCalendarAPI implements ICalendarAPI {
         }
 
         return {
-            summary: (task ? task.title : localEvent.title) || "Taskroot Event",
+            summary: localEvent.title || "",
             start: startObj,
             end: endObj,
             description: localEvent.description || "",
@@ -124,8 +130,8 @@ export class GoogleCalendarAPI implements ICalendarAPI {
         const rrule = parseRecurrenceRule(googleEvent.recurrence);
 
         return {
-            id: id || "", googleEventId: googleEvent.id, googleCalendarId: calendarId, taskId,
-            title: googleEvent.summary || "Untitled Event", date: date || "", endDate, start: start || 0, end: end || 0, type,
+            id: id || "", googleId: googleEvent.id, googleCalendarId: calendarId, taskId,
+            title: googleEvent.summary || "", date: date || "", endDate, start: start || 0, end: end || 0, type,
             category: calendarSummary, rrule, isAllDay,
             updatedAt: googleEvent.updated ? new Date(googleEvent.updated).getTime() : Date.now(),
         };

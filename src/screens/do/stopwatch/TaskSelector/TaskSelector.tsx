@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/prefer-tag-over-role */
 import { useState, useEffect, useRef, useMemo } from "react";
 import type { AppTask, AppEvent } from "../../../../core/domain/models";
 import { sortTasksForSelection } from "./sortTasksForSelection";
@@ -8,6 +9,7 @@ import "./TaskSelector.css";
 
 
 const ANIMATION_DELAY_MS = 150;
+const FADE_OUT_DURATION_MS = 400;
 interface TaskSelectorProps {
     selectorOpen: boolean;
     setSelectorOpen: (open: boolean) => void;
@@ -243,7 +245,7 @@ function TaskSelectorItem({
                     import("cuelume").then(({ play }) => play("success"));
                     setTimeout(() => {
                         updateTask(task.id, { status: "done" });
-                    }, 400); // 400ms is fade out duration
+                    }, FADE_OUT_DURATION_MS);
                 }}
                 title="Toggle Done"
                 aria-label={`Complete ${task.title}`}

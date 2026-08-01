@@ -45,6 +45,26 @@
         </div>
       </div>
     </div>
+    <script>
+      let _cleared = false;
+      const _earlyCheck = (e) => {
+        if (_cleared) return;
+        if (e.shiftKey || e.ctrlKey) {
+          _cleared = true;
+          if (confirm("Shift/Ctrl detected on startup. Reset local data and resync from Google?")) {
+            localStorage.removeItem("taskroot_tasks");
+            localStorage.removeItem("taskroot_events");
+            localStorage.removeItem("taskroot_syncState");
+            window.location.reload();
+            return;
+          }
+        }
+        window.removeEventListener("pointermove", _earlyCheck, { capture: true });
+        window.removeEventListener("keydown", _earlyCheck, { capture: true });
+      };
+      window.addEventListener("pointermove", _earlyCheck, { capture: true });
+      window.addEventListener("keydown", _earlyCheck, { capture: true });
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

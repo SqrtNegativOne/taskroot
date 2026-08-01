@@ -7,8 +7,6 @@ import { computeFilterDefaults } from "../../core/domain/filters";
 import type { AppTask, AppFilter } from "../../core/domain/models";
 import { TaskRow } from "./task-row";
 import { useEvents } from "../../core/store/hooks";
-import { parseYMD } from "../../core/store/data";
-import { MINUTES_IN_HOUR } from "../../core/utils/constants";
 
 export interface TaskListPaneProps {
     tasks: AppTask[];
@@ -51,9 +49,7 @@ export function TaskListPane({
         const set = new Set<string>();
         events.forEach(e => {
             if (e.type === 'plan' && !e.isDone && e.taskId) {
-                const date = parseYMD(e.date);
-                date.setHours(Math.floor(e.end / MINUTES_IN_HOUR), e.end % MINUTES_IN_HOUR, 0, 0);
-                if (date.getTime() < now) {
+                if (new Date(e.endTime).getTime() < now) {
                     set.add(e.taskId);
                 }
             }

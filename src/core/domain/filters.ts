@@ -131,7 +131,7 @@ export function sortEvents(evs: HydratedEvent[], sort?: string): HydratedEvent[]
                   : 0;
             if (aDone !== bDone) return aDone - bDone;
         }
-        return (a.start || 0) - (b.start || 0);
+        return (a.startTime || "").localeCompare(b.startTime || "");
     });
     return sorted;
 }

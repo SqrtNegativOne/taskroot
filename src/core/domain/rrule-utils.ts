@@ -1,6 +1,3 @@
-import { HOURS_PER_DAY } from "../utils/constants";
-const MS_PER_SECOND = 1000;
-const SECONDS_PER_HOUR = 3600;
 import { RRule } from "rrule";
 import type { AppEvent } from "./models";
 
@@ -18,27 +15,35 @@ export function expandEventsForView(
         }
 
         try {
-            const rule = RRule.fromString(event.rrule);
-            // RRule works with UTC inherently unless adjusted, we should pass Date objects
-            // representing the local time, but rrule.js usually prefers UTC dates for local calculations.
-            // For simplicity, we just use the viewStartDate and viewEndDate directly.
-            const generatedDates = rule.between(
-                viewStartDate,
-                viewEndDate,
-                true,
-            );
+            let ruleStr = event.rrule;
+            if (!ruleStr.includes("DTSTART")) {
+                const dtstart = event.startTime.replace(/[-:]/g, "");
+                ruleStr = `DTSTART:${dtstart}\n${ruleStr.startsWith("RRULE:") ? ruleStr : "RRULE:" + ruleStr}`;
+            }
+
+            const rule = RRule.fromString(ruleStr);
+            const viewStartUTC = new Date(Date.UTC(viewStartDate.getFullYear(), viewStartDate.getMonth(), viewStartDate.getDate()));
+            const viewEndUTC = new Date(Date.UTC(viewEndDate.getFullYear(), viewEndDate.getMonth(), viewEndDate.getDate()));
+            
+            const generatedDates = rule.between(viewStartUTC, viewEndUTC, true);
+
+            const baseStartDt = new Date(event.startTime);
+            const baseEndDt = new Date(event.endTime);
+            const durationMs = baseEndDt.getTime() - baseStartDt.getTime();
 
             generatedDates.forEach((date) => {
-                // Simple string format YYYY-MM-DD
-                const y = date.getFullYear();
-                const m = (date.getMonth() + 1).toString().padStart(2, "0");
-                const d = date.getDate().toString().padStart(2, "0");
-                const dateStr = `${y}-${m}-${d}`;
+                const y = date.getUTCFullYear();
+                const m = (date.getUTCMonth() + 1).toString().padStart(2, "0");
+                const d = date.getUTCDate().toString().padStart(2, "0");
+                const h = date.getUTCHours().toString().padStart(2, "0");
+                const min = date.getUTCMinutes().toString().padStart(2, "0");
+                const sec = date.getUTCSeconds().toString().padStart(2, "0");
+                const instanceStartTimeStr = `${y}-${m}-${d}T${h}:${min}:${sec}`;
 
                 const exceptionOverride = baseEvents.find(
                     (e) =>
                         e.recurringEventId === event.id &&
-                        e.originalStartDate === dateStr,
+                        e.originalStartTime === instanceStartTimeStr,
                 );
 
                 if (exceptionOverride) {
@@ -46,48 +51,26 @@ export function expandEventsForView(
                         flattenedInstances.push(exceptionOverride);
                     }
                 } else {
-                    // If the event spans multiple days (endDate !== date), we should preserve duration.
-                    // In this simple implementation, we just shift date and endDate.
-                    let newEndDate = dateStr;
-                    if (event.endDate && event.endDate !== event.date) {
-                        const startDt = new Date(event.date);
-                        const endDt = new Date(event.endDate);
-                        const diffDays = Math.round(
-                            (endDt.getTime() - startDt.getTime()) /
-                                (MS_PER_SECOND * SECONDS_PER_HOUR * HOURS_PER_DAY),
-                        );
+                    // newStartDt in local time so we can add duration and output correctly
+                    const newStartDt = new Date(`${y}-${m}-${d}T${h}:${min}:${sec}`);
+                    const newEndDt = new Date(newStartDt.getTime() + durationMs);
 
-                        const newEndDt = new Date(date.getTime());
-                        newEndDt.setDate(newEndDt.getDate() + diffDays);
-                        const ey = newEndDt.getFullYear();
-                        const em = (newEndDt.getMonth() + 1)
-                            .toString()
-                            .padStart(2, "0");
-                        const ed = newEndDt
-                            .getDate()
-                            .toString()
-                            .padStart(2, "0");
-                        newEndDate = `${ey}-${em}-${ed}`;
-                    }
+                    const ey = newEndDt.getFullYear();
+                    const em = (newEndDt.getMonth() + 1).toString().padStart(2, "0");
+                    const ed = newEndDt.getDate().toString().padStart(2, "0");
+                    const eh = newEndDt.getHours().toString().padStart(2, "0");
+                    const emin = newEndDt.getMinutes().toString().padStart(2, "0");
+                    const esec = newEndDt.getSeconds().toString().padStart(2, "0");
+                    const instanceEndTimeStr = `${ey}-${em}-${ed}T${eh}:${emin}:${esec}`;
 
-                    if (event.type === "log") {
-                        flattenedInstances.push({
-                            ...event,
-                            id: `${event.id}_${date.getTime()}`,
-                            date: dateStr,
-                            isInstance: true,
-                            baseEventId: event.id,
-                        });
-                    } else {
-                        flattenedInstances.push({
-                            ...event,
-                            id: `${event.id}_${date.getTime()}`,
-                            date: dateStr,
-                            endDate: newEndDate,
-                            isInstance: true,
-                            baseEventId: event.id,
-                        });
-                    }
+                    flattenedInstances.push({
+                        ...event,
+                        id: `${event.id}_${date.getTime()}`,
+                        startTime: instanceStartTimeStr,
+                        endTime: instanceEndTimeStr,
+                        isInstance: true,
+                        baseEventId: event.id,
+                    });
                 }
             });
         } catch (e) {
@@ -96,7 +79,6 @@ export function expandEventsForView(
                 event.title || event.id,
                 e,
             );
-            // Fallback: just show the base event if rule is invalid
             flattenedInstances.push(event);
         }
     });

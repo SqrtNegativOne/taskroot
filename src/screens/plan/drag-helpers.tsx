@@ -24,7 +24,7 @@ export interface PlanDragState {
 export function DragGhost({ task, event, x, y, ghostStyle }: { task?: AppTask, event?: AppEvent, x: number, y: number, ghostStyle: string }) {
     const title = task ? task.title : event ? event.title : "";
     const pri = task ? task.priority : undefined;
-    const est = task ? task.est : event ? event.end - event.start : MINUTES_IN_HOUR;
+    const est = task ? task.est : event ? (new Date(event.endTime).getTime() - new Date(event.startTime).getTime()) / 60000 : MINUTES_IN_HOUR;
     
     return (
         <div

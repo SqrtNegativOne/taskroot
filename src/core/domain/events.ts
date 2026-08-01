@@ -4,14 +4,12 @@ import { modernizeColor } from "../utils/colors";
 type BaseEvent = {
     id: string;
     title?: string;
-    date: import("./models").DateString; // YYYY-MM-DD
-    start: number; // minutes from midnight
-    end: number;
-    endDate?: import("./models").DateString;
+    startTime: string; // ISO string
+    endTime: string;
     isAllDay?: boolean;
     rrule?: string;
     recurringEventId?: string;
-    originalStartDate?: string;
+    originalStartTime?: string;
     cancelled?: boolean;
     isInstance?: boolean;
     baseEventId?: string;

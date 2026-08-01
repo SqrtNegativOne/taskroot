@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { MS_PER_MINUTE } from "../../core/utils/constants";
 
 import { useEvents, useSettings } from "../../core/store/hooks";
 import type { HydratedEvent } from "../../core/domain/events";
@@ -14,9 +15,18 @@ function calculateUntrackedTime(logEvents: HydratedEvent[], wake: number, sleep:
     const totalDayTime = sleep - wake;
     let trackedTime = 0;
     
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayMs = today.getTime();
+    
     logEvents.forEach((e) => {
-        const start = Math.max(wake, e.start);
-        const end = Math.min(sleep, e.end);
+        const eStart = new Date(e.startTime).getTime();
+        const eEnd = new Date(e.endTime).getTime();
+        const startMin = (eStart - todayMs) / MS_PER_MINUTE;
+        const endMin = (eEnd - todayMs) / MS_PER_MINUTE;
+        
+        const start = Math.max(wake, startMin);
+        const end = Math.min(sleep, endMin);
         if (end > start) {
             trackedTime += end - start;
         }
@@ -46,14 +56,13 @@ export function WrapScreen() {
     });
 
     const logEvents: HydratedEvent[] = events
-        .filter((e) => e.type === "log")
+        .filter((e) => e.type === "time_log")
         .map((e) => ({
             id: e.id,
             title: e.title || "",
-            date: e.date,
-            start: e.start,
-            end: e.end,
-            type: "log",
+            startTime: e.startTime,
+            endTime: e.endTime,
+            type: "time_log",
             isAllDay: false,
             isDone: false,
         }));

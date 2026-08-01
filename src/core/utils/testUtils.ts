@@ -5,9 +5,8 @@ export function createMockAppEvent(overrides: Partial<AppEvent> = {}): AppEvent 
     return {
         id: `mock-evt-${nextId++}`,
         title: "Mock Event",
-        date: "2024-01-01",
-        start: 600, // 10:00 AM
-        end: 660,   // 11:00 AM
+        startTime: "2024-01-01T10:00:00",
+        endTime: "2024-01-01T11:00:00",
         type: "event",
         ...overrides,
     };

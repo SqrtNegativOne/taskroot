@@ -37,6 +37,20 @@ export const setupPointerDrag = (
     window.addEventListener("pointerup", up);
 };
 
+function getIsoFromMinutes(dateStr: string, minutes: number) {
+    const dt = new Date(`${dateStr}T00:00:00`);
+    const dt2 = new Date(dt.getTime() + minutes * 60000);
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${dt2.getFullYear()}-${pad(dt2.getMonth() + 1)}-${pad(dt2.getDate())}T${pad(dt2.getHours())}:${pad(dt2.getMinutes())}:00`;
+}
+
+function getNextDayStr(dateStr: string) {
+    const dt = new Date(`${dateStr}T00:00:00`);
+    dt.setDate(dt.getDate() + 1);
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
+}
+
 export function useDragAndDrop(
     timelineDate: Date,
     setInspectorState: React.Dispatch<React.SetStateAction<InspectorState | undefined>>,
@@ -57,10 +71,11 @@ export function useDragAndDrop(
             if (!active) return setInspectorState({ type: "task", id: task.id });
             const ds = dragRef.current;
             if (ds?.target?.kind === "grid-day" && ds.target.date) {
-                const start = ID_LENGTH * MINUTES_IN_HOUR;
-                createEvent(task, { date: ds.target.date, endDate: ds.target.date, start, end: start + (task.est || MINUTES_IN_HOUR), isAllDay: true });
+                const dStr = ds.target.date;
+                createEvent(task, { startTime: `${dStr}T00:00:00`, endTime: `${getNextDayStr(dStr)}T00:00:00`, isAllDay: true });
             } else if (ds?.target?.kind === "day-time" && ds.target.minute !== undefined) {
-                createEvent(task, { date: ymd(timelineDate), endDate: ymd(timelineDate), start: ds.target.minute, end: ds.target.minute + (task.est || MINUTES_IN_HOUR), isAllDay: false });
+                const dStr = ymd(timelineDate);
+                createEvent(task, { startTime: getIsoFromMinutes(dStr, ds.target.minute), endTime: getIsoFromMinutes(dStr, ds.target.minute + (task.est || MINUTES_IN_HOUR)), isAllDay: false });
             }
             setDragState(undefined);
         });
@@ -75,18 +90,23 @@ export function useDragAndDrop(
         e.preventDefault();
         e.stopPropagation();
 
+        const getDurMins = () => {
+            return (new Date(eventToMove.endTime).getTime() - new Date(eventToMove.startTime).getTime()) / 60000;
+        };
+
         setupPointerDrag(e, (ev) => {
-            setDragState({ event: eventToMove, task, pointerX: ev.clientX, pointerY: ev.clientY, target: resolveDropTarget(document.elementFromPoint(ev.clientX, ev.clientY) || undefined, ev.clientY, task?.est || (eventToMove.end - eventToMove.start)) });
+            setDragState({ event: eventToMove, task, pointerX: ev.clientX, pointerY: ev.clientY, target: resolveDropTarget(document.elementFromPoint(ev.clientX, ev.clientY) || undefined, ev.clientY, task?.est || getDurMins()) });
         }, (active) => {
             if (!active) return setInspectorState({ type: "event", id: eventToMove.id });
             const ds = dragRef.current;
             if (ds?.target?.kind === "grid-day" && ds.target.date) {
                 const dropDate = ds.target.date;
-                setEvents(prev => prev.map((evnt) => evnt.id === eventToMove.id ? { ...evnt, date: dropDate, endDate: dropDate } : evnt));
+                setEvents(prev => prev.map((evnt) => evnt.id === eventToMove.id ? { ...evnt, startTime: `${dropDate}T00:00:00`, endTime: `${getNextDayStr(dropDate)}T00:00:00`, isAllDay: true } : evnt));
             } else if (ds?.target?.kind === "day-time" && ds.target.minute !== undefined) {
-                const duration = eventToMove.end - eventToMove.start;
+                const duration = getDurMins();
                 const dropMinute = ds.target.minute;
-                setEvents(prev => prev.map((evnt) => evnt.id === eventToMove.id ? { ...evnt, date: ymd(timelineDate), endDate: ymd(timelineDate), start: dropMinute, end: dropMinute + duration, isAllDay: false } : evnt));
+                const dStr = ymd(timelineDate);
+                setEvents(prev => prev.map((evnt) => evnt.id === eventToMove.id ? { ...evnt, startTime: getIsoFromMinutes(dStr, dropMinute), endTime: getIsoFromMinutes(dStr, dropMinute + duration), isAllDay: false } : evnt));
             }
             setDragState(undefined);
         });

@@ -2,8 +2,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createMockAppEvent } from "../../utils/testUtils";
 import { GoogleCalendarAPI } from "./GoogleCalendarAPI";
 import * as api from "../../store/api";
-import { HOURS_PER_DAY, MINUTES_IN_HOUR } from "../../utils/constants";
-
 vi.mock("../../store/api", () => ({
     fetchWithTimeout: vi.fn<(...args: never[]) => unknown>(),
 }));
@@ -64,10 +62,9 @@ describe("GoogleCalendarAPI", () => {
             const localEvent = createMockAppEvent({
                 id: "e123",
                 title: "Meeting",
-                date: "2024-05-10",
-                start: 600,
-                end: 660,
-            }); // 10:00 to 11:00
+                startTime: "2024-05-10T10:00:00",
+                endTime: "2024-05-10T11:00:00",
+            });
             const googleEvent = googleCalendarAPI.toGoogleEvent(localEvent, []);
 
             expect(
@@ -81,10 +78,9 @@ describe("GoogleCalendarAPI", () => {
             const localEvent = createMockAppEvent({
                 id: "e123",
                 title: "All day",
-                date: "2024-05-10",
-                start: 0,
-                end: HOURS_PER_DAY * MINUTES_IN_HOUR,
-            }); // 00:00 to 24:00
+                startTime: "2024-05-10T00:00:00",
+                endTime: "2024-05-11T00:00:00",
+            });
             const googleEvent = googleCalendarAPI.toGoogleEvent(localEvent, []);
 
             expect(googleEvent.start?.dateTime).toContain("2024-05-10T00:00:00");
@@ -95,15 +91,14 @@ describe("GoogleCalendarAPI", () => {
             const localEvent = createMockAppEvent({
                 id: "e123",
                 title: "All day event",
-                date: "2024-05-10",
-                endDate: "2024-05-11",
-                start: 0,
-                end: HOURS_PER_DAY * MINUTES_IN_HOUR,
+                startTime: "2024-05-10T00:00:00",
+                endTime: "2024-05-11T00:00:00",
                 isAllDay: true,
             });
             const googleEvent = googleCalendarAPI.toGoogleEvent(localEvent, []);
 
             expect(googleEvent.start?.date).toBe("2024-05-10");
+            expect(googleEvent.end?.date).toBe("2024-05-11");
             expect(googleEvent.summary).toBe("All day event");
             expect(googleEvent.start?.dateTime).toBeUndefined();
             expect(googleEvent.end?.dateTime).toBeUndefined();
@@ -114,17 +109,15 @@ describe("GoogleCalendarAPI", () => {
                 id: "e1",
                 type: "info",
                 title: "Info",
-                date: "2024-05-10",
-                start: 600,
-                end: 660,
+                startTime: "2024-05-10T10:00:00",
+                endTime: "2024-05-10T11:00:00",
             });
             const busyEvent = createMockAppEvent({
                 id: "e2",
                 type: "plan",
                 title: "Plan",
-                date: "2024-05-10",
-                start: 600,
-                end: 660,
+                startTime: "2024-05-10T10:00:00",
+                endTime: "2024-05-10T11:00:00",
             });
 
             const googleInfoEvent = googleCalendarAPI.toGoogleEvent(infoEvent, []);
@@ -190,8 +183,8 @@ describe("GoogleCalendarAPI", () => {
 
             const localEvent = googleCalendarAPI.toLocalEvent(googleEvent);
             expect(localEvent.isAllDay).toBe(true);
-            expect(localEvent.date).toBe("2024-05-10");
-            expect(localEvent.endDate).toBe("2024-05-11");
+            expect(localEvent.startTime).toBe("2024-05-10T00:00:00");
+            expect(localEvent.endTime).toBe("2024-05-11T00:00:00");
         });
     });
 
@@ -202,15 +195,13 @@ describe("GoogleCalendarAPI", () => {
                 taskId: "t-1",
                 type: "plan",
                 title: "Timed Meeting",
-                date: "2024-05-10",
-                start: 600,
-                end: 660,
+                startTime: "2024-05-10T10:00:00",
+                endTime: "2024-05-10T11:00:00",
                 description: "Test description",
                 rrule: "FREQ=WEEKLY",
             });
             
             const googleEvent = googleCalendarAPI.toGoogleEvent(originalLocalEvent, []);
-            // Simulate Google returning an ID and updated timestamp
             googleEvent.id = "g-1";
             googleEvent.updated = "2024-05-01T00:00:00.000Z";
 
@@ -220,9 +211,8 @@ describe("GoogleCalendarAPI", () => {
             expect(restoredLocalEvent.taskId).toBe(originalLocalEvent.taskId);
             expect(restoredLocalEvent.type).toBe(originalLocalEvent.type);
             expect(restoredLocalEvent.title).toBe(originalLocalEvent.title);
-            expect(restoredLocalEvent.date).toBe(originalLocalEvent.date);
-            expect(restoredLocalEvent.start).toBe(originalLocalEvent.start);
-            expect(restoredLocalEvent.end).toBe(originalLocalEvent.end);
+            expect(restoredLocalEvent.startTime).toBe(originalLocalEvent.startTime);
+            expect(restoredLocalEvent.endTime).toBe(originalLocalEvent.endTime);
             expect(restoredLocalEvent.rrule).toBe(originalLocalEvent.rrule);
             expect(restoredLocalEvent.isAllDay).toBe(false);
             expect(restoredLocalEvent.googleId).toBe("g-1");
@@ -233,10 +223,8 @@ describe("GoogleCalendarAPI", () => {
                 id: "e-roundtrip-2",
                 type: "info",
                 title: "All Day Holiday",
-                date: "2024-12-25",
-                endDate: "2024-12-26",
-                start: 0,
-                end: HOURS_PER_DAY * MINUTES_IN_HOUR,
+                startTime: "2024-12-25T00:00:00",
+                endTime: "2024-12-26T00:00:00",
                 isAllDay: true,
             });
 
@@ -248,12 +236,10 @@ describe("GoogleCalendarAPI", () => {
 
             expect(restoredLocalEvent.id).toBe(originalLocalEvent.id);
             expect(restoredLocalEvent.title).toBe(originalLocalEvent.title);
-            expect(restoredLocalEvent.date).toBe(originalLocalEvent.date);
-            expect(restoredLocalEvent.endDate).toBe(originalLocalEvent.endDate);
+            expect(restoredLocalEvent.startTime).toBe(originalLocalEvent.startTime);
+            expect(restoredLocalEvent.endTime).toBe(originalLocalEvent.endTime);
             expect(restoredLocalEvent.isAllDay).toBe(true);
             expect(restoredLocalEvent.type).toBe(originalLocalEvent.type);
-            expect(restoredLocalEvent.start).toBe(0);
-            expect(restoredLocalEvent.end).toBe(HOURS_PER_DAY * MINUTES_IN_HOUR);
         });
     });
 });

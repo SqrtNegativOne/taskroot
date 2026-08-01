@@ -8,10 +8,9 @@ describe("rrule-utils", () => {
             {
                 id: "1",
                 type: "info",
-                start: 0,
-                end: 0,
+                startTime: "2026-07-15T00:00:00",
+                endTime: "2026-07-15T00:00:00",
                 title: "Normal Event",
-                date: "2026-07-15",
             }
         ];
         const viewStart = new Date("2026-07-01T00:00:00Z");
@@ -27,10 +26,9 @@ describe("rrule-utils", () => {
             {
                 id: "2",
                 type: "info",
-                start: 0,
-                end: 0,
+                startTime: "2026-07-10T00:00:00",
+                endTime: "2026-07-10T00:00:00",
                 title: "Daily Standup",
-                date: "2026-07-10",
                 rrule: "DTSTART:20260710T000000Z\nFREQ=DAILY;COUNT=5",
             }
         ];
@@ -38,7 +36,7 @@ describe("rrule-utils", () => {
         const viewEnd = new Date("2026-07-31T23:59:59Z");
 
         const result = expandEventsForView(baseEvents, viewStart, viewEnd);
-        expect(result.length).toBe(5); // eslint-disable-line typescript/no-magic-numbers
+        expect(result.length).toBe(5); // eslint-disable-line typescript/no-magic-numbers
         expect(result[0].isInstance).toBe(true);
         expect(result[0].baseEventId).toBe("2");
     });
@@ -48,21 +46,19 @@ describe("rrule-utils", () => {
             {
                 id: "3",
                 type: "info",
-                start: 0,
-                end: 0,
+                startTime: "2026-07-01T00:00:00",
+                endTime: "2026-07-01T00:00:00",
                 title: "Weekly Meeting",
-                date: "2026-07-01",
                 rrule: "DTSTART:20260701T000000Z\nFREQ=WEEKLY;COUNT=3",
             },
             {
                 id: "exception_1",
                 type: "info",
-                start: 0,
-                end: 0,
+                startTime: "2026-07-09T00:00:00",
+                endTime: "2026-07-09T00:00:00",
                 title: "Weekly Meeting (Moved)",
                 recurringEventId: "3",
-                originalStartDate: "2026-07-08",
-                date: "2026-07-09",
+                originalStartTime: "2026-07-08T00:00:00",
             }
         ];
         const viewStart = new Date("2026-07-01T00:00:00Z");
@@ -74,7 +70,7 @@ describe("rrule-utils", () => {
         // Actually the exception replaces the 07-08 one, but wait, the exception has date 07-09.
         const exception = result.find((e) => e.id === "exception_1");
         expect(exception).toBeDefined();
-        expect(exception?.date).toBe("2026-07-09");
+        expect(exception?.startTime).toBe("2026-07-09T00:00:00");
 
         // Check that we only have 3 instances from the series overall (including exception) + whatever else was in baseEvents if it didn't filter them out?
         // Wait, the exception is in baseEvents, but it doesn't have an rrule. So it will be passed through normally as well!

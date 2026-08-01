@@ -1,5 +1,6 @@
 import React from "react";
 import { useMemo } from "react";
+import { MS_PER_DAY } from "../../../core/utils/constants";
 import {
     ymd,
     addDays,
@@ -104,10 +105,11 @@ export function DateGrid({
                             today={today}
                             events={displayEvents.filter((e: HydratedEvent) => {
                                 const cellDate = ymd(c.date);
-                                if (!e.endDate) return e.date === cellDate;
-                                return (
-                                    cellDate >= e.date && cellDate <= e.endDate
-                                );
+                                const cellStart = new Date(`${cellDate}T00:00:00`).getTime();
+                                const cellEnd = cellStart + MS_PER_DAY;
+                                const eStart = new Date(e.startTime).getTime();
+                                const eEnd = new Date(e.endTime).getTime();
+                                return eStart < cellEnd && eEnd > cellStart;
                             })}
                             isWeek={isStrip}
                             dragState={dragState}

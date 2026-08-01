@@ -18,9 +18,26 @@ const createDefaultTask = (defaults: Partial<AppTask>, defaultDuration: number):
     est: defaultDuration || 0, added: new Date().toISOString(), ...defaults
 });
 
-const createDefaultEvent = (date: Date, start: number, end: number, isAllDay: boolean): AppEvent => ({
-    id: generateEventId(), title: "", date: ymd(date), endDate: ymd(date), start, end, type: isAllDay ? "info" : "busy", isAllDay
-});
+const createDefaultEvent = (date: Date, startMins: number, endMins: number, isAllDay: boolean): AppEvent => {
+    const dStr = ymd(date);
+    const dt = new Date(`${dStr}T00:00:00`);
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    const toIso = (mins: number) => {
+        const t = new Date(dt.getTime() + mins * 60000);
+        return `${t.getFullYear()}-${pad(t.getMonth() + 1)}-${pad(t.getDate())}T${pad(t.getHours())}:${pad(t.getMinutes())}:${pad(t.getSeconds())}`;
+    };
+    if (isAllDay) {
+        return {
+            id: generateEventId(), title: "", type: "info", isAllDay: true,
+            startTime: `${dStr}T00:00:00`,
+            endTime: `${ymd(new Date(dt.getTime() + 24 * 3600 * 1000))}T00:00:00`
+        };
+    }
+    return {
+        id: generateEventId(), title: "", type: "busy", isAllDay: false,
+        startTime: toIso(startMins), endTime: toIso(endMins)
+    };
+};
 
 export const canEditEvent = (ev: AppEvent | undefined, calendars: readonly {id: string, accessRole?: string}[]) => {
     if (!ev) return true;
@@ -40,9 +57,10 @@ export function usePlanActions(
     const createEvent = (task: AppTask, overrides: Partial<AppEvent>) => {
         const defaultCal = calendars.find(c => c.primary)?.id || "primary";
         const calData = calendars.find(c => c.id === defaultCal);
+        const dStr = ymd(timelineDate);
         setEvents(prev => [...prev, {
-            id: generateEventId(), taskId: task.id, date: ymd(timelineDate), endDate: ymd(timelineDate),
-            start: 0, end: MINUTES_IN_HOUR, type: "plan", isAllDay: false, title: task.title, 
+            id: generateEventId(), taskId: task.id, type: "plan", isAllDay: false, title: task.title,
+            startTime: `${dStr}T00:00:00`, endTime: `${dStr}T01:00:00`,
             googleCalendarId: defaultCal, category: calData?.summary || "", ...overrides
         }]);
     };
@@ -62,9 +80,9 @@ export function usePlanActions(
         setInspectorState({ type: "new_event", draft: newEvent });
     };
 
-    const onResizeEvent = (id: string, start: number, end: number) => {
+    const onResizeEvent = (id: string, startTime: string, endTime: string) => {
         if (!canEditEvent(events.find((e: AppEvent) => e.id === id), calendars)) return;
-        setEvents(prev => prev.map((e: AppEvent) => (e.id === id ? { ...e, start, end } : e)));
+        setEvents(prev => prev.map((e: AppEvent) => (e.id === id ? { ...e, startTime, endTime } : e)));
     };
 
     const onMoveEvent = onResizeEvent;

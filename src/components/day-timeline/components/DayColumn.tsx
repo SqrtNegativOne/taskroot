@@ -26,8 +26,8 @@ export interface DayColumnProps<T extends DragState = DragState> {
     sort: string;
     dragState?: T;
     setDragState?: (s: T | undefined) => void;
-    onResizeEvent?: (id: string, start: number, end: number) => void;
-    onMoveEvent?: (id: string, start: number, end: number) => void;
+    onResizeEvent?: (id: string, startTime: string, endTime: string) => void;
+    onMoveEvent?: (id: string, startTime: string, endTime: string) => void;
     onEventClick?: (ev: HydratedEvent) => void;
     onAddEvent?: (date: Date, start: number, end: number) => void;
     showTimeLabels?: boolean;
@@ -51,17 +51,52 @@ export function DayColumn<T extends DragState = DragState>({
     const { containerRef, createPreview, onGridPointerDown } = useEventCreation(date, onAddEvent);
 
     const laid = useMemo(() => {
+        const cellDate = ymd(date);
+        const cellStart = new Date(`${cellDate}T00:00:00`).getTime();
+        const cellEnd = cellStart + 24 * 60 * 60 * 1000;
+
         let dayEvents = events.filter((e: HydratedEvent) => {
-            const cellDate = ymd(date);
-            const inRange = e.endDate
-                ? cellDate >= e.date && cellDate <= e.endDate
-                : e.date === cellDate;
-            return inRange && !e.isAllDay;
+            if (e.isAllDay) return false;
+            const eStart = new Date(e.startTime).getTime();
+            const eEnd = new Date(e.endTime).getTime();
+            return eStart < cellEnd && eEnd > cellStart;
         });
+
         dayEvents = filterEvents(dayEvents, filter);
         dayEvents = sortEvents(dayEvents, sort);
-        return layoutEvents(dayEvents);
+        
+        const mapped = dayEvents.map(e => {
+            const eStart = new Date(e.startTime).getTime();
+            const eEnd = new Date(e.endTime).getTime();
+            const startMins = Math.max(0, (eStart - cellStart) / 60000);
+            const endMins = Math.min(1440, (eEnd - cellStart) / 60000);
+            return { event: e, startMins, endMins };
+        });
+
+        return layoutEvents(mapped);
     }, [events, date, filter, sort]);
+
+    const handleResize = (id: string, newStartMins: number, newEndMins: number) => {
+        const cellDate = ymd(date);
+        const cellStart = new Date(`${cellDate}T00:00:00`);
+        const newStartDt = new Date(cellStart.getTime() + newStartMins * 60000);
+        const newEndDt = new Date(cellStart.getTime() + newEndMins * 60000);
+        const pad = (n: number) => n.toString().padStart(2, '0');
+        const toIso = (dt: Date) => `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}:${pad(dt.getSeconds())}`;
+        
+        if (onResizeEvent) onResizeEvent(id, toIso(newStartDt), toIso(newEndDt));
+    };
+
+    const handleMove = (id: string, newStartMins: number, newEndMins: number) => {
+        const cellDate = ymd(date);
+        const cellStart = new Date(`${cellDate}T00:00:00`);
+        const newStartDt = new Date(cellStart.getTime() + newStartMins * 60000);
+        const newEndDt = new Date(cellStart.getTime() + newEndMins * 60000);
+        const pad = (n: number) => n.toString().padStart(2, '0');
+        const toIso = (dt: Date) => `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}:${pad(dt.getSeconds())}`;
+        
+        if (onMoveEvent) onMoveEvent(id, toIso(newStartDt), toIso(newEndDt));
+    };
 
     const dropPreview = dragState?.target?.kind === "day-time" && dragState.target.date === ymd(date) ? dragState.target : undefined;
 
@@ -100,15 +135,17 @@ export function DayColumn<T extends DragState = DragState>({
             <TimeGridBackground isToday={isToday} showLabels={showTimeLabels} />
             <CurrentTimeLine isToday={isToday} showLabels={showTimeLabels} />
 
-            {laid.map(({ event, lane, lanes }) => (
+            {laid.map(({ event, startMins, endMins, lane, lanes }) => (
                 <EventBlock
                     key={event.id}
                     event={event}
+                    startMins={startMins}
+                    endMins={endMins}
                     task={event.task}
                     lane={lane}
                     lanes={lanes}
-                    onResize={onResizeEvent}
-                    onMove={onMoveEvent}
+                    onResize={handleResize}
+                    onMove={handleMove}
                     dragState={dragState}
                     setDragState={setDragState}
                     onEventClick={onEventClick}

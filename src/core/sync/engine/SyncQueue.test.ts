@@ -92,9 +92,8 @@ describe("SyncQueue", () => {
             id: "1", 
             title: "Original Title", 
             type: "event",
-            date: "2023-10-10",
-            start: 1000,
-            end: 1100,
+            startTime: "2023-10-10T16:40:00",
+            endTime: "2023-10-10T18:20:00",
             createdAt: 0,
             updatedAt: 0
         };

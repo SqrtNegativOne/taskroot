@@ -27,9 +27,8 @@ describe("hydrateEvents", () => {
                 id: "e1",
                 title: "Dummy",
                 type: "plan",
-                date: "2026-05-20",
-                start: 600,
-                end: 660,
+                startTime: "2026-05-20T10:00:00",
+                endTime: "2026-05-20T11:00:00",
                 taskId: "t2",
             }
         ];
@@ -48,9 +47,8 @@ describe("hydrateEvents", () => {
             {
                 id: "e1",
                 type: "busy",
-                date: "2026-05-20",
-                start: 600,
-                end: 660,
+                startTime: "2026-05-20T10:00:00",
+                endTime: "2026-05-20T11:00:00",
                 title: "Team Sync",
             }
         ];
@@ -68,9 +66,8 @@ describe("hydrateEvents", () => {
                 id: "e1",
                 title: "Fake title",
                 type: "plan",
-                date: "2026-07-23",
-                start: 540,
-                end: 600,
+                startTime: "2026-07-23T09:00:00",
+                endTime: "2026-07-23T10:00:00",
                 taskId: "t1",
             },
         ];
@@ -100,5 +97,50 @@ describe("hydrateEvents", () => {
         ];
         hydrated = hydrateEvents(events, tasks);
         expect(hydrated[0].title).toBe("New Name");
+    });
+});
+
+describe("ISO Architecture specific scenarios", () => {
+    it("should handle events crossing midnight", () => {
+        const events: AppEvent[] = [
+            {
+                id: "e1",
+                type: "info",
+                title: "Late Night Event",
+                startTime: "2026-08-01T22:00:00",
+                endTime: "2026-08-02T02:00:00",
+            }
+        ];
+        expect(events[0].startTime).toBe("2026-08-01T22:00:00");
+        expect(events[0].endTime).toBe("2026-08-02T02:00:00");
+    });
+
+    it("should handle multi-day all-day events", () => {
+        const events: AppEvent[] = [
+            {
+                id: "e2",
+                type: "info",
+                title: "Vacation",
+                startTime: "2026-08-10T00:00:00",
+                endTime: "2026-08-15T00:00:00",
+                isAllDay: true,
+            }
+        ];
+        expect(events[0].isAllDay).toBe(true);
+        expect(events[0].startTime).toBe("2026-08-10T00:00:00");
+        expect(events[0].endTime).toBe("2026-08-15T00:00:00");
+    });
+
+    it("should enforce exact ISO string serialization format without trailing Z", () => {
+        const event: AppEvent = {
+            id: "e3",
+            type: "info",
+            title: "Floating Time Event",
+            startTime: "2026-08-01T09:00:00",
+            endTime: "2026-08-01T10:00:00",
+        };
+        expect(event.startTime.endsWith("Z")).toBe(false);
+        expect(event.endTime.endsWith("Z")).toBe(false);
+        expect(event.startTime).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/);
     });
 });

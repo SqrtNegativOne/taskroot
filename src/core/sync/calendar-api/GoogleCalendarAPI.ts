@@ -1,11 +1,10 @@
-import { MINUTES_IN_HOUR, HOURS_PER_DAY, MINUTES_PER_DAY, HTTP_UNAUTHORIZED, HTTP_GONE, HTTP_FORBIDDEN, HTTP_TOO_MANY_REQUESTS, MS_PER_SECOND, MS_PER_MINUTE } from "../../utils/constants";
+import { HTTP_UNAUTHORIZED, HTTP_GONE, HTTP_FORBIDDEN, HTTP_TOO_MANY_REQUESTS, MS_PER_SECOND } from "../../utils/constants";
 import { fetchWithTimeout } from "../../store/api";
 import type { AppTask, AppEvent } from "../../domain/models";
 import type { IAuthManager } from "../auth/types";
 import type { ICalendarAPI } from "./types";
 /// <reference types="gapi.client.calendar" />
 
-const pad = (n: number) => n.toString().padStart(2, "0");
 
 export class GoogleCalendarAPI implements ICalendarAPI {
     private authManager: IAuthManager;
@@ -105,33 +104,17 @@ export class GoogleCalendarAPI implements ICalendarAPI {
     }
 
     toGoogleEvent(localEvent: AppEvent, _tasks: AppTask[]): gapi.client.calendar.Event {
-        const dtStr = (date: string, mins: number) => {
-            const parts = date.split("-").map(Number);
-            const y = parts[0];
-            const m = parts[1];
-            let d = parts[2];
-            if (mins >= MINUTES_PER_DAY) { d += Math.floor(mins / MINUTES_PER_DAY); mins %= MINUTES_PER_DAY; }
-            const dt = new Date(y, m - 1, d);
-            return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(Math.floor(mins / MINUTES_IN_HOUR))}:${pad(mins % MINUTES_IN_HOUR)}:00`;
-        };
         const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
         
         let startObj: gapi.client.calendar.EventDateTime;
         let endObj: gapi.client.calendar.EventDateTime;
 
         if (localEvent.isAllDay) {
-            const dStr = localEvent.date;
-            let endDStr = localEvent.endDate;
-            if (!endDStr) {
-                const parts = dStr.split("-").map(Number);
-                const dt = new Date(parts[0], parts[1] - 1, parts[2] + 1);
-                endDStr = `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
-            }
-            startObj = { date: dStr };
-            endObj = { date: endDStr };
+            startObj = { date: localEvent.startTime.split("T")[0] };
+            endObj = { date: localEvent.endTime.split("T")[0] };
         } else {
-            startObj = { dateTime: dtStr(localEvent.date, localEvent.start), timeZone };
-            endObj = { dateTime: dtStr(localEvent.date, localEvent.end), timeZone };
+            startObj = { dateTime: localEvent.startTime, timeZone };
+            endObj = { dateTime: localEvent.endTime, timeZone };
         }
 
         return {
@@ -162,13 +145,13 @@ export class GoogleCalendarAPI implements ICalendarAPI {
                 updatedAt: googleEvent.updated ? new Date(googleEvent.updated).getTime() : 0,
             };
         }
-        const { date, endDate, start, end, isAllDay } = extractEventTime(googleEvent);
+        const { startTime, endTime, isAllDay } = extractEventTime(googleEvent);
         const { taskId, id, type } = extractEventMetadata(googleEvent);
         const rrule = parseRecurrenceRule(googleEvent.recurrence);
 
         return {
             id, googleId: googleEvent.id, googleCalendarId: calendarId, taskId,
-            title: googleEvent.summary ?? "", date, endDate, start, end, type,
+            title: googleEvent.summary ?? "", startTime, endTime, type,
             category: calendarSummary, rrule, isAllDay,
             updatedAt: googleEvent.updated ? new Date(googleEvent.updated).getTime() : Date.now(),
         };
@@ -179,17 +162,19 @@ function extractEventTime(googleEvent: gapi.client.calendar.Event) {
     if (googleEvent.start?.dateTime) {
         const startDt = new Date(googleEvent.start.dateTime);
         const endDt = new Date(googleEvent.end?.dateTime || googleEvent.start.dateTime);
-        const start = startDt.getHours() * MINUTES_IN_HOUR + startDt.getMinutes();
-        const end = start + Math.floor((endDt.getTime() - startDt.getTime()) / MS_PER_MINUTE);
+        const pad = (n: number) => n.toString().padStart(2, "0");
+        const toFloating = (dt: Date) => `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}:${pad(dt.getSeconds())}`;
         return {
-            date: `${startDt.getFullYear()}-${pad(startDt.getMonth() + 1)}-${pad(startDt.getDate())}`,
-            start,
-            end,
+            startTime: toFloating(startDt),
+            endTime: toFloating(endDt),
             isAllDay: false
         };
     }
     if (!googleEvent.start?.date) throw new Error("Google event missing time information");
-    return { date: googleEvent.start.date, endDate: googleEvent.end?.date, start: 0, end: HOURS_PER_DAY * MINUTES_IN_HOUR, isAllDay: true }; 
+    
+    const startDate = googleEvent.start.date;
+    const endDate = googleEvent.end?.date || startDate;
+    return { startTime: `${startDate}T00:00:00`, endTime: `${endDate}T00:00:00`, isAllDay: true }; 
 }
 
 function getEventId(googleEvent: gapi.client.calendar.Event) {

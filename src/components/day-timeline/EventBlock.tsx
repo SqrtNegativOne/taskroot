@@ -1,6 +1,6 @@
 import { MINUTES_IN_HOUR, HOURS_PER_DAY } from "../../core/utils/constants";
 import React, { useState, Fragment } from "react";
-import { PAD2, parseYMD } from "../../core/store/data";
+import { PAD2 } from "../../core/store/data";
 import type { EventBlockProps } from "./types";
 import { PX_PER_MIN, SNAP_MIN } from "./types";
 import type { AppEvent } from "../../core/domain/models";
@@ -36,6 +36,8 @@ function getEventClassNames(
 
 export function EventBlock<T extends import("./types").DragState = import("./types").DragState>({
     event,
+    startMins,
+    endMins,
     task,
     lane,
     lanes,
@@ -53,8 +55,8 @@ export function EventBlock<T extends import("./types").DragState = import("./typ
         e.stopPropagation();
         e.preventDefault();
         const startY = e.clientY;
-        const startStart = event.start;
-        const startEnd = event.end || 0;
+        const startStart = startMins;
+        const startEnd = endMins;
         const move = (ev: PointerEvent) => {
             const dy = ev.clientY - startY;
             const dm = Math.round(dy / PX_PER_MIN / SNAP_MIN) * SNAP_MIN;
@@ -86,8 +88,8 @@ export function EventBlock<T extends import("./types").DragState = import("./typ
         if (e.button !== 0) return;
         e.preventDefault();
         const startY = e.clientY;
-        const startStart = event.start || 0;
-        const startEnd = event.end || 0;
+        const startStart = startMins;
+        const startEnd = endMins;
         let moved = false;
         let finalDm = 0;
         const move = (ev: PointerEvent) => {
@@ -145,9 +147,7 @@ export function EventBlock<T extends import("./types").DragState = import("./typ
         
         let isPastDue = false;
         if (event.type === 'plan' && !event.isDone) {
-            const date = parseYMD(event.date);
-            date.setHours(Math.floor(end / MINUTES_IN_HOUR), end % MINUTES_IN_HOUR, 0, 0);
-            if (date.getTime() < Date.now()) {
+            if (new Date(event.endTime).getTime() < Date.now()) {
                 isPastDue = true;
             }
         }
@@ -179,8 +179,8 @@ export function EventBlock<T extends import("./types").DragState = import("./typ
                         {title}
                     </div>
                     <div className="day-event-time">
-                        {PAD2(Math.floor(start / MINUTES_IN_HOUR))}:{PAD2(start % MINUTES_IN_HOUR)} –{" "}
-                        {PAD2(Math.floor(end / MINUTES_IN_HOUR))}:{PAD2(end % MINUTES_IN_HOUR)}
+                        {PAD2(Math.floor(Math.round(start) / MINUTES_IN_HOUR))}:{PAD2(Math.round(start) % MINUTES_IN_HOUR)} –{" "}
+                        {PAD2(Math.floor(Math.round(end) / MINUTES_IN_HOUR))}:{PAD2(Math.round(end) % MINUTES_IN_HOUR)}
                     </div>
                     {hasTags && (
                         <div className="day-event-tags">
@@ -207,15 +207,15 @@ export function EventBlock<T extends import("./types").DragState = import("./typ
     if (dragOffset !== undefined) {
         return (
             <Fragment>
-                {renderBlock(event.start || 0, event.end || 0, true, false)}
+                {renderBlock(startMins, endMins, true, false)}
                 {renderBlock(
-                    (event.start || 0) + dragOffset,
-                    (event.end || 0) + dragOffset,
+                    startMins + dragOffset,
+                    endMins + dragOffset,
                     false,
                     true,
                 )}
             </Fragment>
         );
     }
-    return renderBlock(event.start || 0, event.end || 0, false, false);
+    return renderBlock(startMins, endMins, false, false);
 }

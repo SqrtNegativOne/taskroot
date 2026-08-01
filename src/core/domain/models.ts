@@ -39,9 +39,8 @@ export interface AppEvent {
     googleCalendarId?: string;
     taskId?: string;
     title: string;
-    date: DateString;
-    start: number;
-    end: number;
+    startTime: string;
+    endTime: string;
     isAllDay?: boolean;
     type: string;
     category?: string;
@@ -51,6 +50,6 @@ export interface AppEvent {
     _deleted?: boolean;
     isInstance?: boolean;
     baseEventId?: string;
-    endDate?: DateString;
+
     [key: string]: unknown;
 }

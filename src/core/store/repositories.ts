@@ -1,4 +1,5 @@
 import { storeRegistry } from "./storeRegistry";
+import { MINUTES_IN_HOUR, HOURS_PER_DAY, MINUTES_PER_DAY } from "../utils/constants";
 import { taskSync, eventSync, pusher } from "../sync";
 import { SETTINGS_SCHEMA, DEFAULT_SETTINGS } from "./settingsSchema";
 import type { AppSettings } from "./settingsSchema";
@@ -128,10 +129,45 @@ function onEventsDelta(result: AppEvent[]) {
     pusher.trigger();
 }
 
+function parseEvents(parsed: unknown): AppEvent[] {
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map((ev: unknown) => {
+        if (!isRecord(ev)) return ev;
+        if (ev.date !== undefined && ev.startTime === undefined) {
+            const dateStr = ev.date as string;
+            const startMins = typeof ev.start === "number" ? ev.start : 0;
+            const endMins = typeof ev.end === "number" ? ev.end : (ev.isAllDay ? MINUTES_PER_DAY : MINUTES_IN_HOUR);
+            
+            const pad = (n: number) => n.toString().padStart(2, "0");
+            const sh = Math.floor(startMins / MINUTES_IN_HOUR);
+            const sm = startMins % MINUTES_IN_HOUR;
+            let eh = Math.floor(endMins / MINUTES_IN_HOUR);
+            const em = endMins % MINUTES_IN_HOUR;
+            let eDate = dateStr;
+            
+            if (eh >= HOURS_PER_DAY) {
+                 eh -= HOURS_PER_DAY;
+                 const d = new Date(dateStr + "T00:00:00");
+                 d.setDate(d.getDate() + 1);
+                 eDate = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+            }
+
+            ev.startTime = `${dateStr}T${pad(sh)}:${pad(sm)}:00`;
+            ev.endTime = `${eDate}T${pad(eh)}:${pad(em)}:00`;
+            
+            delete ev.date;
+            delete ev.endDate;
+            delete ev.start;
+            delete ev.end;
+        }
+        return ev;
+    }) as AppEvent[];
+}
+
 export const repos = {
     settings: new Repository<AppSettings>("settings", DEFAULT_SETTINGS, { parser: parseSettings }),
     tasks: new Repository<AppTask[]>("tasks", [], { interceptor: (next, prev) => injectUpdatedAt(next, prev), onDelta: onTasksDelta }),
-    events: new Repository<AppEvent[]>("events", [], { interceptor: (next, prev) => injectUpdatedAt(next, prev), onDelta: onEventsDelta }),
+    events: new Repository<AppEvent[]>("events", [], { parser: parseEvents, interceptor: (next, prev) => injectUpdatedAt(next, prev), onDelta: onEventsDelta }),
     distractions: new Repository<DistractionRow[]>("distractions", []),
     distractionStatuses: new Repository<DistractionStatus[]>("distractionStatuses", DEFAULT_STATUSES),
     distractionColumns: new Repository<DistractionColumn[]>("distractionColumns", DEFAULT_DISTRACTION_COLUMNS),

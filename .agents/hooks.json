@@ -3,7 +3,7 @@
     "Stop": [
       {
         "type": "command",
-        "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File .agents/ping.ps1",
+        "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ping.ps1",
         "timeout": 5
       }
     ]

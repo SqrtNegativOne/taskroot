@@ -1,4 +1,3 @@
-import { MINUTES_IN_HOUR } from "../../../core/utils/constants";
 import type { AppTask, AppEvent } from "../../../core/domain/models";
 import { ymd } from "../../../core/store/data";
 
@@ -9,8 +8,8 @@ export function sortTasksForSelection(
 ): AppTask[] {
     const todayStr = ymd(new Date());
     const now = new Date();
-    const nowMin = now.getHours() * MINUTES_IN_HOUR + now.getMinutes();
-
+    const nowMs = now.getTime();
+    
     let filtered = pendingTasks;
     if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
@@ -21,21 +20,25 @@ export function sortTasksForSelection(
 
     return filtered.toSorted((a, b) => {
         const aEvents = safeEvents.filter(
-            (e) => e.taskId === a.id && (e.date === todayStr || e.endDate === todayStr)
+            (e) => e.taskId === a.id && (e.startTime.startsWith(todayStr) || e.endTime.startsWith(todayStr))
         );
         const bEvents = safeEvents.filter(
-            (e) => e.taskId === b.id && (e.date === todayStr || e.endDate === todayStr)
+            (e) => e.taskId === b.id && (e.startTime.startsWith(todayStr) || e.endTime.startsWith(todayStr))
         );
 
         const aThisHour = aEvents.some(
-            (e) =>
-                (e.start || 0) <= nowMin &&
-                ((e.end || 0) >= nowMin || (e.start || 0) + MINUTES_IN_HOUR >= nowMin)
+            (e) => {
+                const s = new Date(e.startTime).getTime();
+                const en = new Date(e.endTime).getTime();
+                return s <= nowMs && (en >= nowMs || s + 3600000 >= nowMs);
+            }
         );
         const bThisHour = bEvents.some(
-            (e) =>
-                (e.start || 0) <= nowMin &&
-                ((e.end || 0) >= nowMin || (e.start || 0) + MINUTES_IN_HOUR >= nowMin)
+            (e) => {
+                const s = new Date(e.startTime).getTime();
+                const en = new Date(e.endTime).getTime();
+                return s <= nowMs && (en >= nowMs || s + 3600000 >= nowMs);
+            }
         );
 
         if (aThisHour !== bThisHour) return aThisHour ? -1 : 1;

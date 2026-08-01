@@ -1,8 +1,7 @@
 import React from "react";
-import { ymd, hhmmShort, PAD2, sameDay, parseYMD } from "../../../core/store/data";
+import { ymd, PAD2, sameDay } from "../../../core/store/data";
 import type { HydratedEvent } from "../../../core/domain/events";
 import { Icon } from "../../../components/icon";
-import { MINUTES_IN_HOUR } from "../../../core/utils/constants";
 
 const OPACITY_FADED = 0.4;
 const ANIMATION_DURATION_MS = 150;
@@ -164,10 +163,7 @@ export function DayCell({
 
 function checkPastDue(ev: HydratedEvent): boolean {
     if (ev.type !== 'plan' || ev.isDone) return false;
-    const date = parseYMD(ev.date);
-    const end = ev.end || 0;
-    date.setHours(Math.floor(end / MINUTES_IN_HOUR), end % MINUTES_IN_HOUR, 0, 0);
-    return date.getTime() < Date.now();
+    return new Date(ev.endTime).getTime() < Date.now();
 }
 
 function EventItem({
@@ -191,7 +187,7 @@ function EventItem({
     return (
         <div
             className={`day-cell-event ev-${ev.type} ${pri !== undefined ? `pri-bar-${pri}` : ""} ${isDone ? "is-done" : ""} ${isEntering ? "is-entering" : ""} ${isRemoving ? "is-removing" : ""}`}
-            title={`${ev.isAllDay ? "All Day" : hhmmShort(ev.start)} — ${title}`}
+            title={`${ev.isAllDay ? "All Day" : ev.startTime.substring(11, 16)} — ${title}`}
             style={{
                 cursor: "grab",
                 opacity: dragState?.event?.id === ev.id ? OPACITY_FADED : 1,
@@ -203,7 +199,7 @@ function EventItem({
         >
             {!ev.isAllDay && (
                 <span className="day-cell-event-time">
-                    {hhmmShort(ev.start)}
+                    {ev.startTime.substring(11, 16)}
                 </span>
             )}
             <span className="day-cell-event-title" style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>

@@ -1,4 +1,4 @@
-import { MINUTES_IN_HOUR, HOURS_PER_DAY, MINUTES_PER_DAY, HTTP_UNAUTHORIZED, HTTP_GONE, HTTP_FORBIDDEN, HTTP_TOO_MANY_REQUESTS, MS_PER_SECOND } from "../../utils/constants";
+import { MINUTES_IN_HOUR, HOURS_PER_DAY, MINUTES_PER_DAY, HTTP_UNAUTHORIZED, HTTP_GONE, HTTP_FORBIDDEN, HTTP_TOO_MANY_REQUESTS, MS_PER_SECOND, MS_PER_MINUTE } from "../../utils/constants";
 import { fetchWithTimeout } from "../../store/api";
 import type { AppTask, AppEvent } from "../../domain/models";
 import type { IAuthManager } from "../auth/types";
@@ -179,10 +179,12 @@ function extractEventTime(googleEvent: gapi.client.calendar.Event) {
     if (googleEvent.start?.dateTime) {
         const startDt = new Date(googleEvent.start.dateTime);
         const endDt = new Date(googleEvent.end?.dateTime || googleEvent.start.dateTime);
+        const start = startDt.getHours() * MINUTES_IN_HOUR + startDt.getMinutes();
+        const end = start + Math.floor((endDt.getTime() - startDt.getTime()) / MS_PER_MINUTE);
         return {
             date: `${startDt.getFullYear()}-${pad(startDt.getMonth() + 1)}-${pad(startDt.getDate())}`,
-            start: startDt.getHours() * MINUTES_IN_HOUR + startDt.getMinutes(),
-            end: (endDt.getDate() !== startDt.getDate() && endDt.getTime() > startDt.getTime()) ? HOURS_PER_DAY * MINUTES_IN_HOUR : endDt.getHours() * MINUTES_IN_HOUR + endDt.getMinutes(),
+            start,
+            end,
             isAllDay: false
         };
     }

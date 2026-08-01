@@ -84,7 +84,7 @@ export function InspectorPane({
         if (!currentEvent) return false;
         const calId = currentEvent.googleCalendarId || calendars.find((c: CalendarData) => c.primary)?.id || "primary";
         const cal = calendars.find((c: CalendarData) => c.id === calId);
-        return Boolean(cal && (cal.accessRole === "reader" || cal.accessRole === "freeBusyReader"));
+        return Boolean(cal && cal.accessRole !== "owner" && cal.accessRole !== "writer");
     }, [currentEvent, calendars]);
 
     const title = getInspectorTitle(currentTask, currentEvent, tasks);

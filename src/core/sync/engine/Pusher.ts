@@ -48,7 +48,14 @@ export class Pusher {
                 await sync.processPushItem(taskOrEvent);
                 this.pushQueue.remove(taskOrEvent);
             } catch (e: unknown) {
-                console.error("Push failed, keeping in queue", e);
+                console.error("Push failed", e);
+                if (e instanceof Error && (e.message.includes("403") || e.message.includes("404") || e.message.includes("400"))) {
+                    this.pushQueue.remove(taskOrEvent);
+                    const itemName = taskOrEvent.item.title || "Unknown item";
+                    syncState.error = `Sync ${taskOrEvent.action} item "${itemName}" discarded because of error: ${e.message}`;
+                    continue;
+                }
+                
                 syncState.error = e instanceof Error ? e.message : "Error syncing item to Google.";
                 break;
             }

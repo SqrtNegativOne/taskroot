@@ -1,11 +1,7 @@
 import React from "react";
 import type { AppEvent, AppTask } from "../../core/domain/models";
-import { isDateString } from "../../core/domain/models";
-import { minToTime } from "./inspector-utils";
-import { timeToMin } from "./inspector-utils";
 import { RepeatSelect } from "./inspector-shared";
-import { Icon } from "../icon";
-
+import { DateTimeGrid } from "./inspector-datetime";
 
 import "./inspector.css";
 
@@ -67,8 +63,8 @@ function EventCalendarSelector({ event, calendars, updateEvent, isReadOnlyCalend
                 }}
             >
                 {calendars.map((c) => (
-                    <option key={c.id} value={c.id} disabled={c.accessRole === "reader" || c.accessRole === "freeBusyReader"}>
-                        {c.summary}{c.accessRole === "reader" || c.accessRole === "freeBusyReader" ? " (Read-Only)" : ""}
+                    <option key={c.id} value={c.id} disabled={c.accessRole !== "owner" && c.accessRole !== "writer"}>
+                        {c.summary}{c.accessRole !== "owner" && c.accessRole !== "writer" ? " (Read-Only)" : ""}
                     </option>
                 ))}
             </select>
@@ -93,156 +89,6 @@ function EventRepeatControls({ event, updateEvent, isReadOnlyCalendar }: { event
                     disabled={isReadOnlyCalendar}
                     onChange={(e) => updateEvent(event.id, { rrule: e.target.value || undefined })}
                 />
-            </div>
-        </div>
-    );
-}
-
-function DateTimeGrid({ event, updateEvent, isReadOnlyCalendar, showEndDate, setShowEndDate }: { event: AppEvent, updateEvent: (id: string, updates: Partial<AppEvent>) => void, isReadOnlyCalendar: boolean, showEndDate: boolean, setShowEndDate: (val: boolean) => void }) {
-    const hasTime = !event.isAllDay;
-    const hasEndDate = showEndDate;
-
-    const handleAddEndDate = () => {
-        if (isReadOnlyCalendar) return;
-        setShowEndDate(true);
-        if (!event.endDate || event.endDate < event.date) {
-            updateEvent(event.id, { endDate: event.date });
-        }
-    };
-
-    const handleRemoveEndDate = () => {
-        if (isReadOnlyCalendar) return;
-        setShowEndDate(false);
-        updateEvent(event.id, { endDate: event.date });
-    };
-
-    const handleAddTime = () => {
-        if (isReadOnlyCalendar) return;
-        const updates: Partial<AppEvent> = { isAllDay: false };
-        if (event.type !== "plan") updates.type = "busy";
-        
-        // Provide sensible defaults if the event lacks valid start/end times
-        const s = Number(event.start);
-        const e = Number(event.end);
-        if (
-            isNaN(s) || 
-            isNaN(e) || 
-            (s === 0 && (e === 0 || isNaN(e))) ||
-            (s === 0 && e === 1440) || // All-day events often default to 00:00 -> 24:00
-            s === e // Invalid zero-duration events
-        ) {
-            updates.start = 9 * 60; // 9:00 AM
-            updates.end = 10 * 60;  // 10:00 AM
-        }
-
-        
-        updateEvent(event.id, updates);
-    };
-
-    const handleRemoveTime = () => {
-        if (isReadOnlyCalendar) return;
-        const updates: Partial<AppEvent> = { isAllDay: true };
-        if (event.type !== "plan") updates.type = "info";
-        updateEvent(event.id, updates);
-    };
-
-    return (
-        <div className="datetime-grid-container">
-            <div className={`dtg-layout dtg-has-time-${hasTime} dtg-has-end-${hasEndDate}`}>
-                {hasTime && (
-                    <>
-                        <div className="dtg-field dtg-time-start">
-                            <input
-                                type="time"
-                                className="inspector-date-input"
-                                value={minToTime(Number(event.start))}
-                                disabled={isReadOnlyCalendar}
-                                onChange={(e) => updateEvent(event.id, { start: timeToMin(e.target.value) })}
-                            />
-                        </div>
-                        <div className="dtg-arrow dtg-time-arrow">
-                            <Icon name="arrow_forward" size={18} />
-                        </div>
-                        <div className="dtg-field dtg-time-end">
-                            <input
-                                type="time"
-                                className="inspector-date-input"
-                                value={minToTime(event.end)}
-                                disabled={isReadOnlyCalendar}
-                                onChange={(e) => updateEvent(event.id, { end: timeToMin(e.target.value) })}
-                            />
-                        </div>
-                        <div className="dtg-action dtg-time-action">
-                            <button className="dtg-btn-icon" onClick={handleRemoveTime} disabled={isReadOnlyCalendar} title="Remove time">
-                                <Icon name="close" size={16} />
-                            </button>
-                        </div>
-                    </>
-                )}
-
-                <div className="dtg-field dtg-date-start">
-                    <input
-                        type="date"
-                        className="inspector-date-input"
-                        value={String(event.date)}
-                        disabled={isReadOnlyCalendar}
-                        onChange={(e) => {
-                            if (isDateString(e.target.value)) {
-                                const updates: Partial<AppEvent> = { date: e.target.value };
-                                if (event.endDate && event.endDate >= event.date) {
-                                    if (event.endDate === event.date) {
-                                        updates.endDate = e.target.value;
-                                    } else if (e.target.value > event.endDate) {
-                                        updates.endDate = e.target.value;
-                                    }
-                                }
-                                updateEvent(event.id, updates);
-                            }
-                        }}
-                    />
-                </div>
-
-                {hasEndDate ? (
-                    <>
-                        <div className="dtg-arrow dtg-date-arrow">
-                            <Icon name="arrow_forward" size={18} />
-                        </div>
-                        <div className="dtg-field dtg-date-end">
-                            <input
-                                type="date"
-                                className="inspector-date-input"
-                                value={String(event.endDate || event.date)}
-                                min={String(event.date)}
-                                disabled={isReadOnlyCalendar}
-                                onChange={(e) => { if (isDateString(e.target.value)) updateEvent(event.id, { endDate: e.target.value }); }}
-                            />
-                        </div>
-                        <div className="dtg-action dtg-date-action">
-                            <button className="dtg-btn-icon" onClick={handleRemoveEndDate} disabled={isReadOnlyCalendar} title="Remove end date">
-                                <Icon name="close" size={16} />
-                            </button>
-                        </div>
-                    </>
-                ) : (
-                    <div className="dtg-inline-actions">
-                        {!hasTime && (
-                            <button className="dtg-btn-icon" onClick={handleAddTime} disabled={isReadOnlyCalendar} title="Add time">
-                                <Icon name="more_time" size={18} />
-                            </button>
-                        )}
-                        <button className="dtg-btn-icon" onClick={handleAddEndDate} disabled={isReadOnlyCalendar} title="Add end date">
-                            <Icon name="transition_push" size={18} />
-                        </button>
-                    </div>
-                )}
-
-                {hasTime && !hasEndDate && (
-                    <div className="dtg-bottom-actions">
-                        <button className="dtg-btn-icon" onClick={handleAddEndDate} disabled={isReadOnlyCalendar} title="Add end date">
-                            <Icon name="transition_push" size={18} />
-                        </button>
-                    </div>
-                )}
             </div>
         </div>
     );

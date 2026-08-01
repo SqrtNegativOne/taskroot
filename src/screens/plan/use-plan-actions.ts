@@ -25,7 +25,7 @@ const createDefaultEvent = (date: Date, start: number, end: number, isAllDay: bo
 export const canEditEvent = (ev: AppEvent | undefined, calendars: readonly {id: string, accessRole?: string}[]) => {
     if (!ev) return true;
     const cal = calendars.find(c => c.id === (ev.googleCalendarId || "primary"));
-    return !cal || (cal.accessRole !== "reader" && cal.accessRole !== "freeBusyReader");
+    return !cal || cal.accessRole === "owner" || cal.accessRole === "writer";
 };
 
 export function usePlanActions(

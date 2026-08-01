@@ -43,6 +43,7 @@ Taskroot is a web-based and desktop task management app focusing on planning, ex
 - **Time Logging**: Stopwatch sessions (Axleless, Flowtime, Guzey) are logged to the `time_logs` store, optionally associated with a task.
 - **MiniTracker**: When the main Electron window is minimized or closed, a frameless transparent window (`miniWin`) opens to show the timer in a compact form, using the `/?minitracker=true` route. **CRITICAL:** There should be NO buttons on the mini tracker window. Restoring the app or other actions should be done via keyboard shortcuts.
 - **Settings Schema**: When adding settings to `settingsSchema/settingsSchema.tsx`, if a setting is self-explanatory, do NOT include a `description` property. Do not have subheadings (`section`) unless the related settings you are clumping in them are very similar.
+- **Time Representation**: The application uses a "minutes from midnight" notation for `AppEvent` `start` and `end` times, coupled with a base `date` string (e.g., `start: 540` for 9:00 AM). This optimizes UI rendering for drag-and-drop on daily grids (where 1 min = 1 pixel) and simplifies daily math. However, be aware of quirks: for events spanning past midnight or multiple days, `end` will exceed `1440` (e.g., `1500` means 1:00 AM the next day). Care must also be taken when converting these floating times to absolute timestamps, as Daylight Saving Time transitions and timezone contexts can complicate the conversion during syncs (like with Google Calendar).
 
 ## Style (Important)
 - Prefer inline exports over bottom exports.

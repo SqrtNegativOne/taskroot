@@ -35,7 +35,9 @@ function useCurrentItem(
             return { currentTask: taskDraft, currentEvent: undefined, currentItem: draftItem, isCurrentTask: true, isNew: true };
         }
         case "new_event": {
-            const eventDraft = (draftItem && "date" in draftItem) ? draftItem : undefined;
+            // Necessary because TS cannot infer that checking for 'date' guarantees an AppEvent here
+            // oxlint-disable-next-line typescript/consistent-type-assertions
+            const eventDraft = (draftItem && "date" in draftItem) ? (draftItem as AppEvent) : undefined;
             return { currentTask: undefined, currentEvent: eventDraft, currentItem: draftItem, isCurrentTask: false, isNew: true };
         }
         case "task": {
@@ -62,7 +64,7 @@ export function InspectorPane({
 
     const [activeState, setActiveState] = React.useState<InspectorState>();
     const [draftItem, setDraftItem] = React.useState<AppTask | AppEvent>();
-    const draftRef = React.useRef<AppTask | AppEvent | undefined>();
+    const draftRef = React.useRef<AppTask | AppEvent | undefined>(undefined);
 
     React.useEffect(() => {
         if (inspectorState?.type === "new_task" || inspectorState?.type === "new_event") {
@@ -103,7 +105,9 @@ export function InspectorPane({
     const updateEvent = React.useCallback((id: string, updates: Partial<AppEvent>) => {
         if (isNew && draftRef.current && draftRef.current.id === id) {
             if ("date" in draftRef.current) {
-                const next: AppEvent = { ...draftRef.current, ...updates };
+                // Necessary because spreading a narrowed union type with Partial updates loses strict type fidelity in TS
+                // oxlint-disable-next-line typescript/consistent-type-assertions
+                const next = { ...draftRef.current, ...updates } as AppEvent;
                 draftRef.current = next;
                 setDraftItem(next);
             }
@@ -148,9 +152,13 @@ export function InspectorPane({
         if (isNew && draft) {
             if (draft.title && draft.title.trim() !== "") {
                 if ("status" in draft) {
-                    setTasks((ts) => [draft, ...ts]);
+                    // Necessary because TS cannot infer the narrowed type inside the generic callback
+                    // oxlint-disable-next-line typescript/consistent-type-assertions
+                    setTasks((ts) => [draft as AppTask, ...ts]);
                 } else if ("date" in draft) {
-                    setEvents((es) => [...es, draft]);
+                    // Necessary because TS cannot infer the narrowed type inside the generic callback
+                    // oxlint-disable-next-line typescript/consistent-type-assertions
+                    setEvents((es) => [...es, draft as AppEvent]);
                 }
             }
         }

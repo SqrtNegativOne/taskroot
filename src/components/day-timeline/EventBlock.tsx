@@ -18,18 +18,19 @@ const DEFAULT_LABEL_OFFSET_PX = 56;
 
 
 
+const SHORT_EVENT_DURATION_MINS = 30;
+
 function getEventClassNames(
     event: AppEvent,
-    compact: boolean,
-    isGhost: boolean,
-    isFloating: boolean
+    opts: { compact: boolean; isGhost: boolean; isFloating: boolean; isShort: boolean }
 ): string {
     const classNames = ["day-event", `ev-${event.type}`];
     if (event.priority) classNames.push(`pri-bar-${event.priority}`);
-    if (compact) classNames.push("is-compact");
+    if (opts.compact) classNames.push("is-compact");
+    if (opts.isShort && !opts.compact) classNames.push("is-short");
     if (event.isDone) classNames.push("is-done");
-    if (isGhost) classNames.push("is-ghost");
-    if (isFloating) classNames.push("is-floating");
+    if (opts.isGhost) classNames.push("is-ghost");
+    if (opts.isFloating) classNames.push("is-floating");
     return classNames.join(" ");
 }
 
@@ -126,8 +127,9 @@ export function EventBlock<T extends import("./types").DragState = import("./typ
         const top = start * PX_PER_MIN;
         const height = (end - start) * PX_PER_MIN;
         const compact = height < COMPACT_EVENT_HEIGHT_PX;
+        const isShort = (end - start) <= SHORT_EVENT_DURATION_MINS;
         
-        const classNames = getEventClassNames(event, compact, isGhost, isFloating);
+        const classNames = getEventClassNames(event, { compact, isGhost, isFloating, isShort });
 
         const style: React.CSSProperties = {
             top: `${top}px`,

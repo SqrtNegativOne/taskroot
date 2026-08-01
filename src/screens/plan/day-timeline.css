@@ -111,6 +111,22 @@
   .day-event.is-compact .day-event-time { display: none; }
   .day-event.is-compact { padding: 1px 8px; }
   .day-event.is-compact .day-event-title { font-size: 0.78em; }
+  
+  .day-event.is-short .day-event-inner {
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+  }
+  .day-event.is-short .day-event-title {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+  .day-event.is-short .day-event-time {
+    flex: 0 0 auto;
+  }
+  .day-event.is-short .day-event-tags {
+    display: none;
+  }
 
   .day-event-handle {
     position: absolute; left: 0; right: 0;

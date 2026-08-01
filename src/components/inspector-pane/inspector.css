@@ -196,3 +196,86 @@
     align-items: center;
     justify-content: center;
 }
+
+/* DateTime Grid */
+.datetime-grid-container {
+    background: var(--bg-input, var(--bg-surface));
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 16px;
+}
+
+.dtg-layout {
+    display: grid;
+    gap: 8px 12px;
+    align-items: center;
+}
+
+/* 1 Date Only */
+.dtg-has-time-false.dtg-has-end-false {
+    grid-template-columns: auto 1fr;
+    grid-template-areas: "date-start actions";
+}
+
+/* Start/End Date Only */
+.dtg-has-time-false.dtg-has-end-true {
+    grid-template-columns: 1fr auto 1fr auto;
+    grid-template-areas: "date-start date-arrow date-end date-action";
+}
+
+/* Time + 1 Date */
+.dtg-has-time-true.dtg-has-end-false {
+    grid-template-columns: 1fr auto 1fr auto;
+    grid-template-areas: 
+        "time-start time-arrow time-end time-action"
+        "date-start date-start date-start bottom-action";
+}
+
+/* 4 Fields */
+.dtg-has-time-true.dtg-has-end-true {
+    grid-template-columns: 1fr auto 1fr auto;
+    grid-template-areas: 
+        "time-start time-arrow time-end time-action"
+        "date-start date-arrow date-end date-action";
+}
+
+.dtg-time-start { grid-area: time-start; }
+.dtg-time-arrow { grid-area: time-arrow; justify-self: center; color: var(--fg-dim); display: flex; align-items: center; }
+.dtg-time-end { grid-area: time-end; }
+.dtg-time-action { grid-area: time-action; display: flex; justify-content: flex-end; }
+
+.dtg-date-start { grid-area: date-start; }
+.dtg-date-arrow { grid-area: date-arrow; justify-self: center; color: var(--fg-dim); display: flex; align-items: center; }
+.dtg-date-end { grid-area: date-end; }
+.dtg-date-action { grid-area: date-action; display: flex; justify-content: flex-end; }
+
+.dtg-inline-actions { grid-area: actions; display: flex; gap: 4px; justify-content: flex-end; }
+.dtg-bottom-actions { grid-area: bottom-action; display: flex; gap: 4px; justify-content: flex-end; }
+
+.dtg-btn-icon {
+    background: transparent;
+    border: none;
+    color: var(--fg-dim);
+    cursor: pointer;
+    border-radius: 4px;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.1s, color 0.1s;
+}
+
+.dtg-btn-icon:hover:not(:disabled) {
+    background: var(--bg-hover);
+    color: var(--fg);
+}
+
+.dtg-btn-icon:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.dtg-field > input {
+    width: 100%;
+}

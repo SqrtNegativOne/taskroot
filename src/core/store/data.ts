@@ -9,7 +9,7 @@ export const MAX_MONTH_INDEX = 11;
 export const TODAY = new Date();
 
 export const PAD2 = (n: number | string): string => String(n).padStart(2, "0");
-export const ymd = (d: Date): import("../domain/models").DateString =>
+export const ymd = (d: Date): import("../domain/models").YmdString =>
     `${d.getFullYear()}-${PAD2(d.getMonth() + 1)}-${PAD2(d.getDate())}`;
 export const parseYMD = (s: string): Date => {
     const [y, m, d] = s.split("-").map(Number);

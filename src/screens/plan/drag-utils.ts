@@ -1,5 +1,5 @@
 import { MINUTES_IN_HOUR, HOURS_PER_DAY } from "../../core/utils/constants";
-import { isDateString } from "../../core/domain/models";
+import { isYmdString } from "../../core/domain/models";
 import { PX_PER_MIN, SNAP_MIN } from "../../components/day-timeline/types";
 import type { PlanDragTarget } from "./drag-helpers";
 
@@ -28,7 +28,7 @@ export function resolveDropTarget(el: Element | undefined, y: number, itemDurati
     const day = el.closest('[data-drop-kind="grid-day"]');
     if (day instanceof HTMLElement) {
         const dropDate = day.dataset.dropDate;
-        if (isDateString(dropDate)) {
+        if (isYmdString(dropDate)) {
             return { kind: "grid-day", date: dropDate };
         }
     }

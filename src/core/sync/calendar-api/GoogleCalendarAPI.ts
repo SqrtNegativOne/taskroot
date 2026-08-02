@@ -1,5 +1,6 @@
 import { HTTP_UNAUTHORIZED, HTTP_GONE, HTTP_FORBIDDEN, HTTP_TOO_MANY_REQUESTS, MS_PER_SECOND } from "../../utils/constants";
 import { fetchWithTimeout } from "../../store/api";
+import { toFloatingIso } from "../../utils/date-utils";
 import type { AppTask, AppEvent } from "../../domain/models";
 import type { IAuthManager } from "../auth/types";
 import type { ICalendarAPI } from "./types";
@@ -158,15 +159,15 @@ export class GoogleCalendarAPI implements ICalendarAPI {
     }
 }
 
+
+
 function extractEventTime(googleEvent: gapi.client.calendar.Event) {
     if (googleEvent.start?.dateTime) {
         const startDt = new Date(googleEvent.start.dateTime);
         const endDt = new Date(googleEvent.end?.dateTime || googleEvent.start.dateTime);
-        const pad = (n: number) => n.toString().padStart(2, "0");
-        const toFloating = (dt: Date) => `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}:${pad(dt.getSeconds())}`;
         return {
-            startTime: toFloating(startDt),
-            endTime: toFloating(endDt),
+            startTime: toFloatingIso(startDt),
+            endTime: toFloatingIso(endDt),
             isAllDay: false
         };
     }

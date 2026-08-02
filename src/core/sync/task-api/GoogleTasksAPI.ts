@@ -14,7 +14,7 @@ function extractLocalTaskId(googleTask: gapi.client.tasks.Task, existing?: AppTa
     return id;
 }
 
-function parseGoogleTaskDue(dueStr?: string): import("../../domain/models").DateString | undefined {
+function parseGoogleTaskDue(dueStr?: string): import("../../domain/models").YmdString | undefined {
     const p = dueStr?.split("T")[0].split("-");
     /* eslint-disable-next-line no-magic-numbers */
     if (p?.length !== 3) return undefined;

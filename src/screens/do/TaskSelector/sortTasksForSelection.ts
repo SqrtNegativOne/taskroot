@@ -1,5 +1,6 @@
 import type { AppTask, AppEvent } from "../../../core/domain/models";
 import { ymd } from "../../../core/store/data";
+import { MS_IN_HOUR } from "../../../core/utils/date-utils";
 
 export function sortTasksForSelection(
     pendingTasks: AppTask[],
@@ -30,14 +31,14 @@ export function sortTasksForSelection(
             (e) => {
                 const s = new Date(e.startTime).getTime();
                 const en = new Date(e.endTime).getTime();
-                return s <= nowMs && (en >= nowMs || s + 3600000 >= nowMs);
+                return s <= nowMs && (en >= nowMs || s + MS_IN_HOUR >= nowMs);
             }
         );
         const bThisHour = bEvents.some(
             (e) => {
                 const s = new Date(e.startTime).getTime();
                 const en = new Date(e.endTime).getTime();
-                return s <= nowMs && (en >= nowMs || s + 3600000 >= nowMs);
+                return s <= nowMs && (en >= nowMs || s + MS_IN_HOUR >= nowMs);
             }
         );
 

@@ -1,4 +1,3 @@
-import React from "react";
 import type { AppEvent, AppTask } from "../../core/domain/models";
 import { RepeatSelect } from "./inspector-shared";
 import { DateTimeGrid } from "./inspector-datetime";
@@ -95,15 +94,13 @@ function EventRepeatControls({ event, updateEvent, isReadOnlyCalendar }: { event
 }
 
 export function EventInspector({ event, tasks, calendars, updateEvent, isReadOnlyCalendar }: EventInspectorProps) {
-    const [showEndDate, setShowEndDate] = React.useState(() => Boolean(event.endDate && event.date && event.endDate !== event.date));
-
     return (
         <>
             <EventTypeSelector event={event} tasks={tasks} updateEvent={updateEvent} isReadOnlyCalendar={isReadOnlyCalendar} />
             <EventCalendarSelector event={event} calendars={calendars} updateEvent={updateEvent} isReadOnlyCalendar={isReadOnlyCalendar} />
             <EventRepeatControls event={event} updateEvent={updateEvent} isReadOnlyCalendar={isReadOnlyCalendar} />
 
-            <DateTimeGrid event={event} updateEvent={updateEvent} isReadOnlyCalendar={isReadOnlyCalendar} showEndDate={showEndDate} setShowEndDate={setShowEndDate} />
+            <DateTimeGrid event={event} updateEvent={updateEvent} isReadOnlyCalendar={isReadOnlyCalendar} />
         </>
     );
 }

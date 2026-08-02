@@ -1,4 +1,5 @@
 import { MINUTES_IN_HOUR } from "../../core/utils/constants";
+import { MS_IN_MINUTE } from "../../core/utils/date-utils";
 import type { AppTask, AppEvent } from "../../core/domain/models";
 import { durationLabel } from "../../core/store/data";
 
@@ -10,7 +11,7 @@ export interface PlanDragTarget {
     kind: string;
     minute?: number;
     duration?: number;
-    date?: import("../../core/domain/models").DateString;
+    date?: import("../../core/domain/models").YmdString;
 }
 
 export interface PlanDragState {
@@ -24,7 +25,7 @@ export interface PlanDragState {
 export function DragGhost({ task, event, x, y, ghostStyle }: { task?: AppTask, event?: AppEvent, x: number, y: number, ghostStyle: string }) {
     const title = task ? task.title : event ? event.title : "";
     const pri = task ? task.priority : undefined;
-    const est = task ? task.est : event ? (new Date(event.endTime).getTime() - new Date(event.startTime).getTime()) / 60000 : MINUTES_IN_HOUR;
+    const est = task ? task.est : event ? (new Date(event.endTime).getTime() - new Date(event.startTime).getTime()) / MS_IN_MINUTE : MINUTES_IN_HOUR;
     
     return (
         <div

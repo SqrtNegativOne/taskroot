@@ -1,5 +1,5 @@
 import React from "react";
-import { PAD2 } from "../../../core/store/data";
+import { toFloatingIso, ISO_HM_END } from "../../../core/utils/date-utils";
 import { useDistractions, useDistractionStatuses, useDistractionColumns } from "../../../core/store/hooks";
 import type { DistractionRow, DistractionStatus, DistractionColumn } from "../../../core/store/repositories";
 import { DLogRow } from "./row";
@@ -38,7 +38,7 @@ export function DistractionLog() {
     };
     const addRow = () => {
         const now = new Date();
-        const created = `${now.getFullYear()}-${PAD2(now.getMonth() + 1)}-${PAD2(now.getDate())}T${PAD2(now.getHours())}:${PAD2(now.getMinutes())}`;
+        const created = toFloatingIso(now).slice(0, ISO_HM_END);
         const id = `d${Date.now()}`;
         setRows((rs: DistractionRow[]) => [
             ...rs,

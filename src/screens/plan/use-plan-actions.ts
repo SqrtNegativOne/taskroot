@@ -4,6 +4,7 @@ import { useTasks, useEvents, useSettings, useCalendars } from "../../core/store
 import type { AppTask, AppEvent } from "../../core/domain/models";
 import { ymd } from "../../core/store/data";
 import type { InspectorState } from "../../components/inspector-pane";
+import { addDays, MS_IN_MINUTE, toFloatingIso } from "../../core/utils/date-utils";
 
 export const MAX_DISPLAY_ITEMS = 6;
 export const ID_LENGTH = 9;
@@ -21,16 +22,15 @@ const createDefaultTask = (defaults: Partial<AppTask>, defaultDuration: number):
 const createDefaultEvent = (date: Date, startMins: number, endMins: number, isAllDay: boolean): AppEvent => {
     const dStr = ymd(date);
     const dt = new Date(`${dStr}T00:00:00`);
-    const pad = (n: number) => n.toString().padStart(2, '0');
     const toIso = (mins: number) => {
-        const t = new Date(dt.getTime() + mins * 60000);
-        return `${t.getFullYear()}-${pad(t.getMonth() + 1)}-${pad(t.getDate())}T${pad(t.getHours())}:${pad(t.getMinutes())}:${pad(t.getSeconds())}`;
+        const t = new Date(dt.getTime() + mins * MS_IN_MINUTE);
+        return toFloatingIso(t);
     };
     if (isAllDay) {
         return {
             id: generateEventId(), title: "", type: "info", isAllDay: true,
             startTime: `${dStr}T00:00:00`,
-            endTime: `${ymd(new Date(dt.getTime() + 24 * 3600 * 1000))}T00:00:00`
+            endTime: `${ymd(addDays(dt))}T00:00:00`
         };
     }
     return {

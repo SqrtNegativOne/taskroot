@@ -1,4 +1,5 @@
 import { MINUTES_IN_HOUR } from "../../core/utils/constants";
+import { MS_IN_MINUTE, toFloatingIso } from "../../core/utils/date-utils";
 import React, { useState, useRef } from 'react';
 import { useEvents, useCalendars } from "../../core/store/hooks";
 import type { AppTask, AppEvent } from "../../core/domain/models";
@@ -39,16 +40,14 @@ export const setupPointerDrag = (
 
 function getIsoFromMinutes(dateStr: string, minutes: number) {
     const dt = new Date(`${dateStr}T00:00:00`);
-    const dt2 = new Date(dt.getTime() + minutes * 60000);
-    const pad = (n: number) => n.toString().padStart(2, '0');
-    return `${dt2.getFullYear()}-${pad(dt2.getMonth() + 1)}-${pad(dt2.getDate())}T${pad(dt2.getHours())}:${pad(dt2.getMinutes())}:00`;
+    const dt2 = new Date(dt.getTime() + minutes * MS_IN_MINUTE);
+    return toFloatingIso(dt2);
 }
 
 function getNextDayStr(dateStr: string) {
     const dt = new Date(`${dateStr}T00:00:00`);
     dt.setDate(dt.getDate() + 1);
-    const pad = (n: number) => n.toString().padStart(2, '0');
-    return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
+    return ymd(dt);
 }
 
 export function useDragAndDrop(
@@ -91,7 +90,7 @@ export function useDragAndDrop(
         e.stopPropagation();
 
         const getDurMins = () => {
-            return (new Date(eventToMove.endTime).getTime() - new Date(eventToMove.startTime).getTime()) / 60000;
+            return (new Date(eventToMove.endTime).getTime() - new Date(eventToMove.startTime).getTime()) / MS_IN_MINUTE;
         };
 
         setupPointerDrag(e, (ev) => {

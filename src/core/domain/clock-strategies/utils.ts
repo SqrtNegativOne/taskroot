@@ -1,5 +1,6 @@
 import { MINUTES_IN_HOUR, MS_PER_SECOND, MS_PER_MINUTE } from "../../utils/constants";
 import { PAD2 } from "../../../core/store/data";
+import { toFloatingIso } from "../../utils/date-utils";
 import type { AppEvent } from "../../../core/domain/models";
 
 
@@ -17,18 +18,15 @@ export function createWorkSessionEvent(
         id: `log-${Date.now()}-${Math.floor(Math.random() * RANDOM_ID_MULTIPLIER)}`,
         title: `Worked on ${taskId || "Task"}`,
         type: "time_log" as const,
-        startTime: toIsoLocal(new Date(startMs)),
-        endTime: toIsoLocal(new Date(endMs)),
+        startTime: toFloatingIso(new Date(startMs)),
+        endTime: toFloatingIso(new Date(endMs)),
         isAllDay: false,
         taskId: taskId || "",
         clockStyle,
     };
 }
 
-function toIsoLocal(dt: Date) {
-    const pad = (n: number) => n.toString().padStart(2, '0');
-    return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}:${pad(dt.getSeconds())}`;
-}
+
 
 
 

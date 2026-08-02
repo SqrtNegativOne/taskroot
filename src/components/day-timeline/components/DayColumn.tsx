@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { MINUTES_IN_HOUR, HOURS_PER_DAY } from "../../../core/utils/constants";
+import { MS_IN_DAY, MS_IN_MINUTE, MINUTES_IN_DAY, toFloatingIso } from "../../../core/utils/date-utils";
 import { PX_PER_MIN } from "../types";
 import type { DragState } from "../types";
 import { ymd, sameDay } from "../../../core/store/data";
@@ -53,7 +54,7 @@ export function DayColumn<T extends DragState = DragState>({
     const laid = useMemo(() => {
         const cellDate = ymd(date);
         const cellStart = new Date(`${cellDate}T00:00:00`).getTime();
-        const cellEnd = cellStart + 24 * 60 * 60 * 1000;
+        const cellEnd = cellStart + MS_IN_DAY;
 
         let dayEvents = events.filter((e: HydratedEvent) => {
             if (e.isAllDay) return false;
@@ -68,8 +69,8 @@ export function DayColumn<T extends DragState = DragState>({
         const mapped = dayEvents.map(e => {
             const eStart = new Date(e.startTime).getTime();
             const eEnd = new Date(e.endTime).getTime();
-            const startMins = Math.max(0, (eStart - cellStart) / 60000);
-            const endMins = Math.min(1440, (eEnd - cellStart) / 60000);
+            const startMins = Math.max(0, (eStart - cellStart) / MS_IN_MINUTE);
+            const endMins = Math.min(MINUTES_IN_DAY, (eEnd - cellStart) / MS_IN_MINUTE);
             return { event: e, startMins, endMins };
         });
 
@@ -79,23 +80,19 @@ export function DayColumn<T extends DragState = DragState>({
     const handleResize = (id: string, newStartMins: number, newEndMins: number) => {
         const cellDate = ymd(date);
         const cellStart = new Date(`${cellDate}T00:00:00`);
-        const newStartDt = new Date(cellStart.getTime() + newStartMins * 60000);
-        const newEndDt = new Date(cellStart.getTime() + newEndMins * 60000);
-        const pad = (n: number) => n.toString().padStart(2, '0');
-        const toIso = (dt: Date) => `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}:${pad(dt.getSeconds())}`;
+        const newStartDt = new Date(cellStart.getTime() + newStartMins * MS_IN_MINUTE);
+        const newEndDt = new Date(cellStart.getTime() + newEndMins * MS_IN_MINUTE);
         
-        if (onResizeEvent) onResizeEvent(id, toIso(newStartDt), toIso(newEndDt));
+        if (onResizeEvent) onResizeEvent(id, toFloatingIso(newStartDt), toFloatingIso(newEndDt));
     };
 
     const handleMove = (id: string, newStartMins: number, newEndMins: number) => {
         const cellDate = ymd(date);
         const cellStart = new Date(`${cellDate}T00:00:00`);
-        const newStartDt = new Date(cellStart.getTime() + newStartMins * 60000);
-        const newEndDt = new Date(cellStart.getTime() + newEndMins * 60000);
-        const pad = (n: number) => n.toString().padStart(2, '0');
-        const toIso = (dt: Date) => `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}:${pad(dt.getSeconds())}`;
+        const newStartDt = new Date(cellStart.getTime() + newStartMins * MS_IN_MINUTE);
+        const newEndDt = new Date(cellStart.getTime() + newEndMins * MS_IN_MINUTE);
         
-        if (onMoveEvent) onMoveEvent(id, toIso(newStartDt), toIso(newEndDt));
+        if (onMoveEvent) onMoveEvent(id, toFloatingIso(newStartDt), toFloatingIso(newEndDt));
     };
 
     const dropPreview = dragState?.target?.kind === "day-time" && dragState.target.date === ymd(date) ? dragState.target : undefined;

@@ -1,6 +1,6 @@
-export type DateString = string; // Format: YYYY-MM-DD
+export type YmdString = string; // Format: YYYY-MM-DD
 
-export function isDateString(s: unknown): s is DateString {
+export function isYmdString(s: unknown): s is YmdString {
     return typeof s === "string";
 }
 
@@ -20,7 +20,7 @@ export interface AppTask {
     readonly onCanvas?: boolean;
     readonly googleId?: string;
     readonly notes?: string;
-    readonly due?: DateString;
+    readonly due?: YmdString;
     readonly _deleted?: boolean;
     readonly updatedAt?: number;
     readonly [key: string]: unknown;

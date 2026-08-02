@@ -36,7 +36,7 @@ describe("rrule-utils", () => {
         const viewEnd = new Date("2026-07-31T23:59:59Z");
 
         const result = expandEventsForView(baseEvents, viewStart, viewEnd);
-        expect(result.length).toBe(5); // eslint-disable-line typescript/no-magic-numbers
+        expect(result.length).toBe(5);
         expect(result[0].isInstance).toBe(true);
         expect(result[0].baseEventId).toBe("2");
     });

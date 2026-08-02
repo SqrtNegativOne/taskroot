@@ -25,7 +25,7 @@ describe("createWorkSessionEvent", () => {
     });
 
     test("logs sessions 1 minute or longer", () => {
-        const ev = createWorkSessionEvent(MS_PER_SECOND, 62000, "task1", "counter"); // eslint-disable-line typescript/no-magic-numbers
+        const ev = createWorkSessionEvent(MS_PER_SECOND, 62000, "task1", "counter");
         expect(ev).not.toBeUndefined();
         expect(ev?.taskId).toBe("task1");
         expect(ev?.clockStyle).toBe("counter");

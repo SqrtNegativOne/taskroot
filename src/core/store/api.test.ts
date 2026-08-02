@@ -34,7 +34,8 @@ describe("api.ts", () => {
             const p = promise.catch(e => e);
 
             // Fast forward timers and flush microtasks
-            await vi.advanceTimersByTimeAsync(1500); // eslint-disable-line typescript/no-magic-numbers
+            await vi.advanceTimersByTimeAsync(1500);
+
 
             const err = await p;
             expect(err).toBeInstanceOf(Error);

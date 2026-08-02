@@ -1,4 +1,4 @@
-/* eslint-disable jsx-a11y/prefer-tag-over-role */
+
 import { useState } from "react";
 import type { AppTask } from "../../../core/domain/models";
 import { TaskCircle } from "../../../components/task-circle";
@@ -26,10 +26,8 @@ export function TaskSelectorItem({
     const [isChecking, setIsChecking] = useState(false);
 
     return (
-        <div
+        <button
             className={`modern-task-item ${idx === selectedIndex ? "is-selected" : ""} ${isExiting ? "is-exiting" : ""}`}
-            role="button"
-            tabIndex={0}
             onKeyDown={(e) => {
                 if (e.key === "Enter") startWithTask(task.id);
             }}
@@ -40,7 +38,7 @@ export function TaskSelectorItem({
                 }
             }}
             onClick={() => startWithTask(task.id)}
-            style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+            style={{ display: "flex", alignItems: "center", justifyContent: "center", border: "none", background: "none", textAlign: "left", width: "100%", padding: 0 }}
         >
             <TaskCircle
                 priority={task.priority}
@@ -61,6 +59,6 @@ export function TaskSelectorItem({
             <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {task.title}
             </span>
-        </div>
+        </button>
     );
 }

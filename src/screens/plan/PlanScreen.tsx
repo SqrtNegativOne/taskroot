@@ -23,6 +23,8 @@ import { TaskListPane } from "../../components/tasklist";
 import { SplitPane } from "../../components/split-pane";
 import { FilterSortButtons } from "./shared-menus/index";
 import { usePlanEvents, PLAN_EVENT_FILTER_COLUMNS, PLAN_EVENT_SORT_OPTIONS } from "./use-plan-events";
+import { RecurringActionModal } from "../../components/RecurringActionModal";
+import type { RecurringMode } from "../../core/domain/rrule-utils";
 
 export function PlanScreen() {
 
@@ -56,9 +58,33 @@ export function PlanScreen() {
     const [inspectorState, setInspectorState] = React.useState<InspectorState>();
 
 
+    const [recurringPrompt, setRecurringPrompt] = React.useState<{
+        actionType: "edit" | "delete";
+        onConfirm: (mode: RecurringMode) => void;
+    } | undefined>(undefined);
 
-    const { createEvent, onAddTask, onAddEvent, onResizeEvent, onMoveEvent, onDeleteTask } = usePlanActions(timelineDate, setInspectorState);
-    const { onTaskDragStart, onEventDragStart, dragState, setDragState } = useDragAndDrop(timelineDate, setInspectorState, createEvent);
+    const interceptRecurringAction = React.useCallback((
+        event: AppEvent, 
+        actionType: "edit" | "delete", 
+        _updatesOrNone: Partial<AppEvent> | undefined, 
+        executeImmediately: (mode: RecurringMode) => void
+    ) => {
+        const isRecurring = !!event.rrule || !!event.isInstance || !!event.recurringEventId;
+        if (isRecurring) {
+            setRecurringPrompt({
+                actionType,
+                onConfirm: (mode) => {
+                    executeImmediately(mode);
+                    setRecurringPrompt(undefined);
+                }
+            });
+        } else {
+            executeImmediately("instance");
+        }
+    }, []);
+
+    const { createEvent, onAddTask, onAddEvent, onResizeEvent, onMoveEvent, onDeleteTask } = usePlanActions(timelineDate, setInspectorState, hydratedEvents, interceptRecurringAction);
+    const { onTaskDragStart, onEventDragStart, dragState, setDragState } = useDragAndDrop(timelineDate, setInspectorState, createEvent, interceptRecurringAction);
 
     return (
         <>
@@ -159,6 +185,7 @@ export function PlanScreen() {
                     setTasks={setTasks}
                     events={hydratedEvents}
                     setEvents={setEvents}
+                    interceptRecurringAction={interceptRecurringAction}
                 />
             </main>
 
@@ -173,6 +200,13 @@ export function PlanScreen() {
             )}
 
 
+
+            <RecurringActionModal 
+                isOpen={!!recurringPrompt} 
+                actionType={recurringPrompt?.actionType || "edit"} 
+                onConfirm={recurringPrompt?.onConfirm || (() => {})} 
+                onCancel={() => setRecurringPrompt(undefined)} 
+            />
         </>
     );
 }

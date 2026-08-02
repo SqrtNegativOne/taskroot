@@ -45,6 +45,9 @@ export interface AppEvent {
     type: string;
     category?: string;
     rrule?: string;
+    exdates?: string[];
+    recurringEventId?: string;
+    originalStartTime?: string;
     description?: string;
     updatedAt?: number;
     _deleted?: boolean;

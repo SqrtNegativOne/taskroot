@@ -6,6 +6,7 @@ import type { AppTask, AppEvent } from "../../core/domain/models";
 import { ymd } from "../../core/store/data";
 import { resolveDropTarget } from "./drag-utils";
 
+import { applyRecurringUpdate, type RecurringMode } from "../../core/domain/rrule-utils";
 import type { PlanDragState } from "./drag-helpers";
 import type { InspectorState } from "../../components/inspector-pane";
 
@@ -53,7 +54,8 @@ function getNextDayStr(dateStr: string) {
 export function useDragAndDrop(
     timelineDate: Date,
     setInspectorState: React.Dispatch<React.SetStateAction<InspectorState | undefined>>,
-    createEvent: (task: AppTask, overrides: Partial<AppEvent>) => void
+    createEvent: (task: AppTask, overrides: Partial<AppEvent>) => void,
+    interceptRecurringAction: (event: AppEvent, actionType: "edit" | "delete", updates: Partial<AppEvent> | undefined, execute: (mode: RecurringMode) => void) => void
 ) {
     const [, setEvents] = useEvents();
     const [calendars] = useCalendars();
@@ -100,12 +102,18 @@ export function useDragAndDrop(
             const ds = dragRef.current;
             if (ds?.target?.kind === "grid-day" && ds.target.date) {
                 const dropDate = ds.target.date;
-                setEvents(prev => prev.map((evnt) => evnt.id === eventToMove.id ? { ...evnt, startTime: `${dropDate}T00:00:00`, endTime: `${getNextDayStr(dropDate)}T00:00:00`, isAllDay: true } : evnt));
+                const updates = { startTime: `${dropDate}T00:00:00`, endTime: `${getNextDayStr(dropDate)}T00:00:00`, isAllDay: true };
+                interceptRecurringAction(eventToMove, "edit", updates, (mode) => {
+                    setEvents(prev => applyRecurringUpdate(prev, eventToMove, mode, updates));
+                });
             } else if (ds?.target?.kind === "day-time" && ds.target.minute !== undefined) {
                 const duration = getDurMins();
                 const dropMinute = ds.target.minute;
                 const dStr = ymd(timelineDate);
-                setEvents(prev => prev.map((evnt) => evnt.id === eventToMove.id ? { ...evnt, startTime: getIsoFromMinutes(dStr, dropMinute), endTime: getIsoFromMinutes(dStr, dropMinute + duration), isAllDay: false } : evnt));
+                const updates = { startTime: getIsoFromMinutes(dStr, dropMinute), endTime: getIsoFromMinutes(dStr, dropMinute + duration), isAllDay: false };
+                interceptRecurringAction(eventToMove, "edit", updates, (mode) => {
+                    setEvents(prev => applyRecurringUpdate(prev, eventToMove, mode, updates));
+                });
             }
             setDragState(undefined);
         });

@@ -5,6 +5,7 @@ import type { AppTask, AppEvent } from "../../core/domain/models";
 import { ymd } from "../../core/store/data";
 import type { InspectorState } from "../../components/inspector-pane";
 import { addDays, MS_IN_MINUTE, toFloatingIso } from "../../core/utils/date-utils";
+import { applyRecurringUpdate, type RecurringMode } from "../../core/domain/rrule-utils";
 
 export const MAX_DISPLAY_ITEMS = 6;
 export const ID_LENGTH = 9;
@@ -47,10 +48,12 @@ export const canEditEvent = (ev: AppEvent | undefined, calendars: readonly {id: 
 
 export function usePlanActions(
     timelineDate: Date, 
-    setInspectorState: React.Dispatch<React.SetStateAction<InspectorState | undefined>>
+    setInspectorState: React.Dispatch<React.SetStateAction<InspectorState | undefined>>,
+    hydratedEvents: AppEvent[],
+    interceptRecurringAction: (event: AppEvent, actionType: "edit" | "delete", updates: Partial<AppEvent> | undefined, execute: (mode: RecurringMode) => void) => void
 ) {
     const [, setTasks] = useTasks();
-    const [events, setEvents] = useEvents();
+    const [, setEvents] = useEvents();
     const [settings] = useSettings();
     const [calendars] = useCalendars();
 
@@ -81,8 +84,12 @@ export function usePlanActions(
     };
 
     const onResizeEvent = (id: string, startTime: string, endTime: string) => {
-        if (!canEditEvent(events.find((e: AppEvent) => e.id === id), calendars)) return;
-        setEvents(prev => prev.map((e: AppEvent) => (e.id === id ? { ...e, startTime, endTime } : e)));
+        const ev = hydratedEvents.find((e: AppEvent) => e.id === id);
+        if (!ev || !canEditEvent(ev, calendars)) return;
+        
+        interceptRecurringAction(ev, "edit", { startTime, endTime }, (mode) => {
+             setEvents(es => applyRecurringUpdate(es, ev, mode, { startTime, endTime }));
+        });
     };
 
     const onMoveEvent = onResizeEvent;

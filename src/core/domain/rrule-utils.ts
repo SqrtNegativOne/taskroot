@@ -1,6 +1,8 @@
 import { RRule } from "rrule";
 import type { AppEvent } from "./models";
 
+export type RecurringMode = "instance" | "following" | "all";
+
 export function expandEventsForView(
     baseEvents: AppEvent[],
     viewStartDate: Date,
@@ -39,6 +41,15 @@ export function expandEventsForView(
                 const min = date.getUTCMinutes().toString().padStart(2, "0");
                 const sec = date.getUTCSeconds().toString().padStart(2, "0");
                 const instanceStartTimeStr = `${y}-${m}-${d}T${h}:${min}:${sec}`;
+
+                const isExdate = event.exdates?.some((exdate) => {
+                    // Google's exdate format is typically "YYYYMMDDTHHMMSSZ" or "YYYYMMDDTHHMMSS"
+                    // Our instanceStartTimeStr is "YYYY-MM-DDTHH:MM:SS"
+                    const compactInstanceStr = instanceStartTimeStr.replace(/[-:]/g, "");
+                    return exdate.startsWith(compactInstanceStr);
+                });
+
+                if (isExdate) return;
 
                 const exceptionOverride = baseEvents.find(
                     (e) =>
@@ -84,4 +95,84 @@ export function expandEventsForView(
     });
 
     return flattenedInstances;
+}
+
+export function applyRecurringUpdate(
+    events: AppEvent[],
+    instanceEvent: AppEvent,
+    mode: RecurringMode,
+    updates: Partial<AppEvent>
+): AppEvent[] {
+    const baseId = instanceEvent.baseEventId || instanceEvent.id;
+    const baseEvent = events.find((e) => e.id === baseId);
+    if (!baseEvent) return events;
+
+    if (mode === "all") {
+        return events.map((e) => (e.id === baseId ? { ...e, ...updates } : e));
+    }
+    
+    if (mode === "instance") {
+        if (instanceEvent.recurringEventId) {
+             // It's already an exception override, just update it
+             return events.map(e => e.id === instanceEvent.id ? { ...e, ...updates } : e);
+        }
+        
+        // Google exdate is YYYYMMDDTHHMMSS (no dashes)
+        const compactStartTime = instanceEvent.startTime.replace(/[-:]/g, "");
+        const newExdates = [...(baseEvent.exdates || []), compactStartTime];
+        
+        const overrideEvent: AppEvent = {
+            ...baseEvent,
+            ...updates,
+            id: `e${Date.now()}_${crypto.randomUUID()}`,
+            recurringEventId: baseId,
+            originalStartTime: instanceEvent.startTime,
+            rrule: undefined,
+            exdates: undefined,
+            isInstance: undefined,
+            baseEventId: undefined
+        };
+
+        return [
+            ...events.map((e) => (e.id === baseId ? { ...e, exdates: newExdates } : e)),
+            overrideEvent
+        ];
+    }
+    
+    if (mode === "following") {
+        // Complex, fallback to 'all' for now if user chooses it
+        return events.map((e) => (e.id === baseId ? { ...e, ...updates } : e));
+    }
+    
+    return events;
+}
+
+export function applyRecurringDelete(
+    events: AppEvent[],
+    instanceEvent: AppEvent,
+    mode: RecurringMode
+): AppEvent[] {
+    const baseId = instanceEvent.baseEventId || instanceEvent.id;
+    const baseEvent = events.find((e) => e.id === baseId);
+    if (!baseEvent) return events;
+
+    if (mode === "all") {
+        return events.filter((e) => e.id !== baseId && e.recurringEventId !== baseId);
+    }
+    
+    if (mode === "instance") {
+        if (instanceEvent.recurringEventId) {
+             return events.filter(e => e.id !== instanceEvent.id);
+        } else {
+             const compactStartTime = instanceEvent.startTime.replace(/[-:]/g, "");
+             const newExdates = [...(baseEvent.exdates || []), compactStartTime];
+             return events.map((e) => (e.id === baseId ? { ...e, exdates: newExdates } : e));
+        }
+    }
+    
+    if (mode === "following") {
+        return events.filter((e) => e.id !== baseId && e.recurringEventId !== baseId);
+    }
+
+    return events;
 }

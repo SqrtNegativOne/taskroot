@@ -72,9 +72,9 @@ export class GoogleCalendarAPI implements ICalendarAPI {
         return data.items || def;
     }
 
-    async createEvent(localEvent: AppEvent, tasks: AppTask[], calendarId = "primary") {
+    async createEvent(localEvent: AppEvent, ctx: { tasks: AppTask[], events: AppEvent[] }, calendarId = "primary") {
         const res = await this.fetchWithAuth(`calendars/${encodeURIComponent(calendarId)}/events`, {
-            method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(this.toGoogleEvent(localEvent, tasks))
+            method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(this.toGoogleEvent(localEvent, ctx))
         });
         if (!res.ok) throw new Error(`Failed to create event: ${res.status} ${await res.text()}`);
         const data: { id?: string } = await res.json();
@@ -82,9 +82,9 @@ export class GoogleCalendarAPI implements ICalendarAPI {
         return { googleId: data.id, calendarId };
     }
 
-    async updateEvent(googleId: string, localEvent: AppEvent, tasks: AppTask[], calendarId = "primary") {
+    async updateEvent(googleId: string, localEvent: AppEvent, ctx: { tasks: AppTask[], events: AppEvent[] }, calendarId = "primary") {
         const res = await this.fetchWithAuth(`calendars/${encodeURIComponent(calendarId)}/events/${googleId}`, {
-            method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(this.toGoogleEvent(localEvent, tasks))
+            method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(this.toGoogleEvent(localEvent, ctx))
         });
         if (!res.ok) throw new Error(`Failed to update event: ${res.status} ${await res.text()}`);
     }
@@ -104,7 +104,7 @@ export class GoogleCalendarAPI implements ICalendarAPI {
         }
     }
 
-    toGoogleEvent(localEvent: AppEvent, _tasks: AppTask[]): gapi.client.calendar.Event {
+    toGoogleEvent(localEvent: AppEvent, ctx: { tasks: AppTask[], events: AppEvent[] }): gapi.client.calendar.Event {
         const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
         
         let startObj: gapi.client.calendar.EventDateTime;
@@ -131,10 +131,37 @@ export class GoogleCalendarAPI implements ICalendarAPI {
                     type: localEvent.type ?? "",
                 },
             },
-            ...(localEvent.rrule ? { recurrence: [`RRULE:${localEvent.rrule}`] } : {})
+            ...this.buildGoogleRecurrenceAndExceptions(localEvent, timeZone, ctx.events)
         };
     }
 
+    private buildGoogleRecurrenceAndExceptions(localEvent: AppEvent, timeZone: string, events: AppEvent[]) {
+        const recurrence: string[] = [];
+        if (localEvent.rrule) recurrence.push(`RRULE:${localEvent.rrule}`);
+        if (localEvent.exdates && localEvent.exdates.length > 0) {
+            for (const exdate of localEvent.exdates) {
+                if (localEvent.isAllDay) {
+                    const dateOnly = exdate.split("T")[0]; // handle YYYYMMDDTHHMMSS -> YYYYMMDD
+                    recurrence.push(`EXDATE;VALUE=DATE:${dateOnly}`);
+                } else {
+                    recurrence.push(`EXDATE;TZID=${timeZone}:${exdate}`);
+                }
+            }
+        }
+        
+        const baseEventGoogleId = localEvent.recurringEventId 
+            ? events.find((e) => e.id === localEvent.recurringEventId)?.googleId
+            : undefined;
+
+        return {
+            ...(recurrence.length > 0 ? { recurrence } : {}),
+            ...(baseEventGoogleId ? { recurringEventId: baseEventGoogleId } : {}),
+            ...(localEvent.originalStartTime ? { originalStartTime: { dateTime: localEvent.originalStartTime, timeZone } } : {})
+        };
+    }
+
+    // This function inherently performs many property extractions and optional chaining, which trips the complexity rule, but is safe and readable.
+    // oxlint-disable-next-line eslint/complexity
     toLocalEvent(googleEvent: gapi.client.calendar.Event, calendarId = "primary", calendarSummary = "") {
         if (googleEvent.status === "cancelled") {
             const privateProps = googleEvent.extendedProperties?.private;
@@ -148,13 +175,23 @@ export class GoogleCalendarAPI implements ICalendarAPI {
         }
         const { startTime, endTime, isAllDay } = extractEventTime(googleEvent);
         const { taskId, id, type } = extractEventMetadata(googleEvent);
-        const rrule = parseRecurrenceRule(googleEvent.recurrence);
+        const { rrule, exdates } = parseRecurrenceRule(googleEvent.recurrence);
+
+        const rruleProps = rrule ? { rrule } : {};
+        const exdatesProps = exdates ? { exdates } : {};
+        const recurProps = googleEvent.recurringEventId ? { recurringEventId: googleEvent.recurringEventId } : {};
+        const originalStartTime = googleEvent.originalStartTime?.dateTime || googleEvent.originalStartTime?.date;
+        const origProps = originalStartTime ? { originalStartTime } : {};
 
         return {
             id, googleId: googleEvent.id, googleCalendarId: calendarId, taskId,
             title: googleEvent.summary ?? "", startTime, endTime, type,
-            category: calendarSummary, rrule, isAllDay,
+            category: calendarSummary, isAllDay,
             updatedAt: googleEvent.updated ? new Date(googleEvent.updated).getTime() : Date.now(),
+            ...rruleProps,
+            ...exdatesProps,
+            ...recurProps,
+            ...origProps
         };
     }
 }
@@ -199,9 +236,19 @@ function extractEventMetadata(googleEvent: gapi.client.calendar.Event) {
     return { taskId, id, type };
 }
 
-function parseRecurrenceRule(recurrence?: string[]): string | undefined {
-    if (!recurrence) return undefined;
+function parseRecurrenceRule(recurrence?: string[]): { rrule?: string, exdates?: string[] } {
+    if (!recurrence) return {};
     const r = recurrence.find((ruleStr) => ruleStr.startsWith("RRULE:"));
-    if (r) return r.replace(/^RRULE:/i, "");
-    return undefined;
+    const rrule = r ? r.replace(/^RRULE:/i, "") : undefined;
+    
+    const exdates: string[] = [];
+    for (const ruleStr of recurrence) {
+        if (ruleStr.startsWith("EXDATE")) {
+            const parts = ruleStr.split(":");
+            if (parts.length > 1) {
+                exdates.push(parts.slice(1).join(":"));
+            }
+        }
+    }
+    return { rrule, ...(exdates.length > 0 ? { exdates } : {}) };
 }

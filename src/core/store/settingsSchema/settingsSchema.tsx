@@ -309,10 +309,10 @@ export const SETTINGS_TABS = [
 ];
 
 const generateDefaultSettings = (): AppSettings => {
-    const defaults: Record<string, unknown> = {};
+    const defaults: Partial<AppSettings> = {};
     for (const setting of SETTINGS_SCHEMA) {
         if ("defaultValue" in setting) {
-            defaults[setting.id] = setting.defaultValue;
+            Object.assign(defaults, { [setting.id]: setting.defaultValue });
         }
     }
     // Type assertion is necessary here because we are dynamically building

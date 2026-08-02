@@ -19,6 +19,7 @@ interface InspectorPaneProps {
     setTasks: React.Dispatch<React.SetStateAction<AppTask[]>>;
     events: AppEvent[];
     setEvents: React.Dispatch<React.SetStateAction<AppEvent[]>>;
+    interceptRecurringAction?: (event: AppEvent, actionType: "edit" | "delete", updates: Partial<AppEvent> | undefined, execute: (mode: import("../../core/domain/rrule-utils").RecurringMode) => void) => void;
 }
 
 function useCurrentItem(
@@ -58,6 +59,7 @@ export function InspectorPane({
     setTasks,
     events,
     setEvents,
+    interceptRecurringAction
 }: InspectorPaneProps) {
     const paneRef = React.useRef<HTMLDivElement>(null);
     const [calendars] = useCalendars();
@@ -65,6 +67,7 @@ export function InspectorPane({
     const [activeState, setActiveState] = React.useState<InspectorState>();
     const [draftItem, setDraftItem] = React.useState<AppTask | AppEvent>();
     const draftRef = React.useRef<AppTask | AppEvent | undefined>(undefined);
+    const [inspectorEditMode, setInspectorEditMode] = React.useState<import("../../core/domain/rrule-utils").RecurringMode | undefined>(undefined);
 
     React.useEffect(() => {
         if (inspectorState?.type === "new_task" || inspectorState?.type === "new_event") {
@@ -75,6 +78,7 @@ export function InspectorPane({
             draftRef.current = undefined;
         }
         if (inspectorState) setActiveState(inspectorState);
+        setInspectorEditMode(undefined); // Reset mode on new item
     }, [inspectorState]);
 
     const currentState = inspectorState || activeState;
@@ -111,10 +115,26 @@ export function InspectorPane({
                 draftRef.current = next;
                 setDraftItem(next);
             }
+        } else if (currentEvent && interceptRecurringAction) {
+             const isRecurring = !!currentEvent.rrule || currentEvent.isInstance || currentEvent.recurringEventId;
+             if (isRecurring && !inspectorEditMode) {
+                 interceptRecurringAction(currentEvent, "edit", updates, (mode) => {
+                     setInspectorEditMode(mode);
+                     // oxlint-disable-next-line promise/always-return -- we don't need to return anything
+                     import("../../core/domain/rrule-utils").then(({ applyRecurringUpdate }) => {
+                         setEvents(es => applyRecurringUpdate(es, currentEvent, mode, updates));
+                     });
+                 });
+             } else {
+                 // oxlint-disable-next-line promise/always-return -- we don't need to return anything
+                 import("../../core/domain/rrule-utils").then(({ applyRecurringUpdate }) => {
+                     setEvents(es => applyRecurringUpdate(es, currentEvent, inspectorEditMode || "all", updates));
+                 });
+             }
         } else {
             setEvents((es) => es.map((e) => e.id === id ? { ...e, ...updates } : e));
         }
-    }, [setEvents, isNew]);
+    }, [setEvents, isNew, currentEvent, interceptRecurringAction, inspectorEditMode]);
 
     const handleTitleChange = React.useCallback((newTitle: string) => {
         if (!currentItem) return;
@@ -137,11 +157,23 @@ export function InspectorPane({
         if (isCurrentTask) {
             setTasks((ts) => ts.filter((t) => t.id !== currentItem.id));
             setEvents((es) => es.filter((e) => e.taskId !== currentItem.id));
+        } else if (currentEvent && interceptRecurringAction) {
+            const isRecurring = !!currentEvent.rrule || currentEvent.isInstance || currentEvent.recurringEventId;
+            if (isRecurring) {
+                interceptRecurringAction(currentEvent, "delete", undefined, (mode) => {
+                    // oxlint-disable-next-line promise/always-return -- we don't need to return anything
+                    import("../../core/domain/rrule-utils").then(({ applyRecurringDelete }) => {
+                        setEvents(es => applyRecurringDelete(es, currentEvent, mode));
+                    });
+                });
+            } else {
+                setEvents((es) => es.filter((e) => e.id !== currentItem.id && e.id !== currentItem.id.split("_")[0]));
+            }
         } else {
             setEvents((es) => es.filter((e) => e.id !== currentItem.id && e.id !== currentItem.id.split("_")[0]));
         }
         onClose();
-    }, [currentItem, isCurrentTask, isNew, setTasks, setEvents, onClose]);
+    }, [currentItem, isCurrentTask, isNew, setTasks, setEvents, onClose, currentEvent, interceptRecurringAction]);
 
     const onPaneClose = React.useCallback(() => {
         if (document.activeElement instanceof HTMLElement) {

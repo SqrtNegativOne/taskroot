@@ -114,9 +114,10 @@ export class EventSyncStrategy implements ISyncStrategy<AppEvent> {
         [SyncAction.Create]: async (taskOrEvent, tasks) => {
             if (taskOrEvent.type !== SyncType.Event) return;
             const targetCalendarId = taskOrEvent.item.googleCalendarId || "primary";
+            const eventsData = this.context.getLocalData<AppEvent[]>("events");
             const res = await this.calendarAPI.createEvent(
                 taskOrEvent.item,
-                tasks,
+                { tasks, events: eventsData },
                 targetCalendarId,
             );
             if (res) {
@@ -142,10 +143,11 @@ export class EventSyncStrategy implements ISyncStrategy<AppEvent> {
             const gid = currentEvent?.googleId || taskOrEvent.googleId;
 
             if (gid) {
+                const eventsData = this.context.getLocalData<AppEvent[]>("events");
                 await this.calendarAPI.updateEvent(
                     gid,
                     taskOrEvent.item,
-                    tasks,
+                    { tasks, events: eventsData },
                     taskOrEvent.calendarId,
                 );
             }

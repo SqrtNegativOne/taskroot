@@ -1,7 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createMockAppEvent } from "../../utils/testUtils";
+import type { AppEvent } from "../../domain/models";
 import { GoogleCalendarAPI } from "./GoogleCalendarAPI";
 import * as api from "../../store/api";
+
+function assertIsAppEvent(event: unknown): asserts event is AppEvent {
+    if (event && typeof event === "object" && "_deleted" in event) {
+        throw new Error("Expected AppEvent, got deleted event");
+    }
+}
+
 vi.mock("../../store/api", () => ({
     fetchWithTimeout: vi.fn<(...args: never[]) => unknown>(),
 }));
@@ -65,7 +73,7 @@ describe("GoogleCalendarAPI", () => {
                 startTime: "2024-05-10T10:00:00",
                 endTime: "2024-05-10T11:00:00",
             });
-            const googleEvent = googleCalendarAPI.toGoogleEvent(localEvent, []);
+            const googleEvent = googleCalendarAPI.toGoogleEvent(localEvent, { tasks: [], events: [] });
 
             expect(
                 googleEvent.extendedProperties?.private?.taskrootEventId,
@@ -81,7 +89,7 @@ describe("GoogleCalendarAPI", () => {
                 startTime: "2024-05-10T00:00:00",
                 endTime: "2024-05-11T00:00:00",
             });
-            const googleEvent = googleCalendarAPI.toGoogleEvent(localEvent, []);
+            const googleEvent = googleCalendarAPI.toGoogleEvent(localEvent, { tasks: [], events: [] });
 
             expect(googleEvent.start?.dateTime).toContain("2024-05-10T00:00:00");
             expect(googleEvent.end?.dateTime).toContain("2024-05-11T00:00:00");
@@ -95,7 +103,7 @@ describe("GoogleCalendarAPI", () => {
                 endTime: "2024-05-11T00:00:00",
                 isAllDay: true,
             });
-            const googleEvent = googleCalendarAPI.toGoogleEvent(localEvent, []);
+            const googleEvent = googleCalendarAPI.toGoogleEvent(localEvent, { tasks: [], events: [] });
 
             expect(googleEvent.start?.date).toBe("2024-05-10");
             expect(googleEvent.end?.date).toBe("2024-05-11");
@@ -120,11 +128,47 @@ describe("GoogleCalendarAPI", () => {
                 endTime: "2024-05-10T11:00:00",
             });
 
-            const googleInfoEvent = googleCalendarAPI.toGoogleEvent(infoEvent, []);
-            const googleBusyEvent = googleCalendarAPI.toGoogleEvent(busyEvent, []);
+            const googleInfoEvent = googleCalendarAPI.toGoogleEvent(infoEvent, { tasks: [], events: [] });
+            const googleBusyEvent = googleCalendarAPI.toGoogleEvent(busyEvent, { tasks: [], events: [] });
 
             expect(googleInfoEvent.transparency).toBe("transparent");
             expect(googleBusyEvent.transparency).toBe("opaque");
+        });
+
+        it("includes exdates as EXDATE in recurrence array", () => {
+            const localEvent = createMockAppEvent({
+                id: "e1",
+                title: "Recurring",
+                startTime: "2024-05-10T10:00:00",
+                endTime: "2024-05-10T11:00:00",
+                rrule: "FREQ=WEEKLY",
+                exdates: ["20240517T100000Z", "20240524T100000Z"]
+            });
+            const googleEvent = googleCalendarAPI.toGoogleEvent(localEvent, { tasks: [], events: [] });
+            const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            expect(googleEvent.recurrence).toEqual([
+                "RRULE:FREQ=WEEKLY",
+                `EXDATE;TZID=${timeZone}:20240517T100000Z`,
+                `EXDATE;TZID=${timeZone}:20240524T100000Z`,
+            ]);
+        });
+
+        it("includes recurringEventId and originalStartTime for exceptions", () => {
+            const localEvent = createMockAppEvent({
+                id: "e1_exception",
+                title: "Exception",
+                startTime: "2024-05-17T10:00:00",
+                endTime: "2024-05-17T11:00:00",
+                recurringEventId: "master_id",
+                originalStartTime: "2024-05-17T10:00:00"
+            });
+            const baseEvent = createMockAppEvent({
+                id: "master_id",
+                googleId: "master_id_google"
+            });
+            const googleEvent = googleCalendarAPI.toGoogleEvent(localEvent, { tasks: [], events: [baseEvent] });
+            expect(googleEvent.recurringEventId).toBe("master_id_google");
+            expect(googleEvent.originalStartTime?.dateTime).toContain("2024-05-17T10:00:00");
         });
     });
 
@@ -144,6 +188,7 @@ describe("GoogleCalendarAPI", () => {
             };
 
             const localEvent = googleCalendarAPI.toLocalEvent(googleEvent);
+            assertIsAppEvent(localEvent);
             expect(localEvent.id).toBe("e456");
             expect(localEvent.googleId).toBe("g123");
             expect(localEvent.title).toBe("Meeting");
@@ -159,6 +204,7 @@ describe("GoogleCalendarAPI", () => {
             };
 
             const localEvent = googleCalendarAPI.toLocalEvent(googleEvent);
+            assertIsAppEvent(localEvent);
             expect(localEvent.type).toBe("info");
 
             const googleEvent2 = {
@@ -170,6 +216,7 @@ describe("GoogleCalendarAPI", () => {
             };
 
             const localEvent2 = googleCalendarAPI.toLocalEvent(googleEvent2);
+            assertIsAppEvent(localEvent2);
             expect(localEvent2.type).toBe("busy");
         });
 
@@ -182,9 +229,43 @@ describe("GoogleCalendarAPI", () => {
             };
 
             const localEvent = googleCalendarAPI.toLocalEvent(googleEvent);
+            assertIsAppEvent(localEvent);
             expect(localEvent.isAllDay).toBe(true);
             expect(localEvent.startTime).toBe("2024-05-10T00:00:00");
             expect(localEvent.endTime).toBe("2024-05-11T00:00:00");
+        });
+
+        it("parses EXDATEs from recurrence array into exdates", () => {
+            const googleEvent = {
+                id: "g1",
+                summary: "Recurring",
+                start: { dateTime: "2024-05-10T10:00:00Z" },
+                end: { dateTime: "2024-05-10T11:00:00Z" },
+                recurrence: [
+                    "RRULE:FREQ=WEEKLY",
+                    "EXDATE:20240517T100000Z",
+                    "EXDATE;TZID=America/New_York:20240524T100000"
+                ]
+            };
+            const localEvent = googleCalendarAPI.toLocalEvent(googleEvent);
+            assertIsAppEvent(localEvent);
+            expect(localEvent.rrule).toBe("FREQ=WEEKLY");
+            expect(localEvent.exdates).toEqual(["20240517T100000Z", "20240524T100000"]);
+        });
+
+        it("parses recurringEventId and originalStartTime for exceptions", () => {
+            const googleEvent = {
+                id: "g1_exception",
+                summary: "Exception",
+                start: { dateTime: "2024-05-17T10:00:00Z" },
+                end: { dateTime: "2024-05-17T11:00:00Z" },
+                recurringEventId: "master_id",
+                originalStartTime: { dateTime: "2024-05-17T10:00:00Z" }
+            };
+            const localEvent = googleCalendarAPI.toLocalEvent(googleEvent);
+            assertIsAppEvent(localEvent);
+            expect(localEvent.recurringEventId).toBe("master_id");
+            expect(typeof localEvent.originalStartTime).toBe("string");
         });
     });
 
@@ -201,11 +282,12 @@ describe("GoogleCalendarAPI", () => {
                 rrule: "FREQ=WEEKLY",
             });
             
-            const googleEvent = googleCalendarAPI.toGoogleEvent(originalLocalEvent, []);
+            const googleEvent = googleCalendarAPI.toGoogleEvent(originalLocalEvent, { tasks: [], events: [] });
             googleEvent.id = "g-1";
             googleEvent.updated = "2024-05-01T00:00:00.000Z";
 
             const restoredLocalEvent = googleCalendarAPI.toLocalEvent(googleEvent, "primary", "My Calendar");
+            assertIsAppEvent(restoredLocalEvent);
 
             expect(restoredLocalEvent.id).toBe(originalLocalEvent.id);
             expect(restoredLocalEvent.taskId).toBe(originalLocalEvent.taskId);
@@ -228,11 +310,12 @@ describe("GoogleCalendarAPI", () => {
                 isAllDay: true,
             });
 
-            const googleEvent = googleCalendarAPI.toGoogleEvent(originalLocalEvent, []);
+            const googleEvent = googleCalendarAPI.toGoogleEvent(originalLocalEvent, { tasks: [], events: [] });
             googleEvent.id = "g-2";
             googleEvent.updated = "2024-12-01T00:00:00.000Z";
 
             const restoredLocalEvent = googleCalendarAPI.toLocalEvent(googleEvent, "primary", "My Calendar");
+            assertIsAppEvent(restoredLocalEvent);
 
             expect(restoredLocalEvent.id).toBe(originalLocalEvent.id);
             expect(restoredLocalEvent.title).toBe(originalLocalEvent.title);

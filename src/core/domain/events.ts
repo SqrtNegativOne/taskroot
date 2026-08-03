@@ -3,7 +3,6 @@ import { modernizeColor } from "../utils/colors";
 
 // The populated output type for the UI
 export type HydratedEvent = AppEvent & {
-    title: string;
     task?: AppTask;
     color?: string;
 };

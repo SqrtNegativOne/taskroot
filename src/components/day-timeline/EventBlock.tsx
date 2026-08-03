@@ -25,6 +25,7 @@ function getEventClassNames(
     opts: { compact: boolean; isGhost: boolean; isFloating: boolean; isShort: boolean }
 ): string {
     const classNames = ["day-event", `ev-${event.type}`];
+    if (event.taskId) classNames.push("ev-plan");
     if (event.priority) classNames.push(`pri-bar-${event.priority}`);
     if (opts.compact) classNames.push("is-compact");
     if (opts.isShort && !opts.compact) classNames.push("is-short");
@@ -146,13 +147,13 @@ export function EventBlock<T extends import("./types").DragState = import("./typ
         }
         
         let isPastDue = false;
-        if (event.type === 'plan' && !event.isDone) {
+        if (!!event.taskId && !event.isDone) {
             if (new Date(event.endTime).getTime() < Date.now()) {
                 isPastDue = true;
             }
         }
 
-        const hasTags = !compact && event.type === "plan" && task && (task.tags || []).length > 0;
+        const hasTags = !compact && !!task && (task.tags || []).length > 0;
 
         return (
             <div

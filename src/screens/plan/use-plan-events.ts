@@ -39,7 +39,7 @@ export function usePlanEvents(tasks: AppTask[], events: AppEvent[], anchor: Date
 
     const getEventFilterValues = React.useCallback(
         (col: string) => {
-            if (col === "type") return ["info", "plan", "busy", "log"];
+            if (col === "type") return ["info", "busy", "log"];
             if (col === "tag") return allEventTags;
             if (col === "taskStatus") return ["todo", "done", "none"];
             if (col === "category") {

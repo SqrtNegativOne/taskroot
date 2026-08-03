@@ -74,7 +74,7 @@ test("deleting a task also deletes its associated events", async () => {
             title: "All Day Event",
             startTime: "2026-07-12T00:00:00",
             endTime: "2026-07-13T00:00:00",
-            type: "plan",
+            type: "busy",
             isAllDay: true,
         },
         {

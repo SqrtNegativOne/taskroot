@@ -22,28 +22,24 @@ function EventTypeSelector({ event, tasks, updateEvent, isReadOnlyCalendar }: { 
                     value={event.type}
                     disabled={isReadOnlyCalendar}
                     onChange={(e) => {
-                        const val = e.target.value;
-                        const type: "plan" | "busy" | "info" = val === "plan" ? "plan" : val === "busy" ? "busy" : "info";
-                        updateEvent(event.id, type === "plan" ? { type } : { type, taskId: undefined });
+                        const type: "busy" | "info" = e.target.value === "busy" ? "busy" : "info";
+                        updateEvent(event.id, { type });
                     }}
                 >
                     <option value="busy">Busy</option>
-                    <option value="info">Informational</option>
-                    <option value="plan">Plan (task-based)</option>
+                    <option value="info">Informational (Free)</option>
                 </select>
             </div>
-            {event.type === "plan" && (
-                <div className="inspector-field">
-                    <select
-                        value={event.taskId || ""}
-                        disabled={isReadOnlyCalendar}
-                        onChange={(e) => updateEvent(event.id, { taskId: e.target.value || undefined })}
-                    >
-                        <option value="">-- No task attached --</option>
-                        {tasks.map((t) => <option key={t.id} value={t.id}>{t.title}</option>)}
-                    </select>
-                </div>
-            )}
+            <div className="inspector-field">
+                <select
+                    value={event.taskId || ""}
+                    disabled={isReadOnlyCalendar}
+                    onChange={(e) => updateEvent(event.id, { taskId: e.target.value || undefined })}
+                >
+                    <option value="">-- No task attached --</option>
+                    {tasks.map((t) => <option key={t.id} value={t.id}>{t.title}</option>)}
+                </select>
+            </div>
         </>
     );
 }

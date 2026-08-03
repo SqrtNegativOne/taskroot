@@ -57,7 +57,6 @@ export function DateTimeGrid({ event, updateEvent, isReadOnlyCalendar }: { event
         if (isReadOnlyCalendar) return;
         updateEvent(event.id, { 
             isAllDay: false, 
-            type: event.type !== "plan" ? "busy" : event.type,
             startTime: `${startDay}T${DEFAULT_START_HOUR}`,
             endTime: `${endDay}T${DEFAULT_END_HOUR}`
         });
@@ -69,7 +68,6 @@ export function DateTimeGrid({ event, updateEvent, isReadOnlyCalendar }: { event
         if (startDay === eDay) eDay = ymd(addDays(new Date(startDay + "T00:00:00"), 1));
         updateEvent(event.id, { 
             isAllDay: true, 
-            type: event.type !== "plan" ? "info" : event.type,
             startTime: `${startDay}T00:00:00`,
             endTime: `${eDay}T00:00:00`
         });

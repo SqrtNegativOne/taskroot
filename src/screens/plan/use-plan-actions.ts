@@ -62,7 +62,7 @@ export function usePlanActions(
         const calData = calendars.find(c => c.id === defaultCal);
         const dStr = ymd(timelineDate);
         setEvents(prev => [...prev, {
-            id: generateEventId(), taskId: task.id, type: "plan", isAllDay: false, title: task.title,
+            id: generateEventId(), taskId: task.id, type: "busy", isAllDay: false, title: task.title,
             startTime: `${dStr}T00:00:00`, endTime: `${dStr}T01:00:00`,
             googleCalendarId: defaultCal, category: calData?.summary || "", ...overrides
         }]);

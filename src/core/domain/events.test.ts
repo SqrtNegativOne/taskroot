@@ -26,7 +26,7 @@ describe("hydrateEvents", () => {
             {
                 id: "e1",
                 title: "Dummy",
-                type: "plan",
+                type: "busy",
                 startTime: "2026-05-20T10:00:00",
                 endTime: "2026-05-20T11:00:00",
                 taskId: "t2",
@@ -60,12 +60,37 @@ describe("hydrateEvents", () => {
         expect(hydrated[0].isDone).toBe(false); // busy events are never done
     });
 
+    it("should hydrate an info event as a plan using the corresponding task data", () => {
+        const tasks: AppTask[] = [
+            {
+                id: "t1",
+                title: "Task 1",
+                priority: "P1",
+                status: "nextup",
+                tags: [],
+            },
+        ];
+        const events: AppEvent[] = [
+            {
+                id: "e1",
+                title: "Dummy",
+                type: "info",
+                startTime: "2026-05-20T10:00:00",
+                endTime: "2026-05-20T11:00:00",
+                taskId: "t1",
+            }
+        ];
+        const hydrated = hydrateEvents(events, tasks);
+        expect(hydrated.length).toBe(1);
+        expect(hydrated[0].title).toBe("Task 1");
+    });
+
     it("should reflect name updates dynamically (name update thing)", () => {
         const events: AppEvent[] = [
             {
                 id: "e1",
                 title: "Fake title",
-                type: "plan",
+                type: "busy",
                 startTime: "2026-07-23T09:00:00",
                 endTime: "2026-07-23T10:00:00",
                 taskId: "t1",
@@ -97,6 +122,46 @@ describe("hydrateEvents", () => {
         ];
         hydrated = hydrateEvents(events, tasks);
         expect(hydrated[0].title).toBe("New Name");
+    });
+
+    it("should dynamically update the category to match the latest calendar summary", () => {
+        const events: AppEvent[] = [
+            {
+                id: "e1",
+                title: "Test Event",
+                type: "info",
+                startTime: "2026-07-23T09:00:00",
+                endTime: "2026-07-23T10:00:00",
+                googleCalendarId: "cal_1",
+                category: "Old Calendar Name"
+            },
+            {
+                id: "e2",
+                title: "Test Event 2",
+                type: "info",
+                startTime: "2026-07-23T09:00:00",
+                endTime: "2026-07-23T10:00:00",
+                category: "Another Old Name"
+            },
+            {
+                id: "e3",
+                title: "Test Event 3",
+                type: "info",
+                startTime: "2026-07-23T09:00:00",
+                endTime: "2026-07-23T10:00:00",
+            }
+        ];
+
+        const calendars = [
+            { id: "cal_1", summary: "New Calendar Name" },
+            { id: "cal_2", summary: "Another Old Name" }
+        ];
+
+        const hydrated = hydrateEvents(events, [], calendars);
+
+        expect(hydrated[0].category).toBe("New Calendar Name");
+        expect(hydrated[1].category).toBe("Another Old Name");
+        expect(hydrated[2].category).toBe("New Calendar Name"); // Fallback to first calendar
     });
 });
 

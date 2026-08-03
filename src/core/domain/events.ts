@@ -28,6 +28,26 @@ export type HydratedEvent = BaseEvent & {
     color?: string;
 };
 
+function resolveEventCalendar(
+    ev: AppEvent,
+    calendars: { id: string; summary: string; backgroundColor?: string; foregroundColor?: string; primary?: boolean }[]
+) {
+    let calId = ev.googleCalendarId;
+    if (calId === "primary") {
+        const primaryCal = calendars.find((c) => c.primary);
+        if (primaryCal) calId = primaryCal.id;
+    }
+    let cal = calId
+        ? calendars.find((c) => c.id === calId)
+        : ev.category
+        ? calendars.find((c) => c.summary === ev.category)
+        : undefined;
+    if (!cal) {
+        cal = calendars.find((c) => c.primary) || calendars[0];
+    }
+    return cal;
+}
+
 /**
  * Hydrates events with data from their respective tasks to ensure consistency.
  */
@@ -37,17 +57,9 @@ export function hydrateEvents(
     calendars: { id: string; summary: string; backgroundColor?: string; foregroundColor?: string; primary?: boolean }[] = [],
 ): HydratedEvent[] {
     return events.map((ev) => {
-        let calId = ev.googleCalendarId;
-        if (calId === "primary") {
-            const primaryCal = calendars.find(c => c.primary);
-            if (primaryCal) calId = primaryCal.id;
-        }
-        let cal = calId ? calendars.find(c => c.id === calId) : (ev.category ? calendars.find(c => c.summary === ev.category) : undefined);
-        if (!cal) {
-            cal = calendars.find(c => c.primary) || calendars[0];
-        }
+        const cal = resolveEventCalendar(ev, calendars);
         const color = cal?.backgroundColor ? modernizeColor(cal.backgroundColor) : undefined;
-        if (ev.type === "plan") {
+        if (ev.taskId) {
             const task = tasks.find((t) => t.id === ev.taskId);
             return {
                 ...ev,
@@ -56,6 +68,7 @@ export function hydrateEvents(
                 isDone: task ? task.status === "done" : false,
                 task,
                 color,
+                category: cal?.summary ?? ev.category,
             };
         } else {
             // Info, Busy, Log, etc.
@@ -64,6 +77,7 @@ export function hydrateEvents(
                 title: ev.title || "",
                 isDone: false,
                 color,
+                category: cal?.summary ?? ev.category,
             };
         }
     });

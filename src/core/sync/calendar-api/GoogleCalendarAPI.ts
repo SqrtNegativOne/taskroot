@@ -200,11 +200,9 @@ export class GoogleCalendarAPI implements ICalendarAPI {
 
 function extractEventTime(googleEvent: gapi.client.calendar.Event) {
     if (googleEvent.start?.dateTime) {
-        const startDt = new Date(googleEvent.start.dateTime);
-        const endDt = new Date(googleEvent.end?.dateTime || googleEvent.start.dateTime);
         return {
-            startTime: toFloatingIso(startDt),
-            endTime: toFloatingIso(endDt),
+            startTime: toFloatingIso(new Date(googleEvent.start.dateTime)),
+            endTime: toFloatingIso(new Date(googleEvent.end?.dateTime || googleEvent.start.dateTime)),
             isAllDay: false
         };
     }
@@ -223,16 +221,14 @@ function getEventId(googleEvent: gapi.client.calendar.Event) {
 }
 
 function getEventTaskId(googleEvent: gapi.client.calendar.Event) {
-    const priv = googleEvent.extendedProperties?.private;
-    if (priv?.taskId) return priv.taskId;
-    return undefined;
+    return googleEvent.extendedProperties?.private?.taskId;
 }
 
 function extractEventMetadata(googleEvent: gapi.client.calendar.Event) {
     const taskId = getEventTaskId(googleEvent);
     const id = getEventId(googleEvent);
     const defaultType = googleEvent.transparency === "transparent" ? "info" : "busy";
-    const type = googleEvent.extendedProperties?.private?.type || (taskId ? "plan" : defaultType);
+    const type = googleEvent.extendedProperties?.private?.type || defaultType;
     return { taskId, id, type };
 }
 

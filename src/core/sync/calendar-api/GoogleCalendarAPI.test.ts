@@ -122,8 +122,9 @@ describe("GoogleCalendarAPI", () => {
             });
             const busyEvent = createMockAppEvent({
                 id: "e2",
-                type: "plan",
-                title: "Plan",
+                type: "busy",
+                title: "Busy Task",
+                taskId: "some-task-id",
                 startTime: "2024-05-10T10:00:00",
                 endTime: "2024-05-10T11:00:00",
             });
@@ -182,7 +183,7 @@ describe("GoogleCalendarAPI", () => {
                 extendedProperties: {
                     private: {
                         taskrootEventId: "e456",
-                        type: "plan",
+                        type: "busy",
                     },
                 },
             };
@@ -270,11 +271,11 @@ describe("GoogleCalendarAPI", () => {
     });
 
     describe("roundtrip", () => {
-        it("preserves properties of a timed plan event after roundtripping to google and back", () => {
+        it("preserves properties of a timed task event after roundtripping to google and back", () => {
             const originalLocalEvent = createMockAppEvent({
                 id: "e-roundtrip-1",
                 taskId: "t-1",
-                type: "plan",
+                type: "busy",
                 title: "Timed Meeting",
                 startTime: "2024-05-10T10:00:00",
                 endTime: "2024-05-10T11:00:00",

@@ -17,7 +17,7 @@ export function createWorkSessionEvent(
     return {
         id: `log-${Date.now()}-${Math.floor(Math.random() * RANDOM_ID_MULTIPLIER)}`,
         title: `Worked on ${taskId || "Task"}`,
-        type: "time_log" as const,
+        type: "log" as const,
         startTime: toFloatingIso(new Date(startMs)),
         endTime: toFloatingIso(new Date(endMs)),
         taskId: taskId || "",

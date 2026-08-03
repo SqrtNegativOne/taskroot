@@ -2,28 +2,22 @@ import React from "react";
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "./core/auth/useAuth";
 import { AuthProvider } from "./core/auth/AuthContext";
-
-
-import { PlanScreen } from "./screens/plan/PlanScreen";
-import { DoScreen } from "./screens/do/DoScreen";
-import { SettingsScreen } from "./screens/settings/SettingsScreen";
-
 import { useEvents, useSettings, useTasks } from "./core/store/hooks";
 import { purgeOrphanedData } from "./core/store/repositories";
-
-
 import { syncState, poller } from "./core/sync";
-import { useNotification } from "./core/utils/notifications";
-import { NotificationProvider } from "./core/utils/notifications";
-
+import { useNotification, NotificationProvider } from "./core/utils/notifications";
 import { LoginScreen } from "./screens/login/LoginScreen";
-import { WrapScreen } from "./screens/wrap/WrapScreen";
-import { GraphScreen } from "./screens/graph/GraphScreen";
-import { StatsScreen } from "./screens/stats/StatsScreen";
-import { RecapScreen } from "./screens/recap/RecapScreen";
-import { MiniTrackerScreen } from "./screens/minitracker/MiniTrackerScreen";
 import { AppLayout } from "./components/AppLayout";
 import { LoginTitleBar } from "./components/shell";
+
+const PlanScreen        = React.lazy(() => import("./screens/plan/PlanScreen").then(m => ({ default: m.PlanScreen })));
+const DoScreen          = React.lazy(() => import("./screens/do/DoScreen").then(m => ({ default: m.DoScreen })));
+const SettingsScreen    = React.lazy(() => import("./screens/settings/SettingsScreen").then(m => ({ default: m.SettingsScreen })));
+const WrapScreen        = React.lazy(() => import("./screens/wrap/WrapScreen").then(m => ({ default: m.WrapScreen })));
+const GraphScreen       = React.lazy(() => import("./screens/graph/GraphScreen").then(m => ({ default: m.GraphScreen })));
+const StatsScreen       = React.lazy(() => import("./screens/stats/StatsScreen").then(m => ({ default: m.StatsScreen })));
+const RecapScreen       = React.lazy(() => import("./screens/recap/RecapScreen").then(m => ({ default: m.RecapScreen })));
+const MiniTrackerScreen = React.lazy(() => import("./screens/minitracker/MiniTrackerScreen").then(m => ({ default: m.MiniTrackerScreen })));
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
     const { user, loading } = useAuth();
@@ -122,18 +116,20 @@ function AppRouter() {
     }, [navigate, settings.keybindingOpenSettings]);
 
     return (
-        <Routes>
-            <Route element={<AppLayout />}>
-                <Route path="/plan" element={<PlanScreen />} />
-                <Route path="/do" element={<DoScreen />} />
-                <Route path="/settings" element={<SettingsScreen />} />
-                <Route path="/wrap" element={<WrapScreen />} />
-                <Route path="/graph" element={<GraphScreen />} />
-                <Route path="/stats" element={<StatsScreen />} />
-                <Route path="/recap" element={<RecapScreen />} />
-            </Route>
-            <Route path="*" element={<Navigate to="/plan" replace />} />
-        </Routes>
+        <React.Suspense fallback={undefined}>
+            <Routes>
+                <Route element={<AppLayout />}>
+                    <Route path="/plan" element={<PlanScreen />} />
+                    <Route path="/do" element={<DoScreen />} />
+                    <Route path="/settings" element={<SettingsScreen />} />
+                    <Route path="/wrap" element={<WrapScreen />} />
+                    <Route path="/graph" element={<GraphScreen />} />
+                    <Route path="/stats" element={<StatsScreen />} />
+                    <Route path="/recap" element={<RecapScreen />} />
+                </Route>
+                <Route path="*" element={<Navigate to="/plan" replace />} />
+            </Routes>
+        </React.Suspense>
     );
 }
 

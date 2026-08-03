@@ -56,13 +56,13 @@ export function WrapScreen() {
     });
 
     const logEvents: HydratedEvent[] = events
-        .filter((e) => e.type === "time_log")
+        .filter((e) => e.type === "log")
         .map((e) => ({
             id: e.id,
             title: e.title || "",
             startTime: e.startTime,
             endTime: e.endTime,
-            type: "time_log",
+            type: "log" as const,
         }));
 
     const wake = settings.earliest_wake_time || DEFAULT_WORKDAY_MINUTES;

@@ -23,7 +23,7 @@ export class Repository<T> {
     private initial: T;
     private parser?: (saved: unknown) => T;
     private interceptor?: (next: T, prev?: T) => T;
-    private onDelta?: (result: T) => void;
+    private onDelta?: (result: T, prev: T) => void;
 
     constructor(
         key: string,
@@ -31,7 +31,7 @@ export class Repository<T> {
         options?: {
             parser?: (saved: unknown) => T;
             interceptor?: (next: T, prev?: T) => T;
-            onDelta?: (result: T) => void;
+            onDelta?: (result: T, prev: T) => void;
         }
     ) {
         this.key = key;
@@ -61,7 +61,7 @@ export class Repository<T> {
         storeRegistry.setLocalData(this.key, mutated);
         
         if (this.onDelta) {
-            this.onDelta(mutated);
+            this.onDelta(mutated, prev);
         }
         return mutated;
     }
@@ -119,12 +119,29 @@ function parseSettings(parsed: unknown): AppSettings {
     return result;
 }
 
-function onTasksDelta(result: AppTask[]) {
+function propagateTaskTitleToEvents(next: AppTask[], prev: AppTask[]) {
+    const renamedTasks = next.filter((task) => {
+        const old = prev.find((t) => t.id === task.id);
+        return old && old.title !== task.title;
+    });
+    if (renamedTasks.length === 0) return;
+
+    const titleById = new Map(renamedTasks.map((t) => [t.id, t.title]));
+    const events = repos.events.get();
+    const updated = events.map((ev) => {
+        const newTitle = ev.taskId ? titleById.get(ev.taskId) : undefined;
+        return newTitle !== undefined ? Object.assign({}, ev, { title: newTitle }) : ev;
+    });
+    repos.events.set(updated);
+}
+
+function onTasksDelta(result: AppTask[], prev?: AppTask[]) {
+    if (prev) propagateTaskTitleToEvents(result, prev);
     taskSync.computeDelta(result);
     pusher.trigger();
 }
 
-function onEventsDelta(result: AppEvent[]) {
+function onEventsDelta(result: AppEvent[], _prev: AppEvent[]) {
     eventSync.computeDelta(result);
     pusher.trigger();
 }

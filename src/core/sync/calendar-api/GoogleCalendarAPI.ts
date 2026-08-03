@@ -2,6 +2,7 @@ import { HTTP_UNAUTHORIZED, HTTP_GONE, HTTP_FORBIDDEN, HTTP_TOO_MANY_REQUESTS, M
 import { fetchWithTimeout } from "../../store/api";
 import { toFloatingIso } from "../../utils/date-utils";
 import type { AppTask, AppEvent } from "../../domain/models";
+import { toEventType } from "../../domain/models";
 import { isEventAllDay } from "../../domain/events";
 import type { IAuthManager } from "../auth/types";
 import type { ICalendarAPI } from "./types";
@@ -197,8 +198,6 @@ export class GoogleCalendarAPI implements ICalendarAPI {
     }
 }
 
-
-
 function extractEventTime(googleEvent: gapi.client.calendar.Event) {
     if (googleEvent.start?.dateTime) {
         return {
@@ -227,8 +226,8 @@ function getEventTaskId(googleEvent: gapi.client.calendar.Event) {
 function extractEventMetadata(googleEvent: gapi.client.calendar.Event) {
     const taskId = getEventTaskId(googleEvent);
     const id = getEventId(googleEvent);
-    const defaultType = googleEvent.transparency === "transparent" ? "info" : "busy";
-    const type = googleEvent.extendedProperties?.private?.type || defaultType;
+    const defaultType: AppEvent['type'] = googleEvent.transparency === "transparent" ? "info" : "busy";
+    const type = toEventType(googleEvent.extendedProperties?.private?.type, defaultType);
     return { taskId, id, type };
 }
 

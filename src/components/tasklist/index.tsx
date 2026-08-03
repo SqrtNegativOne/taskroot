@@ -47,15 +47,16 @@ export function TaskListPane({
     const pastDueTaskIds = React.useMemo(() => {
         const now = Date.now();
         const set = new Set<string>();
+        const taskMap = new Map(tasks.map((t) => [t.id, t]));
         events.forEach(e => {
-            if (e.type === 'plan' && e.task?.status !== 'done' && e.taskId) {
+            if (e.taskId && taskMap.get(e.taskId)?.status !== 'done') {
                 if (new Date(e.endTime).getTime() < now) {
                     set.add(e.taskId);
                 }
             }
         });
         return set;
-    }, [events]);
+    }, [events, tasks]);
 
     const updateTask = (id: string, updates: Partial<AppTask>) =>
         setTasks((ts) =>

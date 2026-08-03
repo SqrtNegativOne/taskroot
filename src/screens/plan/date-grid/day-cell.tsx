@@ -164,7 +164,7 @@ export function DayCell({
 }
 
 function checkPastDue(ev: HydratedEvent): boolean {
-    if (ev.type !== 'plan' || ev.task?.status === 'done') return false;
+    if (!ev.taskId || ev.task?.status === 'done') return false;
     return new Date(ev.endTime).getTime() < Date.now();
 }
 

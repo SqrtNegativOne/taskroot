@@ -91,10 +91,9 @@ describe("SyncQueue", () => {
         const eventItem: AppEvent = { 
             id: "1", 
             title: "Original Title", 
-            type: "event",
+            type: "busy",
             startTime: "2023-10-10T16:40:00",
             endTime: "2023-10-10T18:20:00",
-            createdAt: 0,
             updatedAt: 0
         };
         const eventUpdated: AppEvent = { ...eventItem, title: "New Title" };

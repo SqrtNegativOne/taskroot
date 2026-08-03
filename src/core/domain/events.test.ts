@@ -9,14 +9,14 @@ describe("hydrateEvents", () => {
             {
                 id: "t1",
                 title: "Task 1",
-                priority: "P1",
+                priority: 1,
                 status: "nextup",
                 tags: [],
             },
             {
                 id: "t2",
                 title: "Task 2",
-                priority: "P2",
+                priority: 2,
                 status: "done",
                 tags: [],
             },
@@ -37,7 +37,7 @@ describe("hydrateEvents", () => {
 
         expect(hydrated.length).toBe(1);
         expect(hydrated[0].title).toBe("Task 2");
-        expect(hydrated[0].task?.priority).toBe("P2");
+        expect(hydrated[0].task?.priority).toBe(2);
         expect(hydrated[0].task?.status).toBe("done");
     });
 
@@ -65,7 +65,7 @@ describe("hydrateEvents", () => {
             {
                 id: "t1",
                 title: "Task 1",
-                priority: "P1",
+                priority: 1,
                 status: "nextup",
                 tags: [],
             },
@@ -102,7 +102,7 @@ describe("hydrateEvents", () => {
             {
                 id: "t1",
                 title: "Old Name",
-                priority: "P1",
+                priority: 1,
                 status: "nextup",
                 tags: [],
             },
@@ -115,7 +115,7 @@ describe("hydrateEvents", () => {
             {
                 id: "t1",
                 title: "New Name",
-                priority: "P1",
+                priority: 1,
                 status: "nextup",
                 tags: [],
             },

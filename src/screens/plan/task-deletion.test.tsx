@@ -17,6 +17,14 @@ vi.mock("../../core/store/api", () => ({
     },
 }));
 
+vi.mock("../../core/sync", () => ({
+    taskSync: { computeDelta: () => {} },
+    eventSync: { computeDelta: () => {} },
+    pusher: { trigger: () => {}, queue: { push: () => {}, getItems: () => [], length: 0 } },
+    poller: { forceSync: () => {}, stop: () => {} },
+    syncState: { error: undefined },
+}));
+
 beforeAll(() => {
     // Mock matchMedia
     Object.defineProperty(window, 'matchMedia', {

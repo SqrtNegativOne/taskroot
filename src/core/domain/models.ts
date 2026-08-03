@@ -41,7 +41,7 @@ export interface AppEvent {
     title: string;
     startTime: string;
     endTime: string;
-    type: 'busy' | 'info';
+    type: 'busy' | 'info' | 'log';
     category?: string;
     rrule?: string;
     exdates?: string[];
@@ -54,4 +54,8 @@ export interface AppEvent {
     baseEventId?: string;
 
     [key: string]: unknown;
+}
+
+export function toEventType(raw: string | undefined, fallback: AppEvent['type']): AppEvent['type'] {
+    return (raw === "info" || raw === "busy" || raw === "log") ? raw : fallback;
 }

@@ -48,7 +48,7 @@ export function TaskListPane({
         const now = Date.now();
         const set = new Set<string>();
         events.forEach(e => {
-            if (e.type === 'plan' && !e.isDone && e.taskId) {
+            if (e.type === 'plan' && e.task?.status !== 'done' && e.taskId) {
                 if (new Date(e.endTime).getTime() < now) {
                     set.add(e.taskId);
                 }

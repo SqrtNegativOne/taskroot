@@ -24,7 +24,6 @@ test("filters events by category correctly", () => {
             endTime: `${todayStr}T11:00:00`,
             type: "info",
             category: "Work",
-            isAllDay: false,
         }),
         createMockAppEvent({
             id: "e2",
@@ -33,7 +32,6 @@ test("filters events by category correctly", () => {
             endTime: `${todayStr}T12:40:00`,
             type: "info",
             category: "Personal",
-            isAllDay: false,
         }),
         createMockAppEvent({
             id: "e3",
@@ -41,7 +39,6 @@ test("filters events by category correctly", () => {
             startTime: `${todayStr}T13:20:00`,
             endTime: `${todayStr}T14:20:00`,
             type: "info",
-            isAllDay: false,
         }),
     ];
 
@@ -87,7 +84,6 @@ test("filters out events by category correctly using 'is not'", () => {
             endTime: `${todayStr}T11:00:00`,
             type: "info",
             category: "Work",
-            isAllDay: false,
         }),
         createMockAppEvent({
             id: "e2",
@@ -96,7 +92,6 @@ test("filters out events by category correctly using 'is not'", () => {
             endTime: `${todayStr}T12:40:00`,
             type: "info",
             category: "Personal",
-            isAllDay: false,
         }),
     ];
 

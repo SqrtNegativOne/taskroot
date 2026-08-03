@@ -1,11 +1,11 @@
 import { storeRegistry } from "./storeRegistry";
-import { MINUTES_IN_HOUR, HOURS_PER_DAY, MINUTES_PER_DAY } from "../utils/constants";
+
 import { taskSync, eventSync, pusher } from "../sync";
 import { SETTINGS_SCHEMA, DEFAULT_SETTINGS } from "./settingsSchema";
 import type { AppSettings } from "./settingsSchema";
 import type { AppTask, AppEvent } from "../domain/models";
 import type { AppNote } from "../../screens/do/tips-notes";
-import { DEFAULT_STATUSES, DEFAULT_DISTRACTION_COLUMNS, REST_CHECKLIST_DEFAULTS, PAD2, ymd } from "./data";
+import { DEFAULT_STATUSES, DEFAULT_DISTRACTION_COLUMNS, REST_CHECKLIST_DEFAULTS } from "./data";
 
 export interface DistractionRow { id: string; [key: string]: unknown; }
 export interface DistractionStatus { id: string; label: string; color: string; }
@@ -132,40 +132,7 @@ function onEventsDelta(result: AppEvent[]) {
 function parseEvents(parsed: unknown): AppEvent[] {
     if (!Array.isArray(parsed)) return [];
     
-    const events: AppEvent[] = parsed.map((ev: unknown) => {
-        if (!isRecord(ev)) return ev;
-        if (ev.date === undefined || ev.startTime !== undefined) return ev;
-        
-        const rawDate = ev.date;
-        if (typeof rawDate !== "string") return ev;
-        
-        const dateStr = rawDate;
-        const startMins = typeof ev.start === "number" ? ev.start : 0;
-        const endMins = typeof ev.end === "number" ? ev.end : (ev.isAllDay ? MINUTES_PER_DAY : MINUTES_IN_HOUR);
-        
-        const sh = Math.floor(startMins / MINUTES_IN_HOUR);
-        const sm = startMins % MINUTES_IN_HOUR;
-        let eh = Math.floor(endMins / MINUTES_IN_HOUR);
-        const em = endMins % MINUTES_IN_HOUR;
-        let eDate = dateStr;
-        
-        if (eh >= HOURS_PER_DAY) {
-             eh -= HOURS_PER_DAY;
-             const d = new Date(dateStr + "T00:00:00");
-             d.setDate(d.getDate() + 1);
-             eDate = ymd(d);
-        }
-
-        ev.startTime = `${dateStr}T${PAD2(sh)}:${PAD2(sm)}:00`;
-        ev.endTime = `${eDate}T${PAD2(eh)}:${PAD2(em)}:00`;
-        
-        delete ev.date;
-        delete ev.endDate;
-        delete ev.start;
-        delete ev.end;
-        
-        return ev;
-    }).filter((ev): ev is AppEvent => isRecord(ev));
+    const events: AppEvent[] = parsed.filter((ev): ev is AppEvent => isRecord(ev));
     
     return events;
 }

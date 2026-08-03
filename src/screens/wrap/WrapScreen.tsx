@@ -63,8 +63,6 @@ export function WrapScreen() {
             startTime: e.startTime,
             endTime: e.endTime,
             type: "time_log",
-            isAllDay: false,
-            isDone: false,
         }));
 
     const wake = settings.earliest_wake_time || DEFAULT_WORKDAY_MINUTES;

@@ -2,6 +2,7 @@ import { HTTP_UNAUTHORIZED, HTTP_GONE, HTTP_FORBIDDEN, HTTP_TOO_MANY_REQUESTS, M
 import { fetchWithTimeout } from "../../store/api";
 import { toFloatingIso } from "../../utils/date-utils";
 import type { AppTask, AppEvent } from "../../domain/models";
+import { isEventAllDay } from "../../domain/events";
 import type { IAuthManager } from "../auth/types";
 import type { ICalendarAPI } from "./types";
 /// <reference types="gapi.client.calendar" />
@@ -110,9 +111,9 @@ export class GoogleCalendarAPI implements ICalendarAPI {
         let startObj: gapi.client.calendar.EventDateTime;
         let endObj: gapi.client.calendar.EventDateTime;
 
-        if (localEvent.isAllDay) {
-            startObj = { date: localEvent.startTime.split("T")[0] };
-            endObj = { date: localEvent.endTime.split("T")[0] };
+        if (isEventAllDay(localEvent)) {
+            startObj = { date: localEvent.startTime };
+            endObj = { date: localEvent.endTime };
         } else {
             startObj = { dateTime: localEvent.startTime, timeZone };
             endObj = { dateTime: localEvent.endTime, timeZone };
@@ -140,8 +141,8 @@ export class GoogleCalendarAPI implements ICalendarAPI {
         if (localEvent.rrule) recurrence.push(`RRULE:${localEvent.rrule}`);
         if (localEvent.exdates && localEvent.exdates.length > 0) {
             for (const exdate of localEvent.exdates) {
-                if (localEvent.isAllDay) {
-                    const dateOnly = exdate.split("T")[0]; // handle YYYYMMDDTHHMMSS -> YYYYMMDD
+                if (isEventAllDay(localEvent)) {
+                    const dateOnly = exdate.includes("T") ? exdate.split("T")[0] : exdate;
                     recurrence.push(`EXDATE;VALUE=DATE:${dateOnly}`);
                 } else {
                     recurrence.push(`EXDATE;TZID=${timeZone}:${exdate}`);
@@ -173,7 +174,7 @@ export class GoogleCalendarAPI implements ICalendarAPI {
                 updatedAt: googleEvent.updated ? new Date(googleEvent.updated).getTime() : 0,
             };
         }
-        const { startTime, endTime, isAllDay } = extractEventTime(googleEvent);
+        const { startTime, endTime } = extractEventTime(googleEvent);
         const { taskId, id, type } = extractEventMetadata(googleEvent);
         const { rrule, exdates } = parseRecurrenceRule(googleEvent.recurrence);
 
@@ -186,7 +187,7 @@ export class GoogleCalendarAPI implements ICalendarAPI {
         return {
             id, googleId: googleEvent.id, googleCalendarId: calendarId, taskId,
             title: googleEvent.summary ?? "", startTime, endTime, type,
-            category: calendarSummary, isAllDay,
+            category: calendarSummary,
             updatedAt: googleEvent.updated ? new Date(googleEvent.updated).getTime() : Date.now(),
             ...rruleProps,
             ...exdatesProps,
@@ -202,15 +203,14 @@ function extractEventTime(googleEvent: gapi.client.calendar.Event) {
     if (googleEvent.start?.dateTime) {
         return {
             startTime: toFloatingIso(new Date(googleEvent.start.dateTime)),
-            endTime: toFloatingIso(new Date(googleEvent.end?.dateTime || googleEvent.start.dateTime)),
-            isAllDay: false
+            endTime: toFloatingIso(new Date(googleEvent.end?.dateTime || googleEvent.start.dateTime))
         };
     }
     if (!googleEvent.start?.date) throw new Error("Google event missing time information");
     
     const startDate = googleEvent.start.date;
     const endDate = googleEvent.end?.date || startDate;
-    return { startTime: `${startDate}T00:00:00`, endTime: `${endDate}T00:00:00`, isAllDay: true }; 
+    return { startTime: startDate, endTime: endDate }; 
 }
 
 function getEventId(googleEvent: gapi.client.calendar.Event) {

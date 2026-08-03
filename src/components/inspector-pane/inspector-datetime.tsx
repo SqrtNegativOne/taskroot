@@ -1,6 +1,7 @@
 import React from "react";
 import type { AppEvent } from "../../core/domain/models";
 import { isYmdString } from "../../core/domain/models";
+import { isEventAllDay } from "../../core/domain/events";
 import { Icon } from "../icon";
 import { addDays, extractDateFromISO, extractTimeFromISO, extractHourMinuteFromISO } from "../../core/utils/date-utils";
 import { ymd } from "../../core/store/data";
@@ -8,16 +9,17 @@ import { ymd } from "../../core/store/data";
 const DEFAULT_START_HOUR = "09:00:00";
 const DEFAULT_END_HOUR = "10:00:00";
 
-function getDisplayEndDate(endTime: string, isAllDay?: boolean): string {
+function getDisplayEndDate(endTime: string, isAllDay: boolean): string {
     if (!isAllDay) return extractDateFromISO(endTime);
-    const d = new Date(endTime);
+    const d = new Date(endTime + "T00:00:00");
     d.setDate(d.getDate() - 1);
     return ymd(d);
 }
 
 export function DateTimeGrid({ event, updateEvent, isReadOnlyCalendar }: { event: AppEvent, updateEvent: (id: string, updates: Partial<AppEvent>) => void, isReadOnlyCalendar: boolean }) {
+    const isAllDay = isEventAllDay(event);
     const startDay = extractDateFromISO(event.startTime);
-    const endDay = getDisplayEndDate(event.endTime, event.isAllDay);
+    const endDay = getDisplayEndDate(event.endTime, isAllDay);
     
     const [showEndDate, setShowEndDate] = React.useState(startDay !== endDay);
     const [localTime, setLocalTime] = React.useState<{ startTime: string, endTime: string } | undefined>(undefined);
@@ -25,15 +27,15 @@ export function DateTimeGrid({ event, updateEvent, isReadOnlyCalendar }: { event
     React.useEffect(() => setShowEndDate(startDay !== endDay), [startDay, endDay]);
     React.useEffect(() => setLocalTime(undefined), [event.startTime, event.endTime]);
 
-    const hasTime = !event.isAllDay;
+    const hasTime = !isAllDay;
     const hasEndDate = showEndDate;
     const currentStartTime = localTime?.startTime || event.startTime;
     const currentEndTime = localTime?.endTime || event.endTime;
 
     const startDateStr = extractDateFromISO(currentStartTime);
-    const startTimeStr = extractHourMinuteFromISO(currentStartTime);
-    const endDateStr = getDisplayEndDate(currentEndTime, event.isAllDay);
-    const endTimeStr = extractHourMinuteFromISO(currentEndTime);
+    const startTimeStr = hasTime ? extractHourMinuteFromISO(currentStartTime) : DEFAULT_START_HOUR;
+    const endDateStr = getDisplayEndDate(currentEndTime, isAllDay);
+    const endTimeStr = hasTime ? extractHourMinuteFromISO(currentEndTime) : DEFAULT_END_HOUR;
 
     const handleTimeBlur = () => {
         if (localTime) {
@@ -45,9 +47,9 @@ export function DateTimeGrid({ event, updateEvent, isReadOnlyCalendar }: { event
     const handleRemoveEndDate = () => {
         if (isReadOnlyCalendar) return;
         setShowEndDate(false);
-        if (event.isAllDay) {
+        if (isAllDay) {
             const nextDay = addDays(new Date(startDay + "T00:00:00"), 1);
-            updateEvent(event.id, { endTime: `${ymd(nextDay)}T00:00:00` });
+            updateEvent(event.id, { endTime: ymd(nextDay) });
         } else {
             updateEvent(event.id, { endTime: `${startDay}T${extractTimeFromISO(event.endTime)}` });
         }
@@ -56,7 +58,6 @@ export function DateTimeGrid({ event, updateEvent, isReadOnlyCalendar }: { event
     const handleAddTime = () => {
         if (isReadOnlyCalendar) return;
         updateEvent(event.id, { 
-            isAllDay: false, 
             startTime: `${startDay}T${DEFAULT_START_HOUR}`,
             endTime: `${endDay}T${DEFAULT_END_HOUR}`
         });
@@ -67,20 +68,19 @@ export function DateTimeGrid({ event, updateEvent, isReadOnlyCalendar }: { event
         let eDay = endDay;
         if (startDay === eDay) eDay = ymd(addDays(new Date(startDay + "T00:00:00"), 1));
         updateEvent(event.id, { 
-            isAllDay: true, 
-            startTime: `${startDay}T00:00:00`,
-            endTime: `${eDay}T00:00:00`
+            startTime: startDay,
+            endTime: eDay
         });
     };
 
     const onStartDateChange = (newDate: string) => {
         if (!isYmdString(newDate)) return;
-        const updates: Partial<AppEvent> = { startTime: `${newDate}T${extractTimeFromISO(currentStartTime)}` };
+        const updates: Partial<AppEvent> = { startTime: isAllDay ? newDate : `${newDate}T${extractTimeFromISO(currentStartTime)}` };
         if (newDate > endDateStr) {
-            if (event.isAllDay) {
+            if (isAllDay) {
                 const dt = new Date(`${newDate}T00:00:00`);
                 dt.setDate(dt.getDate() + 1);
-                updates.endTime = `${ymd(dt)}T00:00:00`;
+                updates.endTime = ymd(dt);
             } else {
                 updates.endTime = `${newDate}T${extractTimeFromISO(currentEndTime)}`;
             }
@@ -90,10 +90,10 @@ export function DateTimeGrid({ event, updateEvent, isReadOnlyCalendar }: { event
 
     const onEndDateChange = (newEndStr: string) => {
         if (!isYmdString(newEndStr)) return;
-        if (event.isAllDay) {
+        if (isAllDay) {
             const dt = new Date(`${newEndStr}T00:00:00`);
             dt.setDate(dt.getDate() + 1);
-            updateEvent(event.id, { endTime: `${ymd(dt)}T00:00:00` });
+            updateEvent(event.id, { endTime: ymd(dt) });
         } else {
             updateEvent(event.id, { endTime: `${newEndStr}T${extractTimeFromISO(currentEndTime)}` });
         }

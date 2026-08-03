@@ -88,17 +88,16 @@ export function filterEvents(
             if (f.column === "type") {
                 match = values.includes(e.type);
             } else if (f.column === "tag") {
-                const eventTags = e.tags || [];
-                const taskTags = e.task && e.task.tags ? e.task.tags : [];
-                const allTags = new Set([...eventTags, ...taskTags].map((t) =>
+                const taskTags = e.task?.tags ?? [];
+                const allTags = new Set(taskTags.map((t) =>
                     typeof t === "string" ? t.toLowerCase() : "",
                 ));
                 match = values.some(v => allTags.has(String(v).toLowerCase()));
             } else if (f.column === "taskStatus") {
                 match = values.some(v => {
                     if (v === "none") return !e.task;
-                    if (v === "done") return e.task ? e.task.status === "done" : e.isDone;
-                    if (v === "todo") return e.task ? e.task.status !== "done" : !e.isDone;
+                    if (v === "done") return e.task?.status === "done";
+                    if (v === "todo") return e.task?.status !== "done";
                     return false;
                 });
             } else if (f.column === "category") {
@@ -115,20 +114,8 @@ export function sortEvents(evs: HydratedEvent[], sort?: string): HydratedEvent[]
     const sorted = [...evs];
     sorted.sort((a, b) => {
         if (sort === "taskStatus") {
-            const aDone = a.task
-                ? a.task.status === "done"
-                    ? 1
-                    : 0
-                : a.isDone
-                  ? 1
-                  : 0;
-            const bDone = b.task
-                ? b.task.status === "done"
-                    ? 1
-                    : 0
-                : b.isDone
-                  ? 1
-                  : 0;
+            const aDone = (a.task?.status === "done") ? 1 : 0;
+            const bDone = (b.task?.status === "done") ? 1 : 0;
             if (aDone !== bDone) return aDone - bDone;
         }
         return (a.startTime || "").localeCompare(b.startTime || "");

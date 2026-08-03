@@ -29,13 +29,13 @@ const createDefaultEvent = (date: Date, startMins: number, endMins: number, isAl
     };
     if (isAllDay) {
         return {
-            id: generateEventId(), title: "", type: "info", isAllDay: true,
-            startTime: `${dStr}T00:00:00`,
-            endTime: `${ymd(addDays(dt))}T00:00:00`
+            id: generateEventId(), title: "", type: "info",
+            startTime: dStr,
+            endTime: ymd(addDays(dt))
         };
     }
     return {
-        id: generateEventId(), title: "", type: "busy", isAllDay: false,
+        id: generateEventId(), title: "", type: "busy",
         startTime: toIso(startMins), endTime: toIso(endMins)
     };
 };
@@ -62,7 +62,7 @@ export function usePlanActions(
         const calData = calendars.find(c => c.id === defaultCal);
         const dStr = ymd(timelineDate);
         setEvents(prev => [...prev, {
-            id: generateEventId(), taskId: task.id, type: "busy", isAllDay: false, title: task.title,
+            id: generateEventId(), taskId: task.id, type: "busy", title: task.title,
             startTime: `${dStr}T00:00:00`, endTime: `${dStr}T01:00:00`,
             googleCalendarId: defaultCal, category: calData?.summary || "", ...overrides
         }]);

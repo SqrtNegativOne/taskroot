@@ -1,6 +1,7 @@
 import React from "react";
 import { ymd, PAD2, sameDay } from "../../../core/store/data";
 import type { HydratedEvent } from "../../../core/domain/events";
+import { isEventAllDay } from "../../../core/domain/events";
 import { Icon } from "../../../components/icon";
 import { extractHourMinuteFromISO } from "../../../core/utils/date-utils";
 
@@ -163,7 +164,7 @@ export function DayCell({
 }
 
 function checkPastDue(ev: HydratedEvent): boolean {
-    if (ev.type !== 'plan' || ev.isDone) return false;
+    if (ev.type !== 'plan' || ev.task?.status === 'done') return false;
     return new Date(ev.endTime).getTime() < Date.now();
 }
 
@@ -181,14 +182,15 @@ function EventItem({
     isRemoving?: boolean;
 }) {
     const title = ev.title;
-    const pri = ev.priority;
-    const isDone = ev.isDone;
+    const pri = ev.task?.priority;
+    const isDone = ev.task?.status === 'done';
     const isPastDue = checkPastDue(ev);
+    const isAllDay = isEventAllDay(ev);
     
     return (
         <div
             className={`day-cell-event ev-${ev.type} ${pri !== undefined ? `pri-bar-${pri}` : ""} ${isDone ? "is-done" : ""} ${isEntering ? "is-entering" : ""} ${isRemoving ? "is-removing" : ""}`}
-            title={`${ev.isAllDay ? "All Day" : extractHourMinuteFromISO(ev.startTime)} — ${title}`}
+            title={`${isAllDay ? "All Day" : extractHourMinuteFromISO(ev.startTime)} — ${title}`}
             style={{
                 cursor: "grab",
                 opacity: dragState?.event?.id === ev.id ? OPACITY_FADED : 1,
@@ -198,7 +200,7 @@ function EventItem({
                 onEventDragStart && onEventDragStart(e, ev, ev.task)
             }
         >
-            {!ev.isAllDay && (
+            {!isAllDay && (
                 <span className="day-cell-event-time">
                     {extractHourMinuteFromISO(ev.startTime)}
                 </span>

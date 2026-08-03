@@ -3,6 +3,7 @@ import { createMockAppEvent } from "../../utils/testUtils";
 import type { AppEvent } from "../../domain/models";
 import { GoogleCalendarAPI } from "./GoogleCalendarAPI";
 import * as api from "../../store/api";
+import { isEventAllDay } from "../../domain/events";
 
 function assertIsAppEvent(event: unknown): asserts event is AppEvent {
     if (event && typeof event === "object" && "_deleted" in event) {
@@ -86,22 +87,21 @@ describe("GoogleCalendarAPI", () => {
             const localEvent = createMockAppEvent({
                 id: "e123",
                 title: "All day",
-                startTime: "2024-05-10T00:00:00",
-                endTime: "2024-05-11T00:00:00",
+                startTime: "2024-05-10",
+                endTime: "2024-05-11",
             });
             const googleEvent = googleCalendarAPI.toGoogleEvent(localEvent, { tasks: [], events: [] });
 
-            expect(googleEvent.start?.dateTime).toContain("2024-05-10T00:00:00");
-            expect(googleEvent.end?.dateTime).toContain("2024-05-11T00:00:00");
+            expect(googleEvent.start?.date).toBe("2024-05-10");
+            expect(googleEvent.end?.date).toBe("2024-05-11");
         });
 
         it("uses start.date and end.date for all-day events", () => {
             const localEvent = createMockAppEvent({
                 id: "e123",
                 title: "All day event",
-                startTime: "2024-05-10T00:00:00",
-                endTime: "2024-05-11T00:00:00",
-                isAllDay: true,
+                startTime: "2024-05-10",
+                endTime: "2024-05-11",
             });
             const googleEvent = googleCalendarAPI.toGoogleEvent(localEvent, { tasks: [], events: [] });
 
@@ -221,7 +221,7 @@ describe("GoogleCalendarAPI", () => {
             expect(localEvent2.type).toBe("busy");
         });
 
-        it("extracts isAllDay from google events with start.date", () => {
+        it("extracts date-only strings for all-day google events", () => {
             const googleEvent = {
                 id: "g123",
                 summary: "All day event",
@@ -231,9 +231,9 @@ describe("GoogleCalendarAPI", () => {
 
             const localEvent = googleCalendarAPI.toLocalEvent(googleEvent);
             assertIsAppEvent(localEvent);
-            expect(localEvent.isAllDay).toBe(true);
-            expect(localEvent.startTime).toBe("2024-05-10T00:00:00");
-            expect(localEvent.endTime).toBe("2024-05-11T00:00:00");
+            expect(isEventAllDay(localEvent)).toBe(true);
+            expect(localEvent.startTime).toBe("2024-05-10");
+            expect(localEvent.endTime).toBe("2024-05-11");
         });
 
         it("parses EXDATEs from recurrence array into exdates", () => {
@@ -297,7 +297,7 @@ describe("GoogleCalendarAPI", () => {
             expect(restoredLocalEvent.startTime).toBe(originalLocalEvent.startTime);
             expect(restoredLocalEvent.endTime).toBe(originalLocalEvent.endTime);
             expect(restoredLocalEvent.rrule).toBe(originalLocalEvent.rrule);
-            expect(restoredLocalEvent.isAllDay).toBe(false);
+            expect(isEventAllDay(restoredLocalEvent)).toBe(false);
             expect(restoredLocalEvent.googleId).toBe("g-1");
         });
 
@@ -306,9 +306,8 @@ describe("GoogleCalendarAPI", () => {
                 id: "e-roundtrip-2",
                 type: "info",
                 title: "All Day Holiday",
-                startTime: "2024-12-25T00:00:00",
-                endTime: "2024-12-26T00:00:00",
-                isAllDay: true,
+                startTime: "2024-12-25",
+                endTime: "2024-12-26",
             });
 
             const googleEvent = googleCalendarAPI.toGoogleEvent(originalLocalEvent, { tasks: [], events: [] });
@@ -322,7 +321,7 @@ describe("GoogleCalendarAPI", () => {
             expect(restoredLocalEvent.title).toBe(originalLocalEvent.title);
             expect(restoredLocalEvent.startTime).toBe(originalLocalEvent.startTime);
             expect(restoredLocalEvent.endTime).toBe(originalLocalEvent.endTime);
-            expect(restoredLocalEvent.isAllDay).toBe(true);
+            expect(isEventAllDay(restoredLocalEvent)).toBe(true);
             expect(restoredLocalEvent.type).toBe(originalLocalEvent.type);
         });
     });

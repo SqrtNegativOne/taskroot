@@ -8,7 +8,7 @@ export interface AppTask {
     readonly id: string;
     readonly title: string;
     readonly status?: "todo" | "next-up" | "doing" | "done" | string;
-    readonly priority?: number | string;
+    readonly priority?: number;
     readonly tags?: readonly string[];
     readonly subtasks?: readonly { readonly done: boolean; readonly [key: string]: unknown }[];
     readonly parent_task?: string;
@@ -41,8 +41,7 @@ export interface AppEvent {
     title: string;
     startTime: string;
     endTime: string;
-    isAllDay?: boolean;
-    type: string;
+    type: 'busy' | 'info';
     category?: string;
     rrule?: string;
     exdates?: string[];

@@ -73,10 +73,10 @@ export function useDragAndDrop(
             const ds = dragRef.current;
             if (ds?.target?.kind === "grid-day" && ds.target.date) {
                 const dStr = ds.target.date;
-                createEvent(task, { startTime: `${dStr}T00:00:00`, endTime: `${getNextDayStr(dStr)}T00:00:00`, isAllDay: true });
+                createEvent(task, { startTime: dStr, endTime: getNextDayStr(dStr) });
             } else if (ds?.target?.kind === "day-time" && ds.target.minute !== undefined) {
                 const dStr = ymd(timelineDate);
-                createEvent(task, { startTime: getIsoFromMinutes(dStr, ds.target.minute), endTime: getIsoFromMinutes(dStr, ds.target.minute + (task.est || MINUTES_IN_HOUR)), isAllDay: false });
+                createEvent(task, { startTime: getIsoFromMinutes(dStr, ds.target.minute), endTime: getIsoFromMinutes(dStr, ds.target.minute + (task.est || MINUTES_IN_HOUR)) });
             }
             setDragState(undefined);
         });
@@ -102,7 +102,7 @@ export function useDragAndDrop(
             const ds = dragRef.current;
             if (ds?.target?.kind === "grid-day" && ds.target.date) {
                 const dropDate = ds.target.date;
-                const updates = { startTime: `${dropDate}T00:00:00`, endTime: `${getNextDayStr(dropDate)}T00:00:00`, isAllDay: true };
+                const updates = { startTime: dropDate, endTime: getNextDayStr(dropDate) };
                 interceptRecurringAction(eventToMove, "edit", updates, (mode) => {
                     setEvents(prev => applyRecurringUpdate(prev, eventToMove, mode, updates));
                 });
@@ -110,7 +110,7 @@ export function useDragAndDrop(
                 const duration = getDurMins();
                 const dropMinute = ds.target.minute;
                 const dStr = ymd(timelineDate);
-                const updates = { startTime: getIsoFromMinutes(dStr, dropMinute), endTime: getIsoFromMinutes(dStr, dropMinute + duration), isAllDay: false };
+                const updates = { startTime: getIsoFromMinutes(dStr, dropMinute), endTime: getIsoFromMinutes(dStr, dropMinute + duration) };
                 interceptRecurringAction(eventToMove, "edit", updates, (mode) => {
                     setEvents(prev => applyRecurringUpdate(prev, eventToMove, mode, updates));
                 });

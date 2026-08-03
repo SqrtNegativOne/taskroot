@@ -20,7 +20,6 @@ export function createWorkSessionEvent(
         type: "time_log" as const,
         startTime: toFloatingIso(new Date(startMs)),
         endTime: toFloatingIso(new Date(endMs)),
-        isAllDay: false,
         taskId: taskId || "",
         clockStyle,
     };

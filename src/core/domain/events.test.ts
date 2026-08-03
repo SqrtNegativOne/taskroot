@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { hydrateEvents } from "./events";
+import { hydrateEvents, isEventAllDay } from "./events";
 import type { AppEvent } from "./models";
 import type { AppTask } from "./models";
 
@@ -37,8 +37,8 @@ describe("hydrateEvents", () => {
 
         expect(hydrated.length).toBe(1);
         expect(hydrated[0].title).toBe("Task 2");
-        expect(hydrated[0].priority).toBe("P2");
-        expect(hydrated[0].isDone).toBe(true);
+        expect(hydrated[0].task?.priority).toBe("P2");
+        expect(hydrated[0].task?.status).toBe("done");
     });
 
     it("should allow busy events to have their own titles and no task", () => {
@@ -57,7 +57,7 @@ describe("hydrateEvents", () => {
 
         expect(hydrated.length).toBe(1);
         expect(hydrated[0].title).toBe("Team Sync");
-        expect(hydrated[0].isDone).toBe(false); // busy events are never done
+        expect(hydrated[0].task).toBeUndefined();
     });
 
     it("should hydrate an info event as a plan using the corresponding task data", () => {
@@ -186,14 +186,18 @@ describe("ISO Architecture specific scenarios", () => {
                 id: "e2",
                 type: "info",
                 title: "Vacation",
-                startTime: "2026-08-10T00:00:00",
-                endTime: "2026-08-15T00:00:00",
-                isAllDay: true,
+                startTime: "2026-08-10",
+                endTime: "2026-08-15",
             }
         ];
-        expect(events[0].isAllDay).toBe(true);
-        expect(events[0].startTime).toBe("2026-08-10T00:00:00");
-        expect(events[0].endTime).toBe("2026-08-15T00:00:00");
+        expect(isEventAllDay(events[0])).toBe(true);
+        expect(events[0].startTime).toBe("2026-08-10");
+        expect(events[0].endTime).toBe("2026-08-15");
+    });
+
+    it("should correctly identify all day events from strings", () => {
+        expect(isEventAllDay({ startTime: "2026-08-10", endTime: "2026-08-15" })).toBe(true);
+        expect(isEventAllDay({ startTime: "2026-08-10T10:00:00", endTime: "2026-08-10T11:00:00" })).toBe(false);
     });
 
     it("should enforce exact ISO string serialization format without trailing Z", () => {

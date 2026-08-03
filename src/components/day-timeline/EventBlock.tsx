@@ -3,7 +3,7 @@ import React, { useState, Fragment } from "react";
 import { PAD2 } from "../../core/store/data";
 import type { EventBlockProps } from "./types";
 import { PX_PER_MIN, SNAP_MIN } from "./types";
-import type { AppEvent } from "../../core/domain/models";
+import type { HydratedEvent } from "../../core/domain/events";
 import { Icon } from "../icon";
 
 const MIN_EVENT_HEIGHT_PX = 18;
@@ -21,15 +21,15 @@ const DEFAULT_LABEL_OFFSET_PX = 56;
 const SHORT_EVENT_DURATION_MINS = 30;
 
 function getEventClassNames(
-    event: AppEvent,
+    event: HydratedEvent,
     opts: { compact: boolean; isGhost: boolean; isFloating: boolean; isShort: boolean }
 ): string {
     const classNames = ["day-event", `ev-${event.type}`];
     if (event.taskId) classNames.push("ev-plan");
-    if (event.priority) classNames.push(`pri-bar-${event.priority}`);
+    if (event.task?.priority) classNames.push(`pri-bar-${event.task.priority}`);
     if (opts.compact) classNames.push("is-compact");
     if (opts.isShort && !opts.compact) classNames.push("is-short");
-    if (event.isDone) classNames.push("is-done");
+    if (event.task?.status === "done") classNames.push("is-done");
     if (opts.isGhost) classNames.push("is-ghost");
     if (opts.isFloating) classNames.push("is-floating");
     return classNames.join(" ");
@@ -39,7 +39,6 @@ export function EventBlock<T extends import("./types").DragState = import("./typ
     event,
     startMins,
     endMins,
-    task,
     lane,
     lanes,
     onResize,
@@ -50,7 +49,7 @@ export function EventBlock<T extends import("./types").DragState = import("./typ
     const [dragOffset, setDragOffset] = useState<number>();
 
     const title = event.title;
-    const pri = event.priority;
+    const pri = event.task?.priority;
 
     const onResizeStart = (edge: "top" | "bottom") => (e: React.PointerEvent<HTMLDivElement>) => {
         e.stopPropagation();
@@ -147,13 +146,13 @@ export function EventBlock<T extends import("./types").DragState = import("./typ
         }
         
         let isPastDue = false;
-        if (!!event.taskId && !event.isDone) {
+        if (!!event.taskId && event.task?.status !== "done") {
             if (new Date(event.endTime).getTime() < Date.now()) {
                 isPastDue = true;
             }
         }
 
-        const hasTags = !compact && !!task && (task.tags || []).length > 0;
+
 
         return (
             <div
@@ -183,15 +182,6 @@ export function EventBlock<T extends import("./types").DragState = import("./typ
                         {PAD2(Math.floor(Math.round(start) / MINUTES_IN_HOUR))}:{PAD2(Math.round(start) % MINUTES_IN_HOUR)} –{" "}
                         {PAD2(Math.floor(Math.round(end) / MINUTES_IN_HOUR))}:{PAD2(Math.round(end) % MINUTES_IN_HOUR)}
                     </div>
-                    {hasTags && (
-                        <div className="day-event-tags">
-                            {(task.tags || []).map((t) => (
-                                <span key={t} className="day-event-tag">
-                                    #{t}
-                                </span>
-                            ))}
-                        </div>
-                    )}
                 </div>
                 <div
                     className="day-event-handle day-event-handle-bottom"

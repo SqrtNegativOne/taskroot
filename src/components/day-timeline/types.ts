@@ -1,6 +1,6 @@
 import { MINUTES_IN_HOUR } from "../../core/utils/constants";
 import type { HydratedEvent } from "../../core/domain/events";
-import type { AppTask, AppFilter } from "../../core/domain/models";
+import type { AppFilter } from "../../core/domain/models";
 
 export const PIXELS_PER_HOUR = 56;
 
@@ -44,7 +44,6 @@ export interface EventBlockProps<T extends DragState = DragState> {
     event: HydratedEvent;
     startMins: number;
     endMins: number;
-    task?: AppTask;
     lane: number;
     lanes: number;
     onResize?: (id: string, start: number, end: number) => void;

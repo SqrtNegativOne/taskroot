@@ -6,6 +6,7 @@ import type { DragState } from "../types";
 import { ymd, sameDay } from "../../../core/store/data";
 import { layoutEvents } from "../layout";
 import type { HydratedEvent } from "../../../core/domain/events";
+import { isEventAllDay } from "../../../core/domain/events";
 import { filterEvents, sortEvents } from "../../../core/domain/filters";
 import type { AppFilter } from "../../../core/domain/models";
 
@@ -57,7 +58,7 @@ export function DayColumn<T extends DragState = DragState>({
         const cellEnd = cellStart + MS_IN_DAY;
 
         let dayEvents = events.filter((e: HydratedEvent) => {
-            if (e.isAllDay) return false;
+            if (isEventAllDay(e)) return false;
             const eStart = new Date(e.startTime).getTime();
             const eEnd = new Date(e.endTime).getTime();
             return eStart < cellEnd && eEnd > cellStart;
@@ -138,7 +139,6 @@ export function DayColumn<T extends DragState = DragState>({
                     event={event}
                     startMins={startMins}
                     endMins={endMins}
-                    task={event.task}
                     lane={lane}
                     lanes={lanes}
                     onResize={handleResize}

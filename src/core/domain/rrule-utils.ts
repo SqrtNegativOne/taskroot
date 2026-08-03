@@ -1,5 +1,6 @@
 import { RRule } from "rrule";
 import type { AppEvent } from "./models";
+import type { HydratedEvent } from "./events";
 
 export type RecurringMode = "instance" | "following" | "all";
 
@@ -7,8 +8,8 @@ export function expandEventsForView(
     baseEvents: AppEvent[],
     viewStartDate: Date,
     viewEndDate: Date,
-) {
-    const flattenedInstances: AppEvent[] = [];
+): HydratedEvent[] {
+    const flattenedInstances: HydratedEvent[] = [];
 
     baseEvents.forEach((event) => {
         if (!event.rrule) {
@@ -99,7 +100,7 @@ export function expandEventsForView(
 
 export function applyRecurringUpdate(
     events: AppEvent[],
-    instanceEvent: AppEvent,
+    instanceEvent: HydratedEvent,
     mode: RecurringMode,
     updates: Partial<AppEvent>
 ): AppEvent[] {
@@ -129,8 +130,6 @@ export function applyRecurringUpdate(
             originalStartTime: instanceEvent.startTime,
             rrule: undefined,
             exdates: undefined,
-            isInstance: undefined,
-            baseEventId: undefined
         };
 
         return [
@@ -149,7 +148,7 @@ export function applyRecurringUpdate(
 
 export function applyRecurringDelete(
     events: AppEvent[],
-    instanceEvent: AppEvent,
+    instanceEvent: HydratedEvent,
     mode: RecurringMode
 ): AppEvent[] {
     const baseId = instanceEvent.baseEventId || instanceEvent.id;

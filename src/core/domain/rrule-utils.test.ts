@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { expandEventsForView, applyRecurringUpdate, applyRecurringDelete } from "./rrule-utils";
 import type { AppEvent } from "./models";
+import type { HydratedEvent } from "./events";
 
 describe("rrule-utils", () => {
     it("does not touch non-recurring events", () => {
@@ -83,7 +84,7 @@ describe("rrule-utils", () => {
                 { id: '1', title: 'Test', startTime: '2026-08-01T10:00:00', endTime: '2026-08-01T11:00:00', type: 'busy', rrule: 'FREQ=DAILY' },
                 { id: '2', title: 'Other', startTime: '2026-08-02T10:00:00', endTime: '2026-08-02T11:00:00', type: 'busy' }
             ];
-            const instanceEvent: AppEvent = {
+            const instanceEvent: HydratedEvent = {
                 ...events[0],
                 id: '1_12345',
                 baseEventId: '1',
@@ -102,7 +103,7 @@ describe("rrule-utils", () => {
             const events: AppEvent[] = [
                 { id: '1', title: 'Test', startTime: '2026-08-01T10:00:00', endTime: '2026-08-01T11:00:00', type: 'busy', rrule: 'FREQ=DAILY' }
             ];
-            const instanceEvent: AppEvent = {
+            const instanceEvent: HydratedEvent = {
                 ...events[0],
                 id: '1_12345',
                 baseEventId: '1',
@@ -152,7 +153,7 @@ describe("rrule-utils", () => {
                 { id: 'override_1', title: 'Override', startTime: '2026-08-02T10:00:00', endTime: '2026-08-02T11:00:00', type: 'busy', recurringEventId: '1', originalStartTime: '2026-08-02T10:00:00' },
                 { id: '2', title: 'Other', startTime: '2026-08-03T10:00:00', endTime: '2026-08-03T11:00:00', type: 'busy' }
             ];
-            const instanceEvent: AppEvent = {
+            const instanceEvent: HydratedEvent = {
                 ...events[0],
                 id: '1_12345',
                 baseEventId: '1',
@@ -170,7 +171,7 @@ describe("rrule-utils", () => {
             const events: AppEvent[] = [
                 { id: '1', title: 'Test', startTime: '2026-08-01T10:00:00', endTime: '2026-08-01T11:00:00', type: 'busy', rrule: 'FREQ=DAILY' }
             ];
-            const instanceEvent: AppEvent = {
+            const instanceEvent: HydratedEvent = {
                 ...events[0],
                 id: '1_12345',
                 baseEventId: '1',

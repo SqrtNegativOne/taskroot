@@ -5,6 +5,10 @@ import { modernizeColor } from "../utils/colors";
 export type HydratedEvent = AppEvent & {
     task?: AppTask;
     color?: string;
+    /** Set by the expander; true when this is a virtual instance generated from an rrule (never stored). */
+    isInstance?: boolean;
+    /** Set by the expander; the local `id` of the master event this instance was generated from. */
+    baseEventId?: string;
 };
 
 function resolveEventCalendar(

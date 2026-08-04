@@ -46,7 +46,6 @@ export interface AppEvent {
     // --- Content ---
     title: string;
     description?: string;
-    category?: string;
 
     // --- Timing ---
     /** Floating local datetime `"YYYY-MM-DDThh:mm:ss"`, or date-only `"YYYY-MM-DD"` for all-day events. */

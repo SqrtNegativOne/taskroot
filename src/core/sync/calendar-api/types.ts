@@ -8,5 +8,5 @@ export interface ICalendarAPI {
     updateEvent(googleId: string, localEvent: AppEvent, ctx: { tasks: AppTask[], events: AppEvent[] }, calendarId?: string): Promise<void>;
     moveEvent(googleId: string, sourceCalendarId: string, destinationCalendarId: string): Promise<void>;
     deleteEvent(googleId: string, calendarId?: string): Promise<void>;
-    toLocalEvent(remoteEvent: gapi.client.calendar.Event, calendarId?: string, calendarSummary?: string): AppEvent | { id: string; _deleted: boolean; updatedAt: number; };
+    toLocalEvent(remoteEvent: gapi.client.calendar.Event, calendarId?: string): AppEvent | { id: string; _deleted: boolean; updatedAt: number; };
 }

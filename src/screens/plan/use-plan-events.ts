@@ -37,6 +37,7 @@ export function usePlanEvents(tasks: AppTask[], events: AppEvent[], anchor: Date
         return hydrateEvents(visibleEvents, tasks, calendars);
     }, [visibleEvents, tasks, calendars]);
 
+    // TODO: Types and status should not be hardcoded. Also look for other places where it might be hardcoded.
     const getEventFilterValues = React.useCallback(
         (col: string) => {
             if (col === "type") return ["info", "busy", "log"];
@@ -45,7 +46,7 @@ export function usePlanEvents(tasks: AppTask[], events: AppEvent[], anchor: Date
             if (col === "category") {
                 const s = new Set<string>();
                 events.forEach((e: AppEvent) => {
-                    if (e.category) s.add(e.category);
+                    if (typeof e.category === "string") s.add(e.category);
                 });
                 return Array.from(s).toSorted();
             }

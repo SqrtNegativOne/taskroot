@@ -164,7 +164,7 @@ export class GoogleCalendarAPI implements ICalendarAPI {
 
     // This function inherently performs many property extractions and optional chaining, which trips the complexity rule, but is safe and readable.
     // oxlint-disable-next-line eslint/complexity
-    toLocalEvent(googleEvent: gapi.client.calendar.Event, calendarId = "primary", calendarSummary = "") {
+    toLocalEvent(googleEvent: gapi.client.calendar.Event, calendarId = "primary") {
         if (googleEvent.status === "cancelled") {
             const privateProps = googleEvent.extendedProperties?.private;
             const id = (privateProps ? privateProps.taskrootEventId : undefined) || googleEvent.id;
@@ -188,7 +188,6 @@ export class GoogleCalendarAPI implements ICalendarAPI {
         return {
             id, googleId: googleEvent.id, googleCalendarId: calendarId, taskId,
             title: googleEvent.summary ?? "", startTime, endTime, type,
-            category: calendarSummary,
             updatedAt: googleEvent.updated ? new Date(googleEvent.updated).getTime() : Date.now(),
             ...rruleProps,
             ...exdatesProps,

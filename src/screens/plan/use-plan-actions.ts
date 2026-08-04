@@ -59,12 +59,11 @@ export function usePlanActions(
 
     const createEvent = (task: AppTask, overrides: Partial<AppEvent>) => {
         const defaultCal = calendars.find(c => c.primary)?.id || "primary";
-        const calData = calendars.find(c => c.id === defaultCal);
         const dStr = ymd(timelineDate);
         setEvents(prev => [...prev, {
             id: generateEventId(), taskId: task.id, type: "busy", title: task.title,
             startTime: `${dStr}T00:00:00`, endTime: `${dStr}T01:00:00`,
-            googleCalendarId: defaultCal, category: calData?.summary || "", ...overrides
+            googleCalendarId: defaultCal, ...overrides
         }]);
     };
 
@@ -76,10 +75,7 @@ export function usePlanActions(
     const onAddEvent = (dateArg: Date | string, startArg?: number, endArg?: number) => {
         const start = typeof startArg === "number" ? startArg : ID_LENGTH * MINUTES_IN_HOUR;
         const newEvent = createDefaultEvent(dateArg instanceof Date ? dateArg : timelineDate, start, typeof endArg === "number" ? endArg : start + MINUTES_IN_HOUR, typeof startArg !== "number");
-        const defaultCal = calendars.find(c => c.primary)?.id || "primary";
-        const calData = calendars.find(c => c.id === defaultCal);
-        newEvent.googleCalendarId = defaultCal;
-        if (calData) newEvent.category = calData.summary;
+        newEvent.googleCalendarId = calendars.find(c => c.primary)?.id || "primary";
         setInspectorState({ type: "new_event", draft: newEvent });
     };
 

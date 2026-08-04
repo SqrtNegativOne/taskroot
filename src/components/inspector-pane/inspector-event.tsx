@@ -53,8 +53,7 @@ function EventCalendarSelector({ event, calendars, updateEvent, isReadOnlyCalend
                 value={event.googleCalendarId || calendars.find((c) => c.primary)?.id || "primary"}
                 disabled={isReadOnlyCalendar}
                 onChange={(e) => {
-                    const cal = calendars.find((c) => c.id === e.target.value);
-                    updateEvent(event.id, { googleCalendarId: e.target.value, category: cal?.summary || "" });
+                    updateEvent(event.id, { googleCalendarId: e.target.value });
                 }}
             >
                 {calendars.map((c) => (

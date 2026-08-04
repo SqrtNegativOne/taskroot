@@ -5,14 +5,21 @@ import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import { expect, test } from "vitest";
 import { DateGrid } from "./date-grid";
+import { hydrateEvents } from "../../core/domain/events";
 import { createMockAppEvent } from "../../core/utils/testUtils";
 import { ymd } from "../../core/store/data";
+import type { AppTask } from "../../core/domain/models";
+
+const CALENDARS = [
+    { id: "cal-work", summary: "Work", primary: true },
+    { id: "cal-personal", summary: "Personal" },
+];
 
 test("filters events by category correctly", () => {
     const today = new Date("2026-07-23T12:00:00Z");
     const todayStr = ymd(today);
 
-    // Fakes
+    const tasks: AppTask[] = [];
     const events = [
         createMockAppEvent({
             id: "e1",
@@ -20,7 +27,7 @@ test("filters events by category correctly", () => {
             startTime: `${todayStr}T10:00:00`,
             endTime: `${todayStr}T11:00:00`,
             type: "info",
-            category: "Work",
+            googleCalendarId: "cal-work",
         }),
         createMockAppEvent({
             id: "e2",
@@ -28,7 +35,7 @@ test("filters events by category correctly", () => {
             startTime: `${todayStr}T11:40:00`,
             endTime: `${todayStr}T12:40:00`,
             type: "info",
-            category: "Personal",
+            googleCalendarId: "cal-personal",
         }),
         createMockAppEvent({
             id: "e3",
@@ -36,6 +43,7 @@ test("filters events by category correctly", () => {
             startTime: `${todayStr}T13:20:00`,
             endTime: `${todayStr}T14:20:00`,
             type: "info",
+            // no calendar → falls back to primary ("Work")
         }),
     ];
 
@@ -47,8 +55,7 @@ test("filters events by category correctly", () => {
             setView={() => {}}
             anchor={today}
             setAnchor={() => {}}
-            // eslint-disable-next-line typescript/consistent-type-assertions
-            events={events as unknown as import("../../core/domain/events").HydratedEvent[]}
+            events={hydrateEvents(events, tasks, CALENDARS)}
             filter={filter}
             sort="time"
             filterMenu={undefined}
@@ -59,18 +66,19 @@ test("filters events by category correctly", () => {
         />
     );
 
-    // Work event should be visible
+    // Work event (and the no-calendar event that falls back to primary/Work) should be visible
     expect(screen.queryByText("Event One")).not.toBeNull();
-    // Others should be filtered out
+    // Personal event should be filtered out
     expect(screen.queryByText("Event Two")).toBeNull();
-    expect(screen.queryByText("Event Three")).toBeNull();
+    // No-calendar event falls back to primary ("Work") — also visible
+    expect(screen.queryByText("Event Three")).not.toBeNull();
 });
 
 test("filters out events by category correctly using 'is not'", () => {
     const today = new Date("2026-07-23T12:00:00Z");
     const todayStr = ymd(today);
 
-    // Fakes
+    const tasks: AppTask[] = [];
     const events = [
         createMockAppEvent({
             id: "e1",
@@ -78,7 +86,7 @@ test("filters out events by category correctly using 'is not'", () => {
             startTime: `${todayStr}T10:00:00`,
             endTime: `${todayStr}T11:00:00`,
             type: "info",
-            category: "Work",
+            googleCalendarId: "cal-work",
         }),
         createMockAppEvent({
             id: "e2",
@@ -86,7 +94,7 @@ test("filters out events by category correctly using 'is not'", () => {
             startTime: `${todayStr}T11:40:00`,
             endTime: `${todayStr}T12:40:00`,
             type: "info",
-            category: "Personal",
+            googleCalendarId: "cal-personal",
         }),
     ];
 
@@ -98,8 +106,7 @@ test("filters out events by category correctly using 'is not'", () => {
             setView={() => {}}
             anchor={today}
             setAnchor={() => {}}
-            // eslint-disable-next-line typescript/consistent-type-assertions
-            events={events as unknown as import("../../core/domain/events").HydratedEvent[]}
+            events={hydrateEvents(events, tasks, CALENDARS)}
             filter={filter}
             sort="time"
             filterMenu={undefined}

@@ -2,16 +2,8 @@ import { SyncType, SyncAction } from "./types";
 import type { SyncQueueItem } from "./types";
 import type { AppEvent } from "../../domain/models";
 
-function getTargetCalendarId(
-    currentEvent: AppEvent,
-    oldEvent: AppEvent,
-    calendars: { id: string; summary: string }[]
-): string {
-    if (currentEvent.category) {
-        const cal = calendars.find((c) => c.summary === currentEvent.category);
-        if (cal) return cal.id;
-    }
-    return oldEvent.googleCalendarId || "primary";
+function getTargetCalendarId(currentEvent: AppEvent, oldEvent: AppEvent): string {
+    return currentEvent.googleCalendarId || oldEvent.googleCalendarId || "primary";
 }
 
 function handleCreation(currentEvent: AppEvent, actions: SyncQueueItem[]) {
@@ -23,13 +15,12 @@ function handleCreation(currentEvent: AppEvent, actions: SyncQueueItem[]) {
 function handleUpdateOrMove(
     currentEvent: AppEvent,
     oldEvent: AppEvent,
-    actions: SyncQueueItem[],
-    calendars: { id: string; summary: string }[]
+    actions: SyncQueueItem[]
 ) {
     if (!(currentEvent.updatedAt && oldEvent.updatedAt && currentEvent.updatedAt > oldEvent.updatedAt))
         return;
 
-    const targetCalendarId = getTargetCalendarId(currentEvent, oldEvent, calendars);
+    const targetCalendarId = getTargetCalendarId(currentEvent, oldEvent);
     const isCalendarChange = oldEvent.googleCalendarId && oldEvent.googleCalendarId !== targetCalendarId;
     const hasValidTitle = currentEvent.title && currentEvent.title.trim() !== "";
 
@@ -69,28 +60,26 @@ function handleUpdateOrMove(
 function processSingleEventDelta(
     currentEvent: AppEvent,
     oldEvent: AppEvent | undefined,
-    actions: SyncQueueItem[],
-    calendars: { id: string; summary: string }[]
+    actions: SyncQueueItem[]
 ) {
     if (currentEvent.type === "log") return;
 
     if (!oldEvent) {
         handleCreation(currentEvent, actions);
     } else {
-        handleUpdateOrMove(currentEvent, oldEvent, actions, calendars);
+        handleUpdateOrMove(currentEvent, oldEvent, actions);
     }
 }
 
 export function computeEventDeltaActions(
     currentEvents: AppEvent[],
-    oldEventsMap: Map<string, AppEvent>,
-    calendars: { id: string; summary: string }[]
+    oldEventsMap: Map<string, AppEvent>
 ): SyncQueueItem[] {
     const actions: SyncQueueItem[] = [];
     const currentEventsMap = new Map(currentEvents.map((e) => [e.id, e]));
 
     for (const event of currentEvents)
-        processSingleEventDelta(event, oldEventsMap.get(event.id), actions, calendars);
+        processSingleEventDelta(event, oldEventsMap.get(event.id), actions);
 
     for (const [id, oldEvent] of oldEventsMap.entries()) {
         if (oldEvent.type === "log") continue;

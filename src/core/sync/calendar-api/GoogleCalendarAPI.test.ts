@@ -287,7 +287,7 @@ describe("GoogleCalendarAPI", () => {
             googleEvent.id = "g-1";
             googleEvent.updated = "2024-05-01T00:00:00.000Z";
 
-            const restoredLocalEvent = googleCalendarAPI.toLocalEvent(googleEvent, "primary", "My Calendar");
+            const restoredLocalEvent = googleCalendarAPI.toLocalEvent(googleEvent, "primary");
             assertIsAppEvent(restoredLocalEvent);
 
             expect(restoredLocalEvent.id).toBe(originalLocalEvent.id);
@@ -314,7 +314,7 @@ describe("GoogleCalendarAPI", () => {
             googleEvent.id = "g-2";
             googleEvent.updated = "2024-12-01T00:00:00.000Z";
 
-            const restoredLocalEvent = googleCalendarAPI.toLocalEvent(googleEvent, "primary", "My Calendar");
+            const restoredLocalEvent = googleCalendarAPI.toLocalEvent(googleEvent, "primary");
             assertIsAppEvent(restoredLocalEvent);
 
             expect(restoredLocalEvent.id).toBe(originalLocalEvent.id);

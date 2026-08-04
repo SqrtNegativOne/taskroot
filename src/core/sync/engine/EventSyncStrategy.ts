@@ -62,7 +62,7 @@ export class EventSyncStrategy implements ISyncStrategy<AppEvent> {
                 if (remoteEvents) {
                     allRemoteEvents.push(
                         ...remoteEvents.map((e: gapi.client.calendar.Event) =>
-                            this.calendarAPI.toLocalEvent(e, cal.id, cal.summary),
+                            this.calendarAPI.toLocalEvent(e, cal.id),
                         ),
                     );
                 }
@@ -102,8 +102,7 @@ export class EventSyncStrategy implements ISyncStrategy<AppEvent> {
     }
 
     computeDelta(currentEvents: AppEvent[]) {
-        const calendars = this.context.getLocalData<{id: string, summary: string}[]>("calendars") || [];
-        const actions = computeEventDeltaActions(currentEvents, this.context.oldEventsMap, calendars);
+        const actions = computeEventDeltaActions(currentEvents, this.context.oldEventsMap);
         for (const action of actions) {
             this.context.pushQueue.push(action);
         }

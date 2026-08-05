@@ -19,6 +19,9 @@ const StatsScreen       = React.lazy(() => import("./screens/stats/StatsScreen")
 const RecapScreen       = React.lazy(() => import("./screens/recap/RecapScreen").then(m => ({ default: m.RecapScreen })));
 const MiniTrackerScreen = React.lazy(() => import("./screens/minitracker/MiniTrackerScreen").then(m => ({ default: m.MiniTrackerScreen })));
 const DevScreen         = React.lazy(() => import("./screens/dev/DevScreen").then(m => ({ default: m.DevScreen })));
+const LauncherScreen    = React.lazy(() => import("./screens/launcher/LauncherScreen").then(m => ({ default: m.LauncherScreen })));
+const DocsScreen        = React.lazy(() => import("./screens/docs/DocsScreen").then(m => ({ default: m.DocsScreen })));
+const SkedScreen        = React.lazy(() => import("./screens/sked/SkedScreen").then(m => ({ default: m.SkedScreen })));
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
     const { user, loading } = useAuth();
@@ -99,6 +102,22 @@ const handleSettingsKeydown = (
 function AppRouter() {
     const navigate = useNavigate();
     const [settings] = useSettings();
+    const [tasks, setTasks] = useTasks();
+    const [events] = useEvents();
+
+    React.useEffect(() => {
+        const api = window.electronAPI;
+        if (api?.updateShortcut) {
+            api.updateShortcut(settings.keybindingLauncher);
+        }
+    }, [settings.keybindingLauncher]);
+
+    React.useEffect(() => {
+        const api = window.electronAPI;
+        if (api?.pushLauncherData) {
+            api.pushLauncherData({ tasks, events });
+        }
+    }, [tasks, events]);
 
     React.useEffect(() => {
         const api = window.electronAPI;
@@ -108,6 +127,58 @@ function AppRouter() {
             });
         }
     }, [navigate]);
+
+    React.useEffect(() => {
+        const api = window.electronAPI;
+        if (api?.onLauncherCommand) {
+            api.onLauncherCommand((cmdData: unknown) => {
+                if (!cmdData || typeof cmdData !== 'object' || !('action' in cmdData)) return;
+
+                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+                const { action, payload } = cmdData as { action: string, payload?: Record<string, string> };
+                switch (action) {
+                    case 'NAVIGATE':
+                        if (payload?.route) navigate(`/${payload.route}`);
+                        break;
+                    case 'RESET_MINITRACKER':
+                        api.resetMinitracker();
+                        break;
+                    case 'PLAN_TASK': {
+                        if (!payload?.taskName) break;
+                        const newTask = { id: crypto.randomUUID(), title: payload.taskName, status: 'todo' };
+                        setTasks((prev) => [newTask, ...prev]);
+                        navigate('/plan');
+                        break;
+                    }
+                    case 'PLAN_TASK_EXISTING':
+                        navigate('/plan');
+                        break;
+                    case 'DO_TASK': {
+                        if (!payload?.taskName) break;
+                        const newTask = { id: crypto.randomUUID(), title: payload.taskName, status: 'doing' };
+                        setTasks((prev) => [newTask, ...prev]);
+                        navigate('/do');
+                        break;
+                    }
+                    case 'DO_TASK_EXISTING': {
+                        if (!payload?.taskId) break;
+                        setTasks((prev) => prev.map(t =>
+                            t.id === payload.taskId ? { ...t, status: 'doing' } : (t.status === 'doing' ? { ...t, status: 'todo' } : t)
+                        ));
+                        navigate('/do');
+                        break;
+                    }
+                    case 'ADD_TASK': {
+                        if (!payload?.taskName) break;
+                        const newTask = { id: crypto.randomUUID(), title: payload.taskName, status: 'todo' };
+                        setTasks((prev) => [newTask, ...prev]);
+                        break;
+                    }
+                }
+                api.restoreMainWindow();
+            });
+        }
+    }, [navigate, setTasks]);
 
     React.useEffect(() => {
         const handler = (e: KeyboardEvent) =>
@@ -128,6 +199,8 @@ function AppRouter() {
                     <Route path="/stats" element={<StatsScreen />} />
                     <Route path="/recap" element={<RecapScreen />} />
                     <Route path="/dev" element={<DevScreen />} />
+                    <Route path="/docs" element={<DocsScreen />} />
+                    <Route path="/sked" element={<SkedScreen />} />
                 </Route>
                 <Route path="*" element={<Navigate to="/plan" replace />} />
             </Routes>
@@ -225,6 +298,14 @@ export function App() {
             <GlobalSync>
                 <MiniTrackerScreen />
             </GlobalSync>
+        );
+    }
+
+    if (window.location.search.includes("launcher=true")) {
+        return (
+            <React.Suspense fallback={undefined}>
+                <LauncherScreen />
+            </React.Suspense>
         );
     }
 

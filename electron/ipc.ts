@@ -66,4 +66,43 @@ export function setupIpcHandlers() {
     ipcMain.on("window-end-drag", (_event) => {
         windowManager.endDrag();
     });
+
+    // Launcher IPC
+    ipcMain.on("update-shortcut", (event, shortcut) => {
+        const { globalShortcut } = require("electron");
+        globalShortcut.unregisterAll();
+        if (shortcut) {
+            try {
+                globalShortcut.register(shortcut, () => {
+                    windowManager.toggleLauncher();
+                });
+            } catch (err) {
+                console.error("Failed to register shortcut", err);
+            }
+        }
+    });
+
+    ipcMain.on("hide-launcher", (_event) => {
+        if (windowManager.launcherWin) {
+            windowManager.launcherWin.hide();
+        }
+    });
+
+    ipcMain.on("launcher-command", (_event, commandData) => {
+        // Forward to main window
+        if (windowManager.win && !windowManager.win.isDestroyed()) {
+            windowManager.win.webContents.send("launcher-command-execute", commandData);
+        }
+    });
+
+    ipcMain.on("launcher-data-update", (_event, data) => {
+        // Forward to launcher window
+        if (windowManager.launcherWin && !windowManager.launcherWin.isDestroyed()) {
+            windowManager.launcherWin.webContents.send("launcher-data-sync", data);
+        }
+    });
+
+    ipcMain.on("reset-minitracker", (_event) => {
+        windowManager.resetMinitracker();
+    });
 }

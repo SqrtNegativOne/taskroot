@@ -190,6 +190,13 @@ const SETTINGS_CONFIG: Record<string, Record<string, ConfigItem[]>> = {
     keybindings: {
         "Keybindings": [
             {
+                id: "keybindingLauncher",
+                label: "Open Launcher",
+                keywords: ["keyboard", "shortcut", "launcher", "open"],
+                type: "keybinding",
+                defaultValue: "Ctrl+Space",
+            },
+            {
                 id: "keybindingOpenSettings",
                 label: "Open Settings",
                 keywords: ["keyboard", "shortcut", "settings", "open"],

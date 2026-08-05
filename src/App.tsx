@@ -18,6 +18,7 @@ const GraphScreen       = React.lazy(() => import("./screens/graph/GraphScreen")
 const StatsScreen       = React.lazy(() => import("./screens/stats/StatsScreen").then(m => ({ default: m.StatsScreen })));
 const RecapScreen       = React.lazy(() => import("./screens/recap/RecapScreen").then(m => ({ default: m.RecapScreen })));
 const MiniTrackerScreen = React.lazy(() => import("./screens/minitracker/MiniTrackerScreen").then(m => ({ default: m.MiniTrackerScreen })));
+const DevScreen         = React.lazy(() => import("./screens/dev/DevScreen").then(m => ({ default: m.DevScreen })));
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
     const { user, loading } = useAuth();
@@ -126,6 +127,7 @@ function AppRouter() {
                     <Route path="/graph" element={<GraphScreen />} />
                     <Route path="/stats" element={<StatsScreen />} />
                     <Route path="/recap" element={<RecapScreen />} />
+                    <Route path="/dev" element={<DevScreen />} />
                 </Route>
                 <Route path="*" element={<Navigate to="/plan" replace />} />
             </Routes>

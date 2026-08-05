@@ -173,4 +173,9 @@ export class SyncQueue {
     getItems(): SyncQueueItem[] {
         return [...this.queue];
     }
+
+    clear() {
+        this.queue = [];
+        this.save();
+    }
 }

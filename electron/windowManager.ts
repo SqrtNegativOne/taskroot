@@ -21,6 +21,7 @@ const defaultWebPreferences = {
 class WindowManager {
     public win?: BrowserWindow;
     public miniWin?: BrowserWindow;
+    public launcherWin?: BrowserWindow;
     public isQuitting = false;
     public snapThreshold: number = DEFAULT_SNAP_DISTANCE;
     
@@ -59,6 +60,71 @@ class WindowManager {
             if (this.mainUrl) {
                 this.win?.loadURL(this.mainUrl);
             }
+        }
+    }
+
+    createLauncherWindow() {
+        if (this.launcherWin) return;
+        if (!this.mainUrl) return;
+
+        this.launcherWin = new BrowserWindow({
+            width: 640,
+            height: 56, // grows as results populate
+            frame: false,
+            transparent: true,
+            resizable: false,
+            show: false,
+            skipTaskbar: true,
+            alwaysOnTop: true,
+            webPreferences: defaultWebPreferences,
+        });
+
+        this.launcherWin.loadURL(`${this.mainUrl}?launcher=true`);
+
+        this.launcherWin.on('blur', () => {
+            this.launcherWin?.hide();
+        });
+
+        this.launcherWin.on("close", (e) => {
+            if (!this.isQuitting) {
+                e.preventDefault();
+            }
+        });
+
+        this.launcherWin.on("closed", () => {
+            this.launcherWin = undefined;
+        });
+    }
+
+    toggleLauncher() {
+        if (!this.launcherWin || this.launcherWin.isDestroyed()) {
+            this.createLauncherWindow();
+        }
+
+        if (this.launcherWin?.isVisible()) {
+            this.launcherWin.hide();
+        } else if (this.launcherWin) {
+            const point = screen.getCursorScreenPoint();
+            const display = screen.getDisplayNearestPoint(point);
+            const winBounds = this.launcherWin.getBounds();
+
+            // Center the launcher on the display where the cursor is
+            const x = Math.round(display.workArea.x + (display.workArea.width / 2) - (winBounds.width / 2));
+            const y = Math.round(display.workArea.y + (display.workArea.height / 2) - (winBounds.height / 2));
+
+            this.launcherWin.setPosition(x, y);
+            this.launcherWin.show();
+            this.launcherWin.focus();
+        }
+    }
+
+    resetMinitracker() {
+        if (this.miniWin && !this.miniWin.isDestroyed()) {
+            this.miniWin.setBounds({
+                width: DRAG_START_BOUNDS.width,
+                height: DRAG_START_BOUNDS.height
+            });
+            this.miniWin.center();
         }
     }
 

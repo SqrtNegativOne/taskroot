@@ -21,6 +21,14 @@ declare global {
         startDrag: (offsetX: number, offsetY: number) => void;
         dragTick: () => void;
         endDrag: () => void;
+
+        updateShortcut: (shortcut: string) => void;
+        hideLauncher: () => void;
+        executeLauncherCommand: (commandData: unknown) => void;
+        onLauncherCommand: (callback: (commandData: unknown) => void) => void;
+        pushLauncherData: (data: { tasks: unknown[], events: unknown[] }) => void;
+        onLauncherDataUpdate: (callback: (data: { tasks: unknown[], events: unknown[] }) => void) => void;
+        resetMinitracker: () => void;
     }
 
     interface Window {

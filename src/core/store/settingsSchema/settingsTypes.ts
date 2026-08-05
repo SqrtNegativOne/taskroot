@@ -30,6 +30,7 @@ export interface AppSettings {
     trackerShowBorder: boolean;
     trackerSnapThreshold: number;
     trackerFontSize: number | "dynamic";
+    keybindingLauncher: string;
 }
 
 export type SettingType =

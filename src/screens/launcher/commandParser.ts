@@ -1,4 +1,4 @@
-import { AppTask } from '../../core/domain/models';
+import type { AppTask } from '../../core/domain/models';
 
 export interface CommandOption {
     id: string;

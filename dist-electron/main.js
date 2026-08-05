@@ -51,6 +51,7 @@ function initializeApp() {
         windowManager.setMiniWindowUrl(`${VITE_DEV_SERVER_URL}?minitracker=true`);
         win.loadURL(VITE_DEV_SERVER_URL);
         windowManager.createMiniWindow();
+        windowManager.createLauncherWindow();
     }
     else {
         localServer = startLocalServer((port) => {
@@ -59,6 +60,7 @@ function initializeApp() {
             windowManager.setMiniWindowUrl(`${mainUrl}?minitracker=true`);
             win.loadURL(mainUrl);
             windowManager.createMiniWindow();
+            windowManager.createLauncherWindow();
         });
     }
 }
@@ -82,6 +84,8 @@ app.on("will-quit", () => {
     if (localServer) {
         localServer.close();
     }
+    const { globalShortcut } = require('electron');
+    globalShortcut.unregisterAll();
 });
 app.on("window-all-closed", () => {
     if (process.platform !== "darwin") {

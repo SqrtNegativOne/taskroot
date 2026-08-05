@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { AppTask } from '../../core/domain/models';
+import type { AppTask } from '../../core/domain/models';
 import { search } from './search';
-import { parseCommands, CommandOption } from './commandParser';
+import { parseCommands } from './commandParser';
+import type { CommandOption } from './commandParser';
 
 import './launcher.css';
 
@@ -9,14 +10,12 @@ const staticCommands: CommandOption[] = [
     { id: 'docs', label: 'Help, Info, Docs', action: 'NAVIGATE', payload: { route: 'docs' }, static: true },
     { id: 'plan', label: 'Plan', action: 'NAVIGATE', payload: { route: 'plan' }, static: true },
     { id: 'do', label: 'Do', action: 'NAVIGATE', payload: { route: 'do' }, static: true },
-    { id: 'sked', label: 'Schedule', action: 'NAVIGATE', payload: { route: 'sked' }, static: true },
     { id: 'minitracker', label: 'Reset Mini Tracker', action: 'RESET_MINITRACKER', static: true },
 ];
 
 const navAliases = [
     { label: 'docs', id: 'docs' }, { label: 'help', id: 'docs' }, { label: 'info', id: 'docs' },
     { label: 'plan', id: 'plan' }, { label: 'do', id: 'do' },
-    { label: 'sked', id: 'sked' },
     { label: 'minitracker', id: 'minitracker' }, { label: 'tracker', id: 'minitracker' }, { label: 'timer', id: 'minitracker' }, { label: 'clock', id: 'minitracker' }
 ];
 
@@ -39,6 +38,7 @@ export function LauncherScreen() {
         const api = window.electronAPI;
         if (api?.onLauncherDataUpdate) {
             api.onLauncherDataUpdate((data) => {
+                if (!data.tasks || !Array.isArray(data.tasks) || !data.tasks.every((t): t is AppTask => !!t)) return;
                 setTasks(data.tasks);
             });
         }

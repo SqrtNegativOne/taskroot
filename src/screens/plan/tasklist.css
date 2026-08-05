@@ -37,7 +37,7 @@
   .search-input::placeholder { color: var(--fg-dimmer); }
   .search-clear {
     appearance: none; border: 0; background: none; color: var(--fg-dim);
-    cursor: pointer; padding: 0 4px; font-size: 1.1em;
+    cursor: pointer; padding: 0 4px; font-size: 1.5em;
   }
   .search-clear:hover { color: var(--fg); }
 

@@ -4,6 +4,7 @@ import { useCalendars } from "../../core/store/hooks";
 import type { CalendarData } from "../../core/store/repositories";
 import { getInspectorTitle } from "./inspector-utils";
 import { InspectorPaneContent } from "./inspector-content";
+import { applyRecurringUpdate, applyRecurringDelete } from "../../core/domain/rrule-utils";
 import "./inspector.css";
 
 export type InspectorState = 
@@ -120,16 +121,10 @@ export function InspectorPane({
              if (isRecurring && !inspectorEditMode) {
                  interceptRecurringAction(currentEvent, "edit", updates, (mode) => {
                      setInspectorEditMode(mode);
-                     // oxlint-disable-next-line promise/always-return -- we don't need to return anything
-                     import("../../core/domain/rrule-utils").then(({ applyRecurringUpdate }) => {
-                         setEvents(es => applyRecurringUpdate(es, currentEvent, mode, updates));
-                     });
+                     setEvents(es => applyRecurringUpdate(es, currentEvent, mode, updates));
                  });
              } else {
-                 // oxlint-disable-next-line promise/always-return -- we don't need to return anything
-                 import("../../core/domain/rrule-utils").then(({ applyRecurringUpdate }) => {
-                     setEvents(es => applyRecurringUpdate(es, currentEvent, inspectorEditMode || "all", updates));
-                 });
+                 setEvents(es => applyRecurringUpdate(es, currentEvent, inspectorEditMode || "all", updates));
              }
         } else {
             setEvents((es) => es.map((e) => e.id === id ? { ...e, ...updates } : e));
@@ -161,10 +156,7 @@ export function InspectorPane({
             const isRecurring = !!currentEvent.rrule || currentEvent.isInstance || currentEvent.recurringEventId;
             if (isRecurring) {
                 interceptRecurringAction(currentEvent, "delete", undefined, (mode) => {
-                    // oxlint-disable-next-line promise/always-return -- we don't need to return anything
-                    import("../../core/domain/rrule-utils").then(({ applyRecurringDelete }) => {
-                        setEvents(es => applyRecurringDelete(es, currentEvent, mode));
-                    });
+                    setEvents(es => applyRecurringDelete(es, currentEvent, mode));
                 });
             } else {
                 setEvents((es) => es.filter((e) => e.id !== currentItem.id && e.id !== currentItem.id.split("_")[0]));

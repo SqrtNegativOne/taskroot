@@ -1,3 +1,6 @@
+const WORD_BOUNDARY_BONUS = 3;
+const DEFAULT_SEARCH_LIMIT = 20;
+
 export function fuzzyScore(query: string, target: string): number {
   query = query.toLowerCase();
   target = target.toLowerCase();
@@ -6,7 +9,7 @@ export function fuzzyScore(query: string, target: string): number {
     if (target[ti] === query[qi]) {
       run++;
       score += 1 + run;                                   // reward consecutive hits
-      if (ti === 0 || /[\s\-_]/.test(target[ti - 1])) score += 3; // word-boundary bonus
+      if (ti === 0 || /[\s\-_]/.test(target[ti - 1])) score += WORD_BOUNDARY_BONUS; // word-boundary bonus
       qi++;
     } else {
       run = 0;
@@ -15,7 +18,7 @@ export function fuzzyScore(query: string, target: string): number {
   return qi === query.length ? score : -1; // -1 = query chars weren't all found in order
 }
 
-export function search<T extends { label: string }>(query: string, items: T[], limit = 20): T[] {
+export function search<T extends { label: string }>(query: string, items: T[], limit = DEFAULT_SEARCH_LIMIT): T[] {
   if (!query) return items.slice(0, limit);
   return items
     .map(item => ({ item, s: fuzzyScore(query, item.label) }))

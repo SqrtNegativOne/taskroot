@@ -29,6 +29,7 @@ declare global {
         pushLauncherData: (data: { tasks: unknown[], events: unknown[] }) => void;
         onLauncherDataUpdate: (callback: (data: { tasks: unknown[], events: unknown[] }) => void) => void;
         resetMinitracker: () => void;
+        resizeLauncher: (height: number) => void;
     }
 
     interface Window {

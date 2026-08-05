@@ -1,14 +1,11 @@
 import React from "react";
-import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
-import { useAuth } from "./core/auth/useAuth";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./core/auth/AuthContext";
-import { useEvents, useSettings, useTasks } from "./core/store/hooks";
-import { purgeOrphanedData } from "./core/store/repositories";
-import { syncState, poller } from "./core/sync";
-import { useNotification, NotificationProvider } from "./core/utils/notifications";
-import { LoginScreen } from "./screens/login/LoginScreen";
+import { NotificationProvider } from "./core/utils/notifications";
 import { AppLayout } from "./components/AppLayout";
-import { LoginTitleBar } from "./components/shell";
+import { RequireAuth } from "./core/auth/RequireAuth";
+import { GlobalSync } from "./core/sync/GlobalSync";
+import { useAppIntegration } from "./core/utils/useAppIntegration";
 
 const PlanScreen        = React.lazy(() => import("./screens/plan/PlanScreen").then(m => ({ default: m.PlanScreen })));
 const DoScreen          = React.lazy(() => import("./screens/do/DoScreen").then(m => ({ default: m.DoScreen })));
@@ -22,169 +19,8 @@ const DevScreen         = React.lazy(() => import("./screens/dev/DevScreen").the
 const LauncherScreen    = React.lazy(() => import("./screens/launcher/LauncherScreen").then(m => ({ default: m.LauncherScreen })));
 const DocsScreen        = React.lazy(() => import("./screens/docs/DocsScreen").then(m => ({ default: m.DocsScreen })));
 
-function RequireAuth({ children }: { children: React.ReactNode }) {
-    const { user, loading } = useAuth();
-    const { notify } = useNotification();
-    const notified = React.useRef(false);
-    const OFFLINE_NOTIFY_DELAY_MS = 500;
-
-    if (import.meta.env.VITE_OFFLINE_MODE === "true") {
-        if (!notified.current) {
-            notified.current = true;
-            // Use setTimeout to ensure it doesn't fire during render
-            setTimeout(
-                () => notify("Offline mode: Bypassed login", "info"),
-                OFFLINE_NOTIFY_DELAY_MS,
-            );
-        }
-        return <>{children}</>;
-    }
-
-    if (loading) {
-        return (
-            <div className="app">
-                <LoginTitleBar />
-                <div style={{ display: "flex", flex: 1, justifyContent: "center", alignItems: "center" }}>
-                    Loading...
-                </div>
-            </div>
-        );
-    }
-    
-    const hasGoogleToken = !!localStorage.getItem("google_access_token");
-
-    if (!user || !hasGoogleToken) return <LoginScreen />;
-    return <>{children}</>;
-}
-
-const parseKeybinding = (kb: string) => {
-    const parts = kb.split("+");
-    const key = parts.pop();
-    return {
-        key,
-        needsCtrl: parts.includes("Ctrl"),
-        needsAlt: parts.includes("Alt"),
-        needsShift: parts.includes("Shift"),
-        needsMeta: parts.includes("Meta"),
-    };
-};
-
-function isInputEvent(e: KeyboardEvent) {
-    if (!(e.target instanceof HTMLElement)) return false;
-    return e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA" || e.target.isContentEditable;
-}
-
-function isKeyMatch(e: KeyboardEvent, parsedKb: { key: string | undefined, needsCtrl: boolean, needsAlt: boolean, needsShift: boolean, needsMeta: boolean }) {
-    const { key, needsCtrl, needsAlt, needsShift, needsMeta } = parsedKb;
-    const keyMatch = e.key.toUpperCase() === key?.toUpperCase() || (e.key === " " && key === "Space");
-    return e.ctrlKey === needsCtrl && e.altKey === needsAlt && e.shiftKey === needsShift && e.metaKey === needsMeta && keyMatch;
-}
-
-const handleSettingsKeydown = (
-    e: KeyboardEvent,
-    settingsKb: string,
-    navigate: (path: string) => void,
-) => {
-    if (isInputEvent(e) && !e.ctrlKey && !e.metaKey && !e.altKey)
-        return;
-
-    const parsedKb = parseKeybinding(settingsKb || "Ctrl+,");
-
-    if (isKeyMatch(e, parsedKb)) {
-        e.preventDefault();
-        navigate("/settings");
-    }
-};
-
-
-
 function AppRouter() {
-    const navigate = useNavigate();
-    const [settings] = useSettings();
-    const [tasks, setTasks] = useTasks();
-    const [events] = useEvents();
-
-    React.useEffect(() => {
-        const api = window.electronAPI;
-        if (api?.updateShortcut) {
-            api.updateShortcut(settings.keybindingLauncher);
-        }
-    }, [settings.keybindingLauncher]);
-
-    React.useEffect(() => {
-        const api = window.electronAPI;
-        if (api?.pushLauncherData) {
-            api.pushLauncherData({ tasks, events });
-        }
-    }, [tasks, events]);
-
-    React.useEffect(() => {
-        const api = window.electronAPI;
-        if (api?.onDeepLink) {
-            api.onDeepLink((route: string) => {
-                navigate(`/${route}`);
-            });
-        }
-    }, [navigate]);
-
-    React.useEffect(() => {
-        const api = window.electronAPI;
-        if (api?.onLauncherCommand) {
-            api.onLauncherCommand((cmdData: unknown) => {
-                if (!cmdData || typeof cmdData !== 'object' || !('action' in cmdData)) return;
-
-                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-                const { action, payload } = cmdData as { action: string, payload?: Record<string, string> };
-                switch (action) {
-                    case 'NAVIGATE':
-                        if (payload?.route) navigate(`/${payload.route}`);
-                        break;
-                    case 'RESET_MINITRACKER':
-                        api.resetMinitracker();
-                        break;
-                    case 'PLAN_TASK': {
-                        if (!payload?.taskName) break;
-                        const newTask = { id: crypto.randomUUID(), title: payload.taskName, status: 'todo' };
-                        setTasks((prev) => [newTask, ...prev]);
-                        navigate('/plan');
-                        break;
-                    }
-                    case 'PLAN_TASK_EXISTING':
-                        navigate('/plan');
-                        break;
-                    case 'DO_TASK': {
-                        if (!payload?.taskName) break;
-                        const newTask = { id: crypto.randomUUID(), title: payload.taskName, status: 'doing' };
-                        setTasks((prev) => [newTask, ...prev]);
-                        navigate('/do');
-                        break;
-                    }
-                    case 'DO_TASK_EXISTING': {
-                        if (!payload?.taskId) break;
-                        setTasks((prev) => prev.map(t =>
-                            t.id === payload.taskId ? { ...t, status: 'doing' } : (t.status === 'doing' ? { ...t, status: 'todo' } : t)
-                        ));
-                        navigate('/do');
-                        break;
-                    }
-                    case 'ADD_TASK': {
-                        if (!payload?.taskName) break;
-                        const newTask = { id: crypto.randomUUID(), title: payload.taskName, status: 'todo' };
-                        setTasks((prev) => [newTask, ...prev]);
-                        break;
-                    }
-                }
-                api.restoreMainWindow();
-            });
-        }
-    }, [navigate, setTasks]);
-
-    React.useEffect(() => {
-        const handler = (e: KeyboardEvent) =>
-            handleSettingsKeydown(e, settings.keybindingOpenSettings, navigate);
-        window.addEventListener("keydown", handler);
-        return () => window.removeEventListener("keydown", handler);
-    }, [navigate, settings.keybindingOpenSettings]);
+    useAppIntegration();
 
     return (
         <React.Suspense fallback={undefined}>
@@ -204,86 +40,6 @@ function AppRouter() {
             </Routes>
         </React.Suspense>
     );
-}
-
-function GlobalSyncLoading({ syncMessage }: { syncMessage: string | null }) {
-    if (window.location.search.includes("minitracker=true")) {
-        // eslint-disable-next-line unicorn/no-null
-        return null;
-    }
-    return (
-        <div className="app">
-            <LoginTitleBar />
-            <div style={{ display: "flex", flex: 1, justifyContent: "center", alignItems: "center", flexDirection: "column", background: "var(--bg)", color: "var(--fg)", fontFamily: "var(--sans)" }}>
-            <div
-                style={{
-                    width: "40px",
-                    height: "40px",
-                    border: "3px solid var(--border)",
-                    borderTopColor: "var(--accent)",
-                    borderRadius: "50%",
-                    animation: "spin 1s linear infinite",
-                }}
-            />
-            <div
-                style={{
-                    marginTop: "16px",
-                    color: "var(--fg-dim)",
-                    fontSize: "0.9rem",
-                }}
-            >
-                {syncMessage || "Syncing data..."}
-            </div>
-            <style>{`
-          @keyframes spin {
-            to { transform: rotate(360deg); }
-          }
-        `}</style>
-            </div>
-        </div>
-    );
-}
-
-function GlobalSync({ children }: { children: React.ReactNode }) {
-    const [, , tasksLoaded] = useTasks();
-    const [, , eventsLoaded] = useEvents();
-    const [settings] = useSettings();
-    const initialSyncDone = React.useSyncExternalStore(
-        (listener) => syncState.subscribe(listener),
-        () => syncState.initialSyncComplete
-    );
-    const syncMessage = React.useSyncExternalStore(
-        (listener) => syncState.subscribe(listener),
-        () => syncState.getUiMessage()
-    );
-    const { notify } = useNotification();
-
-    React.useEffect(() => {
-        purgeOrphanedData(notify);
-        poller.start();
-    }, [settings, notify]);
-
-    React.useEffect(() => {
-        const checkNotifications = () => {
-            if (syncState.error) {
-                notify(`Sync error: ${syncState.error}`, "error");
-                syncState.error = undefined;
-            }
-            if (syncState.info) {
-                notify(syncState.info, "info");
-                syncState.info = undefined;
-            }
-        };
-        checkNotifications();
-        const unsub = syncState.subscribe(checkNotifications);
-        return unsub;
-    }, [notify]);
-
-    if (!tasksLoaded || !eventsLoaded || !initialSyncDone) {
-        return <GlobalSyncLoading syncMessage={syncMessage} />;
-    }
-
-    return <>{children}</>;
 }
 
 export function App() {

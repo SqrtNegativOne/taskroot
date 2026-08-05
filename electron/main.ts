@@ -1,4 +1,4 @@
-import { app } from "electron";
+import { app, globalShortcut } from "electron";
 import path from "node:path";
 import { VITE_DEV_SERVER_URL } from "./constants.js";
 import { windowManager } from "./windowManager.js";
@@ -96,7 +96,6 @@ app.on("will-quit", () => {
     if (localServer) {
         localServer.close();
     }
-    const { globalShortcut } = require('electron');
     globalShortcut.unregisterAll();
 });
 

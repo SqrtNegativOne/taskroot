@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import type { AppTask } from '../../core/domain/models';
+import type { AppTask, AppEvent } from '../../core/domain/models';
 import { search } from './search';
 import { parseCommands } from './commandParser';
 import type { CommandOption } from './commandParser';
@@ -31,6 +31,7 @@ const MAX_RESULTS = 10;
 export function LauncherScreen() {
     const [query, setQuery] = useState('');
     const [tasks, setTasks] = useState<AppTask[]>([]);
+    const [events, setEvents] = useState<AppEvent[]>([]);
     const [selectedIndex, setSelectedIndex] = useState(0);
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -38,8 +39,27 @@ export function LauncherScreen() {
         const api = window.electronAPI;
         if (api?.onLauncherDataUpdate) {
             api.onLauncherDataUpdate((data) => {
-                if (!data.tasks || !Array.isArray(data.tasks) || !data.tasks.every((t): t is AppTask => !!t)) return;
-                setTasks(data.tasks);
+                if (data && typeof data === 'object') {
+                    const newTasks = Reflect.get(data, 'tasks');
+                    if (Array.isArray(newTasks)) {
+                        setTasks(newTasks.filter((obj): obj is AppTask => 
+                            typeof obj === 'object' && obj !== null && 
+                            typeof Reflect.get(obj, 'id') === 'string' && 
+                            typeof Reflect.get(obj, 'title') === 'string' && 
+                            typeof Reflect.get(obj, 'status') === 'string'
+                        ));
+                    }
+                    const newEvents = Reflect.get(data, 'events');
+                    if (Array.isArray(newEvents)) {
+                        setEvents(newEvents.filter((obj): obj is AppEvent => 
+                            typeof obj === 'object' && obj !== null && 
+                            typeof Reflect.get(obj, 'id') === 'string' && 
+                            typeof Reflect.get(obj, 'title') === 'string' && 
+                            typeof Reflect.get(obj, 'startTime') === 'string' && 
+                            typeof Reflect.get(obj, 'endTime') === 'string'
+                        ));
+                    }
+                }
             });
         }
         if (inputRef.current) {
@@ -48,7 +68,7 @@ export function LauncherScreen() {
     }, []);
 
     // Combine static search with parsed commands
-    const parsed = parseCommands(query, tasks);
+    const parsed = parseCommands(query, tasks, events);
 
     // Fuzzy search over static and tasks/events shortcuts
     const searchedStatic: CommandOption[] = [];
@@ -72,7 +92,19 @@ export function LauncherScreen() {
 
     useEffect(() => {
         setSelectedIndex(0);
-    }, [query]);
+        
+        if (window.electronAPI?.resizeLauncher) {
+            const container = document.querySelector('.launcher-container');
+            if (container) {
+                // Ensure DOM has updated
+                setTimeout(() => {
+                    if (!container) return;
+                    const h = container.getBoundingClientRect().height;
+                    window.electronAPI?.resizeLauncher(Math.ceil(h));
+                }, 0);
+            }
+        }
+    }, [query, options.length]);
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'ArrowDown') {

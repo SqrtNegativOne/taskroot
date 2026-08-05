@@ -1,35 +1,42 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
-// Expose safe APIs to the renderer process
-contextBridge.exposeInMainWorld('electronAPI', {
-  logToFile: (level: string, message: string) => ipcRenderer.send('log-to-file', level, message),
-  minimizeWindow: () => ipcRenderer.send('window-minimize'),
-  maximizeWindow: () => ipcRenderer.send('window-maximize'),
-  closeWindow: () => ipcRenderer.send('window-close'),
-  restoreMainWindow: () => ipcRenderer.send('window-restore-main'),
-  onDeepLink: (callback: (route: string) => void) => ipcRenderer.on('deep-link', (_event, route) => callback(route)),
-  setSnapThreshold: (threshold: number) => ipcRenderer.send('set-snap-threshold', threshold),
-  onSnapped: (callback: () => void) => ipcRenderer.on('minitracker-snapped', () => callback()),
-  onHover: (callback: (isHovering: boolean) => void) => {
-    ipcRenderer.removeAllListeners('minitracker-hover');
-    ipcRenderer.on('minitracker-hover', (_event, isHovering) => callback(isHovering));
-  },
-  startDrag: (offsetX: number, offsetY: number) => ipcRenderer.send('window-start-drag', offsetX, offsetY),
-  dragTick: () => ipcRenderer.send('window-drag-tick'),
-  endDrag: () => ipcRenderer.send('window-end-drag'),
+const api: Record<string, unknown> = {};
 
-  // Launcher APIs
-  updateShortcut: (shortcut: string) => ipcRenderer.send('update-shortcut', shortcut),
-  hideLauncher: () => ipcRenderer.send('hide-launcher'),
-  executeLauncherCommand: (commandData: unknown) => ipcRenderer.send('launcher-command', commandData),
-  onLauncherCommand: (callback: (commandData: unknown) => void) => {
-    ipcRenderer.removeAllListeners('launcher-command-execute');
-    ipcRenderer.on('launcher-command-execute', (_event, commandData) => callback(commandData));
-  },
-  pushLauncherData: (data: { tasks: unknown[], events: unknown[] }) => ipcRenderer.send('launcher-data-update', data),
-  onLauncherDataUpdate: (callback: (data: { tasks: unknown[], events: unknown[] }) => void) => {
-    ipcRenderer.removeAllListeners('launcher-data-sync');
-    ipcRenderer.on('launcher-data-sync', (_event, data) => callback(data));
-  },
-  resetMinitracker: () => ipcRenderer.send('reset-minitracker'),
-});
+const sendChannels = {
+  logToFile: 'log-to-file',
+  minimizeWindow: 'window-minimize',
+  maximizeWindow: 'window-maximize',
+  closeWindow: 'window-close',
+  restoreMainWindow: 'window-restore-main',
+  setSnapThreshold: 'set-snap-threshold',
+  startDrag: 'window-start-drag',
+  dragTick: 'window-drag-tick',
+  endDrag: 'window-end-drag',
+  updateShortcut: 'update-shortcut',
+  hideLauncher: 'hide-launcher',
+  executeLauncherCommand: 'launcher-command',
+  pushLauncherData: 'launcher-data-update',
+  resetMinitracker: 'reset-minitracker',
+  resizeLauncher: 'resize-launcher',
+};
+
+for (const [method, channel] of Object.entries(sendChannels)) {
+  api[method] = (...args: unknown[]) => ipcRenderer.send(channel, ...args);
+}
+
+const receiveChannels = {
+  onDeepLink: 'deep-link',
+  onSnapped: 'minitracker-snapped',
+  onHover: 'minitracker-hover',
+  onLauncherCommand: 'launcher-command-execute',
+  onLauncherDataUpdate: 'launcher-data-sync',
+};
+
+for (const [method, channel] of Object.entries(receiveChannels)) {
+  api[method] = (callback: (...args: unknown[]) => void) => {
+    ipcRenderer.removeAllListeners(channel);
+    ipcRenderer.on(channel, (_event, ...args) => callback(...args));
+  };
+}
+
+contextBridge.exposeInMainWorld('electronAPI', api);

@@ -95,7 +95,27 @@ export class EventSyncStrategy implements ISyncStrategy<AppEvent> {
             }
             updated = true;
         } else if ((q.action === SyncAction.Update || q.action === SyncAction.Create || q.action === SyncAction.Move) && q.item && q.item.id) {
-            eventsMap.set(q.item.id, q.item);
+            if ((q.action === SyncAction.Update || q.action === SyncAction.Move) && q.updatedFields && eventsMap.has(q.item.id)) {
+                const existing = eventsMap.get(q.item.id)!;
+                const partialUpdate: Partial<AppEvent> = {};
+                for (const field of q.updatedFields) {
+                    Object.defineProperty(partialUpdate, field, {
+                        value: q.item[field],
+                        enumerable: true,
+                        writable: true,
+                        configurable: true,
+                    });
+                }
+                Object.defineProperty(partialUpdate, "updatedAt", {
+                    value: q.item.updatedAt,
+                    enumerable: true,
+                    writable: true,
+                    configurable: true,
+                });
+                eventsMap.set(q.item.id, { ...existing, ...partialUpdate });
+            } else {
+                eventsMap.set(q.item.id, q.item);
+            }
             updated = true;
         }
         return updated;
@@ -146,6 +166,7 @@ export class EventSyncStrategy implements ISyncStrategy<AppEvent> {
                 await this.calendarAPI.updateEvent(
                     gid,
                     taskOrEvent.item,
+                    taskOrEvent.updatedFields,
                     { tasks, events: eventsData },
                     taskOrEvent.calendarId,
                 );

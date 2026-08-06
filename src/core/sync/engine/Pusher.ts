@@ -2,6 +2,7 @@ import { SyncQueue } from "./SyncQueue";
 import type { Synchronizer } from "./Synchronizer";
 import { SyncType } from "./types";
 import { syncState } from "../SyncState";
+import { ConflictError } from "../errors";
 import type { AppTask, AppEvent } from "../../domain/models";
 
 export class Pusher {
@@ -48,6 +49,12 @@ export class Pusher {
                 await sync.processPushItem(taskOrEvent);
                 this.pushQueue.remove(taskOrEvent);
             } catch (e: unknown) {
+                if (e instanceof ConflictError) {
+                    console.warn(`ETag conflict on push: ${e.message}. Dropping push to let poller resolve.`);
+                    this.pushQueue.remove(taskOrEvent);
+                    continue;
+                }
+
                 console.error("Push failed", e);
                 if (e instanceof Error && (e.message.includes("403") || e.message.includes("404") || e.message.includes("400"))) {
                     this.pushQueue.remove(taskOrEvent);

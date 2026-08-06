@@ -21,6 +21,7 @@ export type SyncQueueItem =
           item: AppTask;
           googleId?: string;
           calendarId?: never;
+          updatedFields?: (keyof AppTask)[];
       }
     | {
           type: typeof SyncType.Event;
@@ -29,6 +30,7 @@ export type SyncQueueItem =
           googleId?: string;
           calendarId?: string;
           destinationCalendarId?: string;
+          updatedFields?: (keyof AppEvent)[];
       };
 
 export interface ISyncEngineContext {

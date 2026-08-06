@@ -2,7 +2,7 @@
 
 Highly opinionated and highly powerful task management application for personal use only.
 - Optimistic React UI ↔ store.tsx ↔ SyncEngine ↔ API Wrappers ↔ Google Tasks+Calendar API
-- Local-first software: All offline data in localStorage, so 0 loading screens. Network is optional.
+- Local-first software: All offline data in localStorage, so no loading screens. Network is optional.
 - GRAPH MODE.
 - Forcing functions through filters.
 - Neat sound effects that I stole from a twitter post about them

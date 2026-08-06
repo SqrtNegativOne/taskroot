@@ -24,6 +24,14 @@ function handleUpdateOrMove(
     const isCalendarChange = oldEvent.googleCalendarId && oldEvent.googleCalendarId !== targetCalendarId;
     const hasValidTitle = currentEvent.title && currentEvent.title.trim() !== "";
 
+    const updatedFields: (keyof AppEvent)[] = [];
+    for (const k of Object.keys(currentEvent) as (keyof AppEvent)[]) {
+        if (k === "updatedAt" || k === "etag") continue;
+        if (JSON.stringify(currentEvent[k]) !== JSON.stringify(oldEvent[k])) {
+            updatedFields.push(k);
+        }
+    }
+
     if (isCalendarChange && oldEvent.googleId) {
         actions.push({
             type: SyncType.Event,
@@ -32,6 +40,7 @@ function handleUpdateOrMove(
             googleId: oldEvent.googleId,
             calendarId: oldEvent.googleCalendarId,
             destinationCalendarId: targetCalendarId,
+            updatedFields
         });
 
         if (hasValidTitle) {
@@ -41,6 +50,7 @@ function handleUpdateOrMove(
                 item: currentEvent,
                 googleId: oldEvent.googleId,
                 calendarId: targetCalendarId,
+                updatedFields
             });
         }
         return;
@@ -53,6 +63,7 @@ function handleUpdateOrMove(
             item: currentEvent,
             googleId: currentEvent.googleId,
             calendarId: targetCalendarId,
+            updatedFields
         });
     }
 }

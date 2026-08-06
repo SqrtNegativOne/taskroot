@@ -75,7 +75,27 @@ export class TaskSyncStrategy implements ISyncStrategy<AppTask> {
             }
             updated = true;
         } else if ((q.action === SyncAction.Update || q.action === SyncAction.Create) && q.item && q.item.id) {
-            tasksMap.set(q.item.id, q.item);
+            if (q.action === SyncAction.Update && q.updatedFields && tasksMap.has(q.item.id)) {
+                const existing = tasksMap.get(q.item.id)!;
+                const partialUpdate: Partial<AppTask> = {};
+                for (const field of q.updatedFields) {
+                    Object.defineProperty(partialUpdate, field, {
+                        value: q.item[field],
+                        enumerable: true,
+                        writable: true,
+                        configurable: true,
+                    });
+                }
+                Object.defineProperty(partialUpdate, "updatedAt", {
+                    value: q.item.updatedAt,
+                    enumerable: true,
+                    writable: true,
+                    configurable: true,
+                });
+                tasksMap.set(q.item.id, { ...existing, ...partialUpdate });
+            } else {
+                tasksMap.set(q.item.id, q.item);
+            }
             updated = true;
         }
         return updated;
@@ -112,7 +132,7 @@ export class TaskSyncStrategy implements ISyncStrategy<AppTask> {
             const gid = currentTask?.googleId || taskOrEvent.googleId;
 
             if (gid) {
-                await this.tasksAPI.updateTask(gid, taskOrEvent.item);
+                await this.tasksAPI.updateTask(gid, taskOrEvent.item, taskOrEvent.updatedFields);
             }
         },
         [SyncAction.Delete]: async (taskOrEvent) => {

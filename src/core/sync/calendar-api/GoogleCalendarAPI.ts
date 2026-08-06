@@ -1,6 +1,7 @@
-import { HTTP_UNAUTHORIZED, HTTP_GONE, HTTP_FORBIDDEN, HTTP_TOO_MANY_REQUESTS, MS_PER_SECOND } from "../../utils/constants";
+import { HTTP_UNAUTHORIZED, HTTP_GONE, HTTP_FORBIDDEN, HTTP_TOO_MANY_REQUESTS, HTTP_PRECONDITION_FAILED, MS_PER_SECOND } from "../../utils/constants";
 import { fetchWithTimeout } from "../../store/api";
 import { toFloatingIso } from "../../utils/date-utils";
+import { ConflictError } from "../errors";
 import type { AppTask, AppEvent } from "../../domain/models";
 import { toEventType } from "../../domain/models";
 import { isEventAllDay } from "../../domain/events";
@@ -84,10 +85,37 @@ export class GoogleCalendarAPI implements ICalendarAPI {
         return { googleId: data.id, calendarId };
     }
 
-    async updateEvent(googleId: string, localEvent: AppEvent, ctx: { tasks: AppTask[], events: AppEvent[] }, calendarId = "primary") {
+    async updateEvent(googleId: string, localEvent: AppEvent, updatedFields: (keyof AppEvent)[] | undefined, ctx: { tasks: AppTask[], events: AppEvent[] }, calendarId = "primary") {
+        const headers: Record<string, string> = { "Content-Type": "application/json" };
+        if (localEvent.etag) headers["If-Match"] = localEvent.etag;
+
+        let payload = this.toGoogleEvent(localEvent, ctx);
+        if (updatedFields && updatedFields.length > 0) {
+            const partialPayload: Partial<gapi.client.calendar.Event> = {};
+            // If they just updated specific fields, map those to Google properties
+            if (updatedFields.includes("title")) partialPayload.summary = payload.summary;
+            if (updatedFields.includes("startTime") || updatedFields.includes("endTime")) {
+                partialPayload.start = payload.start;
+                partialPayload.end = payload.end;
+            }
+            if (updatedFields.includes("type") || updatedFields.includes("taskId")) {
+                partialPayload.extendedProperties = payload.extendedProperties;
+                partialPayload.transparency = payload.transparency;
+            }
+            if (updatedFields.includes("rrule") || updatedFields.includes("exdates")) {
+                partialPayload.recurrence = payload.recurrence;
+            }
+            if (updatedFields.includes("recurringEventId")) partialPayload.recurringEventId = payload.recurringEventId;
+            if (updatedFields.includes("originalStartTime")) partialPayload.originalStartTime = payload.originalStartTime;
+            
+            payload = partialPayload as gapi.client.calendar.Event;
+        }
+
         const res = await this.fetchWithAuth(`calendars/${encodeURIComponent(calendarId)}/events/${googleId}`, {
-            method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(this.toGoogleEvent(localEvent, ctx))
+            method: "PATCH", headers, body: JSON.stringify(payload)
         });
+        
+        if (res.status === HTTP_PRECONDITION_FAILED) throw new ConflictError(`ETag conflict on event: ${localEvent.title}`);
         if (!res.ok) throw new Error(`Failed to update event: ${res.status} ${await res.text()}`);
     }
 
@@ -189,6 +217,7 @@ export class GoogleCalendarAPI implements ICalendarAPI {
             id, googleId: googleEvent.id, googleCalendarId: calendarId, taskId,
             title: googleEvent.summary ?? "", startTime, endTime, type,
             updatedAt: googleEvent.updated ? new Date(googleEvent.updated).getTime() : Date.now(),
+            etag: googleEvent.etag,
             ...rruleProps,
             ...exdatesProps,
             ...recurProps,

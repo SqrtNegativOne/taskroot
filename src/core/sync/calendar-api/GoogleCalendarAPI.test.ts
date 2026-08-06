@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createMockAppEvent } from "../../utils/testUtils";
 import type { AppEvent } from "../../domain/models";
 import { GoogleCalendarAPI } from "./GoogleCalendarAPI";
+import { ConflictError } from "../errors";
+import { HTTP_PRECONDITION_FAILED } from "../../utils/constants";
 import * as api from "../../store/api";
 import { isEventAllDay } from "../../domain/events";
 
@@ -63,6 +65,33 @@ describe("GoogleCalendarAPI", () => {
             await expect(
                 googleCalendarAPI.fetchEvents("start", "end"),
             ).rejects.toThrow("Unauthorized");
+        });
+    });
+
+    describe("updateEvent", () => {
+        it("sends If-Match header when localEvent has an etag", async () => {
+            const mockFetch = vi.mocked(api.fetchWithTimeout);
+            mockFetch.mockResolvedValueOnce(new Response(undefined, { status: 200 }));
+
+            await googleCalendarAPI.updateEvent("g123", createMockAppEvent({
+                id: "e123",
+                title: "Buy milk",
+                etag: "version-1",
+            }), undefined, { tasks: [], events: [] });
+
+            const headers = mockFetch.mock.calls[0][1]?.headers;
+            expect(headers).toHaveProperty("If-Match", "version-1");
+        });
+
+        it("throws ConflictError when API returns 412", async () => {
+            const mockFetch = vi.mocked(api.fetchWithTimeout);
+            mockFetch.mockResolvedValueOnce(new Response(undefined, { status: HTTP_PRECONDITION_FAILED }));
+
+            await expect(googleCalendarAPI.updateEvent("goog-1", createMockAppEvent({
+                id: "e1",
+                title: "Buy milk",
+                etag: "version-1",
+            }), undefined, { tasks: [], events: [] })).rejects.toThrow(ConflictError);
         });
     });
 
@@ -267,6 +296,18 @@ describe("GoogleCalendarAPI", () => {
             assertIsAppEvent(localEvent);
             expect(localEvent.recurringEventId).toBe("master_id");
             expect(typeof localEvent.originalStartTime).toBe("string");
+        });
+
+        it("maps etag from google to local model", () => {
+            const googleEvent = {
+                id: "g123",
+                summary: "Event with etag",
+                start: { dateTime: "2024-05-10T10:00:00Z" },
+                etag: "test-etag-123",
+            };
+            const localEvent = googleCalendarAPI.toLocalEvent(googleEvent);
+            assertIsAppEvent(localEvent);
+            expect(localEvent.etag).toBe("test-etag-123");
         });
     });
 

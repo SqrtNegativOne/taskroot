@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createMockAppTask } from "../../utils/testUtils";
 import { GoogleTasksAPI } from "./GoogleTasksAPI";
+import { ConflictError } from "../errors";
+import { HTTP_PRECONDITION_FAILED } from "../../utils/constants";
 import * as api from "../../store/api";
 
 vi.mock("../../store/api", () => ({
@@ -63,6 +65,33 @@ describe("GoogleTasksAPI", () => {
         });
     });
 
+    describe("updateTask", () => {
+        it("sends If-Match header when localTask has an etag", async () => {
+            const mockFetch = vi.mocked(api.fetchWithTimeout);
+            mockFetch.mockResolvedValueOnce(new Response(undefined, { status: 200 }));
+
+            await googleTasksAPI.updateTask("g123", {
+                id: "t123",
+                title: "Buy milk",
+                etag: "version-1",
+            });
+
+            const headers = mockFetch.mock.calls[0][1]?.headers;
+            expect(headers).toHaveProperty("If-Match", "version-1");
+        });
+
+        it("throws ConflictError when API returns 412", async () => {
+            const mockFetch = vi.mocked(api.fetchWithTimeout);
+            mockFetch.mockResolvedValueOnce(new Response(undefined, { status: HTTP_PRECONDITION_FAILED }));
+
+            await expect(googleTasksAPI.updateTask("g123", {
+                id: "t123",
+                title: "Buy milk",
+                etag: "version-1",
+            })).rejects.toThrow(ConflictError);
+        });
+    });
+
     describe("toGoogleTask", () => {
         it("prepends Taskroot Task ID to notes if not present", () => {
             const localTask = {
@@ -103,6 +132,17 @@ describe("GoogleTasksAPI", () => {
             const localTask = googleTasksAPI.toLocalTask(googleTask);
             expect(localTask.id).toBe("t456");
             expect(localTask).toMatchObject({ googleId: "g123", status: "done" });
+        });
+
+        it("maps etag from google to local model", () => {
+            const googleTask = {
+                id: "g123",
+                title: "Task with etag",
+                etag: "test-etag-123",
+            };
+            const localTask = googleTasksAPI.toLocalTask(googleTask);
+            if ('_deleted' in localTask) throw new Error("Expected AppTask");
+            expect(localTask.etag).toBe("test-etag-123");
         });
 
         it("handles deleted tasks", () => {

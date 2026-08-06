@@ -28,11 +28,20 @@ export function computeTaskDeltaActions(
             currentTask.updatedAt > oldTask.updatedAt
         ) {
             if (currentTask.title && currentTask.title.trim() !== "") {
+                const updatedFields: (keyof AppTask)[] = [];
+                for (const k of Object.keys(currentTask) as (keyof AppTask)[]) {
+                    if (k === "updatedAt" || k === "etag") continue;
+                    if (JSON.stringify(currentTask[k]) !== JSON.stringify(oldTask[k])) {
+                        updatedFields.push(k);
+                    }
+                }
+
                 actions.push({
                     type: SyncType.Task,
                     action: SyncAction.Update,
                     item: currentTask,
                     googleId: currentTask.googleId,
+                    updatedFields,
                 });
             }
         }

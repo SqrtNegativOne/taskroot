@@ -1,5 +1,6 @@
-import { HTTP_UNAUTHORIZED, HTTP_FORBIDDEN, HTTP_TOO_MANY_REQUESTS, MS_PER_SECOND } from "../../utils/constants";
+import { HTTP_UNAUTHORIZED, HTTP_FORBIDDEN, HTTP_TOO_MANY_REQUESTS, HTTP_PRECONDITION_FAILED, MS_PER_SECOND } from "../../utils/constants";
 import { fetchWithTimeout } from "../../store/api";
+import { ConflictError } from "../errors";
 import type { AppTask } from "../../domain/models";
 import type { IAuthManager } from "../auth/types";
 import type { ITasksAPI } from "./types";
@@ -29,6 +30,7 @@ function getGoogleTaskBase(googleTask: gapi.client.tasks.Task) {
         notes: googleTask.notes ?? "",
         status: googleTask.status === "completed" ? "done" as const : "todo" as const,
         updatedAt: googleTask.updated ? new Date(googleTask.updated).getTime() : Date.now(),
+        etag: googleTask.etag,
     };
 }
 
@@ -106,10 +108,25 @@ export class GoogleTasksAPI implements ITasksAPI {
         return data.id;
     }
 
-    async updateTask(googleId: string, localTask: AppTask, tasklistId = "@default") {
+    async updateTask(googleId: string, localTask: AppTask, updatedFields?: (keyof AppTask)[], tasklistId = "@default") {
+        const headers: Record<string, string> = { "Content-Type": "application/json" };
+        if (localTask.etag) headers["If-Match"] = localTask.etag;
+
+        let payload = this.toGoogleTask(localTask);
+        if (updatedFields && updatedFields.length > 0) {
+            const partialPayload: Partial<gapi.client.tasks.Task> = {};
+            if (updatedFields.includes("title")) partialPayload.title = payload.title;
+            if (updatedFields.includes("notes")) partialPayload.notes = payload.notes;
+            if (updatedFields.includes("status")) partialPayload.status = payload.status;
+            if (updatedFields.includes("due")) partialPayload.due = payload.due;
+            payload = partialPayload as gapi.client.tasks.Task;
+        }
+
         const res = await this.fetchWithAuth(`lists/${tasklistId}/tasks/${googleId}`, {
-            method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(this.toGoogleTask(localTask))
+            method: "PATCH", headers, body: JSON.stringify(payload)
         });
+        
+        if (res.status === HTTP_PRECONDITION_FAILED) throw new ConflictError(`ETag conflict on task: ${localTask.title}`);
         if (!res.ok) throw new Error(`Failed to update task: ${res.status} ${await res.text()}`);
     }
 

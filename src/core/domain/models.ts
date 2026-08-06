@@ -23,6 +23,7 @@ export interface AppTask {
     readonly due?: YmdString;
     readonly _deleted?: boolean;
     readonly updatedAt?: number;
+    readonly etag?: string;
     readonly [key: string]: unknown;
 }
 
@@ -79,6 +80,8 @@ export interface AppEvent {
     updatedAt?: number;
     /** Soft-delete flag; kept until the deletion is confirmed pushed to GCal. */
     _deleted?: boolean;
+    /** ETag fingerprint from Google API for optimistic concurrency control. */
+    etag?: string;
 
     [key: string]: unknown;
 }

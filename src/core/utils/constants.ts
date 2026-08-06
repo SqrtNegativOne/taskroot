@@ -19,6 +19,7 @@ export const HTTP_METHOD_NOT_ALLOWED = 405; // unused
 export const HTTP_NOT_ACCEPTABLE = 406; // unused
 export const HTTP_REQUEST_TIMEOUT = 408; // unused
 export const HTTP_GONE = 410;
+export const HTTP_PRECONDITION_FAILED = 412;
 export const HTTP_TOO_MANY_REQUESTS = 429;
 
 export const HTTP_INTERNAL_ERROR = 500;

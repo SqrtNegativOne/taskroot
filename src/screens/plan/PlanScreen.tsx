@@ -69,7 +69,7 @@ export function PlanScreen() {
         _updatesOrNone: Partial<AppEvent> | undefined, 
         executeImmediately: (mode: RecurringMode) => void
     ) => {
-        const isRecurring = !!event.rrule || !!event.isInstance || !!event.recurringEventId;
+        const isRecurring = !!event.rrule || !!event.isInstance;
         if (isRecurring) {
             setRecurringPrompt({
                 actionType,

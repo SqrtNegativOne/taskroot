@@ -108,6 +108,10 @@ export function applyRecurringUpdate(
     const baseEvent = events.find((e) => e.id === baseId);
     if (!baseEvent) return events;
 
+    if (!baseEvent.rrule && !baseEvent.recurringEventId) {
+        return events.map((e) => (e.id === baseId ? { ...e, ...updates } : e));
+    }
+
     if (mode === "all") {
         return events.map((e) => (e.id === baseId ? { ...e, ...updates } : e));
     }
@@ -154,6 +158,10 @@ export function applyRecurringDelete(
     const baseId = instanceEvent.baseEventId || instanceEvent.id;
     const baseEvent = events.find((e) => e.id === baseId);
     if (!baseEvent) return events;
+
+    if (!baseEvent.rrule && !baseEvent.recurringEventId) {
+        return events.filter((e) => e.id !== baseId);
+    }
 
     if (mode === "all") {
         return events.filter((e) => e.id !== baseId && e.recurringEventId !== baseId);

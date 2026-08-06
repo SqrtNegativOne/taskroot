@@ -23,6 +23,14 @@ interface InspectorPaneProps {
     interceptRecurringAction?: (event: AppEvent, actionType: "edit" | "delete", updates: Partial<AppEvent> | undefined, execute: (mode: import("../../core/domain/rrule-utils").RecurringMode) => void) => void;
 }
 
+function isAppTask(item: AppTask | AppEvent | undefined): item is AppTask {
+    return !!item && "status" in item;
+}
+
+function isAppEvent(item: AppTask | AppEvent | undefined): item is AppEvent {
+    return !!item && "startTime" in item;
+}
+
 function useCurrentItem(
     currentState: InspectorState | undefined,
     tasks: AppTask[],
@@ -33,13 +41,11 @@ function useCurrentItem(
 
     switch (currentState.type) {
         case "new_task": {
-            const taskDraft = (draftItem && "status" in draftItem) ? draftItem : undefined;
+            const taskDraft = isAppTask(draftItem) ? draftItem : undefined;
             return { currentTask: taskDraft, currentEvent: undefined, currentItem: draftItem, isCurrentTask: true, isNew: true };
         }
         case "new_event": {
-            // Necessary because TS cannot infer that checking for 'date' guarantees an AppEvent here
-            // oxlint-disable-next-line typescript/consistent-type-assertions
-            const eventDraft = (draftItem && "date" in draftItem) ? (draftItem as AppEvent) : undefined;
+            const eventDraft = isAppEvent(draftItem) ? draftItem : undefined;
             return { currentTask: undefined, currentEvent: eventDraft, currentItem: draftItem, isCurrentTask: false, isNew: true };
         }
         case "task": {
@@ -97,7 +103,7 @@ export function InspectorPane({
 
     const updateTask = React.useCallback((id: string, updates: Partial<AppTask>) => {
         if (isNew && draftRef.current && draftRef.current.id === id) {
-            if ("status" in draftRef.current) {
+            if (isAppTask(draftRef.current)) {
                 const next: AppTask = { ...draftRef.current, ...updates };
                 draftRef.current = next;
                 setDraftItem(next);
@@ -109,15 +115,13 @@ export function InspectorPane({
 
     const updateEvent = React.useCallback((id: string, updates: Partial<AppEvent>) => {
         if (isNew && draftRef.current && draftRef.current.id === id) {
-            if ("date" in draftRef.current) {
-                // Necessary because spreading a narrowed union type with Partial updates loses strict type fidelity in TS
-                // oxlint-disable-next-line typescript/consistent-type-assertions
-                const next = { ...draftRef.current, ...updates } as AppEvent;
+            if (isAppEvent(draftRef.current)) {
+                const next: AppEvent = { ...draftRef.current, ...updates };
                 draftRef.current = next;
                 setDraftItem(next);
             }
         } else if (currentEvent && interceptRecurringAction) {
-             const isRecurring = !!currentEvent.rrule || currentEvent.isInstance || currentEvent.recurringEventId;
+             const isRecurring = !!currentEvent.rrule || currentEvent.isInstance;
              if (isRecurring && !inspectorEditMode) {
                  interceptRecurringAction(currentEvent, "edit", updates, (mode) => {
                      setInspectorEditMode(mode);
@@ -153,7 +157,7 @@ export function InspectorPane({
             setTasks((ts) => ts.filter((t) => t.id !== currentItem.id));
             setEvents((es) => es.filter((e) => e.taskId !== currentItem.id));
         } else if (currentEvent && interceptRecurringAction) {
-            const isRecurring = !!currentEvent.rrule || currentEvent.isInstance || currentEvent.recurringEventId;
+            const isRecurring = !!currentEvent.rrule || currentEvent.isInstance;
             if (isRecurring) {
                 interceptRecurringAction(currentEvent, "delete", undefined, (mode) => {
                     setEvents(es => applyRecurringDelete(es, currentEvent, mode));
@@ -175,14 +179,10 @@ export function InspectorPane({
         const draft = draftRef.current;
         if (isNew && draft) {
             if (draft.title && draft.title.trim() !== "") {
-                if ("status" in draft) {
-                    // Necessary because TS cannot infer the narrowed type inside the generic callback
-                    // oxlint-disable-next-line typescript/consistent-type-assertions
-                    setTasks((ts) => [draft as AppTask, ...ts]);
-                } else if ("date" in draft) {
-                    // Necessary because TS cannot infer the narrowed type inside the generic callback
-                    // oxlint-disable-next-line typescript/consistent-type-assertions
-                    setEvents((es) => [...es, draft as AppEvent]);
+                if (isAppTask(draft)) {
+                    setTasks((ts) => [draft, ...ts]);
+                } else if (isAppEvent(draft)) {
+                    setEvents((es) => [...es, draft]);
                 }
             }
         }

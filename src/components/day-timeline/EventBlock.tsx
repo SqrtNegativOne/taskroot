@@ -122,7 +122,7 @@ export function EventBlock<T extends import("./types").DragState = import("./typ
         window.addEventListener("pointerup", up);
     };
 
-    const isRecurring = Boolean(event.rrule || event.isInstance || event.recurringEventId);
+    const isRecurring = Boolean(event.rrule || event.isInstance);
 
     // eslint-disable-next-line complexity
     const renderBlock = (start: number, end: number, isGhost: boolean, isFloating: boolean) => {

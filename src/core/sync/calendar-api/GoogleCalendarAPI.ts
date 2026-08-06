@@ -39,7 +39,7 @@ export class GoogleCalendarAPI implements ICalendarAPI {
             if (c.id && c.summary) {
                 result.push({
                     id: c.id,
-                    summary: c.summary,
+                    summary: c.summaryOverride || c.summary,
                     accessRole: c.accessRole,
                     backgroundColor: c.backgroundColor,
                     foregroundColor: c.foregroundColor,

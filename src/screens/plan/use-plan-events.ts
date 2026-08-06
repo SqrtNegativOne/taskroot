@@ -45,8 +45,8 @@ export function usePlanEvents(tasks: AppTask[], events: AppEvent[], anchor: Date
             if (col === "taskStatus") return ["todo", "done", "none"];
             if (col === "category") {
                 const s = new Set<string>();
-                events.forEach((e: AppEvent) => {
-                    if (typeof e.category === "string") s.add(e.category);
+                calendars.forEach(c => {
+                    if (c.summary) s.add(c.summary);
                 });
                 return Array.from(s).toSorted();
             }

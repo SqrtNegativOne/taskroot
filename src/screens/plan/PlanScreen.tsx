@@ -7,7 +7,7 @@ import {
     } from "../../components/day-timeline";
 
 import { InspectorPane, type InspectorState } from "../../components/inspector-pane";
-import type { AppEvent } from "../../core/domain/models";
+import type { AppEvent, AppTask } from "../../core/domain/models";
 
 import { DragGhost, type PlanDragState } from "./drag-helpers";
 import { usePlanActions } from "./use-plan-actions";
@@ -25,6 +25,14 @@ import { FilterSortButtons } from "./shared-menus/index";
 import { usePlanEvents, PLAN_EVENT_FILTER_COLUMNS, PLAN_EVENT_SORT_OPTIONS } from "./use-plan-events";
 import { RecurringActionModal } from "../../components/RecurringActionModal";
 import type { RecurringMode } from "../../core/domain/rrule-utils";
+
+function isDraftTask(draft: AppTask | AppEvent | undefined): draft is AppTask {
+    return !!draft && "status" in draft;
+}
+
+function isDraftEvent(draft: AppTask | AppEvent | undefined): draft is AppEvent {
+    return !!draft && "startTime" in draft;
+}
 
 export function PlanScreen() {
 
@@ -51,11 +59,23 @@ export function PlanScreen() {
     const [timeFilter, setTimeFilter] = useTimeFilters();
     const [timeSort, setTimeSort] = useTimeSort();
 
-    const { hydratedEvents, getEventFilterValues } = usePlanEvents(tasks, events, anchor);
-
-
     // Inspector state
     const [inspectorState, setInspectorState] = React.useState<InspectorState>();
+    const [activeDraft, setActiveDraft] = React.useState<AppTask | AppEvent | undefined>(undefined);
+
+    const displayTasks = React.useMemo(() => {
+        if (isDraftTask(activeDraft))
+            return [activeDraft, ...tasks];
+        return tasks;
+    }, [tasks, activeDraft]);
+
+    const displayEvents = React.useMemo(() => {
+        if (isDraftEvent(activeDraft))
+            return [activeDraft, ...events];
+        return events;
+    }, [events, activeDraft]);
+
+    const { hydratedEvents, getEventFilterValues } = usePlanEvents(displayTasks, displayEvents, anchor);
 
 
     const [recurringPrompt, setRecurringPrompt] = React.useState<{
@@ -88,7 +108,6 @@ export function PlanScreen() {
 
     return (
         <>
-
             <main className="main" style={{ position: "relative" }}>
                 <SplitPane
                     direction="horizontal"
@@ -97,7 +116,7 @@ export function PlanScreen() {
                     snapThreshold={50}
                 >
                     <TaskListPane
-                        tasks={tasks}
+                        tasks={displayTasks}
                         setTasks={setTasks}
                         filters={filters}
                         setFilters={setFilters}
@@ -186,6 +205,7 @@ export function PlanScreen() {
                     events={hydratedEvents}
                     setEvents={setEvents}
                     interceptRecurringAction={interceptRecurringAction}
+                    onDraftChange={setActiveDraft}
                 />
             </main>
 
@@ -198,8 +218,6 @@ export function PlanScreen() {
                     ghostStyle="bracket"
                 />
             )}
-
-
 
             <RecurringActionModal 
                 isOpen={!!recurringPrompt} 

@@ -21,6 +21,7 @@ interface InspectorPaneProps {
     events: AppEvent[];
     setEvents: React.Dispatch<React.SetStateAction<AppEvent[]>>;
     interceptRecurringAction?: (event: AppEvent, actionType: "edit" | "delete", updates: Partial<AppEvent> | undefined, execute: (mode: import("../../core/domain/rrule-utils").RecurringMode) => void) => void;
+    onDraftChange?: (draft: AppTask | AppEvent | undefined) => void;
 }
 
 function isAppTask(item: AppTask | AppEvent | undefined): item is AppTask {
@@ -66,7 +67,8 @@ export function InspectorPane({
     setTasks,
     events,
     setEvents,
-    interceptRecurringAction
+    interceptRecurringAction,
+    onDraftChange
 }: InspectorPaneProps) {
     const paneRef = React.useRef<HTMLDivElement>(null);
     const [calendars] = useCalendars();
@@ -87,6 +89,12 @@ export function InspectorPane({
         if (inspectorState) setActiveState(inspectorState);
         setInspectorEditMode(undefined); // Reset mode on new item
     }, [inspectorState]);
+
+    React.useEffect(() => {
+        if (onDraftChange) {
+            onDraftChange(draftItem);
+        }
+    }, [draftItem, onDraftChange]);
 
     const currentState = inspectorState || activeState;
     const { currentTask, currentEvent, currentItem, isCurrentTask, isNew } = useCurrentItem(currentState, tasks, events, draftItem);

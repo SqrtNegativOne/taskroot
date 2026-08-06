@@ -1,6 +1,6 @@
-import { HTTP_UNAUTHORIZED, HTTP_FORBIDDEN, HTTP_TOO_MANY_REQUESTS, MS_PER_SECOND } from "../../utils/constants";
+import { HTTP_UNAUTHORIZED, HTTP_FORBIDDEN, HTTP_TOO_MANY_REQUESTS, MS_PER_SECOND } from "../utils/constants";
 import { fetchWithTimeout } from "../store/api";
-import type { IAuthManager } from "../auth/types";
+import type { IAuthManager } from "./auth/types";
 
 export interface GoogleApiErrorResponse {
     error?: {

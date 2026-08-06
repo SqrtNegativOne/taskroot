@@ -33,7 +33,21 @@ export class GoogleCalendarAPI implements ICalendarAPI {
         const res = await this.fetchWithAuth("users/me/calendarList");
         if (!res.ok) { console.warn(`Failed to fetch calendars`); return def; }
         const data: gapi.client.calendar.CalendarList = await res.json();
-        return data.items || def;
+        const items = data.items || [];
+        const result: {id: string, summary: string, accessRole?: string, backgroundColor?: string, foregroundColor?: string, primary?: boolean}[] = [];
+        for (const c of items) {
+            if (c.id && c.summary) {
+                result.push({
+                    id: c.id,
+                    summary: c.summary,
+                    accessRole: c.accessRole,
+                    backgroundColor: c.backgroundColor,
+                    foregroundColor: c.foregroundColor,
+                    primary: c.primary
+                });
+            }
+        }
+        return result.length > 0 ? result : def;
     }
 
     async createEvent(localEvent: AppEvent, options?: { baseEventRemoteId?: string, calendarId?: string }): Promise<{ remoteId: string, calendarId: string }> {

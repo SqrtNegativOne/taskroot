@@ -37,7 +37,7 @@ export function MoreScreensDropdown() {
             </button>
             {dropdownOpen && (
                 <div className="dropdown-menu">
-                    {["wrap", "graph", "stats", "recap", "dev"].map((screen) => (
+                    {["wrap", "graph", "stats", "recap", "docs", "dev"].map((screen) => (
                         <button
                             key={screen}
                             className="dd-item"

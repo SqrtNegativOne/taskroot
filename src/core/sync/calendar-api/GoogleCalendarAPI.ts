@@ -75,9 +75,10 @@ export class GoogleCalendarAPI implements ICalendarAPI {
         return data.items || def;
     }
 
-    async createEvent(localEvent: AppEvent, ctx: { tasks: AppTask[], events: AppEvent[] }, calendarId = "primary") {
+    async createEvent(localEvent: AppEvent, options?: { baseEventRemoteId?: string, calendarId?: string }): Promise<{ remoteId: string, calendarId: string }> {
+        const calendarId = options?.calendarId || "primary";
         const res = await this.fetchWithAuth(`calendars/${encodeURIComponent(calendarId)}/events`, {
-            method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(this.toGoogleEvent(localEvent, ctx))
+            method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(this.toGoogleEvent(localEvent, options?.baseEventRemoteId))
         });
         if (!res.ok) throw new Error(`Failed to create event: ${res.status} ${await res.text()}`);
         const data: { id?: string } = await res.json();
@@ -85,16 +86,17 @@ export class GoogleCalendarAPI implements ICalendarAPI {
         return { remoteId: data.id, calendarId };
     }
 
-    async updateEvent(remoteId: string, localEvent: AppEvent, updatedFields: (keyof AppEvent)[] | undefined, ctx: { tasks: AppTask[], events: AppEvent[] }, calendarId = "primary") {
+    async updateEvent(remoteId: string, localEvent: AppEvent, options?: { updatedFields?: (keyof AppEvent)[], baseEventRemoteId?: string, calendarId?: string }) {
+        const calendarId = options?.calendarId || "primary";
         const headers: Record<string, string> = { "Content-Type": "application/json" };
         if (localEvent.etag) headers["If-Match"] = localEvent.etag;
 
-        let payload = this.toGoogleEvent(localEvent, ctx);
-        if (updatedFields && updatedFields.length > 0) {
+        let payload = this.toGoogleEvent(localEvent, options?.baseEventRemoteId);
+        if (options?.updatedFields && options.updatedFields.length > 0) {
             const partialPayload: Partial<gapi.client.calendar.Event> = {};
             // If they just updated specific fields, map those to Google properties
-            if (updatedFields.includes("title")) partialPayload.summary = payload.summary;
-            if (updatedFields.includes("startTime") || updatedFields.includes("endTime")) {
+            if (options.updatedFields.includes("title")) partialPayload.summary = payload.summary;
+            if (options.updatedFields.includes("startTime") || options.updatedFields.includes("endTime")) {
                 partialPayload.start = payload.start;
                 partialPayload.end = payload.end;
             }
@@ -134,7 +136,7 @@ export class GoogleCalendarAPI implements ICalendarAPI {
         }
     }
 
-    toGoogleEvent(localEvent: AppEvent, ctx: { tasks: AppTask[], events: AppEvent[] }): gapi.client.calendar.Event {
+    toGoogleEvent(localEvent: AppEvent, baseEventRemoteId?: string): gapi.client.calendar.Event {
         const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
         
         let startObj: gapi.client.calendar.EventDateTime;
@@ -161,11 +163,11 @@ export class GoogleCalendarAPI implements ICalendarAPI {
                     type: localEvent.type ?? "",
                 },
             },
-            ...this.buildGoogleRecurrenceAndExceptions(localEvent, timeZone, ctx.events)
+            ...this.buildGoogleRecurrenceAndExceptions(localEvent, timeZone, baseEventRemoteId)
         };
     }
 
-    private buildGoogleRecurrenceAndExceptions(localEvent: AppEvent, timeZone: string, events: AppEvent[]) {
+    private buildGoogleRecurrenceAndExceptions(localEvent: AppEvent, timeZone: string, baseEventRemoteId?: string) {
         const recurrence: string[] = [];
         if (localEvent.rrule) recurrence.push(`RRULE:${localEvent.rrule}`);
         if (localEvent.exdates && localEvent.exdates.length > 0) {
@@ -179,10 +181,7 @@ export class GoogleCalendarAPI implements ICalendarAPI {
             }
         }
         
-        const baseEventRemoteId = localEvent.recurringEventId 
-            ? events.find((e) => e.id === localEvent.recurringEventId)?.remoteId
-            : undefined;
-
+        
         return {
             ...(recurrence.length > 0 ? { recurrence } : {}),
             ...(baseEventRemoteId ? { recurringEventId: baseEventRemoteId } : {}),

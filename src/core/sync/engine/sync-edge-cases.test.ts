@@ -10,7 +10,7 @@ import { FakeTasksAPI } from "../task-api/FakeTasksAPI";
 describe("Sync Engine - Edge Cases (Partial Payload & Merging)", () => {
     let mockContext: ISyncEngineContext;
     let pushQueue: SyncQueue;
-    let localData: Map<string, any>;
+    let localData: Map<string, unknown>;
     let tasksAPI: FakeTasksAPI;
     let synchronizer: Synchronizer<AppTask>;
 
@@ -20,18 +20,23 @@ describe("Sync Engine - Edge Cases (Partial Payload & Merging)", () => {
         pushQueue = new SyncQueue();
         
         mockContext = {
-            getLocalData: vi.fn((key: string) => localData.get(key) || []),
-            setLocalData: vi.fn((key: string, data: any) => localData.set(key, data)),
+            getLocalData(key: string) {
+                const val = localData.get(key);
+                return val !== undefined ? val : JSON.parse("[]");
+            },
+            setLocalData(key: string, data: unknown) {
+                localData.set(key, data);
+            },
             oldTasksMap: new Map(),
             oldEventsMap: new Map(),
-            updateOldTasksMap: vi.fn((tasks: AppTask[]) => {
+            updateOldTasksMap: vi.fn<(tasks: AppTask[]) => void>((tasks: AppTask[]) => {
                 mockContext.oldTasksMap = new Map(tasks.map(t => [t.id, t]));
             }),
-            updateOldEventsMap: vi.fn(),
+            updateOldEventsMap: vi.fn<(events: AppEvent[]) => void>(),
             getSettings: () => ({ enableTasksSync: true }),
             pushQueue,
-            notifyError: vi.fn(),
-            updateStatus: vi.fn()
+            notifyError: vi.fn<(msg: string) => void>(),
+            updateStatus: vi.fn<(problem?: boolean, isSyncing?: boolean) => void>()
         };
 
         tasksAPI = new FakeTasksAPI();
@@ -76,13 +81,13 @@ describe("Sync Engine - Edge Cases (Partial Payload & Merging)", () => {
         // 3. Concurrently, someone edits the due date remotely at t2
         const t2 = 3000;
         // Mocking the raw data in the Fake API structure
-        (tasksAPI as any).tasks["@default"] = [{
+        tasksAPI.seedRemoteTasks([{
             id: "g1",
             title: "Original Title", // Title was not edited remotely
             due: "2024-12-31T00:00:00.000Z", // Due date WAS edited remotely
             updated: new Date(t2).toISOString(),
             etag: "v2"
-        }];
+        }]);
 
         // 4. Poller runs. It should fetch the remote task, apply the optimistic overlay, 
         // and we expect the resulting local task to have BOTH the local title edit AND the remote due date.
@@ -136,14 +141,14 @@ describe("Sync Engine - Edge Cases (Partial Payload & Merging)", () => {
 
         // 3. Concurrently, someone edits the notes remotely at t2
         const t2 = 3000;
-        (tasksAPI as any).tasks["@default"] = [{
+        tasksAPI.seedRemoteTasks([{
             id: "g2",
             title: "Task 2",
             notes: "Edited Notes\nTaskroot Task ID: t2",
             status: "needsAction", // Status was not edited remotely (still todo equivalent)
             updated: new Date(t2).toISOString(),
             etag: "v2"
-        }];
+        }]);
 
         // 4. Poller runs.
         await synchronizer.poll();

@@ -34,6 +34,10 @@ function getGoogleTaskBase(googleTask: gapi.client.tasks.Task) {
 export class FakeTasksAPI implements ITasksAPI {
     private tasks: Record<string, gapi.client.tasks.Task[]> = {};
 
+    public seedRemoteTasks(tasks: gapi.client.tasks.Task[], tasklistId = "@default"): void {
+        this.tasks[tasklistId] = tasks;
+    }
+
     private generateEtag(): string {
         return crypto.randomUUID();
     }

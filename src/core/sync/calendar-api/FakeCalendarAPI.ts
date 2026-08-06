@@ -1,6 +1,6 @@
 import { toFloatingIso } from "../../utils/date-utils";
 import { ConflictError } from "../errors";
-import type { AppTask, AppEvent } from "../../domain/models";
+import type { AppEvent } from "../../domain/models";
 import { toEventType } from "../../domain/models";
 import { isEventAllDay } from "../../domain/events";
 import type { ICalendarAPI } from "./types";
@@ -60,6 +60,10 @@ function parseRecurrenceRule(recurrence?: string[]): { rrule?: string, exdates?:
 export class FakeCalendarAPI implements ICalendarAPI {
     private calendars: Record<string, gapi.client.calendar.Event[]> = {};
 
+    public seedRemoteEvents(events: gapi.client.calendar.Event[], calendarId = "primary"): void {
+        this.calendars[calendarId] = events;
+    }
+
     private generateEtag(): string {
         return crypto.randomUUID();
     }
@@ -72,10 +76,11 @@ export class FakeCalendarAPI implements ICalendarAPI {
         return [{ id: "primary", summary: "Primary Calendar", accessRole: "owner", primary: true }];
     }
 
-    async createEvent(localEvent: AppEvent, ctx: { tasks: AppTask[], events: AppEvent[] }, calendarId = "primary"): Promise<{ remoteId: string, calendarId: string }> {
+    async createEvent(localEvent: AppEvent, options?: { baseEventRemoteId?: string, calendarId?: string }): Promise<{ remoteId: string, calendarId: string }> {
+        const calendarId = options?.calendarId || "primary";
         if (!this.calendars[calendarId]) this.calendars[calendarId] = [];
         const remoteId = "fake-g-id-" + crypto.randomUUID();
-        const googleEvent = this.toGoogleEvent(localEvent, ctx);
+        const googleEvent = this.toGoogleEvent(localEvent, options?.baseEventRemoteId);
         googleEvent.id = remoteId;
         googleEvent.etag = this.generateEtag();
         googleEvent.updated = new Date().toISOString();
@@ -83,7 +88,8 @@ export class FakeCalendarAPI implements ICalendarAPI {
         return { remoteId, calendarId };
     }
 
-    async updateEvent(remoteId: string, localEvent: AppEvent, _updatedFields: (keyof AppEvent)[] | undefined, ctx: { tasks: AppTask[], events: AppEvent[] }, calendarId = "primary"): Promise<void> {
+    async updateEvent(remoteId: string, localEvent: AppEvent, options?: { updatedFields?: (keyof AppEvent)[], baseEventRemoteId?: string, calendarId?: string }): Promise<void> {
+        const calendarId = options?.calendarId || "primary";
         if (!this.calendars[calendarId]) this.calendars[calendarId] = [];
         const index = this.calendars[calendarId].findIndex(e => e.id === remoteId);
         if (index === -1) throw new Error("Event not found");
@@ -124,7 +130,7 @@ export class FakeCalendarAPI implements ICalendarAPI {
         }
     }
 
-    toGoogleEvent(localEvent: AppEvent, ctx: { tasks: AppTask[], events: AppEvent[] }): gapi.client.calendar.Event {
+    toGoogleEvent(localEvent: AppEvent, baseEventRemoteId?: string): gapi.client.calendar.Event {
         const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
         
         let startObj: gapi.client.calendar.EventDateTime;
@@ -151,11 +157,11 @@ export class FakeCalendarAPI implements ICalendarAPI {
                     type: localEvent.type ?? "",
                 },
             },
-            ...this.buildGoogleRecurrenceAndExceptions(localEvent, timeZone, ctx.events)
+            ...this.buildGoogleRecurrenceAndExceptions(localEvent, timeZone, baseEventRemoteId)
         };
     }
 
-    private buildGoogleRecurrenceAndExceptions(localEvent: AppEvent, timeZone: string, events: AppEvent[]) {
+    private buildGoogleRecurrenceAndExceptions(localEvent: AppEvent, timeZone: string, baseEventRemoteId?: string) {
         const recurrence: string[] = [];
         if (localEvent.rrule) recurrence.push(`RRULE:${localEvent.rrule}`);
         if (localEvent.exdates && localEvent.exdates.length > 0) {
@@ -169,9 +175,6 @@ export class FakeCalendarAPI implements ICalendarAPI {
             }
         }
         
-        const baseEventRemoteId = localEvent.recurringEventId 
-            ? events.find((e) => e.id === localEvent.recurringEventId)?.remoteId
-            : undefined;
 
         return {
             ...(recurrence.length > 0 ? { recurrence } : {}),

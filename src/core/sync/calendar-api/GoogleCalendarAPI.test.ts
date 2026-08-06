@@ -196,7 +196,7 @@ describe("GoogleCalendarAPI", () => {
                 id: "master_id",
                 remoteId: "master_id_google"
             });
-            const googleEvent = googleCalendarAPI.toGoogleEvent(localEvent, { tasks: [], events: [baseEvent] });
+            const googleEvent = googleCalendarAPI.toGoogleEvent(localEvent, "master_id_google");
             expect(googleEvent.recurringEventId).toBe("master_id_google");
             expect(googleEvent.originalStartTime?.dateTime).toContain("2024-05-17T10:00:00");
         });

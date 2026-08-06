@@ -75,8 +75,8 @@ export class TaskSyncStrategy implements ISyncStrategy<AppTask> {
             }
             updated = true;
         } else if ((q.action === SyncAction.Update || q.action === SyncAction.Create) && q.item && q.item.id) {
-            if (q.action === SyncAction.Update && q.updatedFields && tasksMap.has(q.item.id)) {
-                const existing = tasksMap.get(q.item.id)!;
+            const existing = tasksMap.get(q.item.id);
+            if (q.action === SyncAction.Update && q.updatedFields && existing) {
                 const partialUpdate: Partial<AppTask> = {};
                 for (const field of q.updatedFields) {
                     Object.defineProperty(partialUpdate, field, {
@@ -87,7 +87,7 @@ export class TaskSyncStrategy implements ISyncStrategy<AppTask> {
                     });
                 }
                 Object.defineProperty(partialUpdate, "updatedAt", {
-                    value: q.item.updatedAt,
+                    value: Math.max(q.item.updatedAt || 0, existing.updatedAt || 0),
                     enumerable: true,
                     writable: true,
                     configurable: true,

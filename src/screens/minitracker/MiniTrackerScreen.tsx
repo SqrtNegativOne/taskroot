@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from "react";
 import "@fontsource-variable/roboto-mono";
-import { useTasks, useStopwatch, useSettings } from "../../core/store/hooks";
+import { useTasks, useEvents, useStopwatch, useSettings } from "../../core/store/hooks";
+import { expandEventsForView } from "../../core/domain/rrule-utils";
+import { isEventAllDay, hydrateEvents } from "../../core/domain/events";
+import { toFloatingIso, MS_IN_MINUTE, addDays } from "../../core/utils/date-utils";
+import type { AppTask, AppEvent } from "../../core/domain/models";
 import "./minitracker.css";
 import { MiniTrackerClock } from "./MiniTrackerClock";
 import type { StopwatchState } from "../../core/domain/clock-strategies/types";
@@ -102,9 +106,44 @@ function useMiniTrackerStyles(settings: AppSettings, isDimmed: boolean): React.C
     return style;
 }
 
+function getOngoingEvent(events: AppEvent[], tasks: AppTask[], date: Date) {
+    const start = new Date(date);
+    start.setHours(0, 0, 0, 0);
+    const end = addDays(start, 1);
+    
+    const expanded = expandEventsForView(events, start, end);
+    const hydrated = hydrateEvents(expanded, tasks);
+    const floatNow = toFloatingIso(date);
+    
+    const ongoingEvents = hydrated.filter((e) => e.startTime <= floatNow && e.endTime > floatNow && !isEventAllDay(e));
+    
+    return ongoingEvents.find((e) => e.task) || ongoingEvents[0];
+}
+
+function useActiveItem(tasks: AppTask[] | null, events: AppEvent[] | null, now: number) {
+    const currentMinute = Math.floor(now / MS_IN_MINUTE);
+    
+    return React.useMemo(() => {
+        const doingTask = tasks?.find((t) => t.status === "doing");
+        if (doingTask) return doingTask;
+
+        if (events && tasks && events.length > 0) {
+            const date = new Date(currentMinute * MS_IN_MINUTE);
+            const bestEvent = getOngoingEvent(events, tasks, date);
+            
+            if (bestEvent) {
+                return bestEvent.task || { title: bestEvent.title };
+            }
+        }
+        
+        return undefined;
+    }, [tasks, events, currentMinute]);
+}
+
 export function MiniTrackerScreen() {
     const [state, setState] = useStopwatch();
     const [tasks] = useTasks();
+    const [events] = useEvents();
     const [settings] = useSettings();
     const [now, setNow] = useState(Date.now());
     const [isDimmed, setIsDimmed] = useState(false);
@@ -130,7 +169,7 @@ export function MiniTrackerScreen() {
     }, []);
 
     useBreakSound(state, setState, now);
-    const activeTask = tasks?.find((t: import('../../core/domain/models').AppTask) => t.status === "doing");
+    const activeTask = useActiveItem(tasks, events, now);
     const clockStyle = settings.clockStyle || "counter";
 
     const running = state.runningSince !== undefined;

@@ -192,10 +192,6 @@ describe("GoogleCalendarAPI", () => {
                 recurringEventId: "master_id",
                 originalStartTime: "2024-05-17T10:00:00"
             });
-            const baseEvent = createMockAppEvent({
-                id: "master_id",
-                remoteId: "master_id_google"
-            });
             const googleEvent = googleCalendarAPI.toGoogleEvent(localEvent, "master_id_google");
             expect(googleEvent.recurringEventId).toBe("master_id_google");
             expect(googleEvent.originalStartTime?.dateTime).toContain("2024-05-17T10:00:00");

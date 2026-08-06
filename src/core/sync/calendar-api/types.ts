@@ -1,4 +1,4 @@
-import type { AppTask, AppEvent } from "../../domain/models";
+import type { AppEvent } from "../../domain/models";
 /// <reference types="gapi.client.calendar" />
 
 export interface ICalendarAPI {

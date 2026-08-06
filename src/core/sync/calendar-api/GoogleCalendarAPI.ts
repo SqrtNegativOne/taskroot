@@ -2,7 +2,7 @@ import { HTTP_UNAUTHORIZED, HTTP_GONE, HTTP_FORBIDDEN, HTTP_TOO_MANY_REQUESTS, H
 import { fetchWithTimeout } from "../../store/api";
 import { toFloatingIso } from "../../utils/date-utils";
 import { ConflictError } from "../errors";
-import type { AppTask, AppEvent } from "../../domain/models";
+import type { AppEvent } from "../../domain/models";
 import { toEventType } from "../../domain/models";
 import { isEventAllDay } from "../../domain/events";
 import type { IAuthManager } from "../auth/types";

@@ -2,7 +2,7 @@ import type { ISyncStrategy } from "./Synchronizer";
 import type { ISyncEngineContext, SyncQueueItem } from "./types";
 import { SyncAction, SyncType } from "./types";
 import type { ICalendarAPI } from "../calendar-api/types";
-import type { AppEvent, AppTask } from "../../domain/models";
+import type { AppEvent } from "../../domain/models";
 import { resolveConflict } from "./conflict-resolver";
 import { computeEventDeltaActions } from "./event-differ";
 
@@ -129,8 +129,8 @@ export class EventSyncStrategy implements ISyncStrategy<AppEvent> {
         this.context.updateOldEventsMap(currentEvents);
     }
 
-    private actionHandlers: Record<string, (item: SyncQueueItem, tasks: AppTask[]) => Promise<void>> = {
-        [SyncAction.Create]: async (taskOrEvent, tasks) => {
+    private actionHandlers: Record<string, (item: SyncQueueItem) => Promise<void>> = {
+        [SyncAction.Create]: async (taskOrEvent) => {
             if (taskOrEvent.type !== SyncType.Event) return;
             const targetCalendarId = taskOrEvent.item.remoteCollectionId || "primary";
             const eventsData = this.context.getLocalData<AppEvent[]>("events");
@@ -155,7 +155,7 @@ export class EventSyncStrategy implements ISyncStrategy<AppEvent> {
                 }
             }
         },
-        [SyncAction.Update]: async (taskOrEvent, tasks) => {
+        [SyncAction.Update]: async (taskOrEvent) => {
             if (taskOrEvent.type !== SyncType.Event) return;
             const events = this.context.getLocalData<AppEvent[]>("events");
             const currentEvent = events.find((e) => e.id === taskOrEvent.item.id);
@@ -194,8 +194,7 @@ export class EventSyncStrategy implements ISyncStrategy<AppEvent> {
 
     async processPushItem(taskOrEvent: SyncQueueItem) {
         if (taskOrEvent.type !== SyncType.Event) return;
-        const tasks = this.context.getLocalData<AppTask[]>("tasks");
         const handler = this.actionHandlers[taskOrEvent.action];
-        if (handler) await handler(taskOrEvent, tasks);
+        if (handler) await handler(taskOrEvent);
     }
 }

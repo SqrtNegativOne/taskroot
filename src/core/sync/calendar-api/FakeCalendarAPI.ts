@@ -99,7 +99,7 @@ export class FakeCalendarAPI implements ICalendarAPI {
             throw new ConflictError(`ETag conflict on event: ${localEvent.title}`);
         }
         
-        const updatedEvent = this.toGoogleEvent(localEvent, ctx);
+        const updatedEvent = this.toGoogleEvent(localEvent, options?.baseEventRemoteId);
         updatedEvent.id = remoteId;
         updatedEvent.etag = this.generateEtag();
         updatedEvent.updated = new Date().toISOString();

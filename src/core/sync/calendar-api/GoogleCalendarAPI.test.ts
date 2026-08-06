@@ -5,6 +5,7 @@ import { GoogleCalendarAPI } from "./GoogleCalendarAPI";
 import { ConflictError } from "../errors";
 import { HTTP_PRECONDITION_FAILED } from "../../utils/constants";
 import * as api from "../../store/api";
+import { FakeAuthManager, MockFetch } from "../../utils/testUtils";
 import { isEventAllDay } from "../../domain/events";
 
 function assertIsAppEvent(event: unknown): asserts event is AppEvent {
@@ -19,48 +20,41 @@ vi.mock("../../store/api", () => ({
 
 describe("GoogleCalendarAPI", () => {
     let googleCalendarAPI: GoogleCalendarAPI;
-    const mockAuthManager = {
-        getToken: vi.fn<() => string>().mockReturnValue("fake-token"),
-        refreshAccessToken: vi.fn<() => Promise<boolean>>().mockResolvedValue(true),
-    };
+    let fakeAuthManager: FakeAuthManager;
+    let mockFetch: MockFetch;
 
     beforeEach(() => {
         vi.resetAllMocks();
-        mockAuthManager.getToken.mockReturnValue("fake-token");
-        mockAuthManager.refreshAccessToken.mockResolvedValue(true);
-        googleCalendarAPI = new GoogleCalendarAPI(mockAuthManager);
+        fakeAuthManager = new FakeAuthManager();
+        mockFetch = new MockFetch();
+        vi.spyOn(api, "fetchWithTimeout").mockImplementation(mockFetch.handler);
+        googleCalendarAPI = new GoogleCalendarAPI(fakeAuthManager);
     });
 
     describe("fetchEvents", () => {
         it("requests events with proper parameters", async () => {
-            const mockFetch = vi.mocked<typeof api.fetchWithTimeout>(api.fetchWithTimeout);
-            mockFetch.mockResolvedValueOnce(
-                new Response(JSON.stringify({ items: [{ id: "e1" }] }), {
-                    status: 200,
-                })
-            );
+            let requestUrl = "";
+            mockFetch.mock("GET", "https://www.googleapis.com/calendar/v3/calendars/primary/events", (url) => {
+                requestUrl = url;
+                return new Response(JSON.stringify({ items: [{ id: "e1" }] }), { status: 200 });
+            });
 
             const events = await googleCalendarAPI.fetchEvents(
                 "2024-01-01T00:00:00Z",
                 "2024-01-31T23:59:59Z",
             );
 
-            expect(mockFetch).toHaveBeenCalledOnce();
-            const url = mockFetch.mock.calls[0][0];
-            expect(url).toContain("timeMin=2024-01-01T00:00:00Z");
-            expect(url).toContain("timeMax=2024-01-31T23:59:59Z");
-            expect(url).toContain("singleEvents=false");
-            expect(url).toContain("maxResults=2500");
+            expect(requestUrl).toContain("timeMin=2024-01-01T00:00:00Z");
+            expect(requestUrl).toContain("timeMax=2024-01-31T23:59:59Z");
+            expect(requestUrl).toContain("singleEvents=false");
+            expect(requestUrl).toContain("maxResults=2500");
 
             expect(events).toHaveLength(1);
         });
 
         it("throws Unauthorized on 401 if refresh fails", async () => {
-            const mockFetch = vi.mocked<typeof api.fetchWithTimeout>(api.fetchWithTimeout);
-            mockFetch.mockResolvedValueOnce(
-                new Response(undefined, { status: 401 })
-            );
-            mockAuthManager.refreshAccessToken.mockResolvedValueOnce(false);
+            mockFetch.mock("GET", "https://www.googleapis.com/calendar/v3/calendars/primary/events", new Response(undefined, { status: 401 }));
+            fakeAuthManager.setWillRefreshSuccess(false);
 
             await expect(
                 googleCalendarAPI.fetchEvents("start", "end"),
@@ -70,28 +64,29 @@ describe("GoogleCalendarAPI", () => {
 
     describe("updateEvent", () => {
         it("sends If-Match header when localEvent has an etag", async () => {
-            const mockFetch = vi.mocked(api.fetchWithTimeout);
-            mockFetch.mockResolvedValueOnce(new Response(undefined, { status: 200 }));
+            let receivedHeaders: HeadersInit | undefined;
+            mockFetch.mock("PATCH", "https://www.googleapis.com/calendar/v3/calendars/primary/events/g123", (_url, init) => {
+                receivedHeaders = init?.headers;
+                return new Response(undefined, { status: 200 });
+            });
 
             await googleCalendarAPI.updateEvent("g123", createMockAppEvent({
                 id: "e123",
                 title: "Buy milk",
                 etag: "version-1",
-            }), undefined, { tasks: [], events: [] });
+            }));
 
-            const headers = mockFetch.mock.calls[0][1]?.headers;
-            expect(headers).toHaveProperty("If-Match", "version-1");
+            expect(receivedHeaders).toHaveProperty("If-Match", "version-1");
         });
 
         it("throws ConflictError when API returns 412", async () => {
-            const mockFetch = vi.mocked(api.fetchWithTimeout);
-            mockFetch.mockResolvedValueOnce(new Response(undefined, { status: HTTP_PRECONDITION_FAILED }));
+            mockFetch.mock("PATCH", "https://www.googleapis.com/calendar/v3/calendars/primary/events/goog-1", new Response(undefined, { status: HTTP_PRECONDITION_FAILED }));
 
             await expect(googleCalendarAPI.updateEvent("goog-1", createMockAppEvent({
                 id: "e1",
                 title: "Buy milk",
                 etag: "version-1",
-            }), undefined, { tasks: [], events: [] })).rejects.toThrow(ConflictError);
+            }))).rejects.toThrow(ConflictError);
         });
     });
 
@@ -103,7 +98,7 @@ describe("GoogleCalendarAPI", () => {
                 startTime: "2024-05-10T10:00:00",
                 endTime: "2024-05-10T11:00:00",
             });
-            const googleEvent = googleCalendarAPI.toGoogleEvent(localEvent, { tasks: [], events: [] });
+            const googleEvent = googleCalendarAPI.toGoogleEvent(localEvent);
 
             expect(
                 googleEvent.extendedProperties?.private?.taskrootEventId,
@@ -119,7 +114,7 @@ describe("GoogleCalendarAPI", () => {
                 startTime: "2024-05-10",
                 endTime: "2024-05-11",
             });
-            const googleEvent = googleCalendarAPI.toGoogleEvent(localEvent, { tasks: [], events: [] });
+            const googleEvent = googleCalendarAPI.toGoogleEvent(localEvent);
 
             expect(googleEvent.start?.date).toBe("2024-05-10");
             expect(googleEvent.end?.date).toBe("2024-05-11");
@@ -132,7 +127,7 @@ describe("GoogleCalendarAPI", () => {
                 startTime: "2024-05-10",
                 endTime: "2024-05-11",
             });
-            const googleEvent = googleCalendarAPI.toGoogleEvent(localEvent, { tasks: [], events: [] });
+            const googleEvent = googleCalendarAPI.toGoogleEvent(localEvent);
 
             expect(googleEvent.start?.date).toBe("2024-05-10");
             expect(googleEvent.end?.date).toBe("2024-05-11");
@@ -158,8 +153,8 @@ describe("GoogleCalendarAPI", () => {
                 endTime: "2024-05-10T11:00:00",
             });
 
-            const googleInfoEvent = googleCalendarAPI.toGoogleEvent(infoEvent, { tasks: [], events: [] });
-            const googleBusyEvent = googleCalendarAPI.toGoogleEvent(busyEvent, { tasks: [], events: [] });
+            const googleInfoEvent = googleCalendarAPI.toGoogleEvent(infoEvent);
+            const googleBusyEvent = googleCalendarAPI.toGoogleEvent(busyEvent);
 
             expect(googleInfoEvent.transparency).toBe("transparent");
             expect(googleBusyEvent.transparency).toBe("opaque");
@@ -174,7 +169,7 @@ describe("GoogleCalendarAPI", () => {
                 rrule: "FREQ=WEEKLY",
                 exdates: ["20240517T100000Z", "20240524T100000Z"]
             });
-            const googleEvent = googleCalendarAPI.toGoogleEvent(localEvent, { tasks: [], events: [] });
+            const googleEvent = googleCalendarAPI.toGoogleEvent(localEvent);
             const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
             expect(googleEvent.recurrence).toEqual([
                 "RRULE:FREQ=WEEKLY",
@@ -320,7 +315,7 @@ describe("GoogleCalendarAPI", () => {
                 rrule: "FREQ=WEEKLY",
             });
             
-            const googleEvent = googleCalendarAPI.toGoogleEvent(originalLocalEvent, { tasks: [], events: [] });
+            const googleEvent = googleCalendarAPI.toGoogleEvent(originalLocalEvent);
             googleEvent.id = "g-1";
             googleEvent.updated = "2024-05-01T00:00:00.000Z";
 
@@ -347,7 +342,7 @@ describe("GoogleCalendarAPI", () => {
                 endTime: "2024-12-26",
             });
 
-            const googleEvent = googleCalendarAPI.toGoogleEvent(originalLocalEvent, { tasks: [], events: [] });
+            const googleEvent = googleCalendarAPI.toGoogleEvent(originalLocalEvent);
             googleEvent.id = "g-2";
             googleEvent.updated = "2024-12-01T00:00:00.000Z";
 

@@ -100,15 +100,15 @@ export class GoogleCalendarAPI implements ICalendarAPI {
                 partialPayload.start = payload.start;
                 partialPayload.end = payload.end;
             }
-            if (updatedFields.includes("type") || updatedFields.includes("taskId")) {
+            if (options.updatedFields.includes("type") || options.updatedFields.includes("taskId")) {
                 partialPayload.extendedProperties = payload.extendedProperties;
                 partialPayload.transparency = payload.transparency;
             }
-            if (updatedFields.includes("rrule") || updatedFields.includes("exdates")) {
+            if (options.updatedFields.includes("rrule") || options.updatedFields.includes("exdates")) {
                 partialPayload.recurrence = payload.recurrence;
             }
-            if (updatedFields.includes("recurringEventId")) partialPayload.recurringEventId = payload.recurringEventId;
-            if (updatedFields.includes("originalStartTime")) partialPayload.originalStartTime = payload.originalStartTime;
+            if (options.updatedFields.includes("recurringEventId")) partialPayload.recurringEventId = payload.recurringEventId;
+            if (options.updatedFields.includes("originalStartTime")) partialPayload.originalStartTime = payload.originalStartTime;
             
             payload = partialPayload as gapi.client.calendar.Event;
         }

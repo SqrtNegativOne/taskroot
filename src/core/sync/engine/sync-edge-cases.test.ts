@@ -5,7 +5,7 @@ import { SyncQueue } from "./SyncQueue";
 
 import type { ISyncEngineContext } from "./types";
 import { SyncType, SyncAction } from "./types";
-import type { AppTask } from "../../domain/models";
+import { type AppTask, type AppEvent } from "../../domain/models";
 import { FakeTasksAPI } from "../task-api/FakeTasksAPI";
 describe("Sync Engine - Edge Cases (Partial Payload & Merging)", () => {
     let mockContext: ISyncEngineContext;

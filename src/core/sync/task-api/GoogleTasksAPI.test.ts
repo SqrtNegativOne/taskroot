@@ -4,60 +4,45 @@ import { GoogleTasksAPI } from "./GoogleTasksAPI";
 import { ConflictError } from "../errors";
 import { HTTP_PRECONDITION_FAILED } from "../../utils/constants";
 import * as api from "../../store/api";
-
-vi.mock("../../store/api", () => ({
-    fetchWithTimeout: vi.fn<(...args: never[]) => unknown>(),
-}));
+import { FakeAuthManager, MockFetch } from "../../utils/testUtils";
 
 // eslint-disable-next-line max-lines-per-function
 describe("GoogleTasksAPI", () => {
     let googleTasksAPI: GoogleTasksAPI;
-    const mockAuthManager = {
-        getToken: vi.fn<(...args: unknown[]) => string>().mockReturnValue("fake-token"),
-        refreshAccessToken: vi.fn<(...args: unknown[]) => Promise<boolean>>().mockResolvedValue(true),
-    };
+    let fakeAuthManager: FakeAuthManager;
+    let mockFetch: MockFetch;
 
     beforeEach(() => {
         vi.resetAllMocks();
-        mockAuthManager.getToken.mockReturnValue("fake-token");
-        mockAuthManager.refreshAccessToken.mockResolvedValue(true);
-        googleTasksAPI = new GoogleTasksAPI(mockAuthManager);
+        fakeAuthManager = new FakeAuthManager();
+        mockFetch = new MockFetch();
+        vi.spyOn(api, "fetchWithTimeout").mockImplementation(mockFetch.handler);
+        googleTasksAPI = new GoogleTasksAPI(fakeAuthManager);
     });
 
     describe("fetchTasks", () => {
         it("handles pagination correctly", async () => {
-            const mockFetch = vi.mocked(api.fetchWithTimeout);
-
-            // Page 1
-            mockFetch.mockResolvedValueOnce(
-                new Response(
-                    JSON.stringify({ items: [{ id: "task1" }], nextPageToken: "token123" }),
-                    { status: 200 }
-                )
-            );
-
-            // Page 2
-            mockFetch.mockResolvedValueOnce(
-                new Response(
-                    JSON.stringify({ items: [{ id: "task2" }], nextPageToken: undefined }),
-                    { status: 200 }
-                )
-            );
+            let requestCount = 0;
+            mockFetch.mock("GET", "https://tasks.googleapis.com/tasks/v1/lists/@default/tasks", (urlStr) => {
+                requestCount++;
+                if (!urlStr.includes("pageToken")) {
+                    return new Response(JSON.stringify({ items: [{ id: "task1" }], nextPageToken: "token123" }), { status: 200 });
+                } else {
+                    return new Response(JSON.stringify({ items: [{ id: "task2" }] }), { status: 200 });
+                }
+            });
 
             const tasks = await googleTasksAPI.fetchTasks();
 
-            expect(mockFetch).toHaveBeenCalledTimes(2);
+            expect(requestCount).toBe(2);
             expect(tasks).toHaveLength(2);
             expect(tasks?.[0].id).toBe("task1");
             expect(tasks?.[1].id).toBe("task2");
         });
 
         it("throws Unauthorized on 401 if refresh fails", async () => {
-            const mockFetch = vi.mocked(api.fetchWithTimeout);
-            mockFetch.mockResolvedValueOnce(
-                new Response(undefined, { status: 401 })
-            );
-            mockAuthManager.refreshAccessToken.mockResolvedValueOnce(false);
+            mockFetch.mock("GET", "https://tasks.googleapis.com/tasks/v1/lists/@default/tasks", new Response(undefined, { status: 401 }));
+            fakeAuthManager.setWillRefreshSuccess(false);
 
             await expect(googleTasksAPI.fetchTasks()).rejects.toThrow(
                 "Unauthorized",
@@ -67,8 +52,11 @@ describe("GoogleTasksAPI", () => {
 
     describe("updateTask", () => {
         it("sends If-Match header when localTask has an etag", async () => {
-            const mockFetch = vi.mocked(api.fetchWithTimeout);
-            mockFetch.mockResolvedValueOnce(new Response(undefined, { status: 200 }));
+            let receivedHeaders: HeadersInit | undefined;
+            mockFetch.mock("PATCH", "https://tasks.googleapis.com/tasks/v1/lists/@default/tasks/g123", (_url, init) => {
+                receivedHeaders = init?.headers;
+                return new Response(undefined, { status: 200 });
+            });
 
             await googleTasksAPI.updateTask("g123", {
                 id: "t123",
@@ -76,13 +64,11 @@ describe("GoogleTasksAPI", () => {
                 etag: "version-1",
             });
 
-            const headers = mockFetch.mock.calls[0][1]?.headers;
-            expect(headers).toHaveProperty("If-Match", "version-1");
+            expect(receivedHeaders).toHaveProperty("If-Match", "version-1");
         });
 
         it("throws ConflictError when API returns 412", async () => {
-            const mockFetch = vi.mocked(api.fetchWithTimeout);
-            mockFetch.mockResolvedValueOnce(new Response(undefined, { status: HTTP_PRECONDITION_FAILED }));
+            mockFetch.mock("PATCH", "https://tasks.googleapis.com/tasks/v1/lists/@default/tasks/g123", new Response(undefined, { status: HTTP_PRECONDITION_FAILED }));
 
             await expect(googleTasksAPI.updateTask("g123", {
                 id: "t123",

@@ -9,13 +9,7 @@ import {
     SETTINGS_TABS,
 } from "../../core/store/settingsSchema";
 
-// Mock dependencies
-vi.mock("../../core/store/api", () => ({
-    api: {
-        clearAllData: vi.fn<(...args: unknown[]) => unknown>(),
-        saveStoreData: vi.fn<(...args: never[]) => unknown>(),
-    },
-}));
+
 
 const renderWithRouter = (ui: React.ReactElement) => {
     return render(<MemoryRouter>{ui}</MemoryRouter>);

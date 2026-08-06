@@ -57,7 +57,7 @@ describe("Event Sync Engine - Edge Cases (Partial Payload & Merging)", () => {
             endTime: "2024-01-01T11:00:00",
             updatedAt: t0,
             etag: "v1",
-            type: "time"
+            type: "busy"
         };
         mockContext.setLocalData("events", [initialEvent]);
         mockContext.updateOldEventsMap([initialEvent]);
@@ -124,7 +124,7 @@ describe("Event Sync Engine - Edge Cases (Partial Payload & Merging)", () => {
             endTime: "2024-01-01T11:00:00",
             updatedAt: t0,
             etag: "v1",
-            type: "time"
+            type: "busy"
         };
         mockContext.setLocalData("events", [initialEvent]);
         mockContext.updateOldEventsMap([initialEvent]);

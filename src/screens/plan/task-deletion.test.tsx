@@ -6,24 +6,12 @@ import { MemoryRouter } from "react-router-dom";
 import { render, fireEvent, waitFor } from "@testing-library/react";
 import { expect, test, vi, beforeEach, beforeAll } from "vitest";
 import { PlanScreen } from "./PlanScreen";
+import { poller } from "../../core/sync";
+import * as api from "../../core/store/api";
+import { MockFetch } from "../../core/utils/testUtils";
 
-vi.mock("../../core/store/api", () => ({
-    api: {
-        subscribeToStore: (_key: string, _fallback: unknown, _onUpdate: unknown, onReady: () => void) => {
-            onReady();
-            return () => {};
-        },
-        saveStoreData: () => {},
-    },
-}));
-
-vi.mock("../../core/sync", () => ({
-    taskSync: { computeDelta: () => {} },
-    eventSync: { computeDelta: () => {} },
-    pusher: { trigger: () => {}, queue: { push: () => {}, getItems: () => [], length: 0 } },
-    poller: { forceSync: () => {}, stop: () => {} },
-    syncState: { error: undefined },
-}));
+const mockFetch = new MockFetch();
+vi.spyOn(api, "fetchWithTimeout").mockImplementation(mockFetch.handler);
 
 beforeAll(() => {
     // Mock matchMedia
@@ -57,6 +45,8 @@ beforeEach(() => {
     // clear jsdom prompt/confirm
     window.confirm = vi.fn<(...args: unknown[]) => boolean>(() => true);
 });
+
+
 
 test("deleting a task also deletes its associated events", async () => {
     // Setup initial data to make test pass without complex unmounts
@@ -93,9 +83,7 @@ test("deleting a task also deletes its associated events", async () => {
         },
     ];
 
-    // Instead of localStorage, we'll spy on React state setters if needed or we can just mock useStored
-    // But since useStored is hard to mock without hoisting issues, we'll just test the deletion logic in UI directly.
-
+    // Preload localStorage with our test data before rendering
     localStorage.setItem("taskroot_tasks", JSON.stringify(tasks));
     localStorage.setItem("taskroot_events", JSON.stringify(events));
 
@@ -105,7 +93,7 @@ test("deleting a task also deletes its associated events", async () => {
         </MemoryRouter>,
     );
 
-    // Give it time to load from localStorage (it's synchronous actually)
+    // Verify the task is rendered
     const taskRow = document.querySelector(".task-row-title");
     expect(taskRow).toBeTruthy();
     expect(taskRow?.textContent).toContain("Test Task for Deletion");
@@ -121,16 +109,10 @@ test("deleting a task also deletes its associated events", async () => {
         expect(document.querySelector(".task-row-title")).toBeNull();
     });
 
-    // Now trigger an action that would write to localStorage, or simply wait
-    // Actually our fix was to use setEvents which synchronously writes to localStorage
+    // Verify that the task deletion also cascaded to delete the associated event in localStorage
     const postDeleteEventsStr = localStorage.getItem("taskroot_events") || "[]";
     const postDeleteEvents = JSON.parse(postDeleteEventsStr);
 
-    // e1 should be deleted (fix is already in place), e2 should remain
-    expect(postDeleteEvents.some((e: { id: string }) => e.id === "e2")).toBe(true);
-    // Wait, since we are doing `setEvents(es => es.filter...)` it will use what was in `events` state.
-    // Did `events` state have e1 and e2?
-    // It should, because useStored initialized it from localStorage!
-    // But previously it failed because `api` mock was weird. Let's see if this passes now.
-    expect(postDeleteEvents.some((e: { id: string }) => e.id === "e1")).toBe(false);
+    expect(postDeleteEvents.some((e: { id: string }) => e.id === "e2")).toBe(true); // Unrelated event remains
+    expect(postDeleteEvents.some((e: { id: string }) => e.id === "e1")).toBe(false); // Associated event is deleted
 });

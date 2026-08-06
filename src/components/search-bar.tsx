@@ -1,5 +1,6 @@
 
 import { Icon } from "./icon";
+import { ICON_SEARCH } from "../core/utils/icons";
 
 interface SearchBarProps {
     value: string;
@@ -18,7 +19,7 @@ export function SearchBar({
             style={{ display: "flex", alignItems: "center", flex: 1 }}
         >
             <Icon
-                name="search"
+                name={ICON_SEARCH}
                 size={14}
                 style={{ color: "var(--fg-dimmer)" }}
             />

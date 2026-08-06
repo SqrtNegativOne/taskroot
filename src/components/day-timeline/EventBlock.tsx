@@ -4,6 +4,7 @@ import { PAD2 } from "../../core/store/data";
 import type { EventBlockProps } from "./types";
 import { PX_PER_MIN, SNAP_MIN } from "./types";
 import type { HydratedEvent } from "../../core/domain/events";
+import { ICON_EVENT_REPEAT, ICON_WARNING } from "../../core/utils/icons";
 import { Icon } from "../icon";
 
 const MIN_EVENT_HEIGHT_PX = 18;
@@ -168,10 +169,10 @@ export function EventBlock<T extends import("./types").DragState = import("./typ
                 <div className="day-event-inner">
                     <div className="day-event-title" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                         {isRecurring && (
-                            <Icon name="event_repeat" size={14} style={{ flexShrink: 0 }} />
+                            <Icon name={ICON_EVENT_REPEAT} size={14} style={{ flexShrink: 0 }} />
                         )}
                         {isPastDue && (
-                            <Icon name="warning" size={14} style={{ flexShrink: 0, color: 'var(--p0)' }} />
+                            <Icon name={ICON_WARNING} size={14} style={{ flexShrink: 0, color: 'var(--p0)' }} />
                         )}
                         {pri !== undefined && (
                             <span className={`pri pri-${pri}`}>●</span>

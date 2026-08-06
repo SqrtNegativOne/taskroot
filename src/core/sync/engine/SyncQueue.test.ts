@@ -102,7 +102,7 @@ describe("SyncQueue", () => {
             type: SyncType.Event,
             action: SyncAction.Update,
             item: eventItem,
-            googleId: "g1",
+            remoteId: "g1",
             calendarId: "cal1"
         });
 
@@ -110,7 +110,7 @@ describe("SyncQueue", () => {
             type: SyncType.Event,
             action: SyncAction.Move,
             item: eventItem,
-            googleId: "g1",
+            remoteId: "g1",
             calendarId: "cal1",
             destinationCalendarId: "cal2"
         });
@@ -123,7 +123,7 @@ describe("SyncQueue", () => {
             type: SyncType.Event,
             action: SyncAction.Update,
             item: eventUpdated,
-            googleId: "g1",
+            remoteId: "g1",
             calendarId: "cal2"
         });
         

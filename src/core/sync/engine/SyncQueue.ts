@@ -97,7 +97,7 @@ export class SyncQueue {
             case "move->delete":
             case "move+update->delete":
                 removeAllExisting();
-                if (item.googleId) this.queue.push(item);
+                if (item.remoteId) this.queue.push(item);
                 break;
             case "delete->delete":
                 return;
@@ -112,7 +112,7 @@ export class SyncQueue {
 
         // Brand new action
         if (existingIndices.length === 0) {
-            if (item.action === SyncAction.Delete && !item.googleId) {
+            if (item.action === SyncAction.Delete && !item.remoteId) {
                 // This item wasn't synced to Google yet, so we don't even need to add a delete action for it.
                 return;
             }

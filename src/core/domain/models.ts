@@ -18,11 +18,12 @@ export interface AppTask {
     readonly canvasX?: number;
     readonly canvasY?: number;
     readonly onCanvas?: boolean;
-    readonly googleId?: string;
+    readonly remoteId?: string;
     readonly notes?: string;
     readonly due?: YmdString;
     readonly _deleted?: boolean;
     readonly updatedAt?: number;
+    /** ETag fingerprint from Google API for optimistic concurrency control. */
     readonly etag?: string;
     readonly [key: string]: unknown;
 }
@@ -38,9 +39,9 @@ export interface AppEvent {
     // --- Identity ---
     id: string;
     /** Stable Google Calendar event ID; absent until first sync. */
-    googleId?: string;
+    remoteId?: string;
     /** Which Google Calendar this belongs to (e.g. `"primary"` or a calendar ID). */
-    googleCalendarId?: string;
+    remoteCollectionId?: string;
     /** Links this event to an AppTask, turning it into a time-block for that task. */
     taskId?: string;
 
@@ -64,7 +65,7 @@ export interface AppEvent {
     // --- Recurrence (stored exception) ---
     /**
      * Local `id` of the master event this exception overrides.
-     * Translated to the master's `googleId` when pushing to GCal.
+     * Translated to the master's `remoteId` when pushing to GCal.
      */
     recurringEventId?: string;
     /**

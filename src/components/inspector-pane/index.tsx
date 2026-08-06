@@ -93,7 +93,7 @@ export function InspectorPane({
 
     const isReadOnlyCalendar = React.useMemo(() => {
         if (!currentEvent) return false;
-        const calId = currentEvent.googleCalendarId || calendars.find((c: CalendarData) => c.primary)?.id || "primary";
+        const calId = currentEvent.remoteCollectionId || calendars.find((c: CalendarData) => c.primary)?.id || "primary";
         const cal = calendars.find((c: CalendarData) => c.id === calId);
         return Boolean(cal && cal.accessRole !== "owner" && cal.accessRole !== "writer");
     }, [currentEvent, calendars]);

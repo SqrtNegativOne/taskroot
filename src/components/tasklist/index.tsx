@@ -1,6 +1,7 @@
 import React from "react";
 import Fuse from "fuse.js";
 import { Icon } from "../icon";
+import { ICON_ADD_TASK } from "../../core/utils/icons";
 import { SearchBar } from "../search-bar";
 import { FilterSortButtons } from "../../screens/plan/shared-menus";
 import { computeFilterDefaults } from "../../core/domain/filters";
@@ -172,7 +173,7 @@ export function TaskListPane({
                         title="Add Task"
                         onClick={handleAddTask}
                     >
-                        <Icon name="add_task" size={16} />
+                        <Icon name={ICON_ADD_TASK} size={16} />
                     </button>
                 </div>
             </header>

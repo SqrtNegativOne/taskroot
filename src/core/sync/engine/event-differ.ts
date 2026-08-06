@@ -3,11 +3,11 @@ import type { SyncQueueItem } from "./types";
 import type { AppEvent } from "../../domain/models";
 
 function getTargetCalendarId(currentEvent: AppEvent, oldEvent: AppEvent): string {
-    return currentEvent.googleCalendarId || oldEvent.googleCalendarId || "primary";
+    return currentEvent.remoteCollectionId || oldEvent.remoteCollectionId || "primary";
 }
 
 function handleCreation(currentEvent: AppEvent, actions: SyncQueueItem[]) {
-    const isValid = !currentEvent.googleId && currentEvent.title && currentEvent.title.trim() !== "";
+    const isValid = !currentEvent.remoteId && currentEvent.title && currentEvent.title.trim() !== "";
     if (isValid)
         actions.push({ type: SyncType.Event, action: SyncAction.Create, item: currentEvent });
 }
@@ -21,7 +21,7 @@ function handleUpdateOrMove(
         return;
 
     const targetCalendarId = getTargetCalendarId(currentEvent, oldEvent);
-    const isCalendarChange = oldEvent.googleCalendarId && oldEvent.googleCalendarId !== targetCalendarId;
+    const isCalendarChange = oldEvent.remoteCollectionId && oldEvent.remoteCollectionId !== targetCalendarId;
     const hasValidTitle = currentEvent.title && currentEvent.title.trim() !== "";
 
     const updatedFields: (keyof AppEvent)[] = [];
@@ -32,13 +32,13 @@ function handleUpdateOrMove(
         }
     }
 
-    if (isCalendarChange && oldEvent.googleId) {
+    if (isCalendarChange && oldEvent.remoteId) {
         actions.push({
             type: SyncType.Event,
             action: SyncAction.Move,
             item: currentEvent,
-            googleId: oldEvent.googleId,
-            calendarId: oldEvent.googleCalendarId,
+            remoteId: oldEvent.remoteId,
+            calendarId: oldEvent.remoteCollectionId,
             destinationCalendarId: targetCalendarId,
             updatedFields
         });
@@ -48,7 +48,7 @@ function handleUpdateOrMove(
                 type: SyncType.Event,
                 action: SyncAction.Update,
                 item: currentEvent,
-                googleId: oldEvent.googleId,
+                remoteId: oldEvent.remoteId,
                 calendarId: targetCalendarId,
                 updatedFields
             });
@@ -61,7 +61,7 @@ function handleUpdateOrMove(
             type: SyncType.Event,
             action: SyncAction.Update,
             item: currentEvent,
-            googleId: currentEvent.googleId,
+            remoteId: currentEvent.remoteId,
             calendarId: targetCalendarId,
             updatedFields
         });
@@ -99,8 +99,8 @@ export function computeEventDeltaActions(
                 type: SyncType.Event,
                 action: SyncAction.Delete,
                 item: oldEvent,
-                googleId: oldEvent.googleId,
-                calendarId: oldEvent.googleCalendarId || "primary",
+                remoteId: oldEvent.remoteId,
+                calendarId: oldEvent.remoteCollectionId || "primary",
             });
         }
     }

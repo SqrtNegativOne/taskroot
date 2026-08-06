@@ -1,6 +1,7 @@
 import React from "react";
 import { useState, useEffect, useRef } from "react";
 import { Icon } from "../../../components/icon";
+import { ICON_DASHBOARD } from "../../../core/utils/icons";
 import { ANIMATION_DELAY_MS } from "./constants";
 
 
@@ -99,7 +100,7 @@ export function CalendarHeader({
                             cursor: "pointer",
                         }}
                     >
-                        <Icon name="dashboard" size={16} />
+                        <Icon name={ICON_DASHBOARD} size={16} />
                     </button>
                     
                     {showViewMenu && (

@@ -25,7 +25,7 @@ function parseGoogleTaskDue(dueStr?: string): import("../../domain/models").YmdS
 function getGoogleTaskBase(googleTask: gapi.client.tasks.Task) {
     if (!googleTask.id) throw new Error("Google task missing ID");
     return {
-        googleId: googleTask.id,
+        remoteId: googleTask.id,
         title: googleTask.title ?? "",
         notes: googleTask.notes ?? "",
         status: googleTask.status === "completed" ? "done" as const : "todo" as const,
@@ -108,7 +108,7 @@ export class GoogleTasksAPI implements ITasksAPI {
         return data.id;
     }
 
-    async updateTask(googleId: string, localTask: AppTask, updatedFields?: (keyof AppTask)[], tasklistId = "@default") {
+    async updateTask(remoteId: string, localTask: AppTask, updatedFields?: (keyof AppTask)[], tasklistId = "@default") {
         const headers: Record<string, string> = { "Content-Type": "application/json" };
         if (localTask.etag) headers["If-Match"] = localTask.etag;
 
@@ -122,7 +122,7 @@ export class GoogleTasksAPI implements ITasksAPI {
             payload = partialPayload as gapi.client.tasks.Task;
         }
 
-        const res = await this.fetchWithAuth(`lists/${tasklistId}/tasks/${googleId}`, {
+        const res = await this.fetchWithAuth(`lists/${tasklistId}/tasks/${remoteId}`, {
             method: "PATCH", headers, body: JSON.stringify(payload)
         });
         
@@ -130,8 +130,8 @@ export class GoogleTasksAPI implements ITasksAPI {
         if (!res.ok) throw new Error(`Failed to update task: ${res.status} ${await res.text()}`);
     }
 
-    async deleteTask(googleId: string, tasklistId = "@default") {
-        const res = await this.fetchWithAuth(`lists/${tasklistId}/tasks/${googleId}`, { method: "DELETE" });
+    async deleteTask(remoteId: string, tasklistId = "@default") {
+        const res = await this.fetchWithAuth(`lists/${tasklistId}/tasks/${remoteId}`, { method: "DELETE" });
         if (!res.ok) throw new Error(`Failed to delete task: ${res.status} ${await res.text()}`);
     }
 

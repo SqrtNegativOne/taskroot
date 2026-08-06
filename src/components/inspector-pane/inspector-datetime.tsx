@@ -5,6 +5,7 @@ import { isEventAllDay } from "../../core/domain/events";
 import { Icon } from "../icon";
 import { addDays, extractDateFromISO, extractTimeFromISO, extractHourMinuteFromISO } from "../../core/utils/date-utils";
 import { ymd } from "../../core/store/data";
+import { ICON_ARROW_FORWARD, ICON_CLOSE, ICON_MORE_TIME, ICON_TRANSITION_PUSH } from "../../core/utils/icons";
 
 const DEFAULT_START_HOUR = "09:00:00";
 const DEFAULT_END_HOUR = "10:00:00";
@@ -115,7 +116,7 @@ export function DateTimeGrid({ event, updateEvent, isReadOnlyCalendar }: { event
                                 onKeyDown={(e) => e.key === "Enter" && handleTimeBlur()}
                             />
                         </div>
-                        <div className="dtg-arrow dtg-time-arrow"><Icon name="arrow_forward" size={18} /></div>
+                        <div className="dtg-arrow dtg-time-arrow"><Icon name={ICON_ARROW_FORWARD} size={18} /></div>
                         <div className="dtg-field dtg-time-end">
                             <input
                                 type="time"
@@ -128,7 +129,7 @@ export function DateTimeGrid({ event, updateEvent, isReadOnlyCalendar }: { event
                             />
                         </div>
                         <div className="dtg-action dtg-time-action">
-                            <button className="dtg-btn-icon" onClick={handleRemoveTime} disabled={isReadOnlyCalendar} title="Remove time"><Icon name="close" size={16} /></button>
+                            <button className="dtg-btn-icon" onClick={handleRemoveTime} disabled={isReadOnlyCalendar} title="Remove time"><Icon name={ICON_CLOSE} size={16} /></button>
                         </div>
                     </>
                 )}
@@ -139,24 +140,24 @@ export function DateTimeGrid({ event, updateEvent, isReadOnlyCalendar }: { event
 
                 {hasEndDate ? (
                     <>
-                        <div className="dtg-arrow dtg-date-arrow"><Icon name="arrow_forward" size={18} /></div>
+                        <div className="dtg-arrow dtg-date-arrow"><Icon name={ICON_ARROW_FORWARD} size={18} /></div>
                         <div className="dtg-field dtg-date-end">
                             <input type="date" className="inspector-date-input" value={endDateStr} min={startDateStr} disabled={isReadOnlyCalendar} onChange={(e) => onEndDateChange(e.target.value)} />
                         </div>
                         <div className="dtg-action dtg-date-action">
-                            <button className="dtg-btn-icon" onClick={handleRemoveEndDate} disabled={isReadOnlyCalendar} title="Remove end date"><Icon name="close" size={16} /></button>
+                            <button className="dtg-btn-icon" onClick={handleRemoveEndDate} disabled={isReadOnlyCalendar} title="Remove end date"><Icon name={ICON_CLOSE} size={16} /></button>
                         </div>
                     </>
                 ) : (!hasTime && (
                     <div className="dtg-inline-actions">
-                        <button className="dtg-btn-icon" onClick={handleAddTime} disabled={isReadOnlyCalendar} title="Add time"><Icon name="more_time" size={18} /></button>
-                        <button className="dtg-btn-icon" onClick={() => !isReadOnlyCalendar && setShowEndDate(true)} disabled={isReadOnlyCalendar} title="Add end date"><Icon name="transition_push" size={18} /></button>
+                        <button className="dtg-btn-icon" onClick={handleAddTime} disabled={isReadOnlyCalendar} title="Add time"><Icon name={ICON_MORE_TIME} size={18} /></button>
+                        <button className="dtg-btn-icon" onClick={() => !isReadOnlyCalendar && setShowEndDate(true)} disabled={isReadOnlyCalendar} title="Add end date"><Icon name={ICON_TRANSITION_PUSH} size={18} /></button>
                     </div>
                 ))}
                 
                 {hasTime && !hasEndDate && (
                     <div className="dtg-bottom-actions">
-                        <button className="dtg-btn-icon" onClick={() => !isReadOnlyCalendar && setShowEndDate(true)} disabled={isReadOnlyCalendar} title="Add end date"><Icon name="transition_push" size={18} /></button>
+                        <button className="dtg-btn-icon" onClick={() => !isReadOnlyCalendar && setShowEndDate(true)} disabled={isReadOnlyCalendar} title="Add end date"><Icon name={ICON_TRANSITION_PUSH} size={18} /></button>
                     </div>
                 )}
             </div>

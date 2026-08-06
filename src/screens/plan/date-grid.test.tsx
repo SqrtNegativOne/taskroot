@@ -27,7 +27,7 @@ test("filters events by category correctly", () => {
             startTime: `${todayStr}T10:00:00`,
             endTime: `${todayStr}T11:00:00`,
             type: "info",
-            googleCalendarId: "cal-work",
+            remoteCollectionId: "cal-work",
         }),
         createMockAppEvent({
             id: "e2",
@@ -35,7 +35,7 @@ test("filters events by category correctly", () => {
             startTime: `${todayStr}T11:40:00`,
             endTime: `${todayStr}T12:40:00`,
             type: "info",
-            googleCalendarId: "cal-personal",
+            remoteCollectionId: "cal-personal",
         }),
         createMockAppEvent({
             id: "e3",
@@ -86,7 +86,7 @@ test("filters out events by category correctly using 'is not'", () => {
             startTime: `${todayStr}T10:00:00`,
             endTime: `${todayStr}T11:00:00`,
             type: "info",
-            googleCalendarId: "cal-work",
+            remoteCollectionId: "cal-work",
         }),
         createMockAppEvent({
             id: "e2",
@@ -94,7 +94,7 @@ test("filters out events by category correctly using 'is not'", () => {
             startTime: `${todayStr}T11:40:00`,
             endTime: `${todayStr}T12:40:00`,
             type: "info",
-            googleCalendarId: "cal-personal",
+            remoteCollectionId: "cal-personal",
         }),
     ];
 

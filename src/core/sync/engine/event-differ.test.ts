@@ -26,11 +26,11 @@ function asMap(...events: ReturnType<typeof createMockAppEvent>[]) {
 // ---------------------------------------------------------------------------
 
 describe("computeEventDeltaActions — event creation", () => {
-    it("queues a Create for a new synced event with a googleCalendarId", () => {
+    it("queues a Create for a new synced event with a remoteCollectionId", () => {
         const newEvent = createMockAppEvent({
             id: "e1",
             title: "Team standup",
-            googleCalendarId: "cal-work",
+            remoteCollectionId: "cal-work",
         });
 
         const actions = computeEventDeltaActions([newEvent], new Map());
@@ -43,7 +43,7 @@ describe("computeEventDeltaActions — event creation", () => {
         });
     });
 
-    it("queues a Create for an event with no googleCalendarId (will target primary)", () => {
+    it("queues a Create for an event with no remoteCollectionId (will target primary)", () => {
         const newEvent = createMockAppEvent({ id: "e1", title: "Quick note" });
 
         const actions = computeEventDeltaActions([newEvent], new Map());
@@ -52,11 +52,11 @@ describe("computeEventDeltaActions — event creation", () => {
         expect(actions[0].action).toBe(SyncAction.Create);
     });
 
-    it("does NOT queue a Create for an event that already has a googleId", () => {
+    it("does NOT queue a Create for an event that already has a remoteId", () => {
         const syncedEvent = createMockAppEvent({
             id: "e1",
-            googleId: "goog-1",
-            googleCalendarId: "cal-work",
+            remoteId: "goog-1",
+            remoteCollectionId: "cal-work",
         });
 
         const actions = computeEventDeltaActions([syncedEvent], new Map());
@@ -89,8 +89,8 @@ describe("computeEventDeltaActions — event deletion", () => {
     it("queues a Delete when a known event is removed from the local store", () => {
         const deletedEvent = createMockAppEvent({
             id: "e1",
-            googleId: "goog-1",
-            googleCalendarId: "cal-work",
+            remoteId: "goog-1",
+            remoteCollectionId: "cal-work",
             updatedAt: T0,
         });
         const oldMap = asMap(deletedEvent);
@@ -100,15 +100,15 @@ describe("computeEventDeltaActions — event deletion", () => {
         expect(actions).toHaveLength(1);
         expect(actions[0]).toMatchObject({
             action: SyncAction.Delete,
-            googleId: "goog-1",
+            remoteId: "goog-1",
             calendarId: "cal-work",
         });
     });
 
-    it("Delete uses 'primary' as calendarId when googleCalendarId is absent", () => {
+    it("Delete uses 'primary' as calendarId when remoteCollectionId is absent", () => {
         const deletedEvent = createMockAppEvent({
             id: "e1",
-            googleId: "goog-1",
+            remoteId: "goog-1",
             updatedAt: T0,
         });
         const oldMap = asMap(deletedEvent);
@@ -136,8 +136,8 @@ describe("computeEventDeltaActions — event update", () => {
     it("queues an Update when title changes (updatedAt bumped)", () => {
         const oldEvent = createMockAppEvent({
             id: "e1",
-            googleId: "goog-1",
-            googleCalendarId: "cal-work",
+            remoteId: "goog-1",
+            remoteCollectionId: "cal-work",
             title: "Old title",
             updatedAt: T0,
         });
@@ -152,8 +152,8 @@ describe("computeEventDeltaActions — event update", () => {
     it("does NOT queue an Update when updatedAt has not changed", () => {
         const event = createMockAppEvent({
             id: "e1",
-            googleId: "goog-1",
-            googleCalendarId: "cal-work",
+            remoteId: "goog-1",
+            remoteCollectionId: "cal-work",
             title: "Same title",
             updatedAt: T0,
         });
@@ -166,8 +166,8 @@ describe("computeEventDeltaActions — event update", () => {
     it("does NOT queue an Update when updatedAt is older than the snapshot", () => {
         const oldEvent = createMockAppEvent({
             id: "e1",
-            googleId: "goog-1",
-            googleCalendarId: "cal-work",
+            remoteId: "goog-1",
+            remoteCollectionId: "cal-work",
             updatedAt: T1,
         });
         const staleEvent = { ...oldEvent, updatedAt: T0 };
@@ -183,14 +183,14 @@ describe("computeEventDeltaActions — event update", () => {
 // ---------------------------------------------------------------------------
 
 describe("computeEventDeltaActions — calendar change", () => {
-    it("queues Move + Update when googleCalendarId changes", () => {
+    it("queues Move + Update when remoteCollectionId changes", () => {
         const oldEvent = createMockAppEvent({
             id: "e1",
-            googleId: "goog-1",
-            googleCalendarId: "cal-work",
+            remoteId: "goog-1",
+            remoteCollectionId: "cal-work",
             updatedAt: T0,
         });
-        const movedEvent = { ...oldEvent, googleCalendarId: "cal-personal", updatedAt: T1 };
+        const movedEvent = { ...oldEvent, remoteCollectionId: "cal-personal", updatedAt: T1 };
 
         const actions = computeEventDeltaActions([movedEvent], asMap(oldEvent));
 
@@ -201,18 +201,18 @@ describe("computeEventDeltaActions — calendar change", () => {
         expect(moveAction).toMatchObject({
             calendarId: "cal-work",
             destinationCalendarId: "cal-personal",
-            googleId: "goog-1",
+            remoteId: "goog-1",
         });
         expect(updateAction).toBeDefined();
     });
 
-    it("does NOT queue a Move when the old event has no googleId (never synced)", () => {
+    it("does NOT queue a Move when the old event has no remoteId (never synced)", () => {
         const oldEvent = createMockAppEvent({
             id: "e1",
-            googleCalendarId: "cal-work",
+            remoteCollectionId: "cal-work",
             updatedAt: T0,
         });
-        const movedEvent = { ...oldEvent, googleCalendarId: "cal-personal", updatedAt: T1 };
+        const movedEvent = { ...oldEvent, remoteCollectionId: "cal-personal", updatedAt: T1 };
 
         const actions = computeEventDeltaActions([movedEvent], asMap(oldEvent));
 
@@ -220,18 +220,18 @@ describe("computeEventDeltaActions — calendar change", () => {
         expect(actions.every((a) => a.action !== SyncAction.Move)).toBe(true);
     });
 
-    it("uses googleCalendarId (not category) to determine the target calendar", () => {
-        // Under the new scheme, only googleCalendarId drives calendar routing.
+    it("uses remoteCollectionId (not category) to determine the target calendar", () => {
+        // Under the new scheme, only remoteCollectionId drives calendar routing.
         // A stale category string pointing elsewhere must not override it.
         const oldEvent = createMockAppEvent({
             id: "e1",
-            googleId: "goog-1",
-            googleCalendarId: "cal-work",
+            remoteId: "goog-1",
+            remoteCollectionId: "cal-work",
             updatedAt: T0,
         });
         const currentEvent = {
             ...oldEvent,
-            googleCalendarId: "cal-personal",
+            remoteCollectionId: "cal-personal",
             // stale category field present — must be ignored
             category: "Work",
             updatedAt: T1,
@@ -246,12 +246,12 @@ describe("computeEventDeltaActions — calendar change", () => {
     it("Update action targets the destination calendar after a move", () => {
         const oldEvent = createMockAppEvent({
             id: "e1",
-            googleId: "goog-1",
-            googleCalendarId: "cal-work",
+            remoteId: "goog-1",
+            remoteCollectionId: "cal-work",
             title: "Meeting",
             updatedAt: T0,
         });
-        const movedEvent = { ...oldEvent, googleCalendarId: "cal-personal", updatedAt: T1 };
+        const movedEvent = { ...oldEvent, remoteCollectionId: "cal-personal", updatedAt: T1 };
 
         const actions = computeEventDeltaActions([movedEvent], asMap(oldEvent));
 
@@ -261,7 +261,7 @@ describe("computeEventDeltaActions — calendar change", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Calendar deleted / orphaned googleCalendarId
+// Calendar deleted / orphaned remoteCollectionId
 // ---------------------------------------------------------------------------
 
 describe("computeEventDeltaActions — orphaned calendar references", () => {
@@ -270,8 +270,8 @@ describe("computeEventDeltaActions — orphaned calendar references", () => {
         // The differ must not silently drop the update; it should still push it.
         const oldEvent = createMockAppEvent({
             id: "e1",
-            googleId: "goog-1",
-            googleCalendarId: "cal-deleted",
+            remoteId: "goog-1",
+            remoteCollectionId: "cal-deleted",
             title: "Old title",
             updatedAt: T0,
         });
@@ -285,8 +285,8 @@ describe("computeEventDeltaActions — orphaned calendar references", () => {
     it("Delete action still includes the old calendarId even when that calendar is gone", () => {
         const deletedEvent = createMockAppEvent({
             id: "e1",
-            googleId: "goog-1",
-            googleCalendarId: "cal-deleted",
+            remoteId: "goog-1",
+            remoteCollectionId: "cal-deleted",
             updatedAt: T0,
         });
         const oldMap = asMap(deletedEvent);

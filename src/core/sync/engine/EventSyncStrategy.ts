@@ -86,9 +86,9 @@ export class EventSyncStrategy implements ISyncStrategy<AppEvent> {
 
         if (q.action === SyncAction.Delete) {
             if (q.item && q.item.id) eventsMap.delete(q.item.id);
-            if (q.googleId) {
+            if (q.remoteId) {
                 for (const [key, event] of Array.from(eventsMap.entries())) {
-                    if (event.googleId === q.googleId) {
+                    if (event.remoteId === q.remoteId) {
                         eventsMap.delete(key);
                     }
                 }
@@ -132,7 +132,7 @@ export class EventSyncStrategy implements ISyncStrategy<AppEvent> {
     private actionHandlers: Record<string, (item: SyncQueueItem, tasks: AppTask[]) => Promise<void>> = {
         [SyncAction.Create]: async (taskOrEvent, tasks) => {
             if (taskOrEvent.type !== SyncType.Event) return;
-            const targetCalendarId = taskOrEvent.item.googleCalendarId || "primary";
+            const targetCalendarId = taskOrEvent.item.remoteCollectionId || "primary";
             const eventsData = this.context.getLocalData<AppEvent[]>("events");
             const res = await this.calendarAPI.createEvent(
                 taskOrEvent.item,
@@ -145,13 +145,13 @@ export class EventSyncStrategy implements ISyncStrategy<AppEvent> {
                 if (idx !== -1) {
                     events[idx] = {
                         ...events[idx],
-                        googleId: res.googleId,
-                        googleCalendarId: res.calendarId,
+                        remoteId: res.remoteId,
+                        remoteCollectionId: res.calendarId,
                     };
                     this.context.setLocalData("events", events);
                     this.context.updateOldEventsMap(events);
                 } else {
-                    await this.calendarAPI.deleteEvent(res.googleId, res.calendarId);
+                    await this.calendarAPI.deleteEvent(res.remoteId, res.calendarId);
                 }
             }
         },
@@ -159,7 +159,7 @@ export class EventSyncStrategy implements ISyncStrategy<AppEvent> {
             if (taskOrEvent.type !== SyncType.Event) return;
             const events = this.context.getLocalData<AppEvent[]>("events");
             const currentEvent = events.find((e) => e.id === taskOrEvent.item.id);
-            const gid = currentEvent?.googleId || taskOrEvent.googleId;
+            const gid = currentEvent?.remoteId || taskOrEvent.remoteId;
 
             if (gid) {
                 const eventsData = this.context.getLocalData<AppEvent[]>("events");
@@ -174,19 +174,19 @@ export class EventSyncStrategy implements ISyncStrategy<AppEvent> {
         },
         [SyncAction.Delete]: async (taskOrEvent) => {
             if (taskOrEvent.type !== SyncType.Event) return;
-            // Delete actions always have taskOrEvent.googleId if they were queued correctly.
+            // Delete actions always have taskOrEvent.remoteId if they were queued correctly.
             // If deleted before Create finished, it's handled in the Create block.
-            if (taskOrEvent.googleId) {
+            if (taskOrEvent.remoteId) {
                 await this.calendarAPI.deleteEvent(
-                    taskOrEvent.googleId,
+                    taskOrEvent.remoteId,
                     taskOrEvent.calendarId,
                 );
             }
         },
         [SyncAction.Move]: async (taskOrEvent) => {
-            if (taskOrEvent.type !== SyncType.Event || !taskOrEvent.googleId || !taskOrEvent.calendarId || !taskOrEvent.destinationCalendarId) return;
+            if (taskOrEvent.type !== SyncType.Event || !taskOrEvent.remoteId || !taskOrEvent.calendarId || !taskOrEvent.destinationCalendarId) return;
             await this.calendarAPI.moveEvent(
-                taskOrEvent.googleId,
+                taskOrEvent.remoteId,
                 taskOrEvent.calendarId,
                 taskOrEvent.destinationCalendarId
             );

@@ -5,7 +5,7 @@ export type HydratedEvent = AppEvent & {
     task?: AppTask;
     color?: string;
     /** The display name of the calendar this event belongs to. Computed at hydration time from
-     *  googleCalendarId; never stored on the event itself. */
+     *  remoteCollectionId; never stored on the event itself. */
     category?: string;
     /** Set by the expander; true when this is a virtual instance generated from an rrule (never stored). */
     isInstance?: boolean;
@@ -16,9 +16,9 @@ export type HydratedEvent = AppEvent & {
 type Calendar = { id: string; summary: string; backgroundColor?: string; foregroundColor?: string; primary?: boolean };
 
 function resolveEventCalendar(ev: AppEvent, calendars: Calendar[]): Calendar | undefined {
-    const calId = ev.googleCalendarId === "primary"
+    const calId = ev.remoteCollectionId === "primary"
         ? (calendars.find((c) => c.primary)?.id ?? "primary")
-        : ev.googleCalendarId;
+        : ev.remoteCollectionId;
 
     return calId
         ? (calendars.find((c) => c.id === calId) ?? calendars.find((c) => c.primary) ?? calendars[0])

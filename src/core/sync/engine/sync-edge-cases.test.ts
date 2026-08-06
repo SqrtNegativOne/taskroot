@@ -44,7 +44,7 @@ describe("Sync Engine - Edge Cases (Partial Payload & Merging)", () => {
         const t0 = 1000;
         const initialTask: AppTask = {
             id: "t1",
-            googleId: "g1",
+            remoteId: "g1",
             title: "Original Title",
             due: "2024-01-01",
             updatedAt: t0,
@@ -69,7 +69,7 @@ describe("Sync Engine - Edge Cases (Partial Payload & Merging)", () => {
             type: SyncType.Task,
             action: SyncAction.Update,
             item: localEditedTask,
-            googleId: "g1",
+            remoteId: "g1",
             updatedFields: ["title"]
         });
 
@@ -104,7 +104,7 @@ describe("Sync Engine - Edge Cases (Partial Payload & Merging)", () => {
         const t0 = 1000;
         const initialTask: AppTask = {
             id: "t2",
-            googleId: "g2",
+            remoteId: "g2",
             title: "Task 2",
             notes: "Original Notes",
             due: "2024-01-01",
@@ -130,7 +130,7 @@ describe("Sync Engine - Edge Cases (Partial Payload & Merging)", () => {
             type: SyncType.Task,
             action: SyncAction.Update,
             item: localEditedTask,
-            googleId: "g2",
+            remoteId: "g2",
             updatedFields: ["status"]
         });
 

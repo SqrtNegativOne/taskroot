@@ -124,7 +124,7 @@ describe("hydrateEvents", () => {
         expect(hydrated[0].title).toBe("New Name");
     });
 
-    it("derives category from googleCalendarId, not from any stored field", () => {
+    it("derives category from remoteCollectionId, not from any stored field", () => {
         const events: AppEvent[] = [
             {
                 id: "e1",
@@ -132,7 +132,7 @@ describe("hydrateEvents", () => {
                 type: "info",
                 startTime: "2026-07-23T09:00:00",
                 endTime: "2026-07-23T10:00:00",
-                googleCalendarId: "cal_1",
+                remoteCollectionId: "cal_1",
             },
             {
                 id: "e2",
@@ -140,7 +140,7 @@ describe("hydrateEvents", () => {
                 type: "info",
                 startTime: "2026-07-23T09:00:00",
                 endTime: "2026-07-23T10:00:00",
-                googleCalendarId: "cal_2",
+                remoteCollectionId: "cal_2",
             },
             {
                 id: "e3",
@@ -148,7 +148,7 @@ describe("hydrateEvents", () => {
                 type: "info",
                 startTime: "2026-07-23T09:00:00",
                 endTime: "2026-07-23T10:00:00",
-                // no googleCalendarId → falls back to primary
+                // no remoteCollectionId → falls back to primary
             }
         ];
 
@@ -166,7 +166,7 @@ describe("hydrateEvents", () => {
 });
 
 // ---------------------------------------------------------------------------
-// hydrateEvents — calendar resolution (new scheme: googleCalendarId is authoritative)
+// hydrateEvents — calendar resolution (new scheme: remoteCollectionId is authoritative)
 // ---------------------------------------------------------------------------
 
 describe("hydrateEvents — calendar rename", () => {
@@ -178,7 +178,7 @@ describe("hydrateEvents — calendar rename", () => {
                 type: "busy",
                 startTime: "2026-07-23T09:00:00",
                 endTime: "2026-07-23T10:00:00",
-                googleCalendarId: "cal-work",
+                remoteCollectionId: "cal-work",
                 // no category stored — new scheme
             },
         ];
@@ -197,7 +197,7 @@ describe("hydrateEvents — calendar rename", () => {
                 type: "busy",
                 startTime: "2026-07-23T09:00:00",
                 endTime: "2026-07-23T10:00:00",
-                googleCalendarId: "cal-work",
+                remoteCollectionId: "cal-work",
             },
         ];
         const calendars = [{ id: "cal-work", summary: "Work" }];
@@ -216,7 +216,7 @@ describe("hydrateEvents — calendar rename", () => {
                 type: "busy",
                 startTime: "2026-07-23T09:00:00",
                 endTime: "2026-07-23T10:00:00",
-                googleCalendarId: "cal-work",
+                remoteCollectionId: "cal-work",
             },
         ];
 
@@ -237,7 +237,7 @@ describe("hydrateEvents — calendar color change", () => {
                 type: "busy",
                 startTime: "2026-07-23T09:00:00",
                 endTime: "2026-07-23T10:00:00",
-                googleCalendarId: "cal-work",
+                remoteCollectionId: "cal-work",
             },
         ];
 
@@ -260,7 +260,7 @@ describe("hydrateEvents — calendar color change", () => {
                 type: "busy",
                 startTime: "2026-07-23T09:00:00",
                 endTime: "2026-07-23T10:00:00",
-                googleCalendarId: "cal-work",
+                remoteCollectionId: "cal-work",
             },
         ];
         const calendars = [{ id: "cal-work", summary: "Work" }];
@@ -280,7 +280,7 @@ describe("hydrateEvents — calendar deleted from store", () => {
                 type: "busy",
                 startTime: "2026-07-23T09:00:00",
                 endTime: "2026-07-23T10:00:00",
-                googleCalendarId: "cal-deleted",
+                remoteCollectionId: "cal-deleted",
             },
         ];
         const calendars = [
@@ -302,7 +302,7 @@ describe("hydrateEvents — calendar deleted from store", () => {
                 type: "busy",
                 startTime: "2026-07-23T09:00:00",
                 endTime: "2026-07-23T10:00:00",
-                googleCalendarId: "cal-gone",
+                remoteCollectionId: "cal-gone",
             },
         ];
         const calendars = [{ id: "cal-first", summary: "First Calendar" }];
@@ -320,7 +320,7 @@ describe("hydrateEvents — calendar deleted from store", () => {
                 type: "busy",
                 startTime: "2026-07-23T09:00:00",
                 endTime: "2026-07-23T10:00:00",
-                googleCalendarId: "cal-gone",
+                remoteCollectionId: "cal-gone",
             },
         ];
 
@@ -341,7 +341,7 @@ describe("hydrateEvents — new calendar added to store", () => {
                 type: "info",
                 startTime: "2026-07-23T09:00:00",
                 endTime: "2026-07-23T10:00:00",
-                googleCalendarId: "cal-new",
+                remoteCollectionId: "cal-new",
             },
         ];
         const calendars = [
@@ -356,7 +356,7 @@ describe("hydrateEvents — new calendar added to store", () => {
     });
 });
 
-describe("hydrateEvents — event with no googleCalendarId", () => {
+describe("hydrateEvents — event with no remoteCollectionId", () => {
     it("falls back to the primary calendar for locally-created unsynced events", () => {
         const events: AppEvent[] = [
             {
@@ -365,7 +365,7 @@ describe("hydrateEvents — event with no googleCalendarId", () => {
                 type: "busy",
                 startTime: "2026-07-23T09:00:00",
                 endTime: "2026-07-23T10:00:00",
-                // no googleCalendarId yet
+                // no remoteCollectionId yet
             },
         ];
         const calendars = [
@@ -380,7 +380,7 @@ describe("hydrateEvents — event with no googleCalendarId", () => {
 });
 
 describe("hydrateEvents — multiple events across different calendars", () => {
-    it("assigns correct category and color per event based on its googleCalendarId", () => {
+    it("assigns correct category and color per event based on its remoteCollectionId", () => {
         const events: AppEvent[] = [
             {
                 id: "e1",
@@ -388,7 +388,7 @@ describe("hydrateEvents — multiple events across different calendars", () => {
                 type: "busy",
                 startTime: "2026-07-23T09:00:00",
                 endTime: "2026-07-23T10:00:00",
-                googleCalendarId: "cal-work",
+                remoteCollectionId: "cal-work",
             },
             {
                 id: "e2",
@@ -396,7 +396,7 @@ describe("hydrateEvents — multiple events across different calendars", () => {
                 type: "busy",
                 startTime: "2026-07-23T11:00:00",
                 endTime: "2026-07-23T12:00:00",
-                googleCalendarId: "cal-personal",
+                remoteCollectionId: "cal-personal",
             },
         ];
         const calendars = [
@@ -419,7 +419,7 @@ describe("hydrateEvents — multiple events across different calendars", () => {
                 type: "busy",
                 startTime: "2026-07-23T09:00:00",
                 endTime: "2026-07-23T10:00:00",
-                googleCalendarId: "primary",
+                remoteCollectionId: "primary",
             },
         ];
         const calendars = [
@@ -435,7 +435,7 @@ describe("hydrateEvents — multiple events across different calendars", () => {
 describe("hydrateEvents — both sides changed (rename conflict)", () => {
     it("always uses whatever summary is currently in the calendars store (remote wins after poll)", () => {
         // This simulates the state AFTER a poll where remote renamed the calendar.
-        // The event's googleCalendarId is stable; only the store changes.
+        // The event's remoteCollectionId is stable; only the store changes.
         const events: AppEvent[] = [
             {
                 id: "e1",
@@ -443,7 +443,7 @@ describe("hydrateEvents — both sides changed (rename conflict)", () => {
                 type: "busy",
                 startTime: "2026-07-23T09:00:00",
                 endTime: "2026-07-23T10:00:00",
-                googleCalendarId: "cal-1",
+                remoteCollectionId: "cal-1",
             },
         ];
 

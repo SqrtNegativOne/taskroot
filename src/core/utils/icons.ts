@@ -1,0 +1,15 @@
+export const ICON_EVENT_REPEAT = "event_repeat";
+export const ICON_WARNING = "warning";
+export const ICON_VIEW_COLUMN = "view_column";
+export const ICON_ARROW_FORWARD = "arrow_forward";
+export const ICON_CLOSE = "close";
+export const ICON_MORE_TIME = "more_time";
+export const ICON_TRANSITION_PUSH = "transition_push";
+export const ICON_SEARCH = "search";
+export const ICON_SETTINGS = "settings";
+export const ICON_KEYBOARD_ARROW_DOWN = "keyboard_arrow_down";
+export const ICON_ADD_TASK = "add_task";
+export const ICON_DASHBOARD = "dashboard";
+export const ICON_ADD = "add";
+export const ICON_FILTER_LIST = "filter_list";
+export const ICON_SWAP_VERT = "swap_vert";

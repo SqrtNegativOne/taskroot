@@ -72,20 +72,20 @@ export class FakeCalendarAPI implements ICalendarAPI {
         return [{ id: "primary", summary: "Primary Calendar", accessRole: "owner", primary: true }];
     }
 
-    async createEvent(localEvent: AppEvent, ctx: { tasks: AppTask[], events: AppEvent[] }, calendarId = "primary"): Promise<{ googleId: string, calendarId: string }> {
+    async createEvent(localEvent: AppEvent, ctx: { tasks: AppTask[], events: AppEvent[] }, calendarId = "primary"): Promise<{ remoteId: string, calendarId: string }> {
         if (!this.calendars[calendarId]) this.calendars[calendarId] = [];
-        const googleId = "fake-g-id-" + crypto.randomUUID();
+        const remoteId = "fake-g-id-" + crypto.randomUUID();
         const googleEvent = this.toGoogleEvent(localEvent, ctx);
-        googleEvent.id = googleId;
+        googleEvent.id = remoteId;
         googleEvent.etag = this.generateEtag();
         googleEvent.updated = new Date().toISOString();
         this.calendars[calendarId].push(googleEvent);
-        return { googleId, calendarId };
+        return { remoteId, calendarId };
     }
 
-    async updateEvent(googleId: string, localEvent: AppEvent, _updatedFields: (keyof AppEvent)[] | undefined, ctx: { tasks: AppTask[], events: AppEvent[] }, calendarId = "primary"): Promise<void> {
+    async updateEvent(remoteId: string, localEvent: AppEvent, _updatedFields: (keyof AppEvent)[] | undefined, ctx: { tasks: AppTask[], events: AppEvent[] }, calendarId = "primary"): Promise<void> {
         if (!this.calendars[calendarId]) this.calendars[calendarId] = [];
-        const index = this.calendars[calendarId].findIndex(e => e.id === googleId);
+        const index = this.calendars[calendarId].findIndex(e => e.id === remoteId);
         if (index === -1) throw new Error("Event not found");
         
         const existingEvent = this.calendars[calendarId][index];
@@ -94,15 +94,15 @@ export class FakeCalendarAPI implements ICalendarAPI {
         }
         
         const updatedEvent = this.toGoogleEvent(localEvent, ctx);
-        updatedEvent.id = googleId;
+        updatedEvent.id = remoteId;
         updatedEvent.etag = this.generateEtag();
         updatedEvent.updated = new Date().toISOString();
         this.calendars[calendarId][index] = updatedEvent;
     }
 
-    async moveEvent(googleId: string, sourceCalendarId: string, destinationCalendarId: string): Promise<void> {
+    async moveEvent(remoteId: string, sourceCalendarId: string, destinationCalendarId: string): Promise<void> {
         if (!this.calendars[sourceCalendarId]) return;
-        const index = this.calendars[sourceCalendarId].findIndex(e => e.id === googleId);
+        const index = this.calendars[sourceCalendarId].findIndex(e => e.id === remoteId);
         if (index === -1) throw new Error("Event not found");
 
         const event = this.calendars[sourceCalendarId].splice(index, 1)[0];
@@ -114,9 +114,9 @@ export class FakeCalendarAPI implements ICalendarAPI {
         this.calendars[destinationCalendarId].push(event);
     }
 
-    async deleteEvent(googleId: string, calendarId = "primary"): Promise<void> {
+    async deleteEvent(remoteId: string, calendarId = "primary"): Promise<void> {
         if (!this.calendars[calendarId]) return;
-        const index = this.calendars[calendarId].findIndex(e => e.id === googleId);
+        const index = this.calendars[calendarId].findIndex(e => e.id === remoteId);
         if (index !== -1) {
             this.calendars[calendarId][index].status = "cancelled";
             this.calendars[calendarId][index].etag = this.generateEtag();
@@ -169,13 +169,13 @@ export class FakeCalendarAPI implements ICalendarAPI {
             }
         }
         
-        const baseEventGoogleId = localEvent.recurringEventId 
-            ? events.find((e) => e.id === localEvent.recurringEventId)?.googleId
+        const baseEventRemoteId = localEvent.recurringEventId 
+            ? events.find((e) => e.id === localEvent.recurringEventId)?.remoteId
             : undefined;
 
         return {
             ...(recurrence.length > 0 ? { recurrence } : {}),
-            ...(baseEventGoogleId ? { recurringEventId: baseEventGoogleId } : {}),
+            ...(baseEventRemoteId ? { recurringEventId: baseEventRemoteId } : {}),
             ...(localEvent.originalStartTime ? { originalStartTime: { dateTime: localEvent.originalStartTime, timeZone } } : {})
         };
     }
@@ -203,7 +203,7 @@ export class FakeCalendarAPI implements ICalendarAPI {
         const origProps = originalStartTime ? { originalStartTime } : {};
 
         return {
-            id, googleId: googleEvent.id, googleCalendarId: calendarId, taskId,
+            id, remoteId: googleEvent.id, remoteCollectionId: calendarId, taskId,
             title: googleEvent.summary ?? "", startTime, endTime, type,
             updatedAt: googleEvent.updated ? new Date(googleEvent.updated).getTime() : Date.now(),
             etag: googleEvent.etag,

@@ -82,10 +82,10 @@ export class GoogleCalendarAPI implements ICalendarAPI {
         if (!res.ok) throw new Error(`Failed to create event: ${res.status} ${await res.text()}`);
         const data: { id?: string } = await res.json();
         if (!data.id) throw new Error("Event created but no ID returned");
-        return { googleId: data.id, calendarId };
+        return { remoteId: data.id, calendarId };
     }
 
-    async updateEvent(googleId: string, localEvent: AppEvent, updatedFields: (keyof AppEvent)[] | undefined, ctx: { tasks: AppTask[], events: AppEvent[] }, calendarId = "primary") {
+    async updateEvent(remoteId: string, localEvent: AppEvent, updatedFields: (keyof AppEvent)[] | undefined, ctx: { tasks: AppTask[], events: AppEvent[] }, calendarId = "primary") {
         const headers: Record<string, string> = { "Content-Type": "application/json" };
         if (localEvent.etag) headers["If-Match"] = localEvent.etag;
 
@@ -111,7 +111,7 @@ export class GoogleCalendarAPI implements ICalendarAPI {
             payload = partialPayload as gapi.client.calendar.Event;
         }
 
-        const res = await this.fetchWithAuth(`calendars/${encodeURIComponent(calendarId)}/events/${googleId}`, {
+        const res = await this.fetchWithAuth(`calendars/${encodeURIComponent(calendarId)}/events/${remoteId}`, {
             method: "PATCH", headers, body: JSON.stringify(payload)
         });
         
@@ -119,15 +119,15 @@ export class GoogleCalendarAPI implements ICalendarAPI {
         if (!res.ok) throw new Error(`Failed to update event: ${res.status} ${await res.text()}`);
     }
 
-    async moveEvent(googleId: string, sourceCalendarId: string, destinationCalendarId: string) {
-        const res = await this.fetchWithAuth(`calendars/${encodeURIComponent(sourceCalendarId)}/events/${googleId}/move?destination=${encodeURIComponent(destinationCalendarId)}`, {
+    async moveEvent(remoteId: string, sourceCalendarId: string, destinationCalendarId: string) {
+        const res = await this.fetchWithAuth(`calendars/${encodeURIComponent(sourceCalendarId)}/events/${remoteId}/move?destination=${encodeURIComponent(destinationCalendarId)}`, {
             method: "POST"
         });
         if (!res.ok) throw new Error(`Failed to move event: ${res.status} ${await res.text()}`);
     }
 
-    async deleteEvent(googleId: string, calendarId = "primary") {
-        const res = await this.fetchWithAuth(`calendars/${encodeURIComponent(calendarId)}/events/${googleId}`, { method: "DELETE" });
+    async deleteEvent(remoteId: string, calendarId = "primary") {
+        const res = await this.fetchWithAuth(`calendars/${encodeURIComponent(calendarId)}/events/${remoteId}`, { method: "DELETE" });
         if (!res.ok) {
             if (res.status === HTTP_GONE) return;
             throw new Error(`Failed to delete event: ${res.status} ${await res.text()}`);
@@ -179,13 +179,13 @@ export class GoogleCalendarAPI implements ICalendarAPI {
             }
         }
         
-        const baseEventGoogleId = localEvent.recurringEventId 
-            ? events.find((e) => e.id === localEvent.recurringEventId)?.googleId
+        const baseEventRemoteId = localEvent.recurringEventId 
+            ? events.find((e) => e.id === localEvent.recurringEventId)?.remoteId
             : undefined;
 
         return {
             ...(recurrence.length > 0 ? { recurrence } : {}),
-            ...(baseEventGoogleId ? { recurringEventId: baseEventGoogleId } : {}),
+            ...(baseEventRemoteId ? { recurringEventId: baseEventRemoteId } : {}),
             ...(localEvent.originalStartTime ? { originalStartTime: { dateTime: localEvent.originalStartTime, timeZone } } : {})
         };
     }
@@ -214,7 +214,7 @@ export class GoogleCalendarAPI implements ICalendarAPI {
         const origProps = originalStartTime ? { originalStartTime } : {};
 
         return {
-            id, googleId: googleEvent.id, googleCalendarId: calendarId, taskId,
+            id, remoteId: googleEvent.id, remoteCollectionId: calendarId, taskId,
             title: googleEvent.summary ?? "", startTime, endTime, type,
             updatedAt: googleEvent.updated ? new Date(googleEvent.updated).getTime() : Date.now(),
             etag: googleEvent.etag,

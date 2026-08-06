@@ -6,7 +6,7 @@ import { useNotification } from "../utils/notifications";
 export interface User { uid: string; email: string; displayName: string; }
 
 import {
-    loadGoogleIdentityScript,
+    loadRemoteIdentityScript,
     requestGoogleAuthCode,
     exchangeAuthCodeForTokens,
 } from "./googleAuthUtils";
@@ -23,7 +23,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
     const loginWithGoogle = React.useCallback(async () => {
         try {
-            await loadGoogleIdentityScript();
+            await loadRemoteIdentityScript();
             const code = await requestGoogleAuthCode();
             const tokens = await exchangeAuthCodeForTokens(code);
 

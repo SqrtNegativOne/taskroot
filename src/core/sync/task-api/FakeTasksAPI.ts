@@ -22,7 +22,7 @@ function parseGoogleTaskDue(dueStr?: string): import("../../domain/models").YmdS
 function getGoogleTaskBase(googleTask: gapi.client.tasks.Task) {
     if (!googleTask.id) throw new Error("Google task missing ID");
     return {
-        googleId: googleTask.id,
+        remoteId: googleTask.id,
         title: googleTask.title ?? "",
         notes: googleTask.notes ?? "",
         status: googleTask.status === "completed" ? "done" as const : "todo" as const,
@@ -44,18 +44,18 @@ export class FakeTasksAPI implements ITasksAPI {
 
     async createTask(localTask: AppTask, tasklistId = "@default"): Promise<string> {
         if (!this.tasks[tasklistId]) this.tasks[tasklistId] = [];
-        const googleId = "fake-g-id-" + crypto.randomUUID();
+        const remoteId = "fake-g-id-" + crypto.randomUUID();
         const googleTask = this.toGoogleTask(localTask);
-        googleTask.id = googleId;
+        googleTask.id = remoteId;
         googleTask.etag = this.generateEtag();
         googleTask.updated = new Date().toISOString();
         this.tasks[tasklistId].push(googleTask);
-        return googleId;
+        return remoteId;
     }
 
-    async updateTask(googleId: string, localTask: AppTask, _updatedFields?: (keyof AppTask)[], tasklistId = "@default"): Promise<void> {
+    async updateTask(remoteId: string, localTask: AppTask, _updatedFields?: (keyof AppTask)[], tasklistId = "@default"): Promise<void> {
         if (!this.tasks[tasklistId]) this.tasks[tasklistId] = [];
-        const index = this.tasks[tasklistId].findIndex(t => t.id === googleId);
+        const index = this.tasks[tasklistId].findIndex(t => t.id === remoteId);
         if (index === -1) throw new Error("Task not found");
         
         const existingTask = this.tasks[tasklistId][index];
@@ -64,15 +64,15 @@ export class FakeTasksAPI implements ITasksAPI {
         }
         
         const updatedTask = this.toGoogleTask(localTask);
-        updatedTask.id = googleId;
+        updatedTask.id = remoteId;
         updatedTask.etag = this.generateEtag();
         updatedTask.updated = new Date().toISOString();
         this.tasks[tasklistId][index] = updatedTask;
     }
 
-    async deleteTask(googleId: string, tasklistId = "@default"): Promise<void> {
+    async deleteTask(remoteId: string, tasklistId = "@default"): Promise<void> {
         if (!this.tasks[tasklistId]) return;
-        const index = this.tasks[tasklistId].findIndex(t => t.id === googleId);
+        const index = this.tasks[tasklistId].findIndex(t => t.id === remoteId);
         if (index !== -1) {
             this.tasks[tasklistId][index].deleted = true;
             this.tasks[tasklistId][index].etag = this.generateEtag();

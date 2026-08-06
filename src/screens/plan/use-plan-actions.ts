@@ -42,7 +42,7 @@ const createDefaultEvent = (date: Date, startMins: number, endMins: number, isAl
 
 export const canEditEvent = (ev: AppEvent | undefined, calendars: readonly {id: string, accessRole?: string}[]) => {
     if (!ev) return true;
-    const cal = calendars.find(c => c.id === (ev.googleCalendarId || "primary"));
+    const cal = calendars.find(c => c.id === (ev.remoteCollectionId || "primary"));
     return !cal || cal.accessRole === "owner" || cal.accessRole === "writer";
 };
 
@@ -63,7 +63,7 @@ export function usePlanActions(
         setEvents(prev => [...prev, {
             id: generateEventId(), taskId: task.id, type: "busy", title: task.title,
             startTime: `${dStr}T00:00:00`, endTime: `${dStr}T01:00:00`,
-            googleCalendarId: defaultCal, ...overrides
+            remoteCollectionId: defaultCal, ...overrides
         }]);
     };
 
@@ -75,7 +75,7 @@ export function usePlanActions(
     const onAddEvent = (dateArg: Date | string, startArg?: number, endArg?: number) => {
         const start = typeof startArg === "number" ? startArg : ID_LENGTH * MINUTES_IN_HOUR;
         const newEvent = createDefaultEvent(dateArg instanceof Date ? dateArg : timelineDate, start, typeof endArg === "number" ? endArg : start + MINUTES_IN_HOUR, typeof startArg !== "number");
-        newEvent.googleCalendarId = calendars.find(c => c.primary)?.id || "primary";
+        newEvent.remoteCollectionId = calendars.find(c => c.primary)?.id || "primary";
         setInspectorState({ type: "new_event", draft: newEvent });
     };
 

@@ -44,7 +44,7 @@ export class TaskSyncStrategy implements ISyncStrategy<AppTask> {
             localId = match[1];
         } else {
             for (const t of Array.from(localItemsMap.values())) {
-                if (t.googleId === remote.id) {
+                if (t.remoteId === remote.id) {
                     localId = t.id;
                     break;
                 }
@@ -66,9 +66,9 @@ export class TaskSyncStrategy implements ISyncStrategy<AppTask> {
 
         if (q.action === SyncAction.Delete) {
             if (q.item && q.item.id) tasksMap.delete(q.item.id);
-            if (q.googleId) {
+            if (q.remoteId) {
                 for (const [key, task] of Array.from(tasksMap.entries())) {
-                    if (task.googleId === q.googleId) {
+                    if (task.remoteId === q.remoteId) {
                         tasksMap.delete(key);
                     }
                 }
@@ -117,7 +117,7 @@ export class TaskSyncStrategy implements ISyncStrategy<AppTask> {
                 const tasks = this.context.getLocalData<AppTask[]>("tasks");
                 const idx = tasks.findIndex((t) => t.id === taskOrEvent.item.id);
                 if (idx !== -1) {
-                    tasks[idx] = { ...tasks[idx], googleId: gid };
+                    tasks[idx] = { ...tasks[idx], remoteId: gid };
                     this.context.setLocalData("tasks", tasks);
                     this.context.updateOldTasksMap(tasks);
                 } else {
@@ -129,7 +129,7 @@ export class TaskSyncStrategy implements ISyncStrategy<AppTask> {
             if (taskOrEvent.type !== SyncType.Task) return;
             const tasks = this.context.getLocalData<AppTask[]>("tasks");
             const currentTask = tasks.find((t) => t.id === taskOrEvent.item.id);
-            const gid = currentTask?.googleId || taskOrEvent.googleId;
+            const gid = currentTask?.remoteId || taskOrEvent.remoteId;
 
             if (gid) {
                 await this.tasksAPI.updateTask(gid, taskOrEvent.item, taskOrEvent.updatedFields);
@@ -138,8 +138,8 @@ export class TaskSyncStrategy implements ISyncStrategy<AppTask> {
         [SyncAction.Delete]: async (taskOrEvent) => {
             if (taskOrEvent.type !== SyncType.Task) return;
             // If the item doesn't exist locally, tasks.find will be undefined.
-            // If deleted locally, we rely on taskOrEvent.googleId from the queue.
-            const gid = taskOrEvent.googleId;
+            // If deleted locally, we rely on taskOrEvent.remoteId from the queue.
+            const gid = taskOrEvent.remoteId;
             
             if (gid) {
                 await this.tasksAPI.deleteTask(gid);

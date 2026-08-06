@@ -12,7 +12,7 @@ export function computeTaskDeltaActions(
     for (const currentTask of currentTasks) {
         const oldTask = oldTasksMap.get(currentTask.id);
         if (!oldTask) {
-            if (!currentTask.googleId && currentTask.title && currentTask.title.trim() !== "") {
+            if (!currentTask.remoteId && currentTask.title && currentTask.title.trim() !== "") {
                 actions.push({
                     type: SyncType.Task,
                     action: SyncAction.Create,
@@ -40,7 +40,7 @@ export function computeTaskDeltaActions(
                     type: SyncType.Task,
                     action: SyncAction.Update,
                     item: currentTask,
-                    googleId: currentTask.googleId,
+                    remoteId: currentTask.remoteId,
                     updatedFields,
                 });
             }
@@ -53,7 +53,7 @@ export function computeTaskDeltaActions(
                 type: SyncType.Task,
                 action: SyncAction.Delete,
                 item: oldTask,
-                googleId: oldTask.googleId,
+                remoteId: oldTask.remoteId,
             });
         }
     }

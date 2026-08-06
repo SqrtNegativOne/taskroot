@@ -131,7 +131,7 @@ describe("GoogleTasksAPI", () => {
 
             const localTask = googleTasksAPI.toLocalTask(googleTask);
             expect(localTask.id).toBe("t456");
-            expect(localTask).toMatchObject({ googleId: "g123", status: "done" });
+            expect(localTask).toMatchObject({ remoteId: "g123", status: "done" });
         });
 
         it("maps etag from google to local model", () => {

@@ -194,7 +194,7 @@ describe("GoogleCalendarAPI", () => {
             });
             const baseEvent = createMockAppEvent({
                 id: "master_id",
-                googleId: "master_id_google"
+                remoteId: "master_id_google"
             });
             const googleEvent = googleCalendarAPI.toGoogleEvent(localEvent, { tasks: [], events: [baseEvent] });
             expect(googleEvent.recurringEventId).toBe("master_id_google");
@@ -220,7 +220,7 @@ describe("GoogleCalendarAPI", () => {
             const localEvent = googleCalendarAPI.toLocalEvent(googleEvent);
             assertIsAppEvent(localEvent);
             expect(localEvent.id).toBe("e456");
-            expect(localEvent.googleId).toBe("g123");
+            expect(localEvent.remoteId).toBe("g123");
             expect(localEvent.title).toBe("Meeting");
         });
 
@@ -339,7 +339,7 @@ describe("GoogleCalendarAPI", () => {
             expect(restoredLocalEvent.endTime).toBe(originalLocalEvent.endTime);
             expect(restoredLocalEvent.rrule).toBe(originalLocalEvent.rrule);
             expect(isEventAllDay(restoredLocalEvent)).toBe(false);
-            expect(restoredLocalEvent.googleId).toBe("g-1");
+            expect(restoredLocalEvent.remoteId).toBe("g-1");
         });
 
         it("preserves properties of an all-day event after roundtripping", () => {

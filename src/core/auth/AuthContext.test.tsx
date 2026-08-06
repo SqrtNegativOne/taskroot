@@ -5,7 +5,7 @@ import { useAuth } from "./useAuth";
 import { AuthProvider } from "./AuthContext";
 
 vi.mock("./googleAuthUtils", () => ({
-    loadGoogleIdentityScript: vi.fn<(...args: never[]) => unknown>().mockResolvedValue(undefined),
+    loadRemoteIdentityScript: vi.fn<(...args: never[]) => unknown>().mockResolvedValue(undefined),
     requestGoogleAuthCode: vi.fn<(...args: never[]) => unknown>().mockResolvedValue("test-code"),
     exchangeAuthCodeForTokens: vi.fn<(...args: never[]) => unknown>().mockResolvedValue({ accessToken: "test-token", refreshToken: "test-refresh" }),
 }));

@@ -3,6 +3,7 @@ import { TODAY, parseYMD, durationLabel, dueLabel } from "../../core/store/data"
 import type { AppTask, AppFilter } from "../../core/domain/models";
 import { checkTaskAgainstFilters } from "./filters";
 import { Icon } from "../icon";
+import { ICON_WARNING } from "../../core/utils/icons";
 import { TaskCircle } from "../task-circle";
 
 const TRANSITION_DURATION_MS = 400;
@@ -89,7 +90,7 @@ export function TaskRow({
                 <div className="task-row-line1">
                     <span className="task-row-title">
                         {isPastDue && task.status !== "done" && (
-                            <Icon name="warning" size={14} style={{ marginRight: '4px', color: 'var(--p0)', verticalAlign: 'middle' }} />
+                            <Icon name={ICON_WARNING} size={14} style={{ marginRight: '4px', color: 'var(--p0)', verticalAlign: 'middle' }} />
                         )}
                         {task.title}
                     </span>

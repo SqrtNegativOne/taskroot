@@ -15,7 +15,7 @@ export const ID_LENGTH = 9;
 
 export const canEditEvent = (ev: AppEvent | undefined, calendars: readonly {id: string, accessRole?: string}[]) => {
     if (!ev) return true;
-    const cal = calendars.find(c => c.id === (ev.googleCalendarId || "primary"));
+    const cal = calendars.find(c => c.id === (ev.remoteCollectionId || "primary"));
     return !cal || (cal.accessRole !== "reader" && cal.accessRole !== "freeBusyReader");
 };
 

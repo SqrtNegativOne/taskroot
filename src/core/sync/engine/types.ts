@@ -19,7 +19,7 @@ export type SyncQueueItem =
           type: typeof SyncType.Task;
           action: SyncAction;
           item: AppTask;
-          googleId?: string;
+          remoteId?: string;
           calendarId?: never;
           updatedFields?: (keyof AppTask)[];
       }
@@ -27,7 +27,7 @@ export type SyncQueueItem =
           type: typeof SyncType.Event;
           action: SyncAction;
           item: AppEvent;
-          googleId?: string;
+          remoteId?: string;
           calendarId?: string;
           destinationCalendarId?: string;
           updatedFields?: (keyof AppEvent)[];

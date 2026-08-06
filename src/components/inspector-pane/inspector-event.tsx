@@ -50,10 +50,10 @@ function EventCalendarSelector({ event, calendars, updateEvent, isReadOnlyCalend
             <label htmlFor={`calendar-${event.id}`}>Calendar</label>
             <select
                 id={`calendar-${event.id}`}
-                value={event.googleCalendarId || calendars.find((c) => c.primary)?.id || "primary"}
+                value={event.remoteCollectionId || calendars.find((c) => c.primary)?.id || "primary"}
                 disabled={isReadOnlyCalendar}
                 onChange={(e) => {
-                    updateEvent(event.id, { googleCalendarId: e.target.value });
+                    updateEvent(event.id, { remoteCollectionId: e.target.value });
                 }}
             >
                 {calendars.map((c) => (

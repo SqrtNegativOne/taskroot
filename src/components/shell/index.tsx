@@ -1,7 +1,7 @@
-
 import { Link } from "react-router-dom";
 import { Icon } from "../icon";
 import { WindowControls } from "./window-controls";
+import { ICON_SETTINGS } from "../../core/utils/icons";
 import { SyncStatus } from "./sync-status";
 import { StageIndicator } from "./stage-indicator";
 import { MoreScreensDropdown } from "./more-screens-dropdown";
@@ -29,7 +29,7 @@ export function TitleBar({ current }: { current: string }) {
                     data-cuelume-hover="tick"
                     data-cuelume-toggle
                 >
-                    <Icon name="settings" size={18} />
+                    <Icon name={ICON_SETTINGS} size={18} />
                 </Link>
                 <StageIndicator current={current} />
                 <MoreScreensDropdown />

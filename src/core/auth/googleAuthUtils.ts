@@ -1,6 +1,6 @@
 import { fetchWithTimeout } from "../store/api";
 
-export function loadGoogleIdentityScript(): Promise<void> {
+export function loadRemoteIdentityScript(): Promise<void> {
     return new Promise((resolve, reject) => {
         if (window.google?.accounts?.oauth2) {
             resolve();

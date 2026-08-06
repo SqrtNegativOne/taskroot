@@ -6,7 +6,6 @@ import { MemoryRouter } from "react-router-dom";
 import { render, fireEvent, waitFor } from "@testing-library/react";
 import { expect, test, vi, beforeEach, beforeAll } from "vitest";
 import { PlanScreen } from "./PlanScreen";
-import { poller } from "../../core/sync";
 import * as api from "../../core/store/api";
 import { MockFetch } from "../../core/utils/testUtils";
 

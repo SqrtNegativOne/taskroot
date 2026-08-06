@@ -4,7 +4,8 @@ import { GoogleTasksAPI } from "./GoogleTasksAPI";
 import { ConflictError } from "../errors";
 import { HTTP_PRECONDITION_FAILED } from "../../utils/constants";
 import * as api from "../../store/api";
-import { FakeAuthManager, MockFetch } from "../../utils/testUtils";
+import { MockFetch } from "../../utils/testUtils";
+import { FakeAuthManager } from "../auth/FakeAuthManager";
 
 // eslint-disable-next-line max-lines-per-function
 describe("GoogleTasksAPI", () => {

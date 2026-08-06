@@ -23,6 +23,10 @@ export class TaskSyncStrategy implements ISyncStrategy<AppTask> {
         return "tasks";
     }
 
+    getSyncType(): SyncType {
+        return SyncType.Task;
+    }
+
     updateOldMapSnapshot(items: AppTask[]): void {
         this.context.updateOldTasksMap(items);
     }
@@ -60,46 +64,7 @@ export class TaskSyncStrategy implements ISyncStrategy<AppTask> {
         return resolveConflict(standardizedRemote, existingLocalTask, localItemsMap);
     }
 
-    processQueueItem(q: SyncQueueItem, tasksMap: Map<string, AppTask>): boolean {
-        if (q.type !== SyncType.Task) return false;
-        let updated = false;
 
-        if (q.action === SyncAction.Delete) {
-            if (q.item && q.item.id) tasksMap.delete(q.item.id);
-            if (q.remoteId) {
-                for (const [key, task] of Array.from(tasksMap.entries())) {
-                    if (task.remoteId === q.remoteId) {
-                        tasksMap.delete(key);
-                    }
-                }
-            }
-            updated = true;
-        } else if ((q.action === SyncAction.Update || q.action === SyncAction.Create) && q.item && q.item.id) {
-            const existing = tasksMap.get(q.item.id);
-            if (q.action === SyncAction.Update && q.updatedFields && existing) {
-                const partialUpdate: Partial<AppTask> = {};
-                for (const field of q.updatedFields) {
-                    Object.defineProperty(partialUpdate, field, {
-                        value: q.item[field],
-                        enumerable: true,
-                        writable: true,
-                        configurable: true,
-                    });
-                }
-                Object.defineProperty(partialUpdate, "updatedAt", {
-                    value: Math.max(q.item.updatedAt || 0, existing.updatedAt || 0),
-                    enumerable: true,
-                    writable: true,
-                    configurable: true,
-                });
-                tasksMap.set(q.item.id, { ...existing, ...partialUpdate });
-            } else {
-                tasksMap.set(q.item.id, q.item);
-            }
-            updated = true;
-        }
-        return updated;
-    }
 
     computeDelta(currentTasks: AppTask[]) {
         const actions = computeTaskDeltaActions(currentTasks, this.context.oldTasksMap);

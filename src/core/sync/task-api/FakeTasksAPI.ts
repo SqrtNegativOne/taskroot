@@ -12,11 +12,9 @@ function extractLocalTaskId(googleTask: gapi.client.tasks.Task, existing?: AppTa
 
 function parseGoogleTaskDue(dueStr?: string): import("../../domain/models").YmdString | undefined {
     const p = dueStr?.split("T")[0].split("-");
-    /* eslint-disable-next-line no-magic-numbers */
-    if (p?.length !== 3) return undefined;
-    // We use type assertion to tell TypeScript this string matches the YmdString template literal
-    // oxlint-disable-next-line typescript/consistent-type-assertions
-    return `${Number(p[0])}-${Number(p[1])}-${Number(p[2])}` as import("../../domain/models").YmdString;
+    const EXPECTED_DATE_PARTS = 3;
+    if (p?.length !== EXPECTED_DATE_PARTS) return undefined;
+    return `${Number(p[0])}-${Number(p[1])}-${Number(p[2])}`;
 }
 
 function getGoogleTaskBase(googleTask: gapi.client.tasks.Task) {

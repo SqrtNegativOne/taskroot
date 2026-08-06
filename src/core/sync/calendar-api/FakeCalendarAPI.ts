@@ -21,6 +21,17 @@ function extractEventTime(googleEvent: gapi.client.calendar.Event) {
     return { startTime: startDate, endTime: endDate }; 
 }
 
+function handleCancelledEvent(googleEvent: gapi.client.calendar.Event) {
+    const privateProps = googleEvent.extendedProperties?.private;
+    const id = (privateProps ? privateProps.taskrootEventId : undefined) || googleEvent.id;
+    if (!id) throw new Error("Cancelled Google event missing ID");
+    return {
+        id,
+        _deleted: true,
+        updatedAt: googleEvent.updated ? new Date(googleEvent.updated).getTime() : 0,
+    };
+}
+
 function getEventId(googleEvent: gapi.client.calendar.Event) {
     const priv = googleEvent.extendedProperties?.private;
     if (priv?.taskrootEventId) return priv.taskrootEventId;
@@ -183,17 +194,9 @@ export class FakeCalendarAPI implements ICalendarAPI {
         };
     }
 
-    // oxlint-disable-next-line eslint/complexity
     toLocalEvent(googleEvent: gapi.client.calendar.Event, calendarId = "primary") {
         if (googleEvent.status === "cancelled") {
-            const privateProps = googleEvent.extendedProperties?.private;
-            const id = (privateProps ? privateProps.taskrootEventId : undefined) || googleEvent.id;
-            if (!id) throw new Error("Cancelled Google event missing ID");
-            return {
-                id,
-                _deleted: true,
-                updatedAt: googleEvent.updated ? new Date(googleEvent.updated).getTime() : 0,
-            };
+            return handleCancelledEvent(googleEvent);
         }
         const { startTime, endTime } = extractEventTime(googleEvent);
         const { taskId, id, type } = extractEventMetadata(googleEvent);

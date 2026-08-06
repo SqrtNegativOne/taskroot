@@ -23,6 +23,10 @@ export class EventSyncStrategy implements ISyncStrategy<AppEvent> {
         return "events";
     }
 
+    getSyncType(): SyncType {
+        return SyncType.Event;
+    }
+
     updateOldMapSnapshot(items: AppEvent[]): void {
         this.context.updateOldEventsMap(items);
     }
@@ -80,46 +84,7 @@ export class EventSyncStrategy implements ISyncStrategy<AppEvent> {
         return resolveConflict(remote, existingLocalEvent, localItemsMap);
     }
 
-    processQueueItem(q: SyncQueueItem, eventsMap: Map<string, AppEvent>): boolean {
-        if (q.type !== SyncType.Event) return false;
-        let updated = false;
 
-        if (q.action === SyncAction.Delete) {
-            if (q.item && q.item.id) eventsMap.delete(q.item.id);
-            if (q.remoteId) {
-                for (const [key, event] of Array.from(eventsMap.entries())) {
-                    if (event.remoteId === q.remoteId) {
-                        eventsMap.delete(key);
-                    }
-                }
-            }
-            updated = true;
-        } else if ((q.action === SyncAction.Update || q.action === SyncAction.Create || q.action === SyncAction.Move) && q.item && q.item.id) {
-            const existing = eventsMap.get(q.item.id);
-            if ((q.action === SyncAction.Update || q.action === SyncAction.Move) && q.updatedFields && existing) {
-                const partialUpdate: Partial<AppEvent> = {};
-                for (const field of q.updatedFields) {
-                    Object.defineProperty(partialUpdate, field, {
-                        value: q.item[field],
-                        enumerable: true,
-                        writable: true,
-                        configurable: true,
-                    });
-                }
-                Object.defineProperty(partialUpdate, "updatedAt", {
-                    value: Math.max(q.item.updatedAt || 0, existing.updatedAt || 0),
-                    enumerable: true,
-                    writable: true,
-                    configurable: true,
-                });
-                eventsMap.set(q.item.id, { ...existing, ...partialUpdate });
-            } else {
-                eventsMap.set(q.item.id, q.item);
-            }
-            updated = true;
-        }
-        return updated;
-    }
 
     computeDelta(currentEvents: AppEvent[]) {
         const actions = computeEventDeltaActions(currentEvents, this.context.oldEventsMap);

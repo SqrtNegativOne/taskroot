@@ -1,5 +1,4 @@
 import type { AppEvent, AppTask } from "../domain/models";
-import type { IAuthManager } from "../sync/auth/types";
 
 let nextId = 1;
 export function createMockAppEvent(overrides: Partial<AppEvent> = {}): AppEvent {
@@ -25,30 +24,6 @@ export function createMockAppTask(overrides: Partial<AppTask> = {}): AppTask {
     };
 }
 
-export class FakeAuthManager implements IAuthManager {
-    private token: string | undefined = "fake-token";
-    private willRefreshSuccess = true;
-
-    setToken(token: string | undefined) {
-        this.token = token;
-    }
-
-    setWillRefreshSuccess(success: boolean) {
-        this.willRefreshSuccess = success;
-    }
-
-    getToken(): string | undefined {
-        return this.token;
-    }
-
-    async refreshAccessToken(): Promise<boolean> {
-        if (this.willRefreshSuccess) {
-            this.token = "refreshed-fake-token";
-            return true;
-        }
-        return false;
-    }
-}
 
 export class MockFetch {
     private routes: Array<{
@@ -69,7 +44,7 @@ export class MockFetch {
         const urlStr = typeof input === "string" ? input : (input instanceof URL ? input.toString() : input.url);
         const reqMethod = (init?.method || (input instanceof Request ? input.method : "GET")).toUpperCase();
 
-        for (const route of [...this.routes].reverse()) {
+        for (const route of [...this.routes].toReversed()) {
             if (route.method === reqMethod) {
                 const matches = typeof route.pattern === "string" ? urlStr.includes(route.pattern) : route.pattern.test(urlStr);
                 if (matches) {

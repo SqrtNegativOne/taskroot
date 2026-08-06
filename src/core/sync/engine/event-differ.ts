@@ -25,6 +25,8 @@ function handleUpdateOrMove(
     const hasValidTitle = currentEvent.title && currentEvent.title.trim() !== "";
 
     const updatedFields: (keyof AppEvent)[] = [];
+    // Object.keys returns string[], we know this is (keyof AppEvent)[]
+    // oxlint-disable-next-line typescript/consistent-type-assertions
     for (const k of Object.keys(currentEvent) as (keyof AppEvent)[]) {
         if (k === "updatedAt" || k === "etag") continue;
         if (JSON.stringify(currentEvent[k]) !== JSON.stringify(oldEvent[k])) {

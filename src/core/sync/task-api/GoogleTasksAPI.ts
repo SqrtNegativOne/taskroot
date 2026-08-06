@@ -1,5 +1,5 @@
-import { HTTP_UNAUTHORIZED, HTTP_FORBIDDEN, HTTP_TOO_MANY_REQUESTS, HTTP_PRECONDITION_FAILED, MS_PER_SECOND } from "../../utils/constants";
-import { fetchWithTimeout } from "../../store/api";
+import { HTTP_PRECONDITION_FAILED } from "../../utils/constants";
+import { fetchWithRateLimitAndAuth } from "../google-api-utils";
 import { ConflictError } from "../errors";
 import type { AppTask } from "../../domain/models";
 import type { IAuthManager } from "../auth/types";
@@ -41,61 +41,19 @@ export class GoogleTasksAPI implements ITasksAPI {
     }
 
     private async fetchWithAuth(endpoint: string, options: RequestInit = {}) {
-        const getOpts = (t: string) => ({ ...options, headers: { ...options.headers, Authorization: `Bearer ${t}` } });
-        let token = this.authManager.getToken();
-        if (!token) throw new Error("Unauthorized");
-        
-        let res = await fetchWithTimeout(`https://tasks.googleapis.com/tasks/v1/${endpoint}`, getOpts(token));
-        
-        if (res.status === HTTP_UNAUTHORIZED) {
-            if (!await this.authManager.refreshAccessToken()) throw new Error("Unauthorized");
-            token = this.authManager.getToken();
-            if (!token) throw new Error("Unauthorized");
-            res = await fetchWithTimeout(`https://tasks.googleapis.com/tasks/v1/${endpoint}`, getOpts(token));
-        }
-        
-        let attempts = 0;
-        const maxAttempts = 3;
-        while ((res.status === HTTP_FORBIDDEN || res.status === HTTP_TOO_MANY_REQUESTS) && attempts < maxAttempts) {
-            const clone = res.clone();
-            try {
-                // We use any here because Google API error shapes vary and we only need to check the reason fields.
-                // Necessary for parsing rate limit errors sequentially
-                // eslint-disable-next-line no-await-in-loop
-                const data: { error?: { errors?: { reason?: string }[] } } = await clone.json();
-                const isRateLimit = res.status === HTTP_TOO_MANY_REQUESTS || (data?.error?.errors?.some(e => e.reason === "rateLimitExceeded" || e.reason === "userRateLimitExceeded"));
-                if (isRateLimit) {
-                    attempts++;
-                    const delay = Math.pow(2, attempts) * MS_PER_SECOND + Math.random() * MS_PER_SECOND;
-                    // Necessary for exponential backoff delay
-                    // eslint-disable-next-line no-await-in-loop
-                    await new Promise(resolve => setTimeout(resolve, delay));
-                    // Necessary for sequential retry of the failed request
-                    // eslint-disable-next-line no-await-in-loop
-                    res = await fetchWithTimeout(`https://tasks.googleapis.com/tasks/v1/${endpoint}`, getOpts(token));
-                } else {
-                    break;
-                }
-            } catch {
-                break;
-            }
-        }
-        return res;
+        return fetchWithRateLimitAndAuth(`https://tasks.googleapis.com/tasks/v1/${endpoint}`, this.authManager, options);
     }
 
-    async fetchTasks(tasklistId = "@default") {
-        const allTasks: gapi.client.tasks.Task[] = [];
-        let pageToken = "";
-        do {
-            // eslint-disable-next-line no-await-in-loop
-            const res = await this.fetchWithAuth(`lists/${tasklistId}/tasks?showCompleted=true&showHidden=true&maxResults=100${pageToken ? `&pageToken=${pageToken}` : ""}`);
-            if (!res.ok) { console.warn(`Failed to fetch google tasks`); return undefined; }
-            // eslint-disable-next-line no-await-in-loop
-            const data: { items?: gapi.client.tasks.Task[], nextPageToken?: string } = await res.json();
-            if (data.items) allTasks.push(...data.items);
-            pageToken = data.nextPageToken ?? "";
-        } while (pageToken);
-        return allTasks;
+    async fetchTasks(tasklistId = "@default", pageToken = "", accumulated: gapi.client.tasks.Task[] = []): Promise<gapi.client.tasks.Task[] | undefined> {
+        const res = await this.fetchWithAuth(`lists/${tasklistId}/tasks?showCompleted=true&showHidden=true&maxResults=100${pageToken ? `&pageToken=${pageToken}` : ""}`);
+        if (!res.ok) { console.warn(`Failed to fetch google tasks`); return undefined; }
+        const data: gapi.client.tasks.Tasks = await res.json();
+        if (data.items) accumulated.push(...data.items);
+        
+        if (data.nextPageToken) {
+            return this.fetchTasks(tasklistId, data.nextPageToken, accumulated);
+        }
+        return accumulated;
     }
 
     async createTask(localTask: AppTask, tasklistId = "@default") {
@@ -112,18 +70,21 @@ export class GoogleTasksAPI implements ITasksAPI {
         const headers: Record<string, string> = { "Content-Type": "application/json" };
         if (localTask.etag) headers["If-Match"] = localTask.etag;
 
-        let payload = this.toGoogleTask(localTask);
+        const fullPayload = this.toGoogleTask(localTask);
+        let payloadToSubmit: gapi.client.tasks.Task | Partial<gapi.client.tasks.Task> = fullPayload;
+        
         if (updatedFields && updatedFields.length > 0) {
             const partialPayload: Partial<gapi.client.tasks.Task> = {};
-            if (updatedFields.includes("title")) partialPayload.title = payload.title;
-            if (updatedFields.includes("notes")) partialPayload.notes = payload.notes;
-            if (updatedFields.includes("status")) partialPayload.status = payload.status;
-            if (updatedFields.includes("due")) partialPayload.due = payload.due;
-            payload = partialPayload as gapi.client.tasks.Task;
+            if (updatedFields.includes("title")) partialPayload.title = fullPayload.title;
+            if (updatedFields.includes("notes")) partialPayload.notes = fullPayload.notes;
+            if (updatedFields.includes("status")) partialPayload.status = fullPayload.status;
+            if (updatedFields.includes("due")) partialPayload.due = fullPayload.due;
+            
+            payloadToSubmit = partialPayload;
         }
 
         const res = await this.fetchWithAuth(`lists/${tasklistId}/tasks/${remoteId}`, {
-            method: "PATCH", headers, body: JSON.stringify(payload)
+            method: "PATCH", headers, body: JSON.stringify(payloadToSubmit)
         });
         
         if (res.status === HTTP_PRECONDITION_FAILED) throw new ConflictError(`ETag conflict on task: ${localTask.title}`);

@@ -1,5 +1,5 @@
-import { HTTP_UNAUTHORIZED, HTTP_GONE, HTTP_FORBIDDEN, HTTP_TOO_MANY_REQUESTS, HTTP_PRECONDITION_FAILED, MS_PER_SECOND } from "../../utils/constants";
-import { fetchWithTimeout } from "../../store/api";
+import { HTTP_GONE, HTTP_PRECONDITION_FAILED } from "../../utils/constants";
+import { fetchWithRateLimitAndAuth } from "../google-api-utils";
 import { toFloatingIso } from "../../utils/date-utils";
 import { ConflictError } from "../errors";
 import type { AppEvent } from "../../domain/models";
@@ -17,52 +17,13 @@ export class GoogleCalendarAPI implements ICalendarAPI {
     }
 
     private async fetchWithAuth(endpoint: string, options: RequestInit = {}) {
-        const getOpts = (t: string) => ({ ...options, headers: { ...options.headers, Authorization: `Bearer ${t}` } });
-        let token = this.authManager.getToken();
-        if (!token) throw new Error("Unauthorized");
-        
-        let res = await fetchWithTimeout(`https://www.googleapis.com/calendar/v3/${endpoint}`, getOpts(token));
-        
-        if (res.status === HTTP_UNAUTHORIZED) {
-            if (!await this.authManager.refreshAccessToken()) throw new Error("Unauthorized");
-            token = this.authManager.getToken();
-            if (!token) throw new Error("Unauthorized");
-            res = await fetchWithTimeout(`https://www.googleapis.com/calendar/v3/${endpoint}`, getOpts(token));
-        }
-        
-        let attempts = 0;
-        const maxAttempts = 3;
-        while ((res.status === HTTP_FORBIDDEN || res.status === HTTP_TOO_MANY_REQUESTS) && attempts < maxAttempts) {
-            const clone = res.clone();
-            try {
-                // We use any here because Google API error shapes vary and we only need to check the reason fields.
-                // Necessary for parsing rate limit errors sequentially
-                // eslint-disable-next-line no-await-in-loop
-                const data: { error?: { errors?: { reason?: string }[] } } = await clone.json();
-                const isRateLimit = res.status === HTTP_TOO_MANY_REQUESTS || (data?.error?.errors?.some(e => e.reason === "rateLimitExceeded" || e.reason === "userRateLimitExceeded"));
-                if (isRateLimit) {
-                    attempts++;
-                    const delay = Math.pow(2, attempts) * MS_PER_SECOND + Math.random() * MS_PER_SECOND;
-                    // Necessary for exponential backoff delay
-                    // eslint-disable-next-line no-await-in-loop
-                    await new Promise(resolve => setTimeout(resolve, delay));
-                    // Necessary for sequential retry of the failed request
-                    // eslint-disable-next-line no-await-in-loop
-                    res = await fetchWithTimeout(`https://www.googleapis.com/calendar/v3/${endpoint}`, getOpts(token));
-                } else {
-                    break;
-                }
-            } catch {
-                break;
-            }
-        }
-        return res;
+        return fetchWithRateLimitAndAuth(`https://www.googleapis.com/calendar/v3/${endpoint}`, this.authManager, options);
     }
 
     async fetchEvents(timeMin: string, timeMax: string, calendarId = "primary") {
         const res = await this.fetchWithAuth(`calendars/${encodeURIComponent(calendarId)}/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=false&maxResults=2500`);
         if (!res.ok) { console.warn(`Failed to fetch events for calendar ${calendarId}`); return undefined; }
-        const data: { items?: gapi.client.calendar.Event[] } = await res.json();
+        const data: gapi.client.calendar.Events = await res.json();
         return data.items || [];
     }
 
@@ -71,7 +32,7 @@ export class GoogleCalendarAPI implements ICalendarAPI {
         if (!this.authManager.getToken()) return def;
         const res = await this.fetchWithAuth("users/me/calendarList");
         if (!res.ok) { console.warn(`Failed to fetch calendars`); return def; }
-        const data: { items?: {id: string, summary: string, accessRole?: string, backgroundColor?: string, foregroundColor?: string, primary?: boolean}[] } = await res.json();
+        const data: gapi.client.calendar.CalendarList = await res.json();
         return data.items || def;
     }
 
@@ -91,30 +52,13 @@ export class GoogleCalendarAPI implements ICalendarAPI {
         const headers: Record<string, string> = { "Content-Type": "application/json" };
         if (localEvent.etag) headers["If-Match"] = localEvent.etag;
 
-        let payload = this.toGoogleEvent(localEvent, options?.baseEventRemoteId);
-        if (options?.updatedFields && options.updatedFields.length > 0) {
-            const partialPayload: Partial<gapi.client.calendar.Event> = {};
-            // If they just updated specific fields, map those to Google properties
-            if (options.updatedFields.includes("title")) partialPayload.summary = payload.summary;
-            if (options.updatedFields.includes("startTime") || options.updatedFields.includes("endTime")) {
-                partialPayload.start = payload.start;
-                partialPayload.end = payload.end;
-            }
-            if (options.updatedFields.includes("type") || options.updatedFields.includes("taskId")) {
-                partialPayload.extendedProperties = payload.extendedProperties;
-                partialPayload.transparency = payload.transparency;
-            }
-            if (options.updatedFields.includes("rrule") || options.updatedFields.includes("exdates")) {
-                partialPayload.recurrence = payload.recurrence;
-            }
-            if (options.updatedFields.includes("recurringEventId")) partialPayload.recurringEventId = payload.recurringEventId;
-            if (options.updatedFields.includes("originalStartTime")) partialPayload.originalStartTime = payload.originalStartTime;
-            
-            payload = partialPayload as gapi.client.calendar.Event;
-        }
+        const fullPayload = this.toGoogleEvent(localEvent, options?.baseEventRemoteId);
+        const payloadToSubmit = options?.updatedFields && options.updatedFields.length > 0
+            ? buildPartialEventPayload(options.updatedFields, fullPayload)
+            : fullPayload;
 
         const res = await this.fetchWithAuth(`calendars/${encodeURIComponent(calendarId)}/events/${remoteId}`, {
-            method: "PATCH", headers, body: JSON.stringify(payload)
+            method: "PATCH", headers, body: JSON.stringify(payloadToSubmit)
         });
         
         if (res.status === HTTP_PRECONDITION_FAILED) throw new ConflictError(`ETag conflict on event: ${localEvent.title}`);
@@ -189,18 +133,9 @@ export class GoogleCalendarAPI implements ICalendarAPI {
         };
     }
 
-    // This function inherently performs many property extractions and optional chaining, which trips the complexity rule, but is safe and readable.
-    // oxlint-disable-next-line eslint/complexity
     toLocalEvent(googleEvent: gapi.client.calendar.Event, calendarId = "primary") {
         if (googleEvent.status === "cancelled") {
-            const privateProps = googleEvent.extendedProperties?.private;
-            const id = (privateProps ? privateProps.taskrootEventId : undefined) || googleEvent.id;
-            if (!id) throw new Error("Cancelled Google event missing ID");
-            return {
-                id,
-                _deleted: true,
-                updatedAt: googleEvent.updated ? new Date(googleEvent.updated).getTime() : 0,
-            };
+            return handleCancelledEvent(googleEvent);
         }
         const { startTime, endTime } = extractEventTime(googleEvent);
         const { taskId, id, type } = extractEventMetadata(googleEvent);
@@ -237,6 +172,36 @@ function extractEventTime(googleEvent: gapi.client.calendar.Event) {
     const startDate = googleEvent.start.date;
     const endDate = googleEvent.end?.date || startDate;
     return { startTime: startDate, endTime: endDate }; 
+}
+
+function buildPartialEventPayload(updatedFields: (keyof AppEvent)[], fullPayload: gapi.client.calendar.Event) {
+    const partialPayload: Partial<gapi.client.calendar.Event> = {};
+    if (updatedFields.includes("title")) partialPayload.summary = fullPayload.summary;
+    if (updatedFields.includes("startTime") || updatedFields.includes("endTime")) {
+        partialPayload.start = fullPayload.start;
+        partialPayload.end = fullPayload.end;
+    }
+    if (updatedFields.includes("type") || updatedFields.includes("taskId")) {
+        partialPayload.extendedProperties = fullPayload.extendedProperties;
+        partialPayload.transparency = fullPayload.transparency;
+    }
+    if (updatedFields.includes("rrule") || updatedFields.includes("exdates")) {
+        partialPayload.recurrence = fullPayload.recurrence;
+    }
+    if (updatedFields.includes("recurringEventId")) partialPayload.recurringEventId = fullPayload.recurringEventId;
+    if (updatedFields.includes("originalStartTime")) partialPayload.originalStartTime = fullPayload.originalStartTime;
+    return partialPayload;
+}
+
+function handleCancelledEvent(googleEvent: gapi.client.calendar.Event) {
+    const privateProps = googleEvent.extendedProperties?.private;
+    const id = (privateProps ? privateProps.taskrootEventId : undefined) || googleEvent.id;
+    if (!id) throw new Error("Cancelled Google event missing ID");
+    return {
+        id,
+        _deleted: true,
+        updatedAt: googleEvent.updated ? new Date(googleEvent.updated).getTime() : 0,
+    };
 }
 
 function getEventId(googleEvent: gapi.client.calendar.Event) {

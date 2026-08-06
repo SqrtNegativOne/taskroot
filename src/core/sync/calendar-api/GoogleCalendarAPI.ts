@@ -125,7 +125,6 @@ export class GoogleCalendarAPI implements ICalendarAPI {
             }
         }
         
-        
         return {
             ...(recurrence.length > 0 ? { recurrence } : {}),
             ...(baseEventRemoteId ? { recurringEventId: baseEventRemoteId } : {}),

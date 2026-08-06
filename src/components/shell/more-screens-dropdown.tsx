@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ICON_KEYBOARD_ARROW_DOWN } from "../../core/utils/icons";
+import { ICON_DROPDOWN } from "../../core/utils/icons";
 import { Icon } from "../icon";
 
 export function MoreScreensDropdown() {
@@ -33,7 +33,7 @@ export function MoreScreensDropdown() {
                 data-cuelume-hover="tick"
                 data-cuelume-toggle
             >
-                <Icon name={ICON_KEYBOARD_ARROW_DOWN} size={18} />
+                <Icon name={ICON_DROPDOWN} size={18} />
             </button>
             {dropdownOpen && (
                 <div className="dropdown-menu">

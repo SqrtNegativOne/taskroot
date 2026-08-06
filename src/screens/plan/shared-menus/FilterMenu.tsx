@@ -1,6 +1,6 @@
 import { SelectInput, MultiSelect } from "../../../components/inputs";
 
-import { ICON_CLOSE, ICON_ADD } from "../../../core/utils/icons";
+import { ICON_REMOVE, ICON_ADD_FILTER } from "../../../core/utils/icons";
 import { Icon } from "../../../components/icon";
 import { FloatingMenu } from "./FloatingMenu";
 import type { Filter, Column } from "./types";
@@ -55,12 +55,12 @@ export function FilterMenu({
                         onClick={() => removeFilter(f.id || "")}
                         className="filter-remove-button"
                     >
-                        <Icon name={ICON_CLOSE} size={16} />
+                        <Icon name={ICON_REMOVE} size={16} />
                     </button>
                 </div>
             ))}
             <button onClick={addFilter} className="filter-add-button">
-                <Icon name={ICON_ADD} size={14} /> Add filter
+                <Icon name={ICON_ADD_FILTER} size={14} /> Add filter
             </button>
         </FloatingMenu>
     );

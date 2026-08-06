@@ -3,7 +3,9 @@ import React from "react";
 export interface TaskCircleProps {
     priority?: number | string;
     isDoneOrChecking: boolean;
+    isActive?: boolean;
     onClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
+    onContextMenu?: (e: React.MouseEvent<HTMLButtonElement>) => void;
     style?: React.CSSProperties;
     title?: string;
     ariaLabel?: string;
@@ -12,7 +14,9 @@ export interface TaskCircleProps {
 export function TaskCircle({
     priority,
     isDoneOrChecking,
+    isActive,
     onClick,
+    onContextMenu,
     style,
     title,
     ariaLabel,
@@ -23,10 +27,20 @@ export function TaskCircle({
             className={`task-circle pri-bg-${priority}`}
             style={{ border: "none", padding: 0, font: "inherit", color: "inherit", ...style }}
             onClick={onClick}
+            onContextMenu={onContextMenu}
             title={title || "Toggle Done"}
             aria-label={ariaLabel || `Priority ${priority}`}
         >
-            {isDoneOrChecking && (
+            {isActive ? (
+                <svg
+                    className="task-circle-play"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    style={{ width: "12px", height: "12px", color: "var(--bg)" }}
+                >
+                    <path d="M8 5v14l11-7z" />
+                </svg>
+            ) : isDoneOrChecking ? (
                 <svg
                     className="task-circle-check"
                     viewBox="0 0 24 24"
@@ -38,7 +52,7 @@ export function TaskCircle({
                 >
                     <polyline points="4 12 9 17 20 6"></polyline>
                 </svg>
-            )}
+            ) : undefined}
         </button>
     );
 }

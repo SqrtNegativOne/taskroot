@@ -3,7 +3,7 @@ import { ymd, PAD2, sameDay } from "../../../core/store/data";
 import type { HydratedEvent } from "../../../core/domain/events";
 import { isEventAllDay } from "../../../core/domain/events";
 import { Icon } from "../../../components/icon";
-import { ICON_WARNING } from "../../../core/utils/icons";
+import { ICON_OVERDUE } from "../../../core/utils/icons";
 import { extractHourMinuteFromISO } from "../../../core/utils/date-utils";
 
 const OPACITY_FADED = 0.4;
@@ -208,7 +208,7 @@ function EventItem({
             )}
             <span className="day-cell-event-title" style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
                 {isPastDue && (
-                    <Icon name={ICON_WARNING} size={12} style={{ flexShrink: 0, color: 'var(--p0)' }} />
+                    <Icon name={ICON_OVERDUE} size={12} style={{ flexShrink: 0, color: 'var(--p0)' }} />
                 )}
                 {title}
             </span>

@@ -34,6 +34,13 @@ const SETTINGS_CONFIG: Record<string, Record<string, ConfigItem[]>> = {
                 ],
             },
             {
+                id: "dayTimelineStartView",
+                label: "Timeline View Start Time",
+                keywords: ["timeline", "day", "start", "time", "scroll", "view"],
+                type: "time",
+                defaultValue: 300,
+            },
+            {
                 id: "defaultTaskDuration",
                 label: "Default Duration",
                 keywords: ["task", "duration", "estimate", "time"],
@@ -194,7 +201,7 @@ const SETTINGS_CONFIG: Record<string, Record<string, ConfigItem[]>> = {
                 label: "Open Launcher",
                 keywords: ["keyboard", "shortcut", "launcher", "open"],
                 type: "keybinding",
-                defaultValue: "Ctrl+Space",
+                defaultValue: "Meta+Shift+Space",
             },
             {
                 id: "keybindingOpenSettings",

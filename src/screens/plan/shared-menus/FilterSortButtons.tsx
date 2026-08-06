@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { useFilterActions } from "./useFilterActions";
 import { FilterMenu } from "./FilterMenu";
 import { SortMenu } from "./SortMenu";
-import { ICON_FILTER_LIST, ICON_SWAP_VERT } from "../../../core/utils/icons";
+import { ICON_FILTER, ICON_SORT } from "../../../core/utils/icons";
 import { MenuTriggerButton } from "./MenuTriggerButton";
 import { useAnimatedMenu } from "./useAnimatedMenu";
 import type { FilterSortButtonsProps } from "./types";
@@ -73,7 +73,7 @@ export function FilterSortButtons({
             <MenuTriggerButton
                 isActive={filterMenu.isOpen || filters.length > 0}
                 onClick={handleToggleFilters}
-                icon={ICON_FILTER_LIST}
+                icon={ICON_FILTER}
                 title="Filter"
                 badgeCount={filters.length}
             />
@@ -82,7 +82,7 @@ export function FilterSortButtons({
                 <MenuTriggerButton
                     isActive={sortMenu.isOpen}
                     onClick={handleToggleSort}
-                    icon={ICON_SWAP_VERT}
+                    icon={ICON_SORT}
                     title="Sort"
                 />
             )}

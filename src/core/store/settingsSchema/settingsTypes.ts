@@ -12,6 +12,7 @@ export type RecapDay =
 
 export interface AppSettings {
     defaultCalendarView: "month" | "week";
+    dayTimelineStartView: number;
     defaultTaskDuration: number;
     earliest_wake_time: number;
     last_sleep_time: number;

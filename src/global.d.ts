@@ -1,5 +1,7 @@
 export type __Placeholder = unknown;
 
+
+
 declare global {
     interface ImportMetaEnv {
         readonly VITE_GOOGLE_CLIENT_ID: string;

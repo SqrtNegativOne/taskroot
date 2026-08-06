@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { addDays } from "../../../core/store/data";
-import { ICON_VIEW_COLUMN } from "../../../core/utils/icons";
+import { ICON_LAYOUT } from "../../../core/utils/icons";
 import { Icon } from "../../icon";
 
 // eslint-disable-next-line no-magic-numbers
@@ -85,7 +85,7 @@ export function TimelineHeader({
                                 cursor: "pointer",
                             }}
                         >
-                            <Icon name={ICON_VIEW_COLUMN} size={16} />
+                            <Icon name={ICON_LAYOUT} size={16} />
                         </button>
                         {showViewMenu && (
                             <div

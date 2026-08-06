@@ -20,6 +20,7 @@ export interface AppTask {
     readonly onCanvas?: boolean;
     readonly remoteId?: string;
     readonly notes?: string;
+    readonly tabs?: string;
     readonly due?: YmdString;
     readonly _deleted?: boolean;
     readonly updatedAt?: number;

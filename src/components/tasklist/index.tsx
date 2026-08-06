@@ -61,7 +61,11 @@ export function TaskListPane({
 
     const updateTask = (id: string, updates: Partial<AppTask>) =>
         setTasks((ts) =>
-            ts.map((t) => (t.id === id ? { ...t, ...updates } : t)),
+            ts.map((t) => {
+                if (t.id === id) return { ...t, ...updates };
+                if (updates.status === "doing" && t.status === "doing") return { ...t, status: "todo" };
+                return t;
+            }),
         );
     const deleteTask = (id: string) => {
         if (onDeleteTask) {

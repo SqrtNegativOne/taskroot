@@ -3,7 +3,7 @@ import { TODAY, parseYMD, durationLabel, dueLabel } from "../../core/store/data"
 import type { AppTask, AppFilter } from "../../core/domain/models";
 import { checkTaskAgainstFilters } from "./filters";
 import { Icon } from "../icon";
-import { ICON_WARNING } from "../../core/utils/icons";
+import { ICON_OVERDUE, ICON_TABS } from "../../core/utils/icons";
 import { TaskCircle } from "../task-circle";
 
 const TRANSITION_DURATION_MS = 400;
@@ -58,6 +58,16 @@ export function TaskRow({
             <TaskCircle
                 priority={task.priority}
                 isDoneOrChecking={task.status === "done" || isChecking}
+                isActive={task.status === "doing"}
+                onContextMenu={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (task.status !== "doing") {
+                        updateTask(task.id, { status: "doing" });
+                    } else {
+                        updateTask(task.id, { status: "todo" });
+                    }
+                }}
                 onClick={(e) => {
                     e.stopPropagation();
                     const newStatus = task.status === "done" ? "todo" : "done";
@@ -90,13 +100,33 @@ export function TaskRow({
                 <div className="task-row-line1">
                     <span className="task-row-title">
                         {isPastDue && task.status !== "done" && (
-                            <Icon name={ICON_WARNING} size={14} style={{ marginRight: '4px', color: 'var(--p0)', verticalAlign: 'middle' }} />
+                            <Icon name={ICON_OVERDUE} size={14} style={{ marginRight: '4px', color: 'var(--p0)', verticalAlign: 'middle' }} />
                         )}
                         {task.title}
+                        {task.tabs && (
+                            <button
+                                className="open-tabs-button"
+                                title="Open Tabs"
+                                onPointerDown={(e) => e.stopPropagation()}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    const urls = task.tabs?.match(/https?:\/\/[^\s"']+/g) || [];
+                                    urls.forEach(url => window.open(url, '_blank'));
+                                }}
+                                style={{ 
+                                    cursor: 'pointer', 
+                                    marginLeft: '6px', 
+                                    verticalAlign: 'middle', 
+                                    display: 'inline-flex',
+                                    background: 'none',
+                                    border: 'none',
+                                    padding: 0
+                                }}
+                            >
+                                <Icon name={ICON_TABS} size={16} style={{ color: 'var(--accent)' }} />
+                            </button>
+                        )}
                     </span>
-                    {task.status === "doing" && (
-                        <span className="status-pill status-doing">doing</span>
-                    )}
                     {task.status === "next-up" && (
                         <span className="status-pill status-nextup">
                             next up

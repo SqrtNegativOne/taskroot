@@ -1,4 +1,4 @@
-import { MINUTES_IN_HOUR, MS_IN_DAY } from "./date-utils";
+import { MINUTES_IN_HOUR, MS_IN_DAY, DAYS_IN_WEEK } from "./date-utils";
 
 export interface ParsedProperties {
     priority?: number;
@@ -6,6 +6,17 @@ export interface ParsedProperties {
     time?: string;
     duration?: number;
     tags?: string[];
+}
+
+export interface Token {
+    type: "text" | "sigil";
+    text: string;
+}
+
+export interface ParseResult {
+    cleanTitle: string;
+    properties: ParsedProperties;
+    tokens: Token[];
 }
 
 export function getDueDateFromSigil(day: string, now: Date = new Date()): string {
@@ -21,24 +32,12 @@ export function getDueDateFromSigil(day: string, now: Date = new Date()): string
         if (targetIdx !== -1) {
             const currentIdx = today.getDay();
             addDays = targetIdx - currentIdx;
-            if (addDays <= 0) addDays += 7;
+            if (addDays <= 0) addDays += DAYS_IN_WEEK; // Move to next week if the day has already passed this week
         }
     }
     
     const target = new Date(today.getTime() + addDays * MS_IN_DAY);
     return `${target.getFullYear()}-${(target.getMonth()+1).toString().padStart(2, '0')}-${target.getDate().toString().padStart(2, '0')}`;
-}
-
-
-export interface Token {
-    type: "text" | "sigil";
-    text: string;
-}
-
-export interface ParseResult {
-    cleanTitle: string;
-    properties: ParsedProperties;
-    tokens: Token[];
 }
 
 const PRIORITY_REGEX = /^(?:\.\.|p0|\.|p1|!|p2|!!|p3|!{3,}|p4)$/i;
@@ -51,19 +50,19 @@ function getPriorityValue(sigil: string): number | undefined {
     const s = sigil.toLowerCase();
     if (s === ".." || s === "p0") return 0;
     if (s === "." || s === "p1") return 1;
+    /* eslint-disable no-magic-numbers */
     if (s === "!" || s === "p2") return 2;
+    /* eslint-disable no-magic-numbers */
     if (s === "!!" || s === "p3") return 3;
+    /* eslint-disable no-magic-numbers */
     if (s.startsWith("!!!") || s === "p4") return 4;
-    return undefined;
+    return 1; // Default priority if unrecognized sigil
 }
 
 function processToken(part: string, properties: ParsedProperties): boolean {
     if (PRIORITY_REGEX.test(part)) {
-        const p = getPriorityValue(part);
-        if (p !== undefined) {
-            properties.priority = p;
-            return true;
-        }
+        properties.priority = getPriorityValue(part);
+        return true;
     } else if (DAY_REGEX.test(part)) {
         properties.day = part.toLowerCase();
         return true;
@@ -136,9 +135,6 @@ export function parseSigils(title: string): ParseResult {
         .join("")
         .replace(/\s+/g, " ")
         .trim();
-        
-    // Wait, if a token was text but was just whitespace surrounding a sigil, it might leave weird spaces.
-    // The replace /\s+/g, " " and trim() fixes most of it.
     
     // Group adjacent text tokens
     const mergedTokens: Token[] = [];

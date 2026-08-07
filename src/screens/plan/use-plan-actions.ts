@@ -75,8 +75,11 @@ export function usePlanActions(
     const onAddEvent = (dateArg: Date | string, startArg?: number, endArg?: number) => {
         const start = typeof startArg === "number" ? startArg : ID_LENGTH * MINUTES_IN_HOUR;
         const newEvent = createDefaultEvent(dateArg instanceof Date ? dateArg : timelineDate, start, typeof endArg === "number" ? endArg : start + MINUTES_IN_HOUR, typeof startArg !== "number");
-        newEvent.remoteCollectionId = calendars.find(c => c.primary)?.id || "primary";
-        setInspectorState({ type: "new_event", draft: newEvent });
+        const draftEvent = {
+            ...newEvent,
+            remoteCollectionId: calendars.find(c => c.primary)?.id || "primary"
+        };
+        setInspectorState({ type: "new_event", draft: draftEvent });
     };
 
     const onResizeEvent = (id: string, startTime: string, endTime: string) => {

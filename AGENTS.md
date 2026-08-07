@@ -9,7 +9,7 @@ Taskroot is a web-based and desktop task management app focusing on planning, ex
 - **Frontend Framework**: React 19 with React Router for SPA navigation.
 - **Build Tool**: Vite (with Hot Module Replacement for fast development).
 - **Desktop Wrapper**: Electron (configured via `electron/main.ts` and `preload.cts`).
-- **Linter**: Oxlint (`oxlint`), configured via `.oxlintrc.json`.
+- **Linter**: Oxlint (`oxlint`), configured via `.oxlintrc.json`, with **type-aware linting enabled** (`--type-aware`). Run `bun run lint`.
 - **Language**: TypeScript (`.tsx` and `.ts` files).
 - **Styling**: Vanilla CSS (`src/index.css`) with extensive use of CSS variables for theming.
 - **Backend / Storage**: `localStorage` for offline and fast local prototyping, synced to Google Tasks and Google Calendar. 
@@ -49,6 +49,7 @@ Taskroot is a web-based and desktop task management app focusing on planning, ex
 - Prefer inline exports over bottom exports.
 - Remember that you may not need a useEffect. useEffect is an escape hatch for when you need to imperatively run code after a render. If you can do it declaratively, do it declaratively.
 - Keep all React components pure and functional.
+- Any object that represents state should be readonly.
 - Use Red-Green Test Driven Development.
     - Write tests first as a contract and to make it clear what you are doing.
     - Once they are written, do not modify them, unless there is something truly wrong wit them.
@@ -75,8 +76,8 @@ Taskroot is a web-based and desktop task management app focusing on planning, ex
 - If you add a `// eslint-disable-next-line` or `// oxlint-disable-next-line` comment, don't. If it's necessary, you must include a comment in the code before it explaining why it is necessary, AND THEN you must warn the user you are talking to, that you have done this.
 - Don't name files or folders with generic names like `utils` or `helpers`. That could literally mean anything!
 - Don't use generic names, like suffixing a function or class with `Manager`, `Controller`, `Helper`, or `Service`.
-- After implementing any changes, run `bun oxlint`, and fix all errors and warnings. If you are unsure about a warning, ask for clarification in the code review.
+- After implementing any changes, run `bun run lint`, and fix all errors and warnings. If you are unsure about a warning, ask for clarification in the code review.
 - When you have too much inter-dependent state (e.g., toggling the stopwatch needs to know about selectorOpen, running, currentMs, timeLogs, etc.), consider useReducer.
-- ALWAYS run `bun oxlint`, `npm run test`, and `bun run build` before committing. If any of these fail or give you a warning, fix the issue before committing.
+- ALWAYS run `bun run lint`, `npm run test`, and `bun run build` before committing. If any of these fail or give you a warning, fix the issue before committing.
 - If `bun run build` gives you a warning, fix it. Never be silent about warnings; always inform the user about them.
 - In the program, errors are data; not exceptional in any way. Don't return `null` or `False` when an error happens; be specific.

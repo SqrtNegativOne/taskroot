@@ -1,7 +1,7 @@
 export type YmdString = string; // Format: YYYY-MM-DD
 
 export function isYmdString(s: unknown): s is YmdString {
-    return typeof s === "string";
+    return typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
 }
 
 export interface AppTask {
@@ -30,62 +30,62 @@ export interface AppTask {
 }
 
 export interface AppFilter {
-    id?: string;
-    column: string;
-    operator: string;
-    value: string | number | (string | number)[];
+    readonly id?: string;
+    readonly column: string;
+    readonly operator: string;
+    readonly value: string | number | readonly (string | number)[];
 }
 
 export interface AppEvent {
     // --- Identity ---
-    id: string;
+    readonly id: string;
     /** Stable Google Calendar event ID; absent until first sync. */
-    remoteId?: string;
+    readonly remoteId?: string;
     /** Which Google Calendar this belongs to (e.g. `"primary"` or a calendar ID). */
-    remoteCollectionId?: string;
+    readonly remoteCollectionId?: string;
     /** Links this event to an AppTask, turning it into a time-block for that task. */
-    taskId?: string;
+    readonly taskId?: string;
 
     // --- Content ---
-    title: string;
-    description?: string;
+    readonly title: string;
+    readonly description?: string;
 
     // --- Timing ---
     /** Floating local datetime `"YYYY-MM-DDThh:mm:ss"`, or date-only `"YYYY-MM-DD"` for all-day events. */
-    startTime: string;
+    readonly startTime: string;
     /** Same format as startTime. All-day is detected when both fields are 10-char date-only strings. */
-    endTime: string;
-    type: 'busy' | 'info' | 'log';
+    readonly endTime: string;
+    readonly type: 'busy' | 'info' | 'log';
 
     // --- Recurrence (base event) ---
     /** RFC 5545 RRULE string defining the recurrence pattern. Only present on master events. */
-    rrule?: string;
+    readonly rrule?: string;
     /** Slots to skip from the recurrence, stored in compact `YYYYMMDDTHHMMSS` format. */
-    exdates?: string[];
+    readonly exdates?: readonly string[];
 
     // --- Recurrence (stored exception) ---
     /**
      * Local `id` of the master event this exception overrides.
      * Translated to the master's `remoteId` when pushing to GCal.
      */
-    recurringEventId?: string;
+    readonly recurringEventId?: string;
     /**
      * The generated slot start-time this exception replaces (`"YYYY-MM-DDThh:mm:ss"`).
      * Used by the expander to match and suppress the original instance.
      */
-    originalStartTime?: string;
+    readonly originalStartTime?: string;
     /** True when the exception was cancelled (deleted) rather than rescheduled. */
-    cancelled?: boolean;
+    readonly cancelled?: boolean;
 
     // --- Sync metadata ---
     /** Unix timestamp (ms) of last local write; drives push decisions in the sync engine. */
-    updatedAt?: number;
+    readonly updatedAt?: number;
     /** Soft-delete flag; kept until the deletion is confirmed pushed to GCal. */
-    _deleted?: boolean;
+    readonly _deleted?: boolean;
     /** ETag fingerprint from Google API for optimistic concurrency control. */
-    etag?: string;
+    readonly etag?: string;
 
-    [key: string]: unknown;
+    readonly [key: string]: unknown;
 }
 
 export function toEventType(raw: string | undefined, fallback: AppEvent['type']): AppEvent['type'] {

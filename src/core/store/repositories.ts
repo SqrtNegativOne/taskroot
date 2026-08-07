@@ -7,14 +7,14 @@ import type { AppTask, AppEvent } from "../domain/models";
 import type { AppNote } from "../../screens/do/tips-notes";
 import { DEFAULT_STATUSES, DEFAULT_DISTRACTION_COLUMNS, REST_CHECKLIST_DEFAULTS } from "./data";
 
-export interface DistractionRow { id: string; [key: string]: unknown; }
-export interface DistractionStatus { id: string; label: string; color: string; }
-export interface DistractionColumn { id: string; label: string; width: number; type: string; }
-export interface StopwatchState { elapsed: number; runningSince?: number; isBreak: boolean; breakAllowedMs: number; breakStartedAt?: number; breakSoundPlayed: boolean; }
+export interface DistractionRow { readonly id: string; readonly [key: string]: unknown; }
+export interface DistractionStatus { readonly id: string; readonly label: string; readonly color: string; }
+export interface DistractionColumn { readonly id: string; readonly label: string; readonly width: number; readonly type: string; }
+export interface StopwatchState { readonly elapsed: number; readonly runningSince?: number; readonly isBreak: boolean; readonly breakAllowedMs: number; readonly breakStartedAt?: number; readonly breakSoundPlayed: boolean; }
 export type TimeLog = AppEvent;
-export interface RestItem { id: string; title: string; type: string; checked?: boolean; }
-export interface CalendarData { id: string; summary: string; active: boolean; accessRole?: string; backgroundColor?: string; foregroundColor?: string; primary?: boolean; }
-export interface TestKeyData { count: number; }
+export interface RestItem { readonly id: string; readonly title: string; readonly type: string; readonly checked?: boolean; }
+export interface CalendarData { readonly id: string; readonly summary: string; readonly active: boolean; readonly accessRole?: string; readonly backgroundColor?: string; readonly foregroundColor?: string; readonly primary?: boolean; }
+export interface TestKeyData { readonly count: number; }
 
 const isUpdater = <T>(v: T | ((prev: T) => T)): v is ((prev: T) => T) => typeof v === "function";
 

@@ -41,7 +41,7 @@ export function TaskSelectorItem({
             style={{ display: "flex", alignItems: "center", justifyContent: "center", border: "none", background: "none", textAlign: "left", width: "100%", padding: 0 }}
         >
             <TaskCircle
-                priority={task.priority}
+                {...(task.priority !== undefined ? { priority: task.priority } : {})}
                 isDoneOrChecking={isChecking}
                 style={{ flexShrink: 0, marginRight: "12px", display: "flex", alignItems: "center", justifyContent: "center" }}
                 onClick={(e) => {

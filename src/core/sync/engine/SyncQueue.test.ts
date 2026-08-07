@@ -42,7 +42,7 @@ describe("SyncQueue", () => {
 
         expect(queue.length).toBe(1);
         const items = queue.getItems();
-        expect(items[0].item.title).toBe("Task 1 Updated");
+        expect(items[0]?.item.title).toBe("Task 1 Updated");
     });
 
     it("should not deduplicate Update actions for different tasks", () => {
@@ -83,8 +83,8 @@ describe("SyncQueue", () => {
 
         expect(queue.length).toBe(1);
         const items = queue.getItems();
-        expect(items[0].action).toBe(SyncAction.Create);
-        expect(items[0].item.title).toBe("Task 1 Updated");
+        expect(items[0]?.action).toBe(SyncAction.Create);
+        expect(items[0]?.item.title).toBe("Task 1 Updated");
     });
     it("should handle Move+Update correctly (ensuring Update is pushed to end of queue)", () => {
         const queue = new SyncQueue();
@@ -131,11 +131,11 @@ describe("SyncQueue", () => {
         expect(queue.length).toBe(2);
         const items = queue.getItems();
         
-        expect(items[0].action).toBe(SyncAction.Move);
-        expect(items[0].item.title).toBe("New Title"); // Move payload updated
+        expect(items[0]?.action).toBe(SyncAction.Move);
+        expect(items[0]?.item.title).toBe("New Title"); // Move payload updated
         
-        expect(items[1].action).toBe(SyncAction.Update);
-        expect(items[1].item.title).toBe("New Title"); // The new Update action
-        expect(items[1].calendarId).toBe("cal2");
+        expect(items[1]?.action).toBe(SyncAction.Update);
+        expect(items[1]?.item.title).toBe("New Title"); // The new Update action
+        expect(items[1]?.calendarId).toBe("cal2");
     });
 });

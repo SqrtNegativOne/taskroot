@@ -13,11 +13,13 @@ function processFilterItem(f: AppFilter, req: Record<string, Set<string | number
     if (values.length === 0) return;
     
     if (f.operator === "is not") {
-        if (!excl[f.column]) excl[f.column] = new Set();
-        for (const v of values) excl[f.column].add(v);
+        const colSet = excl[f.column] || new Set();
+        excl[f.column] = colSet;
+        for (const v of values) colSet.add(v);
     } else {
-        if (!req[f.column]) req[f.column] = new Set();
-        for (const v of values) req[f.column].add(v);
+        const colSet = req[f.column] || new Set();
+        req[f.column] = colSet;
+        for (const v of values) colSet.add(v);
     }
 }
 
@@ -43,7 +45,7 @@ function processSingleValueCol(
 ) {
     if (reqCol?.size === 1) {
         const val = Array.from(reqCol)[0];
-        if (!exclCol || !exclCol.has(val)) {
+        if (val !== undefined && (!exclCol || !exclCol.has(val))) {
             defaults[col] = val;
         }
         return;
@@ -82,7 +84,7 @@ export function computeFilterDefaults(filters: AppFilter[] = []) {
             (t) => !excl["tag"] || !excl["tag"].has(t),
         );
         if (validTags.length > 0) {
-            defaults.tags = validTags;
+            defaults["tags"] = validTags;
         }
     }
 

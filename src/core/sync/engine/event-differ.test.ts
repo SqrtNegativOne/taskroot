@@ -49,7 +49,7 @@ describe("computeEventDeltaActions — event creation", () => {
         const actions = computeEventDeltaActions([newEvent], new Map());
 
         expect(actions).toHaveLength(1);
-        expect(actions[0].action).toBe(SyncAction.Create);
+        expect(actions[0]?.action).toBe(SyncAction.Create);
     });
 
     it("does NOT queue a Create for an event that already has a remoteId", () => {
@@ -115,7 +115,7 @@ describe("computeEventDeltaActions — event deletion", () => {
 
         const actions = computeEventDeltaActions([], oldMap);
 
-        expect(actions[0].calendarId).toBe("primary");
+        expect(actions[0]?.calendarId).toBe("primary");
     });
 
     it("does NOT queue a Delete for a log event that was removed", () => {
@@ -293,6 +293,6 @@ describe("computeEventDeltaActions — orphaned calendar references", () => {
 
         const actions = computeEventDeltaActions([], oldMap);
 
-        expect(actions[0].calendarId).toBe("cal-deleted");
+        expect(actions[0]?.calendarId).toBe("cal-deleted");
     });
 });

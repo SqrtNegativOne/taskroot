@@ -65,7 +65,6 @@ export class Pusher {
                     continue;
                 }
                 
-                // eslint-disable-next-line no-await-in-loop
                 await sync.processPushItem(taskOrEvent);
                 this.pushQueue.remove(taskOrEvent);
             } catch (e: unknown) {

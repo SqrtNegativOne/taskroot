@@ -60,7 +60,8 @@ export function StatusCell({
                 <div
                     className="dlog-status-pop"
                     ref={popRef}
-                    onPointerDown={(e) => e.stopPropagation()} // eslint-disable-line jsx-a11y/no-static-element-interactions
+                    role="presentation"
+                    onPointerDown={(e) => e.stopPropagation()}
                 >
                     {statuses.map((s: DistractionStatus) => (
                         <button

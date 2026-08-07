@@ -11,10 +11,10 @@ export interface ClockDisplayData {
 
 export interface StopwatchState {
     elapsed: number;
-    runningSince?: number;
+    runningSince?: number | undefined;
     isBreak: boolean;
     breakAllowedMs: number;
-    breakStartedAt?: number;
+    breakStartedAt?: number | undefined;
     breakSoundPlayed: boolean;
 }
 

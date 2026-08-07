@@ -1,4 +1,3 @@
-/* oxlint-disable react(no-array-index-key) */
 import React from "react";
 import { parseSigils, type ParsedProperties } from "../../core/utils/sigil-parser";
 

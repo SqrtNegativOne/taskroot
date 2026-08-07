@@ -56,7 +56,7 @@ export function TaskRow({
             onPointerDown={handlePointerDown}
         >
             <TaskCircle
-                priority={task.priority}
+                {...(task.priority !== undefined ? { priority: task.priority } : {})}
                 isDoneOrChecking={task.status === "done" || isChecking}
                 isActive={task.status === "doing"}
                 onContextMenu={(e) => {
@@ -99,7 +99,7 @@ export function TaskRow({
             <div className="task-row-content">
                 <TaskRowLine1 
                     task={task} 
-                    isPastDue={isPastDue} 
+                    {...(isPastDue !== undefined ? { isPastDue } : {})} 
                     updateTask={updateTask} 
                     deleteTask={deleteTask} 
                     setIsExiting={setIsExiting} 

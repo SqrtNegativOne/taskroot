@@ -111,7 +111,7 @@ const commandHandlers: Record<string, CommandHandler> = {
             .slice(0, MAX_EVENTS_TO_SHOW);
             
         upcoming.forEach(e => {
-            const timeStr = e.startTime.includes('T') ? e.startTime.split('T')[1].substring(0, HH_MM_LENGTH) : 'All day';
+            const timeStr = e.startTime.includes('T') ? e.startTime.split('T')[1]?.substring(0, HH_MM_LENGTH) : 'All day';
             cmds.push({
                 id: `sked-event-${e.id}`,
                 label: `[${timeStr}] ${e.title}`,
@@ -140,6 +140,7 @@ export function parseCommands(
     if (!q) return [];
 
     const [cmd, ...rest] = q.split(' ');
+    if (!cmd) return [];
     const arg = rest.join(' ');
 
     const handler = commandHandlers[cmd];

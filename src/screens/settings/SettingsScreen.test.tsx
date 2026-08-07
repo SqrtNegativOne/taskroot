@@ -61,8 +61,11 @@ describe("SettingsScreen", () => {
         expect(screen.getByText(firstSetting.label)).toBeInTheDocument();
 
         // The tabs should be hidden
+        const firstTab = SETTINGS_TABS[0];
+        if (!firstTab) return;
+
         expect(
-            screen.queryByText(SETTINGS_TABS[0].label),
+            screen.queryByText(firstTab.label),
         ).not.toBeInTheDocument();
     });
 

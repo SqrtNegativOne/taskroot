@@ -29,11 +29,11 @@ function mergeCalendars(
         return {
             id: c.id,
             summary: c.summary,
-            accessRole: c.accessRole,
+            ...(c.accessRole !== undefined ? { accessRole: c.accessRole } : {}),
             active: prev ? prev.active : true,
-            backgroundColor: c.backgroundColor,
-            foregroundColor: c.foregroundColor,
-            primary: c.primary,
+            ...(c.backgroundColor !== undefined ? { backgroundColor: c.backgroundColor } : {}),
+            ...(c.foregroundColor !== undefined ? { foregroundColor: c.foregroundColor } : {}),
+            ...(c.primary !== undefined ? { primary: c.primary } : {}),
         };
     });
 }
@@ -69,12 +69,12 @@ describe("mergeCalendars — baseline", () => {
 
         const [result] = mergeCalendars(remote, []);
 
-        expect(result.id).toBe("c1");
-        expect(result.summary).toBe("Work");
-        expect(result.accessRole).toBe("owner");
-        expect(result.backgroundColor).toBe("#4285f4");
-        expect(result.foregroundColor).toBe("#ffffff");
-        expect(result.primary).toBe(true);
+        expect(result?.id).toBe("c1");
+        expect(result?.summary).toBe("Work");
+        expect(result?.accessRole).toBe("owner");
+        expect(result?.backgroundColor).toBe("#4285f4");
+        expect(result?.foregroundColor).toBe("#ffffff");
+        expect(result?.primary).toBe(true);
     });
 });
 
@@ -89,8 +89,8 @@ describe("mergeCalendars — remote rename", () => {
 
         const [result] = mergeCalendars(remote, prev);
 
-        expect(result.summary).toBe("New Name");
-        expect(result.active).toBe(true);
+        expect(result?.summary).toBe("New Name");
+        expect(result?.active).toBe(true);
     });
 
     it("preserves active: false when a calendar is renamed remotely", () => {
@@ -99,8 +99,8 @@ describe("mergeCalendars — remote rename", () => {
 
         const [result] = mergeCalendars(remote, prev);
 
-        expect(result.summary).toBe("New Name");
-        expect(result.active).toBe(false);
+        expect(result?.summary).toBe("New Name");
+        expect(result?.active).toBe(false);
     });
 
     it("handles simultaneous rename from remote: remote summary always wins", () => {
@@ -111,7 +111,7 @@ describe("mergeCalendars — remote rename", () => {
 
         const [result] = mergeCalendars(remote, prev);
 
-        expect(result.summary).toBe("Remote Name");
+        expect(result?.summary).toBe("Remote Name");
     });
 });
 
@@ -130,7 +130,7 @@ describe("mergeCalendars — remote color change", () => {
 
         const [result] = mergeCalendars(remote, prev);
 
-        expect(result.backgroundColor).toBe("#4285f4");
+        expect(result?.backgroundColor).toBe("#4285f4");
     });
 
     it("picks up new foregroundColor from remote", () => {
@@ -143,7 +143,7 @@ describe("mergeCalendars — remote color change", () => {
 
         const [result] = mergeCalendars(remote, prev);
 
-        expect(result.foregroundColor).toBe("#ffffff");
+        expect(result?.foregroundColor).toBe("#ffffff");
     });
 
     it("clears color if remote omits it (calendar has no color configured)", () => {
@@ -154,7 +154,7 @@ describe("mergeCalendars — remote color change", () => {
 
         const [result] = mergeCalendars(remote, prev);
 
-        expect(result.backgroundColor).toBeUndefined();
+        expect(result?.backgroundColor).toBeUndefined();
     });
 });
 
@@ -173,7 +173,7 @@ describe("mergeCalendars — remote deletion", () => {
         const result = mergeCalendars(remote, prev);
 
         expect(result).toHaveLength(1);
-        expect(result[0].id).toBe("c1");
+        expect(result[0]?.id).toBe("c1");
     });
 
     it("drops multiple deleted calendars in one pass", () => {
@@ -187,7 +187,7 @@ describe("mergeCalendars — remote deletion", () => {
         const result = mergeCalendars(remote, prev);
 
         expect(result).toHaveLength(1);
-        expect(result[0].id).toBe("c2");
+        expect(result[0]?.id).toBe("c2");
     });
 
     it("results in empty list if remote returns no calendars", () => {
@@ -248,9 +248,9 @@ describe("mergeCalendars — active flag sovereignty", () => {
 
         const [result] = mergeCalendars(remote, prev);
 
-        expect(result.summary).toBe("New");
-        expect(result.backgroundColor).toBe("#4285f4");
-        expect(result.active).toBe(false);
+        expect(result?.summary).toBe("New");
+        expect(result?.backgroundColor).toBe("#4285f4");
+        expect(result?.active).toBe(false);
     });
 
     it("new calendars default to active: true even if all existing are inactive", () => {
@@ -283,7 +283,7 @@ describe("mergeCalendars — ordering", () => {
 
         const result = mergeCalendars(remote, prev);
 
-        expect(result[0].id).toBe("c2");
-        expect(result[1].id).toBe("c1");
+        expect(result[0]?.id).toBe("c2");
+        expect(result[1]?.id).toBe("c1");
     });
 });

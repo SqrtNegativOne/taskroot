@@ -1,4 +1,3 @@
-/* oxlint-disable react(no-array-index-key) */
 import React, { useState, useEffect, useRef } from 'react';
 import type { AppTask, AppEvent } from '../../core/domain/models';
 import { search } from './search';

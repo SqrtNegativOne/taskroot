@@ -36,9 +36,11 @@ describe("hydrateEvents", () => {
         const hydrated = hydrateEvents(events, tasks);
 
         expect(hydrated.length).toBe(1);
-        expect(hydrated[0].title).toBe("Task 2");
-        expect(hydrated[0].task?.priority).toBe(2);
-        expect(hydrated[0].task?.status).toBe("done");
+        const h0 = hydrated[0];
+        if (!h0) throw new Error();
+        expect(h0.title).toBe("Task 2");
+        expect(h0.task?.priority).toBe(2);
+        expect(h0.task?.status).toBe("done");
     });
 
     it("should allow busy events to have their own titles and no task", () => {
@@ -56,8 +58,10 @@ describe("hydrateEvents", () => {
         const hydrated = hydrateEvents(events, tasks);
 
         expect(hydrated.length).toBe(1);
-        expect(hydrated[0].title).toBe("Team Sync");
-        expect(hydrated[0].task).toBeUndefined();
+        const h0 = hydrated[0];
+        if (!h0) throw new Error();
+        expect(h0.title).toBe("Team Sync");
+        expect(h0.task).toBeUndefined();
     });
 
     it("should hydrate an info event as a plan using the corresponding task data", () => {
@@ -82,7 +86,9 @@ describe("hydrateEvents", () => {
         ];
         const hydrated = hydrateEvents(events, tasks);
         expect(hydrated.length).toBe(1);
-        expect(hydrated[0].title).toBe("Task 1");
+        const h0 = hydrated[0];
+        if (!h0) throw new Error();
+        expect(h0.title).toBe("Task 1");
     });
 
     it("should reflect name updates dynamically (name update thing)", () => {
@@ -108,7 +114,9 @@ describe("hydrateEvents", () => {
             },
         ];
         let hydrated = hydrateEvents(events, tasks);
-        expect(hydrated[0].title).toBe("Old Name");
+        let h0 = hydrated[0];
+        if (!h0) throw new Error();
+        expect(h0.title).toBe("Old Name");
 
         // Name updates
         tasks = [
@@ -121,7 +129,9 @@ describe("hydrateEvents", () => {
             },
         ];
         hydrated = hydrateEvents(events, tasks);
-        expect(hydrated[0].title).toBe("New Name");
+        h0 = hydrated[0];
+        if (!h0) throw new Error();
+        expect(h0.title).toBe("New Name");
     });
 
     it("derives category from remoteCollectionId, not from any stored field", () => {
@@ -159,9 +169,13 @@ describe("hydrateEvents", () => {
 
         const hydrated = hydrateEvents(events, [], calendars);
 
-        expect(hydrated[0].category).toBe("Calendar One");
-        expect(hydrated[1].category).toBe("Calendar Two");
-        expect(hydrated[2].category).toBe("Calendar One"); // no ID → primary fallback
+        const h0 = hydrated[0];
+        const h1 = hydrated[1];
+        const h2 = hydrated[2];
+        if (!h0 || !h1 || !h2) throw new Error();
+        expect(h0.category).toBe("Calendar One");
+        expect(h1.category).toBe("Calendar Two");
+        expect(h2.category).toBe("Calendar One"); // no ID → primary fallback
     });
 });
 
@@ -186,6 +200,7 @@ describe("hydrateEvents — calendar rename", () => {
 
         const [hydrated] = hydrateEvents(events, [], calendars);
 
+        if (!hydrated) throw new Error();
         expect(hydrated.category).toBe("Work (renamed)");
     });
 
@@ -205,6 +220,7 @@ describe("hydrateEvents — calendar rename", () => {
         const [first] = hydrateEvents(events, [], calendars);
         const [second] = hydrateEvents(events, [], calendars);
 
+        if (!first || !second) throw new Error();
         expect(first.category).toBe(second.category);
     });
 
@@ -221,10 +237,14 @@ describe("hydrateEvents — calendar rename", () => {
         ];
 
         const before = hydrateEvents(events, [], [{ id: "cal-work", summary: "Work" }]);
-        expect(before[0].category).toBe("Work");
+        const b0 = before[0];
+        if (!b0) throw new Error();
+        expect(b0.category).toBe("Work");
 
         const after = hydrateEvents(events, [], [{ id: "cal-work", summary: "My Work Calendar" }]);
-        expect(after[0].category).toBe("My Work Calendar");
+        const a0 = after[0];
+        if (!a0) throw new Error();
+        expect(a0.category).toBe("My Work Calendar");
     });
 });
 
@@ -249,7 +269,10 @@ describe("hydrateEvents — calendar color change", () => {
             { id: "cal-work", summary: "Work", backgroundColor: "#4285f4" },
         ]);
 
-        expect(before[0].color).not.toBe(after[0].color);
+        const b0 = before[0];
+        const a0 = after[0];
+        if (!b0 || !a0) throw new Error();
+        expect(b0.color).not.toBe(a0.color);
     });
 
     it("has no color when the calendar has no backgroundColor configured", () => {
@@ -267,6 +290,7 @@ describe("hydrateEvents — calendar color change", () => {
 
         const [hydrated] = hydrateEvents(events, [], calendars);
 
+        if (!hydrated) throw new Error();
         expect(hydrated.color).toBeUndefined();
     });
 });
@@ -290,6 +314,7 @@ describe("hydrateEvents — calendar deleted from store", () => {
 
         const [hydrated] = hydrateEvents(events, [], calendars);
 
+        if (!hydrated) throw new Error();
         // Should fall back to the primary calendar's name, not crash
         expect(hydrated.category).toBe("Primary");
     });
@@ -309,6 +334,7 @@ describe("hydrateEvents — calendar deleted from store", () => {
 
         const [hydrated] = hydrateEvents(events, [], calendars);
 
+        if (!hydrated) throw new Error();
         expect(hydrated.category).toBe("First Calendar");
     });
 
@@ -327,8 +353,10 @@ describe("hydrateEvents — calendar deleted from store", () => {
         const hydrated = hydrateEvents(events, [], []);
 
         expect(hydrated).toHaveLength(1);
-        expect(hydrated[0].category).toBeUndefined();
-        expect(hydrated[0].color).toBeUndefined();
+        const h0 = hydrated[0];
+        if (!h0) throw new Error();
+        expect(h0.category).toBeUndefined();
+        expect(h0.color).toBeUndefined();
     });
 });
 
@@ -351,6 +379,7 @@ describe("hydrateEvents — new calendar added to store", () => {
 
         const [hydrated] = hydrateEvents(events, [], calendars);
 
+        if (!hydrated) throw new Error();
         expect(hydrated.category).toBe("Newly Created");
         expect(hydrated.color).toBeDefined();
     });
@@ -375,6 +404,7 @@ describe("hydrateEvents — event with no remoteCollectionId", () => {
 
         const [hydrated] = hydrateEvents(events, [], calendars);
 
+        if (!hydrated) throw new Error();
         expect(hydrated.category).toBe("Primary");
     });
 });
@@ -406,9 +436,12 @@ describe("hydrateEvents — multiple events across different calendars", () => {
 
         const hydrated = hydrateEvents(events, [], calendars);
 
-        expect(hydrated[0].category).toBe("Work");
-        expect(hydrated[1].category).toBe("Personal");
-        expect(hydrated[0].color).not.toBe(hydrated[1].color);
+        const h0 = hydrated[0];
+        const h1 = hydrated[1];
+        if (!h0 || !h1) throw new Error();
+        expect(h0.category).toBe("Work");
+        expect(h1.category).toBe("Personal");
+        expect(h0.color).not.toBe(h1.color);
     });
 
     it("resolves 'primary' alias to the calendar marked primary: true", () => {
@@ -428,6 +461,7 @@ describe("hydrateEvents — multiple events across different calendars", () => {
 
         const [hydrated] = hydrateEvents(events, [], calendars);
 
+        if (!hydrated) throw new Error();
         expect(hydrated.category).toBe("My Calendar");
     });
 });
@@ -452,8 +486,11 @@ describe("hydrateEvents — both sides changed (rename conflict)", () => {
         // Simulate after-poll (remote summary overwrites)
         const afterPollStore = [{ id: "cal-1", summary: "Remote Rename" }];
 
-        expect(hydrateEvents(events, [], localStore)[0].category).toBe("Local Rename");
-        expect(hydrateEvents(events, [], afterPollStore)[0].category).toBe("Remote Rename");
+        const h1 = hydrateEvents(events, [], localStore)[0];
+        const h2 = hydrateEvents(events, [], afterPollStore)[0];
+        if (!h1 || !h2) throw new Error();
+        expect(h1.category).toBe("Local Rename");
+        expect(h2.category).toBe("Remote Rename");
     });
 });
 
@@ -468,8 +505,10 @@ describe("ISO Architecture specific scenarios", () => {
                 endTime: "2026-08-02T02:00:00",
             }
         ];
-        expect(events[0].startTime).toBe("2026-08-01T22:00:00");
-        expect(events[0].endTime).toBe("2026-08-02T02:00:00");
+        const e0 = events[0];
+        if (!e0) throw new Error();
+        expect(e0.startTime).toBe("2026-08-01T22:00:00");
+        expect(e0.endTime).toBe("2026-08-02T02:00:00");
     });
 
     it("should handle multi-day all-day events", () => {
@@ -482,9 +521,11 @@ describe("ISO Architecture specific scenarios", () => {
                 endTime: "2026-08-15",
             }
         ];
-        expect(isEventAllDay(events[0])).toBe(true);
-        expect(events[0].startTime).toBe("2026-08-10");
-        expect(events[0].endTime).toBe("2026-08-15");
+        const e2 = events[0];
+        if (!e2) throw new Error();
+        expect(isEventAllDay(e2)).toBe(true);
+        expect(e2.startTime).toBe("2026-08-10");
+        expect(e2.endTime).toBe("2026-08-15");
     });
 
     it("should correctly identify all day events from strings", () => {

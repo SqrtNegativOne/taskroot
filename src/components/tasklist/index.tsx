@@ -206,7 +206,7 @@ export function TaskListPane({
                         <TaskRow
                             key={t.id}
                             task={t}
-                            onDragStart={onDragStart}
+                            {...(onDragStart !== undefined ? { onDragStart } : {})}
                             dragging={activeDragId === t.id}
                             updateTask={updateTask}
                             deleteTask={deleteTask}

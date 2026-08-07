@@ -148,8 +148,8 @@ export function DayCell({
                     <EventItem 
                         key={ev.id} 
                         ev={ev} 
-                        dragState={dragState} 
-                        onEventDragStart={onEventDragStart}
+                        {...(dragState !== undefined ? { dragState } : {})}
+                        {...(onEventDragStart !== undefined ? { onEventDragStart } : {})}
                         isEntering={entering.has(ev.id)}
                         isRemoving={removing.has(ev.id)}
                     />

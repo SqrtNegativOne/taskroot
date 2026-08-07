@@ -41,7 +41,7 @@ export function DLogRow({
                         row={row}
                         isEditing={isEditing}
                         setEditingCell={setEditingCell}
-                        statusEditor={statusEditor}
+                        {...(statusEditor !== undefined ? { statusEditor } : {})}
                         setStatusEditor={setStatusEditor}
                         updateRow={updateRow}
                         statuses={statuses}
@@ -88,7 +88,7 @@ function DLogCell({
     statuses,
     addStatus,
 }: DLogCellProps) {
-    const val = typeof row[col.id] === "string" ? (row[col.id] as string) : undefined;
+    const val = typeof row[col.id] === "string" ? String(row[col.id]) : undefined;
     return (
         <button
             type="button"
@@ -103,7 +103,7 @@ function DLogCell({
         >
             {col.type === "text" && (
                 <DLogTextCell 
-                    val={val} 
+                    {...(val !== undefined ? { val } : {})}
                     isEditing={isEditing} 
                     rowId={row.id} 
                     colId={col.id} 
@@ -113,7 +113,7 @@ function DLogCell({
             )}
             {col.type === "status" && (
                 <StatusCell
-                    value={val}
+                    {...(val !== undefined ? { value: val } : {})}
                     statuses={statuses}
                     open={statusEditor === row.id}
                     onClose={() => setStatusEditor(undefined)}

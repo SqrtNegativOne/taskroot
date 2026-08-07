@@ -8,7 +8,7 @@ interface User {
 }
 
 interface AuthContextType {
-    user?: User;
+    user?: User | undefined;
     loading: boolean;
     loginWithGoogle: () => Promise<void>;
     logout: () => Promise<void>;

@@ -10,7 +10,7 @@ import { DEFAULT_STATUSES, DEFAULT_DISTRACTION_COLUMNS, REST_CHECKLIST_DEFAULTS 
 export interface DistractionRow { readonly id: string; readonly [key: string]: unknown; }
 export interface DistractionStatus { readonly id: string; readonly label: string; readonly color: string; }
 export interface DistractionColumn { readonly id: string; readonly label: string; readonly width: number; readonly type: string; }
-export interface StopwatchState { readonly elapsed: number; readonly runningSince?: number; readonly isBreak: boolean; readonly breakAllowedMs: number; readonly breakStartedAt?: number; readonly breakSoundPlayed: boolean; }
+export interface StopwatchState { readonly elapsed: number; readonly runningSince?: number | undefined; readonly isBreak: boolean; readonly breakAllowedMs: number; readonly breakStartedAt?: number | undefined; readonly breakSoundPlayed: boolean; }
 export type TimeLog = AppEvent;
 export interface RestItem { readonly id: string; readonly title: string; readonly type: string; readonly checked?: boolean; }
 export interface CalendarData { readonly id: string; readonly summary: string; readonly active: boolean; readonly accessRole?: string; readonly backgroundColor?: string; readonly foregroundColor?: string; readonly primary?: boolean; }
@@ -21,17 +21,17 @@ const isUpdater = <T>(v: T | ((prev: T) => T)): v is ((prev: T) => T) => typeof 
 export class Repository<T> {
     public key: string;
     private initial: T;
-    private parser?: (saved: unknown) => T;
-    private interceptor?: (next: T, prev?: T) => T;
-    private onDelta?: (result: T, prev: T) => void;
+    private parser?: ((saved: unknown) => T) | undefined;
+    private interceptor?: ((next: T, prev?: T) => T) | undefined;
+    private onDelta?: ((result: T, prev: T) => void) | undefined;
 
     constructor(
         key: string,
         initial: T,
         options?: {
-            parser?: (saved: unknown) => T;
-            interceptor?: (next: T, prev?: T) => T;
-            onDelta?: (result: T, prev: T) => void;
+            parser?: ((saved: unknown) => T) | undefined;
+            interceptor?: ((next: T, prev?: T) => T) | undefined;
+            onDelta?: ((result: T, prev: T) => void) | undefined;
         }
     ) {
         this.key = key;
@@ -67,7 +67,7 @@ export class Repository<T> {
     }
 }
 
-function injectUpdatedAt<T extends { id?: string; updatedAt?: number }>(result: T[], prev?: T[]): T[] {
+function injectUpdatedAt<T extends { id?: string; updatedAt?: number | undefined }>(result: T[], prev?: T[]): T[] {
     if (!Array.isArray(result)) return result;
 
     let mutated = false;
@@ -156,8 +156,8 @@ function parseEvents(parsed: unknown): AppEvent[] {
 
 export const repos = {
     settings: new Repository<AppSettings>("settings", DEFAULT_SETTINGS, { parser: parseSettings }),
-    tasks: new Repository<AppTask[]>("tasks", [], { interceptor: (next, prev) => injectUpdatedAt(next, prev), onDelta: onTasksDelta }),
-    events: new Repository<AppEvent[]>("events", [], { parser: parseEvents, interceptor: (next, prev) => injectUpdatedAt(next, prev), onDelta: onEventsDelta }),
+    tasks: new Repository<AppTask[]>("tasks", [], { interceptor: (next, prev) => injectUpdatedAt<AppTask>(next, prev), onDelta: onTasksDelta }),
+    events: new Repository<AppEvent[]>("events", [], { parser: parseEvents, interceptor: (next, prev) => injectUpdatedAt<AppEvent>(next, prev), onDelta: onEventsDelta }),
     distractions: new Repository<DistractionRow[]>("distractions", []),
     distractionStatuses: new Repository<DistractionStatus[]>("distractionStatuses", DEFAULT_STATUSES),
     distractionColumns: new Repository<DistractionColumn[]>("distractionColumns", DEFAULT_DISTRACTION_COLUMNS),

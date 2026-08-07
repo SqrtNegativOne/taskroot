@@ -17,9 +17,10 @@ function extractLocalTaskId(googleTask: gapi.client.tasks.Task, existing?: AppTa
 }
 
 function parseGoogleTaskDue(dueStr?: string): import("../../domain/models").YmdString | undefined {
-    const p = dueStr?.split("T")[0].split("-");
-    /* eslint-disable-next-line no-magic-numbers */
-    if (p?.length !== 3) return undefined;
+    const t = dueStr?.split("T")[0];
+    const p = t ? t.split("-") : undefined;
+    const EXPECTED_DATE_PARTS = 3;
+    if (p?.length !== EXPECTED_DATE_PARTS) return undefined;
     return `${Number(p[0])}-${Number(p[1])}-${Number(p[2])}`;
 }
 
@@ -89,10 +90,10 @@ export class GoogleTasksAPI implements ITasksAPI {
         
         if (updatedFields && updatedFields.length > 0) {
             const partialPayload: Partial<gapi.client.tasks.Task> = {};
-            if (updatedFields.includes("title")) partialPayload.title = fullPayload.title;
-            if (updatedFields.includes("notes")) partialPayload.notes = fullPayload.notes;
-            if (updatedFields.includes("status")) partialPayload.status = fullPayload.status;
-            if (updatedFields.includes("due")) partialPayload.due = fullPayload.due;
+            if (updatedFields.includes("title") && fullPayload.title !== undefined) partialPayload.title = fullPayload.title;
+            if (updatedFields.includes("notes") && fullPayload.notes !== undefined) partialPayload.notes = fullPayload.notes;
+            if (updatedFields.includes("status") && fullPayload.status !== undefined) partialPayload.status = fullPayload.status;
+            if (updatedFields.includes("due") && fullPayload.due !== undefined) partialPayload.due = fullPayload.due;
             
             payloadToSubmit = partialPayload;
         }

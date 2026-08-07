@@ -53,12 +53,12 @@ export function DayTimeline<T extends DragState = DragState>({
                             events={events}
                             filter={filter || []}
                             sort={sort || ""}
-                            dragState={dragState}
-                            setDragState={setDragState}
+                            {...(dragState !== undefined ? { dragState } : {})}
+                            {...(setDragState !== undefined ? { setDragState } : {})}
                             onResizeEvent={onResizeEvent}
                             onMoveEvent={onMoveEvent}
-                            onEventClick={onEventClick}
-                            onAddEvent={onAddEvent}
+                            {...(onEventClick !== undefined ? { onEventClick } : {})}
+                            {...(onAddEvent !== undefined ? { onAddEvent } : {})}
                             showTimeLabels={i === 0}
                         />
                     ))}

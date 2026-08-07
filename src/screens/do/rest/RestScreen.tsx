@@ -63,8 +63,8 @@ function RestHeader() {
             <div className="rest-bracket-row">
                 <span className="bracket">┌─</span>
                 <span className="rest-label">
-                    REST · {DOW_SHORT[TODAY.getDay()].toLowerCase()}{" "}
-                    {MONTHS[TODAY.getMonth()].toLowerCase()} {TODAY.getDate()}
+                    REST · {DOW_SHORT[TODAY.getDay()]?.toLowerCase() || ""}{" "}
+                    {MONTHS[TODAY.getMonth()]?.toLowerCase() || ""} {TODAY.getDate()}
                 </span>
                 <span className="bracket">─┐</span>
             </div>

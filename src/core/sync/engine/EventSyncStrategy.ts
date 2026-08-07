@@ -16,7 +16,7 @@ export class EventSyncStrategy implements ISyncStrategy<AppEvent> {
     }
 
     isSyncEnabled(): boolean {
-        return this.context.getSettings().enableCalendarSync !== false;
+        return this.context.getSettings()["enableCalendarSync"] !== false;
     }
 
     getLocalStoreKey(): string {
@@ -106,14 +106,18 @@ export class EventSyncStrategy implements ISyncStrategy<AppEvent> {
             const baseEventRemoteId = taskOrEvent.item.recurringEventId ? eventsData.find(e => e.id === taskOrEvent.item.recurringEventId)?.remoteId : undefined;
             const res = await this.calendarAPI.createEvent(
                 taskOrEvent.item,
-                { baseEventRemoteId, calendarId: targetCalendarId }
+                { 
+                    ...(baseEventRemoteId !== undefined ? { baseEventRemoteId } : {}), 
+                    calendarId: targetCalendarId 
+                }
             );
             if (res) {
                 const events = this.context.getLocalData<AppEvent[]>("events");
                 const idx = events.findIndex((e) => e.id === taskOrEvent.item.id);
-                if (idx !== -1) {
+                const e = events[idx];
+                if (idx !== -1 && e) {
                     events[idx] = {
-                        ...events[idx],
+                        ...e,
                         remoteId: res.remoteId,
                         remoteCollectionId: res.calendarId,
                     };
@@ -136,7 +140,11 @@ export class EventSyncStrategy implements ISyncStrategy<AppEvent> {
                 await this.calendarAPI.updateEvent(
                     gid,
                     taskOrEvent.item,
-                    { updatedFields: taskOrEvent.updatedFields, baseEventRemoteId, calendarId: taskOrEvent.calendarId }
+                    { 
+                        ...(taskOrEvent.updatedFields !== undefined ? { updatedFields: taskOrEvent.updatedFields } : {}), 
+                        ...(baseEventRemoteId !== undefined ? { baseEventRemoteId } : {}), 
+                        ...(taskOrEvent.calendarId !== undefined ? { calendarId: taskOrEvent.calendarId } : {}) 
+                    }
                 );
             }
         },

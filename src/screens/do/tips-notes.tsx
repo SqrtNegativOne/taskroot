@@ -34,9 +34,7 @@ export function TipsList() {
     return (
         <ul className="tips-list">
             {tips.map((tip, i) => (
-                // Tips are simple strings without a unique ID; rendering order and removal don't cause state issues here because they contain no stateful children.
-                // eslint-disable-next-line react/no-array-index-key
-                <li key={i} className="tips-row">
+                <li key={tip} className="tips-row">
                     <span className="tips-bullet">·</span>
                     <span className="tips-text">{tip}</span>
                     <button

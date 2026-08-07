@@ -18,8 +18,9 @@ describe("rrule-utils", () => {
         const viewEnd = new Date("2026-07-31T23:59:59Z");
 
         const result = expandEventsForView(baseEvents, viewStart, viewEnd);
-        expect(result.length).toBe(1);
-        expect(result[0].title).toBe("Normal Event");
+        const r0 = result[0];
+        if (!r0) throw new Error();
+        expect(r0.title).toBe("Normal Event");
     });
 
     it("expands daily recurring events", () => {
@@ -37,9 +38,10 @@ describe("rrule-utils", () => {
         const viewEnd = new Date("2026-07-31T23:59:59Z");
 
         const result = expandEventsForView(baseEvents, viewStart, viewEnd);
-        expect(result.length).toBe(5);
-        expect(result[0].isInstance).toBe(true);
-        expect(result[0].baseEventId).toBe("2");
+        const r0 = result[0];
+        if (!r0) throw new Error();
+        expect(r0.isInstance).toBe(true);
+        expect(r0.baseEventId).toBe("2");
     });
 
     it("handles exceptions in recurring events", () => {
@@ -84,8 +86,10 @@ describe("rrule-utils", () => {
                 { id: '1', title: 'Test', startTime: '2026-08-01T10:00:00', endTime: '2026-08-01T11:00:00', type: 'busy', rrule: 'FREQ=DAILY' },
                 { id: '2', title: 'Other', startTime: '2026-08-02T10:00:00', endTime: '2026-08-02T11:00:00', type: 'busy' }
             ];
+            const e0 = events[0];
+            if (!e0) throw new Error();
             const instanceEvent: HydratedEvent = {
-                ...events[0],
+                ...e0,
                 id: '1_12345',
                 baseEventId: '1',
                 startTime: '2026-08-02T10:00:00',
@@ -94,8 +98,11 @@ describe("rrule-utils", () => {
             };
             
             const updated = applyRecurringUpdate(events, instanceEvent, 'all', { title: 'Updated' });
-            expect(updated[0].title).toBe('Updated');
-            expect(updated[1].title).toBe('Other');
+            const r0 = updated[0];
+            const r1 = updated[1];
+            if (!r0 || !r1) throw new Error();
+            expect(r0.title).toBe('Updated');
+            expect(r1.title).toBe('Other');
             expect(updated.length).toBe(2);
         });
 
@@ -103,8 +110,10 @@ describe("rrule-utils", () => {
             const events: AppEvent[] = [
                 { id: '1', title: 'Test', startTime: '2026-08-01T10:00:00', endTime: '2026-08-01T11:00:00', type: 'busy', rrule: 'FREQ=DAILY' }
             ];
+            const e0 = events[0];
+            if (!e0) throw new Error();
             const instanceEvent: HydratedEvent = {
-                ...events[0],
+                ...e0,
                 id: '1_12345',
                 baseEventId: '1',
                 startTime: '2026-08-02T10:00:00',
@@ -116,9 +125,11 @@ describe("rrule-utils", () => {
             expect(updated.length).toBe(2);
             
             // Base event gets an exdate
-            expect(updated[0].id).toBe('1');
-            expect(updated[0].exdates).toContain('20260802T100000');
-            expect(updated[0].title).toBe('Test'); // unchanged
+            const r0 = updated[0];
+            if (!r0) throw new Error();
+            expect(r0.id).toBe('1');
+            expect(r0.exdates).toContain('20260802T100000');
+            expect(r0.title).toBe('Test'); // unchanged
             
             // Override event is created
             const override = updated.find(e => e.recurringEventId === '1');
@@ -135,14 +146,17 @@ describe("rrule-utils", () => {
                 { id: 'override_1', title: 'Override', startTime: '2026-08-02T10:00:00', endTime: '2026-08-02T11:00:00', type: 'busy', recurringEventId: '1', originalStartTime: '2026-08-02T10:00:00' }
             ];
             // If they click the override in the UI, it's just the override event
-            const instanceEvent: AppEvent = events[1];
+            const instanceEvent = events[1];
+            if (!instanceEvent) throw new Error("Missing event");
             
             const updated = applyRecurringUpdate(events, instanceEvent, 'instance', { title: 'Updated Override' });
             expect(updated.length).toBe(2);
             
             const override = updated.find(e => e.id === 'override_1');
             expect(override?.title).toBe('Updated Override');
-            expect(updated[0].exdates).toContain('20260802T100000');
+            const r0 = updated[0];
+            if (!r0) throw new Error();
+            expect(r0.exdates).toContain('20260802T100000');
         });
     });
 
@@ -153,8 +167,10 @@ describe("rrule-utils", () => {
                 { id: 'override_1', title: 'Override', startTime: '2026-08-02T10:00:00', endTime: '2026-08-02T11:00:00', type: 'busy', recurringEventId: '1', originalStartTime: '2026-08-02T10:00:00' },
                 { id: '2', title: 'Other', startTime: '2026-08-03T10:00:00', endTime: '2026-08-03T11:00:00', type: 'busy' }
             ];
+            const e0 = events[0];
+            if (!e0) throw new Error();
             const instanceEvent: HydratedEvent = {
-                ...events[0],
+                ...e0,
                 id: '1_12345',
                 baseEventId: '1',
                 startTime: '2026-08-04T10:00:00',
@@ -164,15 +180,19 @@ describe("rrule-utils", () => {
             
             const updated = applyRecurringDelete(events, instanceEvent, 'all');
             expect(updated.length).toBe(1);
-            expect(updated[0].id).toBe('2'); // only the other event remains
+            const r0 = updated[0];
+            if (!r0) throw new Error();
+            expect(r0.id).toBe('2'); // only the other event remains
         });
 
         it('should add an exdate when mode is instance', () => {
             const events: AppEvent[] = [
                 { id: '1', title: 'Test', startTime: '2026-08-01T10:00:00', endTime: '2026-08-01T11:00:00', type: 'busy', rrule: 'FREQ=DAILY' }
             ];
+            const e0 = events[0];
+            if (!e0) throw new Error();
             const instanceEvent: HydratedEvent = {
-                ...events[0],
+                ...e0,
                 id: '1_12345',
                 baseEventId: '1',
                 startTime: '2026-08-02T10:00:00',
@@ -182,8 +202,8 @@ describe("rrule-utils", () => {
             
             const updated = applyRecurringDelete(events, instanceEvent, 'instance');
             expect(updated.length).toBe(1);
-            expect(updated[0].id).toBe('1');
-            expect(updated[0].exdates).toContain('20260802T100000');
+            expect(updated[0]?.id).toBe('1');
+            expect(updated[0]?.exdates).toContain('20260802T100000');
         });
 
         it('should remove an override if mode is instance and instance is an override', () => {
@@ -192,10 +212,11 @@ describe("rrule-utils", () => {
                 { id: 'override_1', title: 'Override', startTime: '2026-08-02T10:00:00', endTime: '2026-08-02T11:00:00', type: 'busy', recurringEventId: '1', originalStartTime: '2026-08-02T10:00:00' }
             ];
             const instanceEvent = events[1]; // UI passes the override event
+            if (!instanceEvent) throw new Error("Missing event");
             
             const updated = applyRecurringDelete(events, instanceEvent, 'instance');
             expect(updated.length).toBe(1);
-            expect(updated[0].id).toBe('1');
+            expect(updated[0]?.id).toBe('1');
             expect(updated.find(e => e.id === 'override_1')).toBeUndefined();
         });
     });

@@ -58,9 +58,7 @@ test("filters events by category correctly", () => {
             events={hydrateEvents(events, tasks, CALENDARS)}
             filter={filter}
             sort="time"
-            filterMenu={undefined}
             today={today}
-            dragState={undefined}
             onEventDragStart={() => {}}
             onAddEvent={() => {}}
         />
@@ -109,9 +107,7 @@ test("filters out events by category correctly using 'is not'", () => {
             events={hydrateEvents(events, tasks, CALENDARS)}
             filter={filter}
             sort="time"
-            filterMenu={undefined}
             today={today}
-            dragState={undefined}
             onEventDragStart={() => {}}
             onAddEvent={() => {}}
         />

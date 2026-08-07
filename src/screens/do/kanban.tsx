@@ -34,11 +34,12 @@ export function Kanban() {
             active = true;
             const el = document.elementFromPoint(ev.clientX, ev.clientY);
             const colEl = el instanceof Element ? el.closest("[data-kanban-col]") : undefined;
+            const overCol = colEl instanceof HTMLElement ? colEl.dataset?.["kanbanCol"] : undefined;
             setDrag({
                 taskId: task.id,
                 x: ev.clientX,
                 y: ev.clientY,
-                overCol: colEl instanceof HTMLElement ? colEl.dataset?.kanbanCol : undefined,
+                ...(overCol !== undefined ? { overCol } : {})
             });
         };
         const up = (ev: PointerEvent) => {
@@ -47,7 +48,7 @@ export function Kanban() {
             if (active) {
                 const el = document.elementFromPoint(ev.clientX, ev.clientY);
                 const colEl = el instanceof Element ? el.closest("[data-kanban-col]") : undefined;
-                const newStatus = colEl instanceof HTMLElement ? colEl.dataset.kanbanCol : undefined;
+                const newStatus = colEl instanceof HTMLElement ? colEl.dataset["kanbanCol"] : undefined;
                 if (
                     newStatus !== task.status &&
                     isAppTaskStatus(newStatus)

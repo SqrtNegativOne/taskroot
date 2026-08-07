@@ -19,7 +19,7 @@ function minToTime(m: number) {
 function timeToMin(t: string) {
     if (!t) return 0;
     const [hh, mm] = t.split(":");
-    return parseInt(hh, 10) * MINUTES_IN_HOUR + parseInt(mm, 10);
+    return parseInt(hh || "0", 10) * MINUTES_IN_HOUR + parseInt(mm || "0", 10);
 }
 
 export interface SettingRendererProps {
@@ -61,8 +61,8 @@ export const NumberSetting = ({ setting, val, settings, setSettings }: SettingRe
     return (
         <div style={{ display: "flex", gap: "12px", alignItems: "center", color: "var(--fg)" }}>
             <NumberInput
-                min={setting.min}
-                max={setting.max}
+                {...(setting.min !== undefined ? { min: setting.min } : {})}
+                {...(setting.max !== undefined ? { max: setting.max } : {})}
                 value={typeof val === "number" || typeof val === "string" ? val : ""}
                 onChange={(v) => setSettings({ ...settings, [setting.id]: v })}
             />

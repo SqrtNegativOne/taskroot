@@ -27,7 +27,6 @@ function processSingleTaskDelta(
 
     const updatedFields: (keyof AppTask)[] = [];
     // Object.keys returns string[], we know this is (keyof AppTask)[]
-    // oxlint-disable-next-line typescript/consistent-type-assertions
     for (const k of Object.keys(currentTask) as (keyof AppTask)[]) {
         if (k === "updatedAt" || k === "etag") continue;
         if (JSON.stringify(currentTask[k]) !== JSON.stringify(oldTask[k])) {
@@ -39,7 +38,7 @@ function processSingleTaskDelta(
         type: SyncType.Task,
         action: SyncAction.Update,
         item: currentTask,
-        remoteId: currentTask.remoteId,
+        ...(currentTask.remoteId !== undefined ? { remoteId: currentTask.remoteId } : {}),
         updatedFields,
     });
 }
@@ -60,7 +59,7 @@ export function computeTaskDeltaActions(
                 type: SyncType.Task,
                 action: SyncAction.Delete,
                 item: oldTask,
-                remoteId: oldTask.remoteId,
+                ...(oldTask.remoteId !== undefined ? { remoteId: oldTask.remoteId } : {}),
             });
         }
     }

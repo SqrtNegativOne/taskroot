@@ -41,8 +41,15 @@ export function hydrateEvents(
         const category = cal?.summary;
         if (ev.taskId) {
             const task = tasks.find((t) => t.id === ev.taskId);
-            return { ...ev, title: task ? task.title : "Unknown Task", task, color, category };
+            const result: HydratedEvent = { ...ev, title: task ? task.title : "Unknown Task" };
+            if (task !== undefined) result.task = task;
+            if (color !== undefined) result.color = color;
+            if (category !== undefined) result.category = category;
+            return result;
         }
-        return { ...ev, title: ev.title || "", color, category };
+        const result: HydratedEvent = { ...ev, title: ev.title || "" };
+        if (color !== undefined) result.color = color;
+        if (category !== undefined) result.category = category;
+        return result;
     });
 }

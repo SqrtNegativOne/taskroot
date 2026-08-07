@@ -1,6 +1,3 @@
-/* eslint-disable jsx-a11y/click-events-have-key-events */
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
 import React, {
     createContext,
     useState,
@@ -159,7 +156,6 @@ function NotificationItem({
 
     return (
         <div
-            onClick={handleClick}
             id={`notif-${notification.id}`}
             role="alert"
             style={{
@@ -177,7 +173,6 @@ function NotificationItem({
                 backdropFilter: "blur(8px)",
                 WebkitBackdropFilter: "blur(8px)",
                 pointerEvents: "auto", // Allow interacting with the notification if needed
-                cursor: "pointer",
                 transition: "background 0.15s ease",
                 animation: notification.exiting
                     ? "notify-fade-out-left 0.5s ease forwards"
@@ -185,13 +180,34 @@ function NotificationItem({
                 maxWidth: "350px",
                 wordBreak: "break-word",
                 overflow: "hidden",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: "12px",
             }}
-            title="Click to copy"
         >
+            <button
+                onClick={handleClick}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        void handleClick();
+                    }
+                }}
+                title="Click to copy"
+                style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: "12px",
+                    width: "100%",
+                    outline: "none",
+                    cursor: "pointer",
+                    background: "transparent",
+                    border: "none",
+                    color: "inherit",
+                    padding: 0,
+                    fontFamily: "inherit",
+                    fontSize: "inherit",
+                    textAlign: "left"
+                }}
+            >
             <span style={{ flex: 1 }}>{notification.message}</span>
             <button
                 onClick={(e) => {
@@ -227,6 +243,7 @@ function NotificationItem({
           100% { opacity: 0; transform: translateX(-30px); max-height: 0; padding-top: 0; padding-bottom: 0; margin-top: -12px; border-width: 0; }
         }
       `}</style>
+            </button>
         </div>
     );
 }

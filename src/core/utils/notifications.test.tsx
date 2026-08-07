@@ -60,8 +60,8 @@ describe("Notification System", () => {
 
         act(() => {
             const buttons = screen.getAllByText("Trigger Notification");
-            fireEvent.click(buttons[0]);
-            fireEvent.click(buttons[1]);
+            if (buttons[0]) fireEvent.click(buttons[0]);
+            if (buttons[1]) fireEvent.click(buttons[1]);
         });
 
         expect(screen.getByText("Message 1")).toBeInTheDocument();

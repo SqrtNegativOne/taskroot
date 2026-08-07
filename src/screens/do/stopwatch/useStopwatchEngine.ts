@@ -15,7 +15,8 @@ export function useStopwatchEngine(setSelectorOpen: (val: boolean) => void) {
     const [settings] = useSettings();
     const [, setTimeLogs] = useTimeLogs();
 
-    const strategy = CLOCK_STRATEGIES[settings.clockStyle || "counter"] || CLOCK_STRATEGIES.counter;
+    const strategy = CLOCK_STRATEGIES[settings.clockStyle || "counter"] || CLOCK_STRATEGIES["counter"];
+    if (!strategy) throw new Error("Missing clock strategy");
 
     const running = state.runningSince !== undefined;
     const currentMs = state.elapsed + (running && !state.isBreak ? Date.now() - (state.runningSince || 0) : 0);
@@ -28,7 +29,7 @@ export function useStopwatchEngine(setSelectorOpen: (val: boolean) => void) {
         currentMs,
         isPristine,
         running,
-        activeTask,
+        ...(activeTask !== undefined ? { activeTask } : {}),
         allowNoTask,
         settings
     }), [state, currentMs, isPristine, running, activeTask, allowNoTask, settings]);

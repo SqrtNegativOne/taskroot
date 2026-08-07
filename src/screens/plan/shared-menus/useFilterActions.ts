@@ -3,7 +3,7 @@ import type { Dispatch, SetStateAction } from "react";
 
 export function useFilterActions(filters: Filter[], setFilters: Dispatch<SetStateAction<Filter[]>>, columns: Column[], getValuesForColumn: (c: string) => string[]) {
     const addFilter = () => {
-        const firstCol = columns[0].id;
+        const firstCol = columns[0]?.id || "";
         const firstVal = [getValuesForColumn(firstCol)[0] || ""];
         setFilters([
             ...filters,

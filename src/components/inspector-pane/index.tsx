@@ -57,8 +57,11 @@ function useCurrentItem(
             const currentEvent = events.find((e) => e.id === currentState.id) || events.find((e) => e.id === currentState.id.split("_")[0]);
             return { currentTask: undefined, currentEvent, currentItem: currentEvent, isCurrentTask: false, isNew: false };
         }
+        default: {
+            const _exhaustiveCheck: never = currentState;
+            throw new Error(`Unhandled state type: ${JSON.stringify(_exhaustiveCheck)}`);
+        }
     }
-    throw new Error(`Unhandled state type: ${JSON.stringify(currentState)}`);
 }
 
 export function InspectorPane({
@@ -130,7 +133,7 @@ export function InspectorPane({
                 setDraftItem(next);
             }
         } else if (currentEvent && interceptRecurringAction) {
-             const isRecurring = !!currentEvent.rrule || currentEvent.isInstance;
+             const isRecurring = !!currentEvent.rrule || Boolean(currentEvent["isInstance"]);
              if (isRecurring && !inspectorEditMode) {
                  interceptRecurringAction(currentEvent, "edit", updates, (mode) => {
                      setInspectorEditMode(mode);
@@ -166,7 +169,7 @@ export function InspectorPane({
             setTasks((ts) => ts.filter((t) => t.id !== currentItem.id));
             setEvents((es) => es.filter((e) => e.taskId !== currentItem.id));
         } else if (currentEvent && interceptRecurringAction) {
-            const isRecurring = !!currentEvent.rrule || currentEvent.isInstance;
+            const isRecurring = !!currentEvent.rrule || Boolean(currentEvent["isInstance"]);
             if (isRecurring) {
                 interceptRecurringAction(currentEvent, "delete", undefined, (mode) => {
                     setEvents(es => applyRecurringDelete(es, currentEvent, mode));
@@ -220,8 +223,8 @@ export function InspectorPane({
             {currentItem && (
                 <InspectorPaneContent
                     currentItem={currentItem}
-                    currentTask={currentTask}
-                    currentEvent={currentEvent}
+                    {...(currentTask !== undefined ? { currentTask } : {})}
+                    {...(currentEvent !== undefined ? { currentEvent } : {})}
                     isReadOnlyCalendar={isReadOnlyCalendar}
                     title={title}
                     tasks={tasks}

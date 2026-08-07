@@ -1,7 +1,7 @@
 import type { ISyncEngineContext, SyncQueueItem } from "./types";
 import { SyncAction, SyncType } from "./types";
 
-export interface ISyncStrategy<T extends { id: string; remoteId?: string; updatedAt?: number }> {
+export interface ISyncStrategy<T extends { id: string; remoteId?: string | undefined; updatedAt?: number | undefined }> {
     isSyncEnabled(): boolean;
     getLocalStoreKey(): string;
     getSyncType(): SyncType;
@@ -13,7 +13,7 @@ export interface ISyncStrategy<T extends { id: string; remoteId?: string; update
     extractItem(q: SyncQueueItem): T | undefined;
 }
 
-export class Synchronizer<T extends { id: string; remoteId?: string; updatedAt?: number }> {
+export class Synchronizer<T extends { id: string; remoteId?: string | undefined; updatedAt?: number | undefined }> {
     protected context: ISyncEngineContext;
     private strategy: ISyncStrategy<T>;
 

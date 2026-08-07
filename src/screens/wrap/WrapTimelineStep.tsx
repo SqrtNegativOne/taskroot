@@ -29,7 +29,6 @@ export function WrapTimelineStep({
                     today={TODAY}
                     timelineDate={TODAY}
                     setTimelineDate={() => {}}
-                    dragState={undefined}
                     setDragState={() => {}}
                     onResizeEvent={() => {}}
                     onMoveEvent={() => {}}
@@ -38,7 +37,6 @@ export function WrapTimelineStep({
                     onDropToTime={() => {}}
                     filter={[]}
                     sort="time"
-                    filterMenu={undefined}
                 />
             </div>
             <p className="wrap-timeline-text">

@@ -49,6 +49,6 @@ export interface EventBlockProps<T extends DragState = DragState> {
     onResize?: (id: string, start: number, end: number) => void;
     onMove?: (id: string, start: number, end: number) => void;
     dragState?: T;
-    setDragState?: (s: T | undefined) => void;
+    setDragState?: React.Dispatch<React.SetStateAction<T | undefined>>;
     onEventClick?: (e: HydratedEvent) => void;
 }

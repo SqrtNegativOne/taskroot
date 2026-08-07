@@ -25,7 +25,8 @@ export function MiniTrackerClock({
     }
     
     const taskName = activeTask ? activeTask.title : "Work session";
-    const strategy = CLOCK_STRATEGIES[clockStyle] || CLOCK_STRATEGIES.counter;
+    const strategy = CLOCK_STRATEGIES[clockStyle] || CLOCK_STRATEGIES["counter"];
+    if (!strategy) throw new Error("Fallback clock strategy 'counter' is missing.");
     
     const optionsObj: ReadonlyStopwatchContext = {
         currentMs,

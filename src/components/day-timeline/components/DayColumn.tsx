@@ -27,7 +27,7 @@ export interface DayColumnProps<T extends DragState = DragState> {
     filter: AppFilter[];
     sort: string;
     dragState?: T;
-    setDragState?: (s: T | undefined) => void;
+    setDragState?: React.Dispatch<React.SetStateAction<T | undefined>>;
     onResizeEvent?: (id: string, startTime: string, endTime: string) => void;
     onMoveEvent?: (id: string, startTime: string, endTime: string) => void;
     onEventClick?: (ev: HydratedEvent) => void;
@@ -143,9 +143,9 @@ export function DayColumn<T extends DragState = DragState>({
                     lanes={lanes}
                     onResize={handleResize}
                     onMove={handleMove}
-                    dragState={dragState}
-                    setDragState={setDragState}
-                    onEventClick={onEventClick}
+                    {...(dragState !== undefined ? { dragState } : {})}
+                    {...(setDragState !== undefined ? { setDragState } : {})}
+                    {...(onEventClick !== undefined ? { onEventClick } : {})}
                     labelOffset={showTimeLabels ? LABEL_OFFSET_PX : LABEL_OFFSET_COMPACT_PX}
                 />
             ))}

@@ -39,8 +39,12 @@ export function SettingsScreen() {
     const settingsBySection = useMemo(() => {
         const grouped: Record<string, typeof SETTINGS_SCHEMA> = {};
         for (const s of displayedSettings) {
-            if (!grouped[s.section]) grouped[s.section] = [];
-            grouped[s.section].push(s);
+            const sectionArr = grouped[s.section];
+            if (!sectionArr) {
+                grouped[s.section] = [s];
+            } else {
+                sectionArr.push(s);
+            }
         }
         return grouped;
     }, [displayedSettings]);

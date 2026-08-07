@@ -19,11 +19,11 @@ describe('search', () => {
 
         const results = search('home', items);
         expect(results.length).toBe(3);
-        expect(results[0].id).toBe(1); // 'Do homework' -> 'home' is a complete word boundary match
+        expect(results[0]?.id).toBe(1); // 'Do homework' -> 'home' is a complete word boundary match
 
         const results2 = search('crft', items);
         expect(results2.length).toBe(1);
-        expect(results2[0].id).toBe(3);
+        expect(results2[0]?.id).toBe(3);
     });
 });
 
@@ -32,22 +32,22 @@ describe('parseCommands', () => {
         const tasks: import('../../core/domain/models').AppTask[] = [{ id: '1', title: 'Buy milk' }];
         const res = parseCommands('plan milk', tasks);
         expect(res.length).toBe(2);
-        expect(res[0].action).toBe('PLAN_TASK');
-        expect(res[1].action).toBe('PLAN_TASK_EXISTING');
+        expect(res[0]?.action).toBe('PLAN_TASK');
+        expect(res[1]?.action).toBe('PLAN_TASK_EXISTING');
     });
 
     it('parses do command correctly', () => {
         const tasks: import('../../core/domain/models').AppTask[] = [{ id: '1', title: 'Buy milk' }];
         const res = parseCommands('do milk', tasks);
         expect(res.length).toBe(2);
-        expect(res[0].action).toBe('DO_TASK');
-        expect(res[1].action).toBe('DO_TASK_EXISTING');
+        expect(res[0]?.action).toBe('DO_TASK');
+        expect(res[1]?.action).toBe('DO_TASK_EXISTING');
     });
 
     it('parses add task command correctly', () => {
         const res = parseCommands('add some task', []);
         expect(res.length).toBe(1);
-        expect(res[0].action).toBe('ADD_TASK');
-        expect(res[0].payload?.taskName).toBe('some task');
+        expect(res[0]?.action).toBe('ADD_TASK');
+        expect(res[0]?.payload?.["taskName"]).toBe('some task');
     });
 });

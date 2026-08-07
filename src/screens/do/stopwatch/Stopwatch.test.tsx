@@ -11,7 +11,7 @@ function createMockContext(overrides: Partial<ReadonlyStopwatchContext>): Readon
         running: false,
         isPristine: true,
         state: { runningSince: undefined, elapsed: 0, isBreak: false, breakAllowedMs: 0, breakStartedAt: undefined, breakSoundPlayed: false },
-        activeTask: undefined,
+
         allowNoTask: false,
         settings: {},
         ...overrides
@@ -28,14 +28,15 @@ describe("createWorkSessionEvent", () => {
         const ev = createWorkSessionEvent(MS_PER_SECOND, 62000, "task1", "counter");
         expect(ev).not.toBeUndefined();
         expect(ev?.taskId).toBe("task1");
-        expect(ev?.clockStyle).toBe("counter");
+        expect(ev?.["clockStyle"]).toBe("counter");
     });
 });
 
 describe("CounterClockStrategy", () => {
-    const strategy = CLOCK_STRATEGIES.counter;
+    const strategy = CLOCK_STRATEGIES["counter"];
 
     test("requiresAnimationLoop when running", () => {
+        if (!strategy) throw new Error();
         expect(
             strategy.requiresAnimationLoop(createMockContext({ running: true, state: { runningSince: 123, elapsed: 0, isBreak: false, breakAllowedMs: 0, breakStartedAt: undefined, breakSoundPlayed: false } })),
         ).toBe(true);
@@ -45,6 +46,7 @@ describe("CounterClockStrategy", () => {
     });
 
     test("calculateToggle toggles state", () => {
+        if (!strategy) throw new Error();
         // Start
         const effect1 = strategy.calculateToggle(createMockContext({
             isPristine: true,
@@ -64,9 +66,10 @@ describe("CounterClockStrategy", () => {
 });
 
 describe("FlowtimeClockStrategy", () => {
-    const strategy = CLOCK_STRATEGIES.flowtime;
+    const strategy = CLOCK_STRATEGIES["flowtime"];
 
     test("calculateToggle prevents pause during break", () => {
+        if (!strategy) throw new Error();
         const effect = strategy.calculateToggle(createMockContext({
             isPristine: false,
             running: false,
@@ -77,9 +80,10 @@ describe("FlowtimeClockStrategy", () => {
 });
 
 describe("GuzeyClockStrategy", () => {
-    const strategy = CLOCK_STRATEGIES.guzey;
+    const strategy = CLOCK_STRATEGIES["guzey"];
 
     test("requiresAnimationLoop is true", () => {
+        if (!strategy) throw new Error();
         expect(strategy.requiresAnimationLoop(createMockContext({ running: true, state: { runningSince: 1000, elapsed: 0, isBreak: false, breakAllowedMs: 0, breakStartedAt: undefined, breakSoundPlayed: false } }))).toBe(true);
     });
 });

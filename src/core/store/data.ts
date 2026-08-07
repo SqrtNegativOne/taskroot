@@ -12,7 +12,10 @@ export const PAD2 = (n: number | string): string => String(n).padStart(2, "0");
 export const ymd = (d: Date): import("../domain/models").YmdString =>
     `${d.getFullYear()}-${PAD2(d.getMonth() + 1)}-${PAD2(d.getDate())}`;
 export const parseYMD = (s: string): Date => {
-    const [y, m, d] = s.split("-").map(Number);
+    const parts = s.split("-").map(Number);
+    const y = parts[0] || 0;
+    const m = parts[1] || 1;
+    const d = parts[2] || 1;
     return new Date(y, m - 1, d);
 };
 export const sameDay = (a: Date, b: Date): boolean =>

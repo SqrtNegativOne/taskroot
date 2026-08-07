@@ -100,8 +100,8 @@ describe("Sync Engine - Edge Cases (Partial Payload & Merging)", () => {
         // This assertion will fail with the current blind overwrite implementation!
         // Because applyOptimisticOverlay just overwrites the whole task from the queue,
         // destroying the remote due date edit.
-        expect(finalTask.title).toBe("Edited Local Title");
-        expect(finalTask.due).toBe("2024-12-31"); 
+        expect(finalTask?.title).toBe("Edited Local Title");
+        expect(finalTask?.due).toBe("2024-12-31"); 
     });
 
     it("should merge local status edits with remote notes edits correctly", async () => {
@@ -157,7 +157,7 @@ describe("Sync Engine - Edge Cases (Partial Payload & Merging)", () => {
         expect(resultingTasks).toHaveLength(1);
         const finalTask = resultingTasks[0];
 
-        expect(finalTask.status).toBe("done");
-        expect(finalTask.notes).toBe("Edited Notes\nTaskroot Task ID: t2");
+        expect(finalTask?.status).toBe("done");
+        expect(finalTask?.notes).toBe("Edited Notes\nTaskroot Task ID: t2");
     });
 });

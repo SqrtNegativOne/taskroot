@@ -1,9 +1,9 @@
-function isNotDeleted<T extends object>(item: T | { id: string, _deleted?: boolean, updatedAt?: number }): item is T {
+function isNotDeleted<T extends object>(item: T | { id: string, _deleted?: boolean | undefined, updatedAt?: number | undefined }): item is T {
     return !("_deleted" in item && item._deleted);
 }
 
-export function resolveConflict<T extends { id: string, updatedAt?: number }>(
-    remoteItem: T | { id: string, _deleted?: boolean, updatedAt?: number },
+export function resolveConflict<T extends { id: string, updatedAt?: number | undefined }>(
+    remoteItem: T | { id: string, _deleted?: boolean | undefined, updatedAt?: number | undefined },
     existingLocalItem: T | undefined,
     localItemsMap: Map<string, T>
 ): boolean {

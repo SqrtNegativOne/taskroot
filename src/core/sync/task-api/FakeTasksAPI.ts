@@ -11,7 +11,8 @@ function extractLocalTaskId(googleTask: gapi.client.tasks.Task, existing?: AppTa
 }
 
 function parseGoogleTaskDue(dueStr?: string): import("../../domain/models").YmdString | undefined {
-    const p = dueStr?.split("T")[0].split("-");
+    const t = dueStr?.split("T")[0];
+    const p = t ? t.split("-") : undefined;
     const EXPECTED_DATE_PARTS = 3;
     if (p?.length !== EXPECTED_DATE_PARTS) return undefined;
     return `${Number(p[0])}-${Number(p[1])}-${Number(p[2])}`;
@@ -60,7 +61,8 @@ export class FakeTasksAPI implements ITasksAPI {
         const index = this.tasks[tasklistId].findIndex(t => t.id === remoteId);
         if (index === -1) throw new Error("Task not found");
         
-        const existingTask = this.tasks[tasklistId][index];
+        const existingTask = this.tasks[tasklistId]?.[index];
+        if (!existingTask) throw new Error("Task not found");
         if (localTask.etag && existingTask.etag !== localTask.etag) {
             throw new ConflictError(`ETag conflict on task: ${localTask.title}`);
         }
@@ -76,9 +78,12 @@ export class FakeTasksAPI implements ITasksAPI {
         if (!this.tasks[tasklistId]) return;
         const index = this.tasks[tasklistId].findIndex(t => t.id === remoteId);
         if (index !== -1) {
-            this.tasks[tasklistId][index].deleted = true;
-            this.tasks[tasklistId][index].etag = this.generateEtag();
-            this.tasks[tasklistId][index].updated = new Date().toISOString();
+        const t = this.tasks[tasklistId]?.[index];
+        if (t) {
+            t.deleted = true;
+            t.etag = this.generateEtag();
+            t.updated = new Date().toISOString();
+        }
         }
     }
 

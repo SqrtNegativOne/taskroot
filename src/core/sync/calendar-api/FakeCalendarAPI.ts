@@ -23,7 +23,7 @@ function extractEventTime(googleEvent: gapi.client.calendar.Event) {
 
 function handleCancelledEvent(googleEvent: gapi.client.calendar.Event) {
     const privateProps = googleEvent.extendedProperties?.private;
-    const id = (privateProps ? privateProps.taskrootEventId : undefined) || googleEvent.id;
+    const id = (privateProps ? privateProps["taskrootEventId"] : undefined) || googleEvent.id;
     if (!id) throw new Error("Cancelled Google event missing ID");
     return {
         id,
@@ -34,20 +34,20 @@ function handleCancelledEvent(googleEvent: gapi.client.calendar.Event) {
 
 function getEventId(googleEvent: gapi.client.calendar.Event) {
     const priv = googleEvent.extendedProperties?.private;
-    if (priv?.taskrootEventId) return priv.taskrootEventId;
+    if (priv?.["taskrootEventId"]) return priv["taskrootEventId"];
     if (!googleEvent.id) throw new Error("Google event missing ID");
     return googleEvent.id;
 }
 
 function getEventTaskId(googleEvent: gapi.client.calendar.Event) {
-    return googleEvent.extendedProperties?.private?.taskId;
+    return googleEvent.extendedProperties?.private?.["taskId"];
 }
 
 function extractEventMetadata(googleEvent: gapi.client.calendar.Event) {
     const taskId = getEventTaskId(googleEvent);
     const id = getEventId(googleEvent);
     const defaultType: AppEvent['type'] = googleEvent.transparency === "transparent" ? "info" : "busy";
-    const type = toEventType(googleEvent.extendedProperties?.private?.type, defaultType);
+    const type = toEventType(googleEvent.extendedProperties?.private?.["type"], defaultType);
     return { taskId, id, type };
 }
 
@@ -65,7 +65,7 @@ function parseRecurrenceRule(recurrence?: string[]): { rrule?: string, exdates?:
             }
         }
     }
-    return { rrule, ...(exdates.length > 0 ? { exdates } : {}) };
+    return { ...(rrule !== undefined ? { rrule } : {}), ...(exdates.length > 0 ? { exdates } : {}) };
 }
 
 export class FakeCalendarAPI implements ICalendarAPI {
@@ -106,6 +106,7 @@ export class FakeCalendarAPI implements ICalendarAPI {
         if (index === -1) throw new Error("Event not found");
         
         const existingEvent = this.calendars[calendarId][index];
+        if (!existingEvent) throw new Error("Event not found");
         if (localEvent.etag && existingEvent.etag !== localEvent.etag) {
             throw new ConflictError(`ETag conflict on event: ${localEvent.title}`);
         }
@@ -135,9 +136,12 @@ export class FakeCalendarAPI implements ICalendarAPI {
         if (!this.calendars[calendarId]) return;
         const index = this.calendars[calendarId].findIndex(e => e.id === remoteId);
         if (index !== -1) {
-            this.calendars[calendarId][index].status = "cancelled";
-            this.calendars[calendarId][index].etag = this.generateEtag();
-            this.calendars[calendarId][index].updated = new Date().toISOString();
+            const ev = this.calendars[calendarId][index];
+            if (ev) {
+                ev.status = "cancelled";
+                ev.etag = this.generateEtag();
+                ev.updated = new Date().toISOString();
+            }
         }
     }
 
@@ -181,7 +185,7 @@ export class FakeCalendarAPI implements ICalendarAPI {
                 if (isEventAllDay(localEvent)) {
                     let dateOnly = exdate;
                     if (exdate.includes("T")) {
-                        dateOnly = exdate.split("T")[0];
+                        dateOnly = exdate.split("T")[0] || exdate;
                     }
                     recurrence.push(`EXDATE;VALUE=DATE:${dateOnly}`);
                 } else {

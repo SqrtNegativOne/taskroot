@@ -52,7 +52,7 @@ export function DateGrid({
     events: HydratedEvent[];
     filter: AppFilter[];
     sort: string;
-    filterMenu: React.ReactNode;
+    filterMenu?: React.ReactNode;
     today: Date;
     dragState?: { target?: { kind: string; date?: string }; event?: { id: string } };
     onEventDragStart?: (e: React.PointerEvent<HTMLDivElement>, ev: HydratedEvent, task?: import("../../../core/domain/models").AppTask) => void;
@@ -73,7 +73,7 @@ export function DateGrid({
     }, [events, filter, sort]);
 
     const titleLabel = isStrip
-        ? weekRangeLabel(cells[0].date, cells[cells.length - 1].date)
+        ? weekRangeLabel(cells[0]?.date || anchor, cells[cells.length - 1]?.date || anchor)
         : `${MONTHS_LONG[anchor.getMonth()]} ${anchor.getFullYear()}`;
 
     const shift = (n: number) => {
@@ -93,7 +93,7 @@ export function DateGrid({
                 setView={setView}
                 setAnchor={setAnchor}
                 shift={shift}
-                filterMenu={filterMenu}
+                {...(filterMenu !== undefined ? { filterMenu } : {})}
             />
 
             <div className={`cal-grid ${isStrip ? "is-strip" : "is-grid"}`}>
@@ -119,9 +119,9 @@ export function DateGrid({
                                 return eStart < cellEnd && eEnd > cellStart;
                             })}
                             isWeek={isStrip}
-                            dragState={dragState}
-                            onEventDragStart={onEventDragStart}
-                            onAddEvent={onAddEvent}
+                            {...(dragState !== undefined ? { dragState } : {})}
+                            {...(onEventDragStart !== undefined ? { onEventDragStart } : {})}
+                            {...(onAddEvent !== undefined ? { onAddEvent } : {})}
                         />
                     ))}
                 </div>

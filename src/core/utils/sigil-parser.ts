@@ -61,7 +61,8 @@ function getPriorityValue(sigil: string): number | undefined {
 
 function processToken(part: string, properties: ParsedProperties): boolean {
     if (PRIORITY_REGEX.test(part)) {
-        properties.priority = getPriorityValue(part);
+        const val = getPriorityValue(part);
+        if (val !== undefined) properties.priority = val;
         return true;
     } else if (DAY_REGEX.test(part)) {
         properties.day = part.toLowerCase();
@@ -71,7 +72,7 @@ function processToken(part: string, properties: ParsedProperties): boolean {
         return true;
     } else if (DURATION_REGEX.test(part)) {
         const m = part.match(DURATION_REGEX);
-        if (m) {
+        if (m?.[1] && m?.[2]) {
             const val = parseInt(m[1], 10);
             const unit = m[2].toLowerCase();
             properties.duration = unit.startsWith("h") ? val * MINUTES_IN_HOUR : val;
@@ -79,7 +80,7 @@ function processToken(part: string, properties: ParsedProperties): boolean {
         }
     } else if (TAG_REGEX.test(part)) {
         const m = part.match(TAG_REGEX);
-        if (m) {
+        if (m?.[1]) {
             if (!properties.tags) properties.tags = [];
             properties.tags.push(m[1]);
             return true;
@@ -100,8 +101,9 @@ function mergeTextTokens(tokens: Token[]): string {
 function mergeAdjacentTokens(tokens: Token[]): Token[] {
     const mergedTokens: Token[] = [];
     for (const t of tokens) {
-        if (mergedTokens.length > 0 && mergedTokens[mergedTokens.length - 1].type === t.type) {
-            mergedTokens[mergedTokens.length - 1].text += t.text;
+        if (mergedTokens.length > 0 && mergedTokens[mergedTokens.length - 1]?.type === t.type) {
+            const lastToken = mergedTokens[mergedTokens.length - 1];
+            if (lastToken) lastToken.text += t.text;
         } else {
             mergedTokens.push({ ...t });
         }
@@ -111,12 +113,13 @@ function mergeAdjacentTokens(tokens: Token[]): Token[] {
 
 function processDurationSigil(parts: string[], i: number, properties: ParsedProperties, tokens: Token[]): boolean {
     const part = parts[i];
+    if (!part) return false;
     if (i + 2 < parts.length && (part.toLowerCase() === "for" || part.toLowerCase() === "in")) {
-        const nextSpace = parts[i+1];
-        const nextWord = parts[i+2];
+        const nextSpace = parts[i+1] || "";
+        const nextWord = parts[i+2] || "";
         const combined = part + nextSpace + nextWord;
         const durMatch = combined.match(DURATION_REGEX);
-        if (durMatch?.[0] === combined) {
+        if (durMatch?.[0] === combined && durMatch[1] && durMatch[2]) {
             const val = parseInt(durMatch[1], 10);
             const unit = durMatch[2].toLowerCase();
             properties.duration = unit.startsWith("h") ? val * MINUTES_IN_HOUR : val;
@@ -134,6 +137,7 @@ export function parseSigils(title: string): ParseResult {
     
     for (let i = 0; i < parts.length; i++) {
         const part = parts[i];
+        if (part === undefined) continue;
         if (part.trim() === "") {
             tokens.push({ type: "text", text: part });
             continue;

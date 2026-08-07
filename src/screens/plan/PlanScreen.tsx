@@ -89,7 +89,7 @@ export function PlanScreen() {
         _updatesOrNone: Partial<AppEvent> | undefined, 
         executeImmediately: (mode: RecurringMode) => void
     ) => {
-        const isRecurring = !!event.rrule || !!event.isInstance;
+        const isRecurring = !!event.rrule || !!event["isInstance"];
         if (isRecurring) {
             setRecurringPrompt({
                 actionType,
@@ -125,7 +125,7 @@ export function PlanScreen() {
                         query={query}
                         setQuery={setQuery}
                         onDragStart={onTaskDragStart}
-                        activeDragId={dragState?.task?.id}
+                        {...(dragState?.task?.id !== undefined ? { activeDragId: dragState.task.id } : {})}
                         onAddTask={onAddTask}
                         onDeleteTask={onDeleteTask}
                     />
@@ -157,7 +157,7 @@ export function PlanScreen() {
                                     />
                                 }
                                 today={TODAY}
-                                dragState={dragState}
+                                {...(dragState !== undefined ? { dragState } : {})}
                                 onEventDragStart={onEventDragStart}
                                 onAddEvent={onAddEvent}
                             />
@@ -180,7 +180,7 @@ export function PlanScreen() {
                                 today={TODAY}
                                 timelineDate={timelineDate}
                                 setTimelineDate={setTimelineDate}
-                                dragState={dragState}
+                                {...(dragState !== undefined ? { dragState } : {})}
                                 setDragState={setDragState}
                                 onResizeEvent={onResizeEvent}
                                 onMoveEvent={onMoveEvent}
@@ -198,7 +198,7 @@ export function PlanScreen() {
                 </SplitPane>
 
                 <InspectorPane
-                    inspectorState={inspectorState}
+                    {...(inspectorState !== undefined ? { inspectorState } : {})}
                     onClose={() => setInspectorState(undefined)}
                     tasks={tasks}
                     setTasks={setTasks}
@@ -211,8 +211,8 @@ export function PlanScreen() {
 
             {dragState && (dragState.task || dragState.event) && (
                 <DragGhost
-                    task={dragState.task}
-                    event={dragState.event}
+                    {...(dragState.task !== undefined ? { task: dragState.task } : {})}
+                    {...(dragState.event !== undefined ? { event: dragState.event } : {})}
                     x={dragState.pointerX}
                     y={dragState.pointerY}
                     ghostStyle="bracket"

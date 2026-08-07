@@ -26,7 +26,6 @@ function handleUpdateOrMove(
 
     const updatedFields: (keyof AppEvent)[] = [];
     // Object.keys returns string[], we know this is (keyof AppEvent)[]
-    // oxlint-disable-next-line typescript/consistent-type-assertions
     for (const k of Object.keys(currentEvent) as (keyof AppEvent)[]) {
         if (k === "updatedAt" || k === "etag") continue;
         if (JSON.stringify(currentEvent[k]) !== JSON.stringify(oldEvent[k])) {
@@ -63,7 +62,7 @@ function handleUpdateOrMove(
             type: SyncType.Event,
             action: SyncAction.Update,
             item: currentEvent,
-            remoteId: currentEvent.remoteId,
+            ...(currentEvent.remoteId !== undefined ? { remoteId: currentEvent.remoteId } : {}),
             calendarId: targetCalendarId,
             updatedFields
         });
@@ -101,7 +100,7 @@ export function computeEventDeltaActions(
                 type: SyncType.Event,
                 action: SyncAction.Delete,
                 item: oldEvent,
-                remoteId: oldEvent.remoteId,
+                ...(oldEvent.remoteId !== undefined ? { remoteId: oldEvent.remoteId } : {}),
                 calendarId: oldEvent.remoteCollectionId || "primary",
             });
         }

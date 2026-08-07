@@ -4,14 +4,14 @@ import { useMemo } from 'react';
 
 const docs: Record<string, string> = import.meta.glob('../../../docs/*.md', { query: '?raw', import: 'default', eager: true });
 
-function LinkRenderer({ href, children }: { href?: string, children?: React.ReactNode }) {
+function LinkRenderer({ href, children, ...rest }: React.AnchorHTMLAttributes<HTMLAnchorElement>) {
     if (href?.startsWith('./')) {
-        return <Link to={`/docs/${href.replace('./', '')}`}>{children}</Link>;
+        return <Link to={`/docs/${href.replace('./', '')}`} {...rest}>{children}</Link>;
     }
     if (href?.startsWith('/docs/')) {
-        return <Link to={href}>{children}</Link>;
+        return <Link to={href} {...rest}>{children}</Link>;
     }
-    return <a href={href} target="_blank" rel="noreferrer">{children}</a>;
+    return <a href={href} target="_blank" rel="noreferrer" {...rest}>{children}</a>;
 }
 
 export function DocsScreen() {

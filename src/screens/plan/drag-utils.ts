@@ -27,7 +27,7 @@ export function resolveDropTarget(el: Element | undefined, y: number, itemDurati
     // Date grid day cell
     const day = el.closest('[data-drop-kind="grid-day"]');
     if (day instanceof HTMLElement) {
-        const dropDate = day.dataset.dropDate;
+        const dropDate = day.dataset["dropDate"];
         if (isYmdString(dropDate)) {
             return { kind: "grid-day", date: dropDate };
         }

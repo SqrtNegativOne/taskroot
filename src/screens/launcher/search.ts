@@ -9,7 +9,7 @@ export function fuzzyScore(query: string, target: string): number {
     if (target[ti] === query[qi]) {
       run++;
       score += 1 + run;                                   // reward consecutive hits
-      if (ti === 0 || /[\s\-_]/.test(target[ti - 1])) score += WORD_BOUNDARY_BONUS; // word-boundary bonus
+      if (ti === 0 || /[\s\-_]/.test(target[ti - 1] || "")) score += WORD_BOUNDARY_BONUS; // word-boundary bonus
       qi++;
     } else {
       run = 0;

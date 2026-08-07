@@ -16,7 +16,7 @@ export class TaskSyncStrategy implements ISyncStrategy<AppTask> {
     }
 
     isSyncEnabled(): boolean {
-        return this.context.getSettings().enableTasksSync !== false;
+        return this.context.getSettings()["enableTasksSync"] !== false;
     }
 
     getLocalStoreKey(): string {
@@ -85,8 +85,9 @@ export class TaskSyncStrategy implements ISyncStrategy<AppTask> {
             if (gid) {
                 const tasks = this.context.getLocalData<AppTask[]>("tasks");
                 const idx = tasks.findIndex((t) => t.id === taskOrEvent.item.id);
-                if (idx !== -1) {
-                    tasks[idx] = { ...tasks[idx], remoteId: gid };
+                const t = tasks[idx];
+                if (idx !== -1 && t) {
+                    tasks[idx] = { ...t, remoteId: gid };
                     this.context.setLocalData("tasks", tasks);
                     this.context.updateOldTasksMap(tasks);
                 } else {

@@ -18,7 +18,7 @@ export function useTaskSelectorKeyboard({
 }: UseTaskSelectorKeyboardProps) {
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === "Enter" && sortedTasks.length > 0) {
-            startWithTask(sortedTasks[selectedIndex]?.id || sortedTasks[0].id);
+            startWithTask(sortedTasks[selectedIndex]?.id || sortedTasks[0]?.id || "");
         } else if (e.key === "Escape") {
             setSearchQuery("");
             e.stopPropagation();

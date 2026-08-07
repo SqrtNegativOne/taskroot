@@ -28,7 +28,7 @@ export function FilterMenu({
     align,
 }: FilterMenuProps) {
     return (
-        <FloatingMenu isClosing={closingFilters} align={align} minWidth="320px">
+        <FloatingMenu isClosing={closingFilters} {...(align !== undefined ? { align } : {})} minWidth="320px">
             {filters.map((f: Filter) => (
                 <div key={f.id} className="filter-row">
                     <SelectInput

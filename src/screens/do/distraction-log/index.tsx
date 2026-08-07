@@ -125,9 +125,9 @@ export function DistractionLog() {
                             row={row}
                             columns={columns}
                             statuses={statuses}
-                            editingCell={editingCell}
+                            {...(editingCell !== undefined ? { editingCell } : {})}
                             setEditingCell={setEditingCell}
-                            statusEditor={statusEditor}
+                            {...(statusEditor !== undefined ? { statusEditor } : {})}
                             setStatusEditor={setStatusEditor}
                             updateRow={updateRow}
                             deleteRow={deleteRow}
@@ -162,7 +162,7 @@ export function DistractionLog() {
                         </span>
                         <span className="dim">
                             {" "}
-                            {rows.filter((r: DistractionRow) => r.status === s.id).length}
+                            {rows.filter((r: DistractionRow) => r["status"] === s.id).length}
                         </span>
                     </span>
                 ))}

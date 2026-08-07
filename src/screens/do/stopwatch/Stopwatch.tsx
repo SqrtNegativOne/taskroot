@@ -131,7 +131,7 @@ export function Stopwatch({ onBreakStatusChange }: { onBreakStatusChange?: (stat
         }
     }, [displayData.isBreak, onBreakStatusChange]);
 
-    useStopwatchKeyboard({ selectorOpen, setSelectorOpen, actions, activeTask, allowNoTask });
+    useStopwatchKeyboard({ selectorOpen, setSelectorOpen, actions, ...(activeTask !== undefined ? { activeTask } : {}), allowNoTask });
 
     return (
         <section className="stopwatch-hero">
@@ -140,7 +140,7 @@ export function Stopwatch({ onBreakStatusChange }: { onBreakStatusChange?: (stat
 
                 { (running || settings.clockStyle === "guzey" || state.isBreak) && (activeTask || allowNoTask) && (
                     <ActiveTaskDisplay
-                        activeTask={activeTask}
+                        {...(activeTask !== undefined ? { activeTask } : {})}
                         setSelectorOpen={setSelectorOpen}
                     />
                 )}
@@ -150,7 +150,7 @@ export function Stopwatch({ onBreakStatusChange }: { onBreakStatusChange?: (stat
                     setSelectorOpen={setSelectorOpen}
                     tasks={tasks || []}
                     events={events || []}
-                    activeTask={activeTask}
+                    {...(activeTask !== undefined ? { activeTask } : {})}
                     allowNoTask={allowNoTask}
                     startWithTask={actions.startWithTask}
                 />

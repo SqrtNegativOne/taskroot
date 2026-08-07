@@ -37,8 +37,8 @@ describe("GoogleTasksAPI", () => {
 
             expect(requestCount).toBe(2);
             expect(tasks).toHaveLength(2);
-            expect(tasks?.[0].id).toBe("task1");
-            expect(tasks?.[1].id).toBe("task2");
+            expect(tasks?.[0]?.id).toBe("task1");
+            expect(tasks?.[1]?.id).toBe("task2");
         });
 
         it("throws Unauthorized on 401 if refresh fails", async () => {

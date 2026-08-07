@@ -40,10 +40,10 @@ export class GoogleCalendarAPI implements ICalendarAPI {
                 result.push({
                     id: c.id,
                     summary: c.summaryOverride || c.summary,
-                    accessRole: c.accessRole,
-                    backgroundColor: c.backgroundColor,
-                    foregroundColor: c.foregroundColor,
-                    primary: c.primary
+                    ...(c.accessRole !== undefined ? { accessRole: c.accessRole } : {}),
+                    ...(c.backgroundColor !== undefined ? { backgroundColor: c.backgroundColor } : {}),
+                    ...(c.foregroundColor !== undefined ? { foregroundColor: c.foregroundColor } : {}),
+                    ...(c.primary !== undefined ? { primary: c.primary } : {})
                 });
             }
         }
@@ -134,7 +134,7 @@ export class GoogleCalendarAPI implements ICalendarAPI {
                 if (isEventAllDay(localEvent)) {
                     let dateOnly = exdate;
                     if (exdate.includes("T")) {
-                        dateOnly = exdate.split("T")[0];
+                        dateOnly = exdate.split("T")[0] || exdate;
                     }
                     recurrence.push(`EXDATE;VALUE=DATE:${dateOnly}`);
                 } else {
@@ -194,27 +194,48 @@ function extractEventTime(googleEvent: gapi.client.calendar.Event) {
 }
 
 function buildPartialEventPayload(updatedFields: (keyof AppEvent)[], fullPayload: gapi.client.calendar.Event) {
-    const partialPayload: Partial<gapi.client.calendar.Event> = {};
-    if (updatedFields.includes("title")) partialPayload.summary = fullPayload.summary;
+    let partialPayload: Partial<gapi.client.calendar.Event> = {};
+    if (updatedFields.includes("title")) {
+        partialPayload = { ...partialPayload, ...(fullPayload.summary !== undefined ? { summary: fullPayload.summary } : {}) };
+    }
     if (updatedFields.includes("startTime") || updatedFields.includes("endTime")) {
-        partialPayload.start = fullPayload.start;
-        partialPayload.end = fullPayload.end;
+        partialPayload = { 
+            ...partialPayload, 
+            ...(fullPayload.start !== undefined ? { start: fullPayload.start } : {}), 
+            ...(fullPayload.end !== undefined ? { end: fullPayload.end } : {}) 
+        };
     }
     if (updatedFields.includes("type") || updatedFields.includes("taskId")) {
-        partialPayload.extendedProperties = fullPayload.extendedProperties;
-        partialPayload.transparency = fullPayload.transparency;
+        partialPayload = { 
+            ...partialPayload, 
+            ...(fullPayload.extendedProperties !== undefined ? { extendedProperties: fullPayload.extendedProperties } : {}), 
+            ...(fullPayload.transparency !== undefined ? { transparency: fullPayload.transparency } : {}) 
+        };
     }
     if (updatedFields.includes("rrule") || updatedFields.includes("exdates")) {
-        partialPayload.recurrence = fullPayload.recurrence;
+        partialPayload = { 
+            ...partialPayload, 
+            ...(fullPayload.recurrence !== undefined ? { recurrence: fullPayload.recurrence } : {}) 
+        };
     }
-    if (updatedFields.includes("recurringEventId")) partialPayload.recurringEventId = fullPayload.recurringEventId;
-    if (updatedFields.includes("originalStartTime")) partialPayload.originalStartTime = fullPayload.originalStartTime;
+    if (updatedFields.includes("recurringEventId")) {
+        partialPayload = { 
+            ...partialPayload, 
+            ...(fullPayload.recurringEventId !== undefined ? { recurringEventId: fullPayload.recurringEventId } : {}) 
+        };
+    }
+    if (updatedFields.includes("originalStartTime")) {
+        partialPayload = { 
+            ...partialPayload, 
+            ...(fullPayload.originalStartTime !== undefined ? { originalStartTime: fullPayload.originalStartTime } : {}) 
+        };
+    }
     return partialPayload;
 }
 
 function handleCancelledEvent(googleEvent: gapi.client.calendar.Event) {
     const privateProps = googleEvent.extendedProperties?.private;
-    const id = (privateProps ? privateProps.taskrootEventId : undefined) || googleEvent.id;
+    const id = (privateProps ? privateProps["taskrootEventId"] : undefined) || googleEvent.id;
     if (!id) throw new Error("Cancelled Google event missing ID");
     return {
         id,
@@ -225,20 +246,20 @@ function handleCancelledEvent(googleEvent: gapi.client.calendar.Event) {
 
 function getEventId(googleEvent: gapi.client.calendar.Event) {
     const priv = googleEvent.extendedProperties?.private;
-    if (priv?.taskrootEventId) return priv.taskrootEventId;
+    if (priv?.["taskrootEventId"]) return priv["taskrootEventId"];
     if (!googleEvent.id) throw new Error("Google event missing ID");
     return googleEvent.id;
 }
 
 function getEventTaskId(googleEvent: gapi.client.calendar.Event) {
-    return googleEvent.extendedProperties?.private?.taskId;
+    return googleEvent.extendedProperties?.private?.["taskId"];
 }
 
 function extractEventMetadata(googleEvent: gapi.client.calendar.Event) {
     const taskId = getEventTaskId(googleEvent);
     const id = getEventId(googleEvent);
     const defaultType: AppEvent['type'] = googleEvent.transparency === "transparent" ? "info" : "busy";
-    const type = toEventType(googleEvent.extendedProperties?.private?.type, defaultType);
+    const type = toEventType(googleEvent.extendedProperties?.private?.["type"], defaultType);
     return { taskId, id, type };
 }
 
@@ -256,5 +277,5 @@ function parseRecurrenceRule(recurrence?: string[]): { rrule?: string, exdates?:
             }
         }
     }
-    return { rrule, ...(exdates.length > 0 ? { exdates } : {}) };
+    return { ...(rrule !== undefined ? { rrule } : {}), ...(exdates.length > 0 ? { exdates } : {}) };
 }

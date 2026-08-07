@@ -101,14 +101,14 @@ describe("Event Sync Engine - Edge Cases (Partial Payload & Merging)", () => {
         const mergedEvent = localEvents[0];
         
         // The title should be the local edit
-        expect(mergedEvent.title).toBe("Edited Local Title");
+        expect(mergedEvent?.title).toBe("Edited Local Title");
         
         // The time should be the remote edit
         // (Note: the mock might parse ISO differently than our floating time, but we test the merging mechanism)
-        expect(mergedEvent.startTime).toBeDefined();
-        expect(mergedEvent.endTime).toBeDefined();
-        expect(mergedEvent.etag).toBe("v2"); // Should have updated to the remote etag
-        expect(mergedEvent.updatedAt).toBeGreaterThanOrEqual(t2);
+        expect(mergedEvent?.startTime).toBeDefined();
+        expect(mergedEvent?.endTime).toBeDefined();
+        expect(mergedEvent?.etag).toBe("v2"); // Should have updated to the remote etag
+        expect(mergedEvent?.updatedAt).toBeGreaterThanOrEqual(t2);
     });
 
     it("should merge local status edits with remote notes edits correctly", async () => {
@@ -166,7 +166,7 @@ describe("Event Sync Engine - Edge Cases (Partial Payload & Merging)", () => {
         expect(resultingEvents).toHaveLength(1);
         const finalEvent = resultingEvents[0];
 
-        expect(finalEvent.description).toBe("Edited Notes\nTaskroot Event ID: e2");
-        expect(finalEvent.startTime).toBe("2024-01-01T15:00:00");
+        expect(finalEvent?.description).toBe("Edited Notes\nTaskroot Event ID: e2");
+        expect(finalEvent?.startTime).toBe("2024-01-01T15:00:00");
     });
 });

@@ -67,7 +67,8 @@ export function useDragAndDrop(
     const onTaskDragStart = (e: React.PointerEvent | React.MouseEvent, task: AppTask) => {
         e.preventDefault();
         setupPointerDrag(e, (ev) => {
-            setDragState({ task, pointerX: ev.clientX, pointerY: ev.clientY, target: resolveDropTarget(document.elementFromPoint(ev.clientX, ev.clientY) || undefined, ev.clientY, task.est || MINUTES_IN_HOUR) });
+            const target = resolveDropTarget(document.elementFromPoint(ev.clientX, ev.clientY) || undefined, ev.clientY, task.est || MINUTES_IN_HOUR);
+            setDragState({ task, pointerX: ev.clientX, pointerY: ev.clientY, ...(target !== undefined ? { target } : {}) });
         }, (active) => {
             if (!active) return setInspectorState({ type: "task", id: task.id });
             const ds = dragRef.current;
@@ -96,7 +97,8 @@ export function useDragAndDrop(
         };
 
         setupPointerDrag(e, (ev) => {
-            setDragState({ event: eventToMove, task, pointerX: ev.clientX, pointerY: ev.clientY, target: resolveDropTarget(document.elementFromPoint(ev.clientX, ev.clientY) || undefined, ev.clientY, task?.est || getDurMins()) });
+            const target = resolveDropTarget(document.elementFromPoint(ev.clientX, ev.clientY) || undefined, ev.clientY, task?.est || getDurMins());
+            setDragState({ event: eventToMove, ...(task !== undefined ? { task } : {}), pointerX: ev.clientX, pointerY: ev.clientY, ...(target !== undefined ? { target } : {}) });
         }, (active) => {
             if (!active) return setInspectorState({ type: "event", id: eventToMove.id });
             const ds = dragRef.current;

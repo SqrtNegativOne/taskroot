@@ -46,18 +46,12 @@ export async function fetchWithRateLimitAndAuth(
     let attempts = 0;
     const maxAttempts = 3;
     while ((res.status === HTTP_FORBIDDEN || res.status === HTTP_TOO_MANY_REQUESTS) && attempts < maxAttempts) {
-        // Necessary for parsing rate limit errors sequentially
-        // eslint-disable-next-line no-await-in-loop
         const isRateLimit = await checkRateLimit(res);
         if (!isRateLimit) break;
 
         attempts++;
         const delay = Math.pow(2, attempts) * MS_PER_SECOND + Math.random() * MS_PER_SECOND;
-        // Necessary for exponential backoff delay
-        // eslint-disable-next-line no-await-in-loop
         await new Promise(resolve => setTimeout(resolve, delay));
-        // Necessary for sequential retry of the failed request
-        // eslint-disable-next-line no-await-in-loop
         res = await fetchWithTimeout(url, getOpts(token));
     }
     return res;

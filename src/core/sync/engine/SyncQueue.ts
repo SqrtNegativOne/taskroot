@@ -30,14 +30,17 @@ export class SyncQueue {
 
     private handleUpdateTransition(transition: string, item: SyncQueueItem, indices: { create: number, update: number, move: number }) {
         if (transition === "create->update") {
-            this.queue[indices.create].item = item.item;
+            const q = this.queue[indices.create];
+            if (q) q.item = item.item;
         } else if (transition === "update->update") {
             this.queue[indices.update] = item;
         } else if (transition === "move->update") {
-            this.queue[indices.move].item = item.item;
+            const q = this.queue[indices.move];
+            if (q) q.item = item.item;
             this.queue.push(item);
         } else if (transition === "move+update->update") {
-            this.queue[indices.move].item = item.item;
+            const q = this.queue[indices.move];
+            if (q) q.item = item.item;
             this.queue.splice(indices.update, 1);
             this.queue.push(item);
         } else if (transition === "delete->update") {
@@ -47,14 +50,17 @@ export class SyncQueue {
 
     private handleMoveTransition(transition: string, item: SyncQueueItem, indices: { create: number, update: number, move: number }) {
         if (transition === "create->move") {
-            this.queue[indices.create].item = item.item;
+            const q = this.queue[indices.create];
+            if (q) q.item = item.item;
         } else if (transition === "update->move") {
-            this.queue[indices.update].item = item.item;
+            const q = this.queue[indices.update];
+            if (q) q.item = item.item;
             this.queue.push(item);
         } else if (transition === "move->move") {
             this.queue[indices.move] = item;
         } else if (transition === "move+update->move") {
-            this.queue[indices.update].item = item.item;
+            const q = this.queue[indices.update];
+            if (q) q.item = item.item;
             this.queue[indices.move] = item;
         } else if (transition === "delete->move") {
             console.warn("Attempted to move a deleted item. Ignoring.");
@@ -118,6 +124,7 @@ export class SyncQueue {
         
         for (let i = 0; i < this.queue.length; i++) {
             const q = this.queue[i];
+            if (!q) continue;
             if (q.type === item.type && q.item?.id === item.item?.id) {
                 this.updateIndicesForExisting(i, q.action, existingIndices, indices);
             }

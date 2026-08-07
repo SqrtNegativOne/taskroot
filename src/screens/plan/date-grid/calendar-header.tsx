@@ -24,7 +24,7 @@ export function CalendarHeader({
     setView: (view: DateGridView) => void;
     setAnchor: (date: Date) => void;
     shift: (n: number) => void;
-    filterMenu: React.ReactNode;
+    filterMenu?: React.ReactNode;
 }) {
     const [showViewMenu, setShowViewMenu] = useState(false);
     const [closingViewMenu, setClosingViewMenu] = useState(false);

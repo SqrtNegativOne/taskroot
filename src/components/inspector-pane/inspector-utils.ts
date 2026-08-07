@@ -11,7 +11,7 @@ export function minToTime(m: number): string {
 export function timeToMin(t: string): number {
     if (!t) return 0;
     const [hh, mm] = t.split(":");
-    return parseInt(hh, 10) * MINUTES_IN_HOUR + parseInt(mm, 10);
+    return parseInt(hh || "0", 10) * MINUTES_IN_HOUR + parseInt(mm || "0", 10);
 }
 
 export function getInspectorTitle(currentTask: AppTask | undefined, currentEvent: AppEvent | undefined, tasks: AppTask[]): string {

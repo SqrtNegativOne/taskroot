@@ -19,7 +19,7 @@ export function SortMenu({
     align,
 }: SortMenuProps) {
     return (
-        <FloatingMenu isClosing={closingSort} align={align} minWidth="200px">
+        <FloatingMenu isClosing={closingSort} {...(align !== undefined ? { align } : {})} minWidth="200px">
             <div className="sort-row">
                 <span className="sort-label">Sort by</span>
                 <SelectInput

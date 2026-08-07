@@ -52,6 +52,7 @@ export function SegmentedControl<T>({
             ro.observe(containerRef.current);
             return () => ro.disconnect();
         }
+        return undefined;
     }, [value, options]);
 
     return (

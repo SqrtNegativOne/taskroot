@@ -31,7 +31,7 @@ export function TaskRow({
     const [isExiting, setIsExiting] = useState(false);
     const [isChecking, setIsChecking] = useState(false);
 
-    const willBeFilteredOut = (newStatus: string) => {
+    const willBeFilteredOut = (newStatus: AppTask["status"]) => {
         return checkTaskAgainstFilters({ ...task, status: newStatus }, filters);
     };
 
@@ -132,6 +132,17 @@ export function TaskRow({
                             next up
                         </span>
                     )}
+                    <select
+                        className="status-select"
+                        value={task.status || "todo"}
+                        onChange={(e) => updateTask(task.id, { status: e.target.value as AppTask["status"] })}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <option value="todo">todo</option>
+                        <option value="doing">doing</option>
+                        <option value="next-up">next up</option>
+                        <option value="done">done</option>
+                    </select>
 
                     <div className="task-row-actions">
                         <button
@@ -158,7 +169,9 @@ export function TaskRow({
                         </button>
                     </div>
                 </div>
-                <TaskRowLine2 task={task} dueStr={dueStr} overdue={Boolean(overdue)} />
+                { (task.est || (task.tags && task.tags.length > 0) || (task.subtasks && task.subtasks.length > 0) || dueStr) && (
+                    <TaskRowLine2 task={task} dueStr={dueStr} overdue={Boolean(overdue)} />
+                )}
             </div>
         </div>
     );
@@ -172,9 +185,6 @@ function TaskRowLine2({ task, dueStr, overdue }: { task: AppTask; dueStr: string
     const hasSubtasks = subtasks.length > 0;
     const hasEst = est > 0;
 
-    if (!hasEst && !hasTags && !hasSubtasks && !dueStr) {
-        return;
-    }
 
     const doneSubtasks = hasSubtasks ? subtasks.filter((s) => s.done).length : 0;
     const totalSubtasks = subtasks.length;

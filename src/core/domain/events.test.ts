@@ -10,7 +10,7 @@ describe("hydrateEvents", () => {
                 id: "t1",
                 title: "Task 1",
                 priority: 1,
-                status: "nextup",
+                status: "next-up",
                 tags: [],
             },
             {
@@ -66,7 +66,7 @@ describe("hydrateEvents", () => {
                 id: "t1",
                 title: "Task 1",
                 priority: 1,
-                status: "nextup",
+                status: "next-up",
                 tags: [],
             },
         ];
@@ -103,7 +103,7 @@ describe("hydrateEvents", () => {
                 id: "t1",
                 title: "Old Name",
                 priority: 1,
-                status: "nextup",
+                status: "next-up",
                 tags: [],
             },
         ];
@@ -116,7 +116,7 @@ describe("hydrateEvents", () => {
                 id: "t1",
                 title: "New Name",
                 priority: 1,
-                status: "nextup",
+                status: "next-up",
                 tags: [],
             },
         ];

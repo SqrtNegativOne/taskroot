@@ -3,7 +3,7 @@ type BivariantUpdater = { bivariantHack(data: unknown): void }["bivariantHack"];
 const updaters = new Map<string, Set<BivariantUpdater>>();
 
 export const storeRegistry = {
-    registerUpdater<T>(key: string, updater: (val: T) => void) {
+    registerUpdater(key: string, updater: (val: unknown) => void) {
         if (!updaters.has(key)) {
             updaters.set(key, new Set());
         }

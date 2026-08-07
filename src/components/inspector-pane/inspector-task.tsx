@@ -22,7 +22,7 @@ export function TaskInspector({ task, updateTask }: TaskInspectorProps) {
                         value={task.status || "todo"}
                         onChange={(e) =>
                             updateTask(task.id, {
-                                status: e.target.value,
+                                status: e.target.value as AppTask["status"],
                             })
                         }
                     />

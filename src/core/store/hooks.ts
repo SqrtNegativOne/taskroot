@@ -16,9 +16,7 @@ export function useRepository<T>(repo: Repository<T>): [T, (val: T | ((prev: T) 
 
     const readVal: T = val;
     const setter = (newVal: T | ((prev: T) => T)) => {
-        const v: unknown = newVal;
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        repo.set(v as Parameters<typeof repo.set>[0]);
+        repo.set(newVal);
     };
     return [readVal, setter, isLoaded];
 }

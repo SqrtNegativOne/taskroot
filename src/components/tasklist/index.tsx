@@ -25,17 +25,15 @@ export interface TaskListPaneProps {
     footer?: React.ReactNode;
 }
 
-const defaultTasks: AppTask[] = [];
-const defaultFilters: AppFilter[] = [];
 
 export function TaskListPane({
-    tasks = defaultTasks,
+    tasks,
     setTasks,
-    filters = defaultFilters,
+    filters,
     setFilters,
     sort,
     setSort,
-    query = "",
+    query,
     setQuery,
     onDragStart,
     activeDragId,
@@ -108,7 +106,7 @@ export function TaskListPane({
             xs = fuse.search(query).map((result) => result.item);
         }
         const cmp: Record<string, (a: AppTask, b: AppTask) => number> = {
-            priority: (a, b) => Number(b.priority || 0) - Number(a.priority || 0),
+            priority: (a, b) => (b.priority || 0) - (a.priority || 0),
             due: (a, b) => (a.due || "9999").localeCompare(b.due || "9999"),
             est: (a, b) => (a.est || 0) - (b.est || 0),
             title: (a, b) => a.title.localeCompare(b.title),

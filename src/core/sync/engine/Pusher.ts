@@ -7,7 +7,7 @@ import type { AppTask, AppEvent } from "../../domain/models";
 
 export class Pusher {
     private pushQueue = new SyncQueue();
-    private synchronizers: Record<string, Synchronizer<unknown & { id: string }>> = {};
+    private synchronizers: Record<string, Synchronizer<{ id: string }>> = {};
 
     constructor(
         taskSync: Synchronizer<AppTask>,

@@ -118,7 +118,7 @@ function RestChecklist({ state }: { state: ReturnType<typeof useRestChecklistSta
                     <button
                         className="rest-checkbox"
                         onClick={() => state.toggle(item.id)}
-                        aria-pressed={!!state.checked[item.id]}
+                        aria-pressed={state.checked[item.id] || false}
                     >
                         <span className="rest-checkbox-box">
                             {state.checked[item.id] ? (

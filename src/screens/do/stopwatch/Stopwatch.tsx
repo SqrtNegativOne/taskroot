@@ -138,14 +138,12 @@ export function Stopwatch({ onBreakStatusChange }: { onBreakStatusChange?: (stat
             <div className="stopwatch-stage" style={{ position: "relative" }}>
                 <StopwatchDisplay context={context} strategy={strategy} toggle={actions.toggle} />
 
-                <ActiveTaskDisplay
-                    settings={settings}
-                    state={state}
-                    activeTask={activeTask}
-                    running={running}
-                    allowNoTask={allowNoTask}
-                    setSelectorOpen={setSelectorOpen}
-                />
+                { (running || settings.clockStyle === "guzey" || state.isBreak) && (activeTask || allowNoTask) && (
+                    <ActiveTaskDisplay
+                        activeTask={activeTask}
+                        setSelectorOpen={setSelectorOpen}
+                    />
+                )}
 
                 <TaskSelector
                     selectorOpen={selectorOpen}

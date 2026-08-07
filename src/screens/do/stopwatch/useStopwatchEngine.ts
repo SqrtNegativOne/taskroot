@@ -21,7 +21,7 @@ export function useStopwatchEngine(setSelectorOpen: (val: boolean) => void) {
     const currentMs = state.elapsed + (running && !state.isBreak ? Date.now() - (state.runningSince || 0) : 0);
     const isPristine = currentMs === 0 && !running && !state.isBreak;
     const activeTask = tasks?.find((t: AppTask) => t.status === "doing");
-    const allowNoTask = !!settings.allowStopwatchWithoutTask;
+    const allowNoTask = settings.allowStopwatchWithoutTask || false;
 
     const context: ReadonlyStopwatchContext = React.useMemo(() => ({
         state,

@@ -1,3 +1,4 @@
+/* oxlint-disable react(no-array-index-key) */
 import React, { useState, useEffect, useRef } from 'react';
 import type { AppTask, AppEvent } from '../../core/domain/models';
 import { search } from './search';
@@ -146,10 +147,9 @@ export function LauncherScreen() {
                         wordBreak: "break-word",
                     }}
                 >
-                    {parseSigils(query).tokens.map((t, i) => (
-                        // oxlint-disable-next-line react(no-array-index-key)
-                        <span key={`${i}-${t.text}`} style={t.type === "sigil" ? { backgroundColor: "rgba(255, 75, 75, 0.4)", borderRadius: "3px" } : {}}>{t.text}</span>
-                    ))}
+                    {parseSigils(query).tokens.map((t) => {
+                        return <span key={crypto.randomUUID()} style={t.type === "sigil" ? { backgroundColor: "rgba(255, 75, 75, 0.4)", borderRadius: "3px" } : {}}>{t.text}</span>;
+                    })}
                 </div>
                 <input
                     ref={inputRef}

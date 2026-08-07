@@ -7,7 +7,7 @@ import { PAD2 } from "../../../core/store/data";
 const DEFAULT_FLOWTIME_BREAK_DIVISOR = 5;
 
 export class FlowtimeClockStrategy implements ClockStrategy {
-    getDisplayData({ currentMs = 0, isPristine, state }: ReadonlyStopwatchContext): ClockDisplayData {
+    getDisplayData({ currentMs, isPristine, state }: ReadonlyStopwatchContext): ClockDisplayData {
         if (state.isBreak && state.breakStartedAt) {
             const breakRemainingMs = state.breakAllowedMs - (Date.now() - state.breakStartedAt);
             const remSecs = Math.max(0, Math.ceil(breakRemainingMs / MS_PER_SECOND));

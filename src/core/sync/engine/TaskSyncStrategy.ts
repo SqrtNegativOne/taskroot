@@ -27,6 +27,10 @@ export class TaskSyncStrategy implements ISyncStrategy<AppTask> {
         return SyncType.Task;
     }
 
+    extractItem(q: SyncQueueItem): AppTask | undefined {
+        return q.type === SyncType.Task ? q.item : undefined;
+    }
+
     updateOldMapSnapshot(items: AppTask[]): void {
         this.context.updateOldTasksMap(items);
     }

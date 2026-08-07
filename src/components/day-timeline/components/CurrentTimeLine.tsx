@@ -3,10 +3,8 @@ import { PX_PER_MIN } from "../types";
 import { PAD2 } from "../../../core/store/data";
 import { useCurrentTime } from "../hooks/useCurrentTime";
 
-export function CurrentTimeLine({ isToday, showLabels = true }: { isToday: boolean; showLabels?: boolean; }) {
+export function CurrentTimeLine({ showLabels = true }: { showLabels?: boolean; }) {
     const nowMin = useCurrentTime();
-
-    if (!isToday) return;
 
     return (
         <div

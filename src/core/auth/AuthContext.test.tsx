@@ -79,6 +79,7 @@ describe("AuthContext", () => {
         });
 
         expect(localStorage.getItem("google_access_token")).toBe("test-token");
+        // oxlint-disable-next-line typescript/unbound-method
         expect(window.location.reload).toHaveBeenCalled();
     });
 
@@ -95,6 +96,7 @@ describe("AuthContext", () => {
         });
 
         expect(localStorage.getItem("google_access_token")).toBeNull();
+        // oxlint-disable-next-line typescript/unbound-method
         expect(window.location.reload).toHaveBeenCalled();
     });
 });

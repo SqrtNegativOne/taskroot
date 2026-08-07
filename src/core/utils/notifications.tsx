@@ -133,6 +133,7 @@ function NotificationItem({
             }, NOTIFICATION_TIMEOUT_MS);
             return () => clearTimeout(timer);
         }
+        return undefined;
     }, [notification.type, onDismiss]);
 
     const colors = getColors(notification.type);

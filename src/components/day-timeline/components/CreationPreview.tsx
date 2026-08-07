@@ -2,11 +2,10 @@ import { PX_PER_MIN } from "../types";
 import { hhmmShort } from "../../../core/store/data";
 
 interface CreationPreviewProps {
-    preview?: { start: number; end: number };
+    preview: { start: number; end: number };
 }
 
 export function CreationPreview({ preview }: CreationPreviewProps) {
-    if (!preview) return;
 
     return (
         <div

@@ -7,7 +7,7 @@ export function isYmdString(s: unknown): s is YmdString {
 export interface AppTask {
     readonly id: string;
     readonly title: string;
-    readonly status?: "todo" | "next-up" | "doing" | "done" | string;
+    readonly status?: "todo" | "next-up" | "doing" | "done";
     readonly priority?: number;
     readonly tags?: readonly string[];
     readonly subtasks?: readonly { readonly done: boolean; readonly [key: string]: unknown }[];

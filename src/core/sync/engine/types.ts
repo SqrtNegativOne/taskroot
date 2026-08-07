@@ -34,7 +34,9 @@ export type SyncQueueItem =
       };
 
 export interface ISyncEngineContext {
+    // oxlint-disable-next-line typescript/no-unnecessary-type-parameters
     getLocalData: <T = unknown>(key: string) => T;
+    // oxlint-disable-next-line typescript/no-unnecessary-type-parameters
     setLocalData: <T = unknown>(key: string, data: T) => void;
     oldTasksMap: Map<string, AppTask>;
     oldEventsMap: Map<string, AppEvent>;

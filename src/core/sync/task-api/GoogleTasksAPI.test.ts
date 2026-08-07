@@ -87,7 +87,7 @@ describe("GoogleTasksAPI", () => {
                 status: "todo",
                 notes: "2 percent",
             };
-            const googleTask = googleTasksAPI.toGoogleTask(localTask);
+            const googleTask = googleTasksAPI.toGoogleTask(localTask as import("../../domain/models").AppTask);
 
             expect(googleTask.notes).toBe("Taskroot Task ID: t123\n2 percent");
             expect(googleTask.status).toBe("needsAction");
@@ -100,7 +100,7 @@ describe("GoogleTasksAPI", () => {
                 status: "done",
                 notes: "Taskroot Task ID: t123\n2 percent",
             };
-            const googleTask = googleTasksAPI.toGoogleTask(localTask);
+            const googleTask = googleTasksAPI.toGoogleTask(localTask as import("../../domain/models").AppTask);
 
             expect(googleTask.notes).toBe("Taskroot Task ID: t123\n2 percent");
             expect(googleTask.status).toBe("completed");

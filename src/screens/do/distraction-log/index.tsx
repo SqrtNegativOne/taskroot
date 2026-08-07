@@ -121,7 +121,7 @@ export function DistractionLog() {
                     )}
                     {rows.map((row: DistractionRow) => (
                         <DLogRow
-                            key={String(row.id)}
+                            key={row.id}
                             row={row}
                             columns={columns}
                             statuses={statuses}
@@ -149,7 +149,7 @@ export function DistractionLog() {
                 </span>
                 <span className="dlog-foot-sep">·</span>
                 {statuses.map((s: DistractionStatus) => (
-                    <span key={String(s.id)} className="dlog-foot-stat">
+                    <span key={s.id} className="dlog-foot-stat">
                         <span
                             className="status-chip"
                             style={{

@@ -1,0 +1,1514 @@
+$ oxlint --type-aware
+
+  x eslint(no-unused-vars): Parameter 'allowNoTask' is declared but never used. Unused parameters should start with a '_'.
+   ,-[src/screens/do/stopwatch/ActiveTaskDisplay.tsx:3:5]
+ 2 |     activeTask,
+ 3 |     allowNoTask,
+   :     ^^^^^|^^^^^
+   :          `-- 'allowNoTask' is declared here
+ 4 |     setSelectorOpen,
+   `----
+  help: Consider removing this parameter.
+
+  ! complexity(complexity): Function '<arrow>' has Cognitive Complexity of 19. Maximum allowed is 15. [ternary operator: +9, nested functions: +7, logical operators: +3]
+  | 
+  | Breakdown:
+  |     Line 35: +1 for 'logical operator '&&''
+  |     Line 37: +1 for 'ternary operator'
+  |     Line 42: +1 for 'ternary operator'
+  |     Line 44: +1 for 'nested arrow function'
+  |     Line 54: +1 for 'logical operator '&&''
+  |     Line 55: +1 for 'ternary operator'
+  |     Line 57: +1 for 'nested arrow function'
+  | >>> Line 59: +2 for 'ternary operator' (incl. +1 nesting) [top offender]
+  |     Line 60: +1 for 'nested arrow function'
+  |     Line 66: +1 for 'nested arrow function'
+  | >>> Line 77: +2 for 'ternary operator' (incl. +1 nesting) [top offender]
+  |     Line 77: +1 for 'logical operator '&&''
+  |     Line 83: +1 for 'ternary operator'
+  |     Line 86: +1 for 'nested arrow function'
+  |     Line 87: +1 for 'nested arrow function'
+  |     Line 91: +1 for 'nested arrow function'
+  |     Line 100: +1 for 'ternary operator'
+  | 
+  | Tips:
+  |   ΓÇó Complex boolean logic (3 operator sequences). Consider extracting into named boolean variables.
+     ,-[src/screens/do/distraction-log/row.tsx:33:26]
+  32 |             <div className="dlog-row">
+  33 | ,->             {columns.map((col: DistractionColumn) => {
+  34 | |                   const isEditing =
+  35 | |                       editingCell?.rowId === row.id &&
+  36 | |                       editingCell?.colId === col.id;
+  37 | |                   const val = typeof row[col.id] === "string" ? row[col.id] : undefined;
+  38 | |                   return (
+  39 | |                       <button
+  40 | |                           type="button"
+  41 | |                           key={col.id}
+  42 | |                           className={`dlog-cell dlog-cell-${col.type} ${isEditing ? "is-editing" : ""}`}
+  43 | |                           style={{ width: col.width, border: "none", background: "none", font: "inherit", color: "inherit", padding: 0, textAlign: "left", cursor: "text" }}
+  44 | |                           onClick={() => {
+  45 | |                               if (col.type === "text")
+  46 | |                                   setEditingCell({
+  47 | |                                       rowId: row.id,
+  48 | |                                       colId: col.id,
+  49 | |                                   });
+  50 | |                               else if (col.type === "status")
+  51 | |                                   setStatusEditor(row.id);
+  52 | |                           }}
+  53 | |                       >
+  54 | |                           {col.type === "text" &&
+  55 | |                               (isEditing ? (
+  56 | |                                   <input
+  57 | |                                       ref={(r) => { if (r && isEditing) r.focus(); }}
+  58 | |                                       className="dlog-cell-input"
+  59 | |                                       defaultValue={typeof val === 'string' ? val : ""}
+  60 | |                                       onBlur={(e) => {
+  61 | |                                           updateRow(row.id, {
+  62 | |                                               [col.id]: e.target.value,
+  63 | |                                           });
+  64 | |                                           setEditingCell(undefined);
+  65 | |                                       }}
+  66 | |                                       onKeyDown={(e) => {
+  67 | |                                           if (e.key === "Enter" && e.currentTarget instanceof HTMLElement) {
+  68 | |                                               e.currentTarget.blur();
+  69 | |                                           }
+  70 | |                                           if (e.key === "Escape" && e.currentTarget instanceof HTMLElement) {
+  71 | |                                               e.currentTarget.blur();
+  72 | |                                               setEditingCell(undefined);
+  73 | |                                           }
+  74 | |                                       }}
+  75 | |                                   />
+  76 | |                               ) : (
+  77 | |                                   typeof val === 'string' && val ? val : (
+  78 | |                                       <span className="dim">click to edit</span>
+  79 | |                                   )
+  80 | |                               ))}
+  81 | |                           {col.type === "status" && (
+  82 | |                               <StatusCell
+  83 | |                                   value={typeof val === 'string' ? val : undefined}
+  84 | |                                   statuses={statuses}
+  85 | |                                   open={statusEditor === row.id}
+  86 | |                                   onClose={() => setStatusEditor(undefined)}
+  87 | |                                   onChange={(v: string) => {
+  88 | |                                       updateRow(row.id, { [col.id]: v });
+  89 | |                                       setStatusEditor(undefined);
+  90 | |                                   }}
+  91 | |                                   onAdd={(label: string, color: string) => {
+  92 | |                                       const newId = addStatus(label, color);
+  93 | |                                       if (newId)
+  94 | |                                           updateRow(row.id, { [col.id]: newId });
+  95 | |                                   }}
+  96 | |                               />
+  97 | |                           )}
+  98 | |                           {col.type === "datetime" && (
+  99 | |                               <span className="dlog-datetime">
+ 100 | |                                   {formatDateTime(typeof val === 'string' ? val : undefined)}
+ 101 | |                               </span>
+ 102 | |                           )}
+ 103 | |                       </button>
+ 104 | |                   );
+ 105 | `->             })}
+ 106 |                 <div className="dlog-cell dlog-cell-actions">
+     `----
+
+  ! complexity(complexity): Function 'DateTimeGrid' has Cognitive Complexity of 21. Maximum allowed is 15. [nested functions: +16, ternary operator: +3, logical operators: +2]
+  | 
+  | Breakdown:
+  | >>> Line 28: +1 for 'nested arrow function' [top offender]
+  | >>> Line 29: +1 for 'nested arrow function' [top offender]
+  | >>> Line 33: +1 for 'logical operator '||'' [top offender]
+  | >>> Line 34: +1 for 'logical operator '||'' [top offender]
+  | >>> Line 37: +1 for 'ternary operator' [top offender]
+  | >>> Line 39: +1 for 'ternary operator' [top offender]
+  | >>> Line 41: +1 for 'nested arrow function' [top offender]
+  | >>> Line 48: +1 for 'nested arrow function' [top offender]
+  | >>> Line 59: +1 for 'nested arrow function' [top offender]
+  | >>> Line 67: +1 for 'nested arrow function' [top offender]
+  | >>> Line 77: +1 for 'nested arrow function' [top offender]
+  | >>> Line 98: +1 for 'nested arrow function' [top offender]
+  | >>> Line 120: +1 for 'nested arrow function' [top offender]
+  | >>> Line 122: +1 for 'nested arrow function' [top offender]
+  | >>> Line 132: +1 for 'nested arrow function' [top offender]
+  | >>> Line 134: +1 for 'nested arrow function' [top offender]
+  | >>> Line 144: +1 for 'nested arrow function' [top offender]
+  | >>> Line 147: +1 for 'ternary operator' [top offender]
+  | >>> Line 151: +1 for 'nested arrow function' [top offender]
+  | >>> Line 160: +1 for 'nested arrow function' [top offender]
+  | >>> Line 166: +1 for 'nested arrow function' [top offender]
+     ,-[src/components/inspector-pane/inspector-datetime.tsx:20:8]
+  19 |     
+  20 | ,-> export function DateTimeGrid({ event, updateEvent, isReadOnlyCalendar }: { event: AppEvent, updateEvent: (id: string, updates: Partial<AppEvent>) => void, isReadOnlyCalendar: boolean }) {
+  21 | |       const isAllDay = isEventAllDay(event);
+  22 | |       const startDay = extractDateFromISO(event.startTime);
+  23 | |       const endDay = getDisplayEndDate(event.endTime, isAllDay);
+  24 | |       
+  25 | |       const [showEndDate, setShowEndDate] = React.useState(startDay !== endDay);
+  26 | |       const [localTime, setLocalTime] = React.useState<{ startTime: string, endTime: string } | undefined>(undefined);
+  27 | |   
+  28 | |       React.useEffect(() => setShowEndDate(startDay !== endDay), [startDay, endDay]);
+  29 | |       React.useEffect(() => setLocalTime(undefined), [event.startTime, event.endTime]);
+  30 | |   
+  31 | |       const hasTime = !isAllDay;
+  32 | |       const hasEndDate = showEndDate;
+  33 | |       const currentStartTime = localTime?.startTime || event.startTime;
+  34 | |       const currentEndTime = localTime?.endTime || event.endTime;
+  35 | |   
+  36 | |       const startDateStr = extractDateFromISO(currentStartTime);
+  37 | |       const startTimeStr = hasTime ? extractHourMinuteFromISO(currentStartTime) : DEFAULT_START_HOUR;
+  38 | |       const endDateStr = getDisplayEndDate(currentEndTime, isAllDay);
+  39 | |       const endTimeStr = hasTime ? extractHourMinuteFromISO(currentEndTime) : DEFAULT_END_HOUR;
+  40 | |   
+  41 | |       const handleTimeBlur = () => {
+  42 | |           if (localTime) {
+  43 | |               updateEvent(event.id, { startTime: localTime.startTime, endTime: localTime.endTime });
+  44 | |               setLocalTime(undefined);
+  45 | |           }
+  46 | |       };
+  47 | |   
+  48 | |       const handleRemoveEndDate = () => {
+  49 | |           if (isReadOnlyCalendar) return;
+  50 | |           setShowEndDate(false);
+  51 | |           if (isAllDay) {
+  52 | |               const nextDay = addDays(new Date(startDay + "T00:00:00"), 1);
+  53 | |               updateEvent(event.id, { endTime: ymd(nextDay) });
+  54 | |           } else {
+  55 | |               updateEvent(event.id, { endTime: `${startDay}T${extractTimeFromISO(event.endTime)}` });
+  56 | |           }
+  57 | |       };
+  58 | |   
+  59 | |       const handleAddTime = () => {
+  60 | |           if (isReadOnlyCalendar) return;
+  61 | |           updateEvent(event.id, { 
+  62 | |               startTime: `${startDay}T${DEFAULT_START_HOUR}`,
+  63 | |               endTime: `${endDay}T${DEFAULT_END_HOUR}`
+  64 | |           });
+  65 | |       };
+  66 | |   
+  67 | |       const handleRemoveTime = () => {
+  68 | |           if (isReadOnlyCalendar) return;
+  69 | |           let eDay = endDay;
+  70 | |           if (startDay === eDay) eDay = ymd(addDays(new Date(startDay + "T00:00:00"), 1));
+  71 | |           updateEvent(event.id, { 
+  72 | |               startTime: startDay,
+  73 | |               endTime: eDay
+  74 | |           });
+  75 | |       };
+  76 | |   
+  77 | |       const onStartDateChange = (newDate: string) => {
+  78 | |           if (!isYmdString(newDate)) return;
+  79 | |           
+  80 | |           let newEndTime = undefined;
+  81 | |           if (newDate > endDateStr) {
+  82 | |               if (isAllDay) {
+  83 | |                   const dt = new Date(`${newDate}T00:00:00`);
+  84 | |                   dt.setDate(dt.getDate() + 1);
+  85 | |                   newEndTime = ymd(dt);
+  86 | |               } else {
+  87 | |                   newEndTime = `${newDate}T${extractTimeFromISO(currentEndTime)}`;
+  88 | |               }
+  89 | |           }
+  90 | |           
+  91 | |           const updates: Partial<AppEvent> = { 
+  92 | |               startTime: isAllDay ? newDate : `${newDate}T${extractTimeFromISO(currentStartTime)}`,
+  93 | |               ...(newEndTime !== undefined && { endTime: newEndTime })
+  94 | |           };
+  95 | |           updateEvent(event.id, updates);
+  96 | |       };
+  97 | |   
+  98 | |       const onEndDateChange = (newEndStr: string) => {
+  99 | |           if (!isYmdString(newEndStr)) return;
+ 100 | |           if (isAllDay) {
+ 101 | |               const dt = new Date(`${newEndStr}T00:00:00`);
+ 102 | |               dt.setDate(dt.getDate() + 1);
+ 103 | |               updateEvent(event.id, { endTime: ymd(dt) });
+ 104 | |           } else {
+ 105 | |               updateEvent(event.id, { endTime: `${newEndStr}T${extractTimeFromISO(currentEndTime)}` });
+ 106 | |           }
+ 107 | |       };
+ 108 | |   
+ 109 | |       return (
+ 110 | |           <div className="datetime-grid-container">
+ 111 | |               <div className={`dtg-layout dtg-has-time-${hasTime} dtg-has-end-${hasEndDate}`}>
+ 112 | |                   {hasTime && (
+ 113 | |                       <>
+ 114 | |                           <div className="dtg-field dtg-time-start">
+ 115 | |                               <input
+ 116 | |                                   type="time"
+ 117 | |                                   className="inspector-date-input"
+ 118 | |                                   value={startTimeStr}
+ 119 | |                                   disabled={isReadOnlyCalendar}
+ 120 | |                                   onChange={(e) => setLocalTime({ startTime: `${startDateStr}T${e.target.value}:00`, endTime: currentEndTime })}
+ 121 | |                                   onBlur={handleTimeBlur}
+ 122 | |                                   onKeyDown={(e) => e.key === "Enter" && handleTimeBlur()}
+ 123 | |                               />
+ 124 | |                           </div>
+ 125 | |                           <div className="dtg-arrow dtg-time-arrow"><Icon name={ICON_TIME_SEPARATOR} size={18} /></div>
+ 126 | |                           <div className="dtg-field dtg-time-end">
+ 127 | |                               <input
+ 128 | |                                   type="time"
+ 129 | |                                   className="inspector-date-input"
+ 130 | |                                   value={endTimeStr}
+ 131 | |                                   disabled={isReadOnlyCalendar}
+ 132 | |                                   onChange={(e) => setLocalTime({ startTime: currentStartTime, endTime: `${extractDateFromISO(currentEndTime)}T${e.target.value}:00` })}
+ 133 | |                                   onBlur={handleTimeBlur}
+ 134 | |                                   onKeyDown={(e) => e.key === "Enter" && handleTimeBlur()}
+ 135 | |                               />
+ 136 | |                           </div>
+ 137 | |                           <div className="dtg-action dtg-time-action">
+ 138 | |                               <button className="dtg-btn-icon" onClick={handleRemoveTime} disabled={isReadOnlyCalendar} title="Remove time"><Icon name={ICON_REMOVE} size={16} /></button>
+ 139 | |                           </div>
+ 140 | |                       </>
+ 141 | |                   )}
+ 142 | |   
+ 143 | |                   <div className="dtg-field dtg-date-start">
+ 144 | |                       <input type="date" className="inspector-date-input" value={startDateStr} disabled={isReadOnlyCalendar} onChange={(e) => onStartDateChange(e.target.value)} />
+ 145 | |                   </div>
+ 146 | |   
+ 147 | |                   {hasEndDate ? (
+ 148 | |                       <>
+ 149 | |                           <div className="dtg-arrow dtg-date-arrow"><Icon name={ICON_TIME_SEPARATOR} size={18} /></div>
+ 150 | |                           <div className="dtg-field dtg-date-end">
+ 151 | |                               <input type="date" className="inspector-date-input" value={endDateStr} min={startDateStr} disabled={isReadOnlyCalendar} onChange={(e) => onEndDateChange(e.target.value)} />
+ 152 | |                           </div>
+ 153 | |                           <div className="dtg-action dtg-date-action">
+ 154 | |                               <button className="dtg-btn-icon" onClick={handleRemoveEndDate} disabled={isReadOnlyCalendar} title="Remove end date"><Icon name={ICON_REMOVE} size={16} /></button>
+ 155 | |                           </div>
+ 156 | |                       </>
+ 157 | |                   ) : (!hasTime && (
+ 158 | |                       <div className="dtg-inline-actions">
+ 159 | |                           <button className="dtg-btn-icon" onClick={handleAddTime} disabled={isReadOnlyCalendar} title="Add time"><Icon name={ICON_ADD_TIME} size={18} /></button>
+ 160 | |                           <button className="dtg-btn-icon" onClick={() => !isReadOnlyCalendar && setShowEndDate(true)} disabled={isReadOnlyCalendar} title="Add end date"><Icon name={ICON_ADD_END_DATE} size={18} /></button>
+ 161 | |                       </div>
+ 162 | |                   ))}
+ 163 | |                   
+ 164 | |                   {hasTime && !hasEndDate && (
+ 165 | |                       <div className="dtg-bottom-actions">
+ 166 | |                           <button className="dtg-btn-icon" onClick={() => !isReadOnlyCalendar && setShowEndDate(true)} disabled={isReadOnlyCalendar} title="Add end date"><Icon name={ICON_ADD_END_DATE} size={18} /></button>
+ 167 | |                       </div>
+ 168 | |                   )}
+ 169 | |               </div>
+ 170 | |           </div>
+ 171 | |       );
+ 172 | `-> }
+     `----
+
+  ! complexity(complexity): Function 'buildGoogleRecurrenceAndExceptions' has Cognitive Complexity of 16. Maximum allowed is 15. [ternary operator: +7, if: +5, for-of: +2]
+  | 
+  | Breakdown:
+  |     Line 130: +1 for 'if'
+  |     Line 131: +1 for 'if'
+  |     Line 131: +1 for 'logical operator '&&''
+  |     Line 132: +2 for 'for-of' (incl. +1 nesting)
+  |     Line 133: +3 for 'if' (incl. +2 nesting)
+  |     Line 133: +1 for 'else'
+  | >>> Line 134: +4 for 'ternary operator' (incl. +3 nesting) [top offender]
+  |     Γå│ Tip: Extract inner loops into helper functions - each extraction removes one nesting level
+  |     Line 143: +1 for 'ternary operator'
+  |     Line 144: +1 for 'ternary operator'
+  |     Line 145: +1 for 'ternary operator'
+     ,-[src/core/sync/calendar-api/GoogleCalendarAPI.ts:128:47]
+ 127 |     
+ 128 | ,->     private buildGoogleRecurrenceAndExceptions(localEvent: AppEvent, timeZone: string, baseEventRemoteId?: string) {
+ 129 | |           const recurrence: string[] = [];
+ 130 | |           if (localEvent.rrule) recurrence.push(`RRULE:${localEvent.rrule}`);
+ 131 | |           if (localEvent.exdates && localEvent.exdates.length > 0) {
+ 132 | |               for (const exdate of localEvent.exdates) {
+ 133 | |                   if (isEventAllDay(localEvent)) {
+ 134 | |                       const dateOnly = exdate.includes("T") ? exdate.split("T")[0] : exdate;
+ 135 | |                       recurrence.push(`EXDATE;VALUE=DATE:${dateOnly}`);
+ 136 | |                   } else {
+ 137 | |                       recurrence.push(`EXDATE;TZID=${timeZone}:${exdate}`);
+ 138 | |                   }
+ 139 | |               }
+ 140 | |           }
+ 141 | |           
+ 142 | |           return {
+ 143 | |               ...(recurrence.length > 0 ? { recurrence } : {}),
+ 144 | |               ...(baseEventRemoteId ? { recurringEventId: baseEventRemoteId } : {}),
+ 145 | |               ...(localEvent.originalStartTime ? { originalStartTime: { dateTime: localEvent.originalStartTime, timeZone } } : {})
+ 146 | |           };
+ 147 | `->     }
+ 148 |     
+     `----
+
+  ! complexity(complexity): Function 'buildGoogleRecurrenceAndExceptions' has Cognitive Complexity of 16. Maximum allowed is 15. [ternary operator: +7, if: +5, for-of: +2]
+  | 
+  | Breakdown:
+  |     Line 177: +1 for 'if'
+  |     Line 178: +1 for 'if'
+  |     Line 178: +1 for 'logical operator '&&''
+  |     Line 179: +2 for 'for-of' (incl. +1 nesting)
+  |     Line 180: +3 for 'if' (incl. +2 nesting)
+  |     Line 180: +1 for 'else'
+  | >>> Line 181: +4 for 'ternary operator' (incl. +3 nesting) [top offender]
+  |     Γå│ Tip: Extract inner loops into helper functions - each extraction removes one nesting level
+  |     Line 191: +1 for 'ternary operator'
+  |     Line 192: +1 for 'ternary operator'
+  |     Line 193: +1 for 'ternary operator'
+     ,-[src/core/sync/calendar-api/FakeCalendarAPI.ts:175:47]
+ 174 |     
+ 175 | ,->     private buildGoogleRecurrenceAndExceptions(localEvent: AppEvent, timeZone: string, baseEventRemoteId?: string) {
+ 176 | |           const recurrence: string[] = [];
+ 177 | |           if (localEvent.rrule) recurrence.push(`RRULE:${localEvent.rrule}`);
+ 178 | |           if (localEvent.exdates && localEvent.exdates.length > 0) {
+ 179 | |               for (const exdate of localEvent.exdates) {
+ 180 | |                   if (isEventAllDay(localEvent)) {
+ 181 | |                       const dateOnly = exdate.includes("T") ? exdate.split("T")[0] : exdate;
+ 182 | |                       recurrence.push(`EXDATE;VALUE=DATE:${dateOnly}`);
+ 183 | |                   } else {
+ 184 | |                       recurrence.push(`EXDATE;TZID=${timeZone}:${exdate}`);
+ 185 | |                   }
+ 186 | |               }
+ 187 | |           }
+ 188 | |           
+ 189 | |   
+ 190 | |           return {
+ 191 | |               ...(recurrence.length > 0 ? { recurrence } : {}),
+ 192 | |               ...(baseEventRemoteId ? { recurringEventId: baseEventRemoteId } : {}),
+ 193 | |               ...(localEvent.originalStartTime ? { originalStartTime: { dateTime: localEvent.originalStartTime, timeZone } } : {})
+ 194 | |           };
+ 195 | `->     }
+ 196 |     
+     `----
+
+  ! complexity(complexity): Function '<arrow>' has Cognitive Complexity of 16. Maximum allowed is 15. [if: +11, logical operators: +2, nested functions: +2]
+  | 
+  | Breakdown:
+  |     Line 57: +1 for 'if'
+  | >>> Line 59: +2 for 'if' (incl. +1 nesting) [top offender]
+  | >>> Line 60: +2 for 'if' (incl. +1 nesting) [top offender]
+  |     Line 60: +1 for 'logical operator '||''
+  | >>> Line 61: +2 for 'if' (incl. +1 nesting) [top offender]
+  | >>> Line 62: +2 for 'if' (incl. +1 nesting) [top offender]
+  |     Line 63: +1 for 'nested arrow function'
+  |     Line 67: +1 for 'nested arrow function'
+  | >>> Line 70: +2 for 'if' (incl. +1 nesting) [top offender]
+  |     Line 71: +1 for 'else if'
+  |     Line 71: +1 for 'logical operator '&&''
+    ,-[src/components/inspector-pane/inspector-content.tsx:56:45]
+ 55 |                             parseMode={true}
+ 56 | ,->                         onPropertiesParsed={(props) => {
+ 57 | |                               if (currentTask) {
+ 58 | |                                   const updates: Partial<{ -readonly [K in keyof AppTask]: AppTask[K] }> = {};
+ 59 | |                                   if (props.priority !== undefined) updates.priority = props.priority;
+ 60 | |                                   if (props.tags) updates.tags = [...(currentTask.tags || []), ...props.tags];
+ 61 | |                                   if (props.duration !== undefined) updates.est = props.duration;
+ 62 | |                                   if (props.day) {
+ 63 | |                                       import('../../core/utils/sigil-parser').then(m => {
+ 64 | |                                           const newDue = m.getDueDateFromSigil(String(props.day));
+ 65 | |                                           updateTask(currentTask.id, { ...updates, due: newDue });
+ 66 | |                                           return true;
+ 67 | |                                       }).catch(() => false);
+ 68 | |                                       return; // early return because we handle update asynchronously
+ 69 | |                                   }
+ 70 | |                                   if (Object.keys(updates).length > 0) updateTask(currentTask.id, updates);
+ 71 | |                               } else if (currentEvent && !isReadOnlyCalendar) {
+ 72 | |                                   // For events, we could theoretically apply duration, day, time, but they aren't straight forward updates yet.
+ 73 | |                                   // We'll just strip the sigils for now, which TitleInput handles via onBlur and cleanTitle.
+ 74 | |                                   // If they want us to update startTime/endTime based on 'props.duration' or 'props.time' we can do it here later.
+ 75 | |                               }
+ 76 | `->                         }}
+ 77 |                             style={{
+    `----
+
+  ! complexity(complexity): Function 'TaskSelector' has Cognitive Complexity of 21. Maximum allowed is 15. [nested functions: +10, ternary operator: +8, logical operators: +2]
+  | 
+  | Breakdown:
+  |     Line 41: +1 for 'nested arrow function'
+  |     Line 45: +1 for 'nested arrow function'
+  |     Line 66: +1 for 'nested arrow function'
+  |     Line 72: +1 for 'nested arrow function'
+  |     Line 79: +1 for 'nested arrow function'
+  |     Line 84: +1 for 'nested arrow function'
+  |     Line 88: +1 for 'nested arrow function'
+  |     Line 92: +1 for 'nested arrow function'
+  |     Line 109: +1 for 'if'
+  |     Line 109: +1 for 'logical operator '&&''
+  |     Line 111: +1 for 'logical operator '&&''
+  |     Line 116: +1 for 'ternary operator'
+  |     Line 117: +1 for 'nested arrow function'
+  |     Line 123: +1 for 'ternary operator'
+  | >>> Line 124: +2 for 'ternary operator' (incl. +1 nesting) [top offender]
+  | >>> Line 130: +2 for 'ternary operator' (incl. +1 nesting) [top offender]
+  |     Line 137: +1 for 'nested arrow function'
+  | >>> Line 141: +2 for 'ternary operator' (incl. +1 nesting) [top offender]
+     ,-[src/screens/do/TaskSelector/TaskSelector.tsx:25:8]
+  24 |     
+  25 | ,-> export function TaskSelector({
+  26 | |       selectorOpen,
+  27 | |       setSelectorOpen,
+  28 | |       tasks,
+  29 | |       events,
+  30 | |       activeTask,
+  31 | |       allowNoTask,
+  32 | |       startWithTask,
+  33 | |   }: TaskSelectorProps) {
+  34 | |       const [visible, setVisible] = useState(false);
+  35 | |       const [isClosing, setIsClosing] = useState(false);
+  36 | |       const [searchQuery, setSearchQuery] = useState("");
+  37 | |       const [selectedIndex, setSelectedIndex] = useState(0);
+  38 | |       const searchInputRef = useRef<HTMLInputElement>(null);
+  39 | |       const [, setTasks] = useTasks();
+  40 | |   
+  41 | |       const updateTask = (id: string, updates: Partial<AppTask>) => {
+  42 | |           setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, ...updates } : t)));
+  43 | |       };
+  44 | |   
+  45 | |       useEffect(() => {
+  46 | |           let timer: ReturnType<typeof setTimeout>;
+  47 | |           if (selectorOpen) {
+  48 | |               setVisible(true);
+  49 | |               setIsClosing(false);
+  50 | |               setSearchQuery("");
+  51 | |               document.body.classList.add("modal-open");
+  52 | |           } else if (visible) {
+  53 | |               setIsClosing(true);
+  54 | |               document.body.classList.remove("modal-open");
+  55 | |               timer = setTimeout(() => {
+  56 | |                   setVisible(false);
+  57 | |                   setIsClosing(false);
+  58 | |               }, ANIMATION_DELAY_MS);
+  59 | |           }
+  60 | |           return () => {
+  61 | |               if (timer) clearTimeout(timer);
+  62 | |           };
+  63 | |       }, [selectorOpen, visible]);
+  64 | |   
+  65 | |       // Cleanup class on unmount
+  66 | |       useEffect(() => {
+  67 | |           return () => {
+  68 | |               document.body.classList.remove("modal-open");
+  69 | |           };
+  70 | |       }, []);
+  71 | |   
+  72 | |       useEffect(() => {
+  73 | |           if (selectorOpen && searchInputRef.current) {
+  74 | |               searchInputRef.current.focus();
+  75 | |           }
+  76 | |       }, [selectorOpen]);
+  77 | |   
+  78 | |       const pendingTasks = useMemo(
+  79 | |           () => (tasks || []).filter((t) => t.status !== "done" && t.status !== "doing"),
+  80 | |           [tasks]
+  81 | |       );
+  82 | |   
+  83 | |       const sortedTasks = useMemo(
+  84 | |           () => sortTasksForSelection(pendingTasks, events, searchQuery),
+  85 | |           [pendingTasks, events, searchQuery]
+  86 | |       );
+  87 | |   
+  88 | |       useEffect(() => {
+  89 | |           setSelectedIndex(0);
+  90 | |       }, [searchQuery, sortedTasks]);
+  91 | |   
+  92 | |       useEffect(() => {
+  93 | |           if (visible) {
+  94 | |               const el = document.querySelector('.modern-task-item.is-selected');
+  95 | |               if (el) {
+  96 | |                   el.scrollIntoView({ block: "nearest" });
+  97 | |               }
+  98 | |           }
+  99 | |       }, [selectedIndex, visible]);
+ 100 | |   
+ 101 | |       const handleKeyDown = useTaskSelectorKeyboard({
+ 102 | |           sortedTasks,
+ 103 | |           selectedIndex,
+ 104 | |           setSelectedIndex,
+ 105 | |           setSearchQuery,
+ 106 | |           startWithTask,
+ 107 | |       });
+ 108 | |   
+ 109 | |       if (!visible && !isClosing) return <></>;
+ 110 | |   
+ 111 | |       const needsBlur = !activeTask && !allowNoTask;
+ 112 | |   
+ 113 | |       return (
+ 114 | |           <>
+ 115 | |               <div
+ 116 | |                   className={`task-selector-backdrop ${needsBlur ? "with-blur" : ""}`}
+ 117 | |                   onPointerDown={(e) => {
+ 118 | |                       e.stopPropagation();
+ 119 | |                       setSelectorOpen(false);
+ 120 | |                   }}
+ 121 | |               />
+ 122 | |   
+ 123 | |               {pendingTasks.length === 0 ? (
+ 124 | |                   <div className={`task-selector-overlay ${isClosing ? "is-closing" : "floating-menu"}`}>
+ 125 | |                       <div className="task-selector-empty-msg">
+ 126 | |                           Create some tasks to start working on them.
+ 127 | |                       </div>
+ 128 | |                   </div>
+ 129 | |               ) : (
+ 130 | |                   <div className={`task-selector-overlay ${isClosing ? "is-closing" : "floating-menu"}`}>
+ 131 | |                       <div className="task-selector-content">
+ 132 | |                           <input
+ 133 | |                               ref={searchInputRef}
+ 134 | |                               className="modern-task-input"
+ 135 | |                               placeholder="Type a task"
+ 136 | |                               value={searchQuery}
+ 137 | |                               onChange={(e) => setSearchQuery(e.target.value)}
+ 138 | |                               onKeyDown={handleKeyDown}
+ 139 | |                           />
+ 140 | |   
+ 141 | |                           <div className={`task-selector-divider ${searchQuery.trim().length > 0 ? "has-search" : ""}`}>
+ 142 | |                               <div className="task-selector-divider-dot" />
+ 143 | |                           </div>
+ 144 | |   
+ 145 | |                           <div className="modern-task-list">
+ 146 | |                               <TaskSearchResults
+ 147 | |                                   sortedTasks={sortedTasks}
+ 148 | |                                   startWithTask={startWithTask}
+ 149 | |                                   selectedIndex={selectedIndex}
+ 150 | |                                   setSelectedIndex={setSelectedIndex}
+ 151 | |                                   updateTask={updateTask}
+ 152 | |                               />
+ 153 | |                           </div>
+ 154 | |                       </div>
+ 155 | |                   </div>
+ 156 | |               )}
+ 157 | |           </>
+ 158 | |       );
+ 159 | `-> }
+     `----
+
+  ! complexity(complexity): Function 'fetchWithRateLimitAndAuth' has Cognitive Complexity of 18. Maximum allowed is 15. [if: +8, nested functions: +3, logical operators: +3]
+  | 
+  | Breakdown:
+  |     Line 18: +1 for 'nested arrow function'
+  |     Line 24: +1 for 'if'
+  |     Line 28: +1 for 'if'
+  | >>> Line 29: +2 for 'if' (incl. +1 nesting) [top offender]
+  | >>> Line 31: +2 for 'if' (incl. +1 nesting) [top offender]
+  |     Line 37: +1 for 'while'
+  |     Line 37: +1 for 'logical operator '&&''
+  |     Line 37: +1 for 'logical operator '||''
+  |     Line 44: +1 for 'logical operator '||''
+  |     Line 44: +1 for 'nested arrow function'
+  | >>> Line 45: +2 for 'if' (incl. +1 nesting) [top offender]
+  |     Line 45: +1 for 'else'
+  |     Line 50: +1 for 'nested arrow function'
+  | >>> Line 57: +2 for 'catch' (incl. +1 nesting) [top offender]
+  | 
+  | Tips:
+  |   ΓÇó Complex boolean logic (3 operator sequences). Consider extracting into named boolean variables.
+    ,-[src/core/sync/google-api-utils.ts:13:8]
+ 12 |     
+ 13 | ,-> export async function fetchWithRateLimitAndAuth(
+ 14 | |       url: string,
+ 15 | |       authManager: IAuthManager,
+ 16 | |       options: RequestInit = {}
+ 17 | |   ): Promise<Response> {
+ 18 | |       const getOpts = (t: string) => {
+ 19 | |           const headers = new Headers(options.headers);
+ 20 | |           headers.set("Authorization", `Bearer ${t}`);
+ 21 | |           return { ...options, headers };
+ 22 | |       };
+ 23 | |       let token = authManager.getToken();
+ 24 | |       if (!token) throw new Error("Unauthorized");
+ 25 | |       
+ 26 | |       let res = await fetchWithTimeout(url, getOpts(token));
+ 27 | |       
+ 28 | |       if (res.status === HTTP_UNAUTHORIZED) {
+ 29 | |           if (!await authManager.refreshAccessToken()) throw new Error("Unauthorized");
+ 30 | |           token = authManager.getToken();
+ 31 | |           if (!token) throw new Error("Unauthorized");
+ 32 | |           res = await fetchWithTimeout(url, getOpts(token));
+ 33 | |       }
+ 34 | |       
+ 35 | |       let attempts = 0;
+ 36 | |       const maxAttempts = 3;
+ 37 | |       while ((res.status === HTTP_FORBIDDEN || res.status === HTTP_TOO_MANY_REQUESTS) && attempts < maxAttempts) {
+ 38 | |           const clone = res.clone();
+ 39 | |           try {
+ 40 | |               // Google API error shapes vary, so we define a structural type to extract rate limit reasons.
+ 41 | |               // Necessary for parsing rate limit errors sequentially
+ 42 | |               // eslint-disable-next-line no-await-in-loop
+ 43 | |               const data: GoogleApiErrorResponse = await clone.json();
+ 44 | |               const isRateLimit = res.status === HTTP_TOO_MANY_REQUESTS || (data?.error?.errors?.some(e => e.reason === "rateLimitExceeded" || e.reason === "userRateLimitExceeded"));
+ 45 | |               if (isRateLimit) {
+ 46 | |                   attempts++;
+ 47 | |                   const delay = Math.pow(2, attempts) * MS_PER_SECOND + Math.random() * MS_PER_SECOND;
+ 48 | |                   // Necessary for exponential backoff delay
+ 49 | |                   // eslint-disable-next-line no-await-in-loop
+ 50 | |                   await new Promise(resolve => setTimeout(resolve, delay));
+ 51 | |                   // Necessary for sequential retry of the failed request
+ 52 | |                   // eslint-disable-next-line no-await-in-loop
+ 53 | |                   res = await fetchWithTimeout(url, getOpts(token));
+ 54 | |               } else {
+ 55 | |                   break;
+ 56 | |               }
+ 57 | |           } catch {
+ 58 | |               break;
+ 59 | |           }
+ 60 | |       }
+ 61 | |       return res;
+ 62 | `-> }
+    `----
+
+  ! complexity(complexity): Function 'handler' has Cognitive Complexity of 18. Maximum allowed is 15. [ternary operator: +11, if: +5, logical operators: +1]
+  | 
+  | Breakdown:
+  |     Line 44: +1 for 'ternary operator'
+  |     Line 44: +2 for 'ternary operator' (incl. +1 nesting)
+  |     Line 45: +1 for 'logical operator '||''
+  |     Line 45: +1 for 'ternary operator'
+  |     Line 47: +1 for 'for-of'
+  |     Line 48: +2 for 'if' (incl. +1 nesting)
+  |     Line 49: +3 for 'ternary operator' (incl. +2 nesting)
+  |     Line 50: +3 for 'if' (incl. +2 nesting)
+  | >>> Line 51: +4 for 'ternary operator' (incl. +3 nesting) [top offender]
+  |     Γå│ Tip: Extract inner loops into helper functions - each extraction removes one nesting level
+    ,-[src/core/utils/testUtils.ts:43:15]
+ 42 |     
+ 43 | ,->     handler = async (input: RequestInfo | URL, init?: RequestInit & { timeout?: number }): Promise<Response> => {
+ 44 | |           const urlStr = typeof input === "string" ? input : (input instanceof URL ? input.toString() : input.url);
+ 45 | |           const reqMethod = (init?.method || (input instanceof Request ? input.method : "GET")).toUpperCase();
+ 46 | |   
+ 47 | |           for (const route of [...this.routes].toReversed()) {
+ 48 | |               if (route.method === reqMethod) {
+ 49 | |                   const matches = typeof route.pattern === "string" ? urlStr.includes(route.pattern) : route.pattern.test(urlStr);
+ 50 | |                   if (matches) {
+ 51 | |                       return typeof route.response === "function" ? route.response(urlStr, init) : route.response;
+ 52 | |                   }
+ 53 | |               }
+ 54 | |           }
+ 55 | |           return new Response("Not Found", { status: 404 });
+ 56 | `->     };
+ 57 |     }
+    `----
+
+  ! complexity(complexity): Function 'handleTransition' has cyclomatic complexity of 22. Maximum allowed is 20. [case: +20, if: +1]
+  | 
+  | Breakdown:
+  | >>> Line 45: +1 for 'case' [top offender]
+  | >>> Line 46: +1 for 'case' [top offender]
+  | >>> Line 47: +1 for 'case' [top offender]
+  | >>> Line 48: +1 for 'case' [top offender]
+  | >>> Line 51: +1 for 'case' [top offender]
+  | >>> Line 56: +1 for 'case' [top offender]
+  | >>> Line 59: +1 for 'case' [top offender]
+  | >>> Line 62: +1 for 'case' [top offender]
+  | >>> Line 66: +1 for 'case' [top offender]
+  | >>> Line 71: +1 for 'case' [top offender]
+  | >>> Line 75: +1 for 'case' [top offender]
+  | >>> Line 78: +1 for 'case' [top offender]
+  | >>> Line 82: +1 for 'case' [top offender]
+  | >>> Line 85: +1 for 'case' [top offender]
+  | >>> Line 89: +1 for 'case' [top offender]
+  | >>> Line 93: +1 for 'case' [top offender]
+  | >>> Line 96: +1 for 'case' [top offender]
+  | >>> Line 97: +1 for 'case' [top offender]
+  | >>> Line 98: +1 for 'case' [top offender]
+  | >>> Line 100: +1 for 'if' [top offender]
+  | >>> Line 102: +1 for 'case' [top offender]
+     ,-[src/core/sync/engine/SyncQueue.ts:32:29]
+  31 |         // oxlint-disable-next-line eslint/complexity
+  32 | ,->     private handleTransition(
+  33 | |           transition: string, 
+  34 | |           item: SyncQueueItem, 
+  35 | |           existingIndices: number[],
+  36 | |           indices: { create: number, update: number, move: number }
+  37 | |       ) {
+  38 | |           const removeAllExisting = () => {
+  39 | |               for (const idx of [...existingIndices].toSorted((a, b) => b - a)) {
+  40 | |                   this.queue.splice(idx, 1);
+  41 | |               }
+  42 | |          };
+  43 | |   
+  44 | |           switch (transition) {
+  45 | |               case "create->create":
+  46 | |               case "update->create":
+  47 | |               case "move->create":
+  48 | |               case "move+update->create":
+  49 | |                   console.warn("Attempted to recreate an item that already exists in the queue.");
+  50 | |                   return;
+  51 | |               case "delete->create":
+  52 | |                   removeAllExisting();
+  53 | |                   this.queue.push(item);
+  54 | |                   break;
+  55 | |   
+  56 | |               case "create->update":
+  57 | |                   this.queue[indices.create].item = item.item;
+  58 | |                   break;
+  59 | |               case "update->update":
+  60 | |                   this.queue[indices.update] = item;
+  61 | |                   break;
+  62 | |               case "move->update":
+  63 | |                   this.queue[indices.move].item = item.item;
+  64 | |                   this.queue.push(item);
+  65 | |                   break;
+  66 | |               case "move+update->update":
+  67 | |                   this.queue[indices.move].item = item.item;
+  68 | |                   this.queue.splice(indices.update, 1);
+  69 | |                   this.queue.push(item);
+  70 | |                   break;
+  71 | |               case "delete->update":
+  72 | |                   console.warn("Attempted to update a deleted item. Ignoring.");
+  73 | |                   return;
+  74 | |   
+  75 | |               case "create->move":
+  76 | |                   this.queue[indices.create].item = item.item;
+  77 | |                   break;
+  78 | |               case "update->move":
+  79 | |                   this.queue[indices.update].item = item.item;
+  80 | |                   this.queue.push(item);
+  81 | |                   break;
+  82 | |               case "move->move":
+  83 | |                   this.queue[indices.move] = item;
+  84 | |                   break;
+  85 | |               case "move+update->move":
+  86 | |                   this.queue[indices.update].item = item.item;
+  87 | |                   this.queue[indices.move] = item;
+  88 | |                   break;
+  89 | |               case "delete->move":
+  90 | |                   console.warn("Attempted to move a deleted item. Ignoring.");
+  91 | |                   return;
+  92 | |   
+  93 | |               case "create->delete":
+  94 | |                   removeAllExisting();
+  95 | |                   break;
+  96 | |               case "update->delete":
+  97 | |               case "move->delete":
+  98 | |               case "move+update->delete":
+  99 | |                   removeAllExisting();
+ 100 | |                   if (item.remoteId) this.queue.push(item);
+ 101 | |                   break;
+ 102 | |               case "delete->delete":
+ 103 | |                   return;
+ 104 | |           }
+ 105 | `->     }
+ 106 |     
+     `----
+
+  ! complexity(complexity): Function 'push' has Cognitive Complexity of 21. Maximum allowed is 15. [if: +12, else if: +4, nested functions: +2]
+  | 
+  | Breakdown:
+  |     Line 110: +1 for 'nested arrow function'
+  |     Line 111: +1 for 'nested arrow function'
+  |     Line 114: +1 for 'if'
+  | >>> Line 115: +2 for 'if' (incl. +1 nesting) [top offender]
+  |     Line 115: +1 for 'logical operator '&&''
+  |     Line 128: +1 for 'for-of'
+  | >>> Line 130: +2 for 'if' (incl. +1 nesting) [top offender]
+  | >>> Line 131: +2 for 'if' (incl. +1 nesting) [top offender]
+  | >>> Line 132: +2 for 'if' (incl. +1 nesting) [top offender]
+  | >>> Line 133: +2 for 'if' (incl. +1 nesting) [top offender]
+  |     Line 136: +1 for 'if'
+  |     Line 137: +1 for 'else if'
+  |     Line 138: +1 for 'else if'
+  |     Line 138: +1 for 'logical operator '&&''
+  |     Line 139: +1 for 'else if'
+  |     Line 140: +1 for 'else if'
+  | 
+  | Tips:
+  |   ΓÇó Long else-if chain (4 branches). Consider using a lookup object or switch statement.
+     ,-[src/core/sync/engine/SyncQueue.ts:107:9]
+ 106 |     
+ 107 | ,->     push(item: SyncQueueItem) {
+ 108 | |   
+ 109 | |           const existingIndices = this.queue
+ 110 | |               .map((q, index) => (q.type === item.type && q.item?.id === item.item?.id ? index : -1))
+ 111 | |               .filter((index) => index !== -1);
+ 112 | |   
+ 113 | |           // Brand new action
+ 114 | |           if (existingIndices.length === 0) {
+ 115 | |               if (item.action === SyncAction.Delete && !item.remoteId) {
+ 116 | |                   // This item wasn't synced to Google yet, so we don't even need to add a delete action for it.
+ 117 | |                   return;
+ 118 | |               }
+ 119 | |               this.queue.push(item);
+ 120 | |               this.save();
+ 121 | |               return;
+ 122 | |           }
+ 123 | |   
+ 124 | |           // Determine existing state
+ 125 | |           let existingState = "";
+ 126 | |           const indices = { create: -1, update: -1, move: -1, delete: -1 };
+ 127 | |   
+ 128 | |           for (const index of existingIndices) {
+ 129 | |               const action = this.queue[index].action;
+ 130 | |               if (action === SyncAction.Create) indices.create = index;
+ 131 | |               if (action === SyncAction.Update) indices.update = index;
+ 132 | |               if (action === SyncAction.Move) indices.move = index;
+ 133 | |               if (action === SyncAction.Delete) indices.delete = index;
+ 134 | |           }
+ 135 | |   
+ 136 | |           if (indices.create !== -1) existingState = "create";
+ 137 | |           else if (indices.delete !== -1) existingState = "delete";
+ 138 | |           else if (indices.update !== -1 && indices.move !== -1) existingState = "move+update";
+ 139 | |           else if (indices.update !== -1) existingState = "update";
+ 140 | |           else if (indices.move !== -1) existingState = "move";
+ 141 | |           
+ 142 | |           const transition = `${existingState}->${item.action}`;
+ 143 | |           
+ 144 | |           this.handleTransition(transition, item, existingIndices, indices);
+ 145 | |   
+ 146 | |           this.save();
+ 147 | `->     }
+ 148 |     
+     `----
+
+  x Unexpected token
+     ,-[src/components/inputs/TitleInput.tsx:106:25]
+ 105 |                             </span>
+ 106 |                         );
+     :                         ^
+ 107 |                     })}
+     `----
+
+  ! complexity(complexity): Function 'parseSigils' has Cognitive Complexity of 24. Maximum allowed is 15. [if: +11, ternary operator: +4, logical operators: +3]
+  | 
+  | Breakdown:
+  |     Line 101: +1 for 'for'
+  |     Line 103: +2 for 'if' (incl. +1 nesting)
+  |     Line 108: +2 for 'if' (incl. +1 nesting)
+  |     Line 108: +1 for 'logical operator '&&''
+  |     Line 108: +1 for 'logical operator '||''
+  |     Line 113: +3 for 'if' (incl. +2 nesting)
+  | >>> Line 116: +4 for 'ternary operator' (incl. +3 nesting) [top offender]
+  |     Γå│ Tip: Extract inner loops into helper functions - each extraction removes one nesting level
+  |     Line 123: +2 for 'if' (incl. +1 nesting)
+  |     Line 123: +1 for 'else'
+  |     Line 133: +1 for 'nested arrow function'
+  |     Line 134: +1 for 'nested arrow function'
+  |     Line 141: +1 for 'for-of'
+  |     Line 142: +2 for 'if' (incl. +1 nesting)
+  |     Line 142: +1 for 'logical operator '&&''
+  |     Line 142: +1 for 'else'
+  | 
+  | Tips:
+  |   ΓÇó Complex boolean logic (3 operator sequences). Consider extracting into named boolean variables.
+     ,-[src/core/utils/sigil-parser.ts:91:8]
+  90 |     
+  91 | ,-> export function parseSigils(title: string): ParseResult {
+  92 | |       const properties: ParsedProperties = {};
+  93 | |       const tokens: Token[] = [];
+  94 | |       
+  95 | |       // We will find all potential sigils using a regex that splits on whitespace boundaries.
+  96 | |       // However, phrases like "for 8m" or "in 1h" have spaces in them.
+  97 | |       // Let's first tokenize by whitespace.
+  98 | |       const parts = title.split(/(\s+)/);
+  99 | |       const cleanParts: string[] = [];
+ 100 | |       
+ 101 | |       for (let i = 0; i < parts.length; i++) {
+ 102 | |           const part = parts[i];
+ 103 | |           if (part.trim() === "") {
+ 104 | |               tokens.push({ type: "text", text: part });
+ 105 | |               continue;
+ 106 | |           }
+ 107 | |           // Check 2-word sigils like "for 8m" or "in 1h"
+ 108 | |           if (i + 2 < parts.length && (part.toLowerCase() === "for" || part.toLowerCase() === "in")) {
+ 109 | |               const nextSpace = parts[i+1];
+ 110 | |               const nextWord = parts[i+2];
+ 111 | |               const combined = part + nextSpace + nextWord;
+ 112 | |               const durMatch = combined.match(DURATION_REGEX);
+ 113 | |               if (durMatch?.[0] === combined) {
+ 114 | |                   const val = parseInt(durMatch[1], 10);
+ 115 | |                   const unit = durMatch[2].toLowerCase();
+ 116 | |                   properties.duration = unit.startsWith("h") ? val * MINUTES_IN_HOUR : val;
+ 117 | |                   tokens.push({ type: "sigil", text: combined });
+ 118 | |                   i += 2;
+ 119 | |                   continue;
+ 120 | |               }
+ 121 | |           }
+ 122 | |   
+ 123 | |           if (processToken(part, properties)) {
+ 124 | |               tokens.push({ type: "sigil", text: part });
+ 125 | |           } else {
+ 126 | |               tokens.push({ type: "text", text: part });
+ 127 | |               cleanParts.push(part);
+ 128 | |           }
+ 129 | |       }
+ 130 | |       
+ 131 | |       // cleanTitle should only contain the text parts, properly spaced.
+ 132 | |       const cleanTitle = tokens
+ 133 | |           .filter(t => t.type === "text")
+ 134 | |           .map(t => t.text)
+ 135 | |           .join("")
+ 136 | |           .replace(/\s+/g, " ")
+ 137 | |           .trim();
+ 138 | |       
+ 139 | |       // Group adjacent text tokens
+ 140 | |       const mergedTokens: Token[] = [];
+ 141 | |       for (const t of tokens) {
+ 142 | |           if (mergedTokens.length > 0 && mergedTokens[mergedTokens.length - 1].type === t.type) {
+ 143 | |               mergedTokens[mergedTokens.length - 1].text += t.text;
+ 144 | |           } else {
+ 145 | |               mergedTokens.push({ ...t });
+ 146 | |           }
+ 147 | |       }
+ 148 | |   
+ 149 | |       return { cleanTitle, properties, tokens: mergedTokens };
+ 150 | `-> }
+     `----
+
+  ! complexity(complexity): Function 'processFilters' has Cognitive Complexity of 19. Maximum allowed is 15. [if: +11, logical operators: +2, ternary operator: +2]
+  | 
+  | Breakdown:
+  |     Line 11: +1 for 'for-of'
+  |     Line 12: +2 for 'if' (incl. +1 nesting)
+  |     Line 12: +1 for 'logical operator '||''
+  |     Line 12: +1 for 'logical operator '&&''
+  |     Line 13: +2 for 'ternary operator' (incl. +1 nesting)
+  |     Line 14: +2 for 'if' (incl. +1 nesting)
+  |     Line 16: +2 for 'if' (incl. +1 nesting)
+  |     Line 16: +1 for 'else'
+  | >>> Line 17: +3 for 'if' (incl. +2 nesting) [top offender]
+  |     Line 18: +1 for 'nested arrow function'
+  |     Line 20: +2 for 'if' (incl. +1 nesting)
+  |     Line 21: +1 for 'nested arrow function'
+    ,-[src/core/domain/filters.ts:8:1]
+  7 |     
+  8 | ,-> function processFilters(filters: AppFilter[]) {
+  9 | |       const req: Record<string, Set<string | number>> = {};
+ 10 | |       const excl: Record<string, Set<string | number>> = {};
+ 11 | |       for (const f of filters) {
+ 12 | |           if (!f.column || (!f.value && f.value !== 0)) continue;
+ 13 | |           const values = Array.isArray(f.value) ? f.value : [f.value];
+ 14 | |           if (values.length === 0) continue;
+ 15 | |           
+ 16 | |           if (f.operator === "is not") {
+ 17 | |               if (!excl[f.column]) excl[f.column] = new Set();
+ 18 | |               values.forEach(v => excl[f.column].add(v));
+ 19 | |           } else {
+ 20 | |               if (!req[f.column]) req[f.column] = new Set();
+ 21 | |               values.forEach(v => req[f.column].add(v));
+ 22 | |           }
+ 23 | |       }
+ 24 | |       return { req, excl };
+ 25 | `-> }
+ 26 |     
+    `----
+
+  ! complexity(complexity): Function 'processSingleValueCols' has Cognitive Complexity of 18. Maximum allowed is 15. [if: +12, for-of: +3, logical operators: +2]
+  | 
+  | Breakdown:
+  |     Line 37: +1 for 'for-of'
+  |     Line 38: +2 for 'if' (incl. +1 nesting)
+  |     Line 39: +3 for 'if' (incl. +2 nesting)
+  | >>> Line 41: +4 for 'if' (incl. +3 nesting) [top offender]
+  |     Γå│ Tip: Extract inner loops into helper functions - each extraction removes one nesting level
+  |     Line 41: +1 for 'logical operator '||''
+  |     Line 45: +1 for 'else if'
+  |     Line 45: +1 for 'logical operator '&&''
+  |     Line 46: +2 for 'for-of' (incl. +1 nesting)
+  |     Line 47: +3 for 'if' (incl. +2 nesting)
+    ,-[src/core/domain/filters.ts:27:1]
+ 26 |     
+ 27 | ,-> function processSingleValueCols(
+ 28 | |       req: Record<string, Set<string | number>>,
+ 29 | |       excl: Record<string, Set<string | number>>,
+ 30 | |       defaults: Record<string, unknown>
+ 31 | |   ) {
+ 32 | |       const FALLBACKS: Record<string, (string | number)[]> = {
+ 33 | |           status: ["todo", "next-up", "doing", "done"],
+ 34 | |           priority: [1, 2, MAX_RETRIES, DRAG_THRESHOLD_PX, 0],
+ 35 | |       };
+ 36 | |       const singleValueCols = ["status", "priority"];
+ 37 | |       for (const col of singleValueCols) {
+ 38 | |           if (req[col]) {
+ 39 | |               if (req[col].size === 1) {
+ 40 | |                   const val = Array.from(req[col])[0];
+ 41 | |                   if (!excl[col] || !excl[col].has(val)) {
+ 42 | |                       defaults[col] = val;
+ 43 | |                   }
+ 44 | |               }
+ 45 | |           } else if (excl[col] && FALLBACKS[col]) {
+ 46 | |               for (const fallback of FALLBACKS[col]) {
+ 47 | |                   if (!excl[col].has(fallback)) {
+ 48 | |                       defaults[col] = fallback;
+ 49 | |                       break;
+ 50 | |                   }
+ 51 | |               }
+ 52 | |           }
+ 53 | |       }
+ 54 | `-> }
+ 55 |     
+    `----
+
+  ! complexity(complexity): Function 'applyRecurringUpdate' has Cognitive Complexity of 16. Maximum allowed is 15. [if: +7, nested functions: +6, logical operators: +3]
+  | 
+  | Breakdown:
+  |     Line 107: +1 for 'logical operator '||''
+  |     Line 108: +1 for 'nested arrow function'
+  |     Line 109: +1 for 'if'
+  |     Line 111: +1 for 'if'
+  |     Line 111: +1 for 'logical operator '&&''
+  |     Line 112: +1 for 'nested arrow function'
+  |     Line 115: +1 for 'if'
+  |     Line 116: +1 for 'nested arrow function'
+  |     Line 119: +1 for 'if'
+  | >>> Line 120: +2 for 'if' (incl. +1 nesting) [top offender]
+  |     Line 122: +1 for 'nested arrow function'
+  |     Line 127: +1 for 'logical operator '||''
+  |     Line 140: +1 for 'nested arrow function'
+  |     Line 145: +1 for 'if'
+  |     Line 147: +1 for 'nested arrow function'
+  | 
+  | Tips:
+  |   ΓÇó Complex boolean logic (3 operator sequences). Consider extracting into named boolean variables.
+     ,-[src/core/domain/rrule-utils.ts:101:8]
+ 100 |     
+ 101 | ,-> export function applyRecurringUpdate(
+ 102 | |       events: AppEvent[],
+ 103 | |       instanceEvent: HydratedEvent,
+ 104 | |       mode: RecurringMode,
+ 105 | |       updates: Partial<AppEvent>
+ 106 | |   ): AppEvent[] {
+ 107 | |       const baseId = instanceEvent.baseEventId || instanceEvent.id;
+ 108 | |       const baseEvent = events.find((e) => e.id === baseId);
+ 109 | |       if (!baseEvent) return events;
+ 110 | |   
+ 111 | |       if (!baseEvent.rrule && !baseEvent.recurringEventId) {
+ 112 | |           return events.map((e) => (e.id === baseId ? { ...e, ...updates } : e));
+ 113 | |       }
+ 114 | |   
+ 115 | |       if (mode === "all") {
+ 116 | |           return events.map((e) => (e.id === baseId ? { ...e, ...updates } : e));
+ 117 | |       }
+ 118 | |       
+ 119 | |       if (mode === "instance") {
+ 120 | |           if (instanceEvent.recurringEventId) {
+ 121 | |                // It's already an exception override, just update it
+ 122 | |                return events.map(e => e.id === instanceEvent.id ? { ...e, ...updates } : e);
+ 123 | |           }
+ 124 | |           
+ 125 | |           // Google exdate is YYYYMMDDTHHMMSS (no dashes)
+ 126 | |           const compactStartTime = instanceEvent.startTime.replace(/[-:]/g, "");
+ 127 | |           const newExdates = [...(baseEvent.exdates || []), compactStartTime];
+ 128 | |           
+ 129 | |           const overrideEvent: AppEvent = {
+ 130 | |               ...baseEvent,
+ 131 | |               ...updates,
+ 132 | |               id: `e${Date.now()}_${crypto.randomUUID()}`,
+ 133 | |               recurringEventId: baseId,
+ 134 | |               originalStartTime: instanceEvent.startTime,
+ 135 | |               rrule: undefined,
+ 136 | |               exdates: undefined,
+ 137 | |           };
+ 138 | |   
+ 139 | |           return [
+ 140 | |               ...events.map((e) => (e.id === baseId ? { ...e, exdates: newExdates } : e)),
+ 141 | |               overrideEvent
+ 142 | |           ];
+ 143 | |       }
+ 144 | |       
+ 145 | |       if (mode === "following") {
+ 146 | |           // Complex, fallback to 'all' for now if user chooses it
+ 147 | |           return events.map((e) => (e.id === baseId ? { ...e, ...updates } : e));
+ 148 | |       }
+ 149 | |       
+ 150 | |       return events;
+ 151 | `-> }
+ 152 |     
+     `----
+
+  ! complexity(complexity): Function 'applyRecurringDelete' has Cognitive Complexity of 17. Maximum allowed is 15. [if: +7, nested functions: +6, logical operators: +3]
+  | 
+  | Breakdown:
+  |     Line 158: +1 for 'logical operator '||''
+  |     Line 159: +1 for 'nested arrow function'
+  |     Line 160: +1 for 'if'
+  |     Line 162: +1 for 'if'
+  |     Line 162: +1 for 'logical operator '&&''
+  |     Line 163: +1 for 'nested arrow function'
+  |     Line 166: +1 for 'if'
+  |     Line 167: +1 for 'nested arrow function'
+  |     Line 170: +1 for 'if'
+  | >>> Line 171: +2 for 'if' (incl. +1 nesting) [top offender]
+  |     Line 171: +1 for 'else'
+  |     Line 172: +1 for 'nested arrow function'
+  |     Line 175: +1 for 'logical operator '||''
+  |     Line 176: +1 for 'nested arrow function'
+  |     Line 180: +1 for 'if'
+  |     Line 181: +1 for 'nested arrow function'
+  | 
+  | Tips:
+  |   ΓÇó Complex boolean logic (3 operator sequences). Consider extracting into named boolean variables.
+     ,-[src/core/domain/rrule-utils.ts:153:8]
+ 152 |     
+ 153 | ,-> export function applyRecurringDelete(
+ 154 | |       events: AppEvent[],
+ 155 | |       instanceEvent: HydratedEvent,
+ 156 | |       mode: RecurringMode
+ 157 | |   ): AppEvent[] {
+ 158 | |       const baseId = instanceEvent.baseEventId || instanceEvent.id;
+ 159 | |       const baseEvent = events.find((e) => e.id === baseId);
+ 160 | |       if (!baseEvent) return events;
+ 161 | |   
+ 162 | |       if (!baseEvent.rrule && !baseEvent.recurringEventId) {
+ 163 | |           return events.filter((e) => e.id !== baseId);
+ 164 | |       }
+ 165 | |   
+ 166 | |       if (mode === "all") {
+ 167 | |           return events.filter((e) => e.id !== baseId && e.recurringEventId !== baseId);
+ 168 | |       }
+ 169 | |       
+ 170 | |       if (mode === "instance") {
+ 171 | |           if (instanceEvent.recurringEventId) {
+ 172 | |                return events.filter(e => e.id !== instanceEvent.id);
+ 173 | |           } else {
+ 174 | |                const compactStartTime = instanceEvent.startTime.replace(/[-:]/g, "");
+ 175 | |                const newExdates = [...(baseEvent.exdates || []), compactStartTime];
+ 176 | |                return events.map((e) => (e.id === baseId ? { ...e, exdates: newExdates } : e));
+ 177 | |           }
+ 178 | |       }
+ 179 | |       
+ 180 | |       if (mode === "following") {
+ 181 | |           return events.filter((e) => e.id !== baseId && e.recurringEventId !== baseId);
+ 182 | |       }
+ 183 | |   
+ 184 | |       return events;
+ 185 | `-> }
+     `----
+
+  ! complexity(complexity): Function 'processPushQueue' has Cognitive Complexity of 20. Maximum allowed is 15. [if: +11, logical operators: +3, ternary operator: +3]
+  | 
+  | Breakdown:
+  |     Line 32: +1 for 'if'
+  |     Line 35: +1 for 'while'
+  |     Line 37: +2 for 'if' (incl. +1 nesting)
+  |     Line 43: +2 for 'if' (incl. +1 nesting)
+  |     Line 43: +1 for 'logical operator '||''
+  |     Line 51: +2 for 'catch' (incl. +1 nesting)
+  | >>> Line 52: +3 for 'if' (incl. +2 nesting) [top offender]
+  | >>> Line 59: +3 for 'if' (incl. +2 nesting) [top offender]
+  |     Line 59: +1 for 'logical operator '&&''
+  |     Line 59: +1 for 'logical operator '||''
+  | >>> Line 66: +3 for 'ternary operator' (incl. +2 nesting) [top offender]
+  | 
+  | Tips:
+  |   ΓÇó Complex boolean logic (3 operator sequences). Consider extracting into named boolean variables.
+    ,-[src/core/sync/engine/Pusher.ts:31:35]
+ 30 |     
+ 31 | ,->     private async processPushQueue() {
+ 32 | |           if (this.pushQueue.length === 0) return;
+ 33 | |           syncState.isPushing = true;
+ 34 | |   
+ 35 | |           while (this.pushQueue.length > 0) {
+ 36 | |               const taskOrEvent = this.pushQueue.peek();
+ 37 | |               if (!taskOrEvent) {
+ 38 | |                   this.pushQueue.shift();
+ 39 | |                   continue;
+ 40 | |               }
+ 41 | |               try {
+ 42 | |                   const sync = this.synchronizers[taskOrEvent.type];
+ 43 | |                   if (!sync || !sync.isSyncEnabled()) {
+ 44 | |                       this.pushQueue.remove(taskOrEvent);
+ 45 | |                       continue;
+ 46 | |                   }
+ 47 | |                   
+ 48 | |                   // eslint-disable-next-line no-await-in-loop
+ 49 | |                   await sync.processPushItem(taskOrEvent);
+ 50 | |                   this.pushQueue.remove(taskOrEvent);
+ 51 | |               } catch (e: unknown) {
+ 52 | |                   if (e instanceof ConflictError) {
+ 53 | |                       console.warn(`ETag conflict on push: ${e.message}. Dropping push to let poller resolve.`);
+ 54 | |                       this.pushQueue.remove(taskOrEvent);
+ 55 | |                       continue;
+ 56 | |                   }
+ 57 | |   
+ 58 | |                   console.error("Push failed", e);
+ 59 | |                   if (e instanceof Error && (e.message.includes("403") || e.message.includes("404") || e.message.includes("400"))) {
+ 60 | |                       this.pushQueue.remove(taskOrEvent);
+ 61 | |                       const itemName = taskOrEvent.item.title || "Unknown item";
+ 62 | |                       syncState.error = `Sync ${taskOrEvent.action} item "${itemName}" discarded because of error: ${e.message}`;
+ 63 | |                       continue;
+ 64 | |                   }
+ 65 | |                   
+ 66 | |                   syncState.error = e instanceof Error ? e.message : "Error syncing item to Google.";
+ 67 | |                   break;
+ 68 | |               }
+ 69 | |           }
+ 70 | |   
+ 71 | |           syncState.isPushing = false;
+ 72 | `->     }
+ 73 |     }
+    `----
+
+  ! complexity(complexity): Function 'TaskRow' has Cognitive Complexity of 16. Maximum allowed is 15. [nested functions: +7, logical operators: +5, ternary operator: +4]
+  | 
+  | Breakdown:
+  | >>> Line 34: +1 for 'nested arrow function' [top offender]
+  | >>> Line 38: +1 for 'nested arrow function' [top offender]
+  | >>> Line 49: +1 for 'ternary operator' [top offender]
+  | >>> Line 51: +1 for 'logical operator '&&'' [top offender]
+  | >>> Line 55: +1 for 'ternary operator' [top offender]
+  | >>> Line 55: +1 for 'ternary operator' [top offender]
+  | >>> Line 55: +1 for 'ternary operator' [top offender]
+  | >>> Line 60: +1 for 'logical operator '||'' [top offender]
+  | >>> Line 62: +1 for 'nested arrow function' [top offender]
+  | >>> Line 71: +1 for 'nested arrow function' [top offender]
+  | >>> Line 110: +1 for 'nested arrow function' [top offender]
+  | >>> Line 111: +1 for 'nested arrow function' [top offender]
+  | >>> Line 138: +1 for 'nested arrow function' [top offender]
+  | >>> Line 161: +1 for 'logical operator '||'' [top offender]
+  | >>> Line 161: +1 for 'logical operator '&&'' [top offender]
+  | >>> Line 161: +1 for 'logical operator '&&'' [top offender]
+  | 
+  | Tips:
+  |   ΓÇó Complex boolean logic (5 operator sequences). Consider extracting into named boolean variables.
+     ,-[src/components/tasklist/task-row.tsx:22:8]
+  21 |     
+  22 | ,-> export function TaskRow({
+  23 | |       task,
+  24 | |       onDragStart,
+  25 | |       dragging,
+  26 | |       updateTask,
+  27 | |       deleteTask,
+  28 | |       filters,
+  29 | |       isPastDue,
+  30 | |   }: TaskRowProps) {
+  31 | |       const [isExiting, setIsExiting] = useState(false);
+  32 | |       const [isChecking, setIsChecking] = useState(false);
+  33 | |   
+  34 | |       const willBeFilteredOut = (newStatus: string) => {
+  35 | |           return checkTaskAgainstFilters({ ...task, status: newStatus }, filters);
+  36 | |       };
+  37 | |   
+  38 | |       const handlePointerDown = (e: React.PointerEvent<HTMLDivElement> | React.MouseEvent<HTMLDivElement>) => {
+  39 | |           if (e.button !== 0) return;
+  40 | |           if (e.target instanceof Element && (
+  41 | |               e.target.closest(".task-row-subtask-toggle") ||
+  42 | |               e.target.closest(".task-row-actions") ||
+  43 | |               e.target.closest(".task-circle")
+  44 | |           ))
+  45 | |               return;
+  46 | |           onDragStart?.(e, task);
+  47 | |       };
+  48 | |   
+  49 | |       const dueStr = task.due ? dueLabel(task.due, TODAY) : "";
+  50 | |       const overdue =
+  51 | |           task.due && parseYMD(task.due) < TODAY && task.status !== "done";
+  52 | |   
+  53 | |       return (
+  54 | |           <div
+  55 | |               className={`task-row ${dragging ? "is-dragging" : ""} ${task.status === "done" ? "is-done" : ""} ${isExiting ? "is-exiting" : ""}`}
+  56 | |               onPointerDown={handlePointerDown}
+  57 | |           >
+  58 | |               <TaskCircle
+  59 | |                   priority={task.priority}
+  60 | |                   isDoneOrChecking={task.status === "done" || isChecking}
+  61 | |                   isActive={task.status === "doing"}
+  62 | |                   onContextMenu={(e) => {
+  63 | |                       e.preventDefault();
+  64 | |                       e.stopPropagation();
+  65 | |                       if (task.status !== "doing") {
+  66 | |                           updateTask(task.id, { status: "doing" });
+  67 | |                       } else {
+  68 | |                           updateTask(task.id, { status: "todo" });
+  69 | |                       }
+  70 | |                   }}
+  71 | |                   onClick={(e) => {
+  72 | |                       e.stopPropagation();
+  73 | |                       const newStatus = task.status === "done" ? "todo" : "done";
+  74 | |                       const isRemoving = willBeFilteredOut(newStatus);
+  75 | |   
+  76 | |                       if (newStatus === "done") {
+  77 | |                           setIsChecking(true);
+  78 | |                           void import("cuelume").then(({ play }) => play("success"));
+  79 | |                       } else {
+  80 | |                           void import("cuelume").then(({ play }) => play("release"));
+  81 | |                       }
+  82 | |   
+  83 | |                       if (isRemoving) {
+  84 | |                           setIsExiting(true);
+  85 | |                           setTimeout(() => {
+  86 | |                               updateTask(task.id, { status: newStatus });
+  87 | |                               setIsChecking(false);
+  88 | |                               setIsExiting(false);
+  89 | |                           }, TRANSITION_DURATION_MS);
+  90 | |                           return;
+  91 | |                       }
+  92 | |   
+  93 | |                       updateTask(task.id, { status: newStatus });
+  94 | |                       if (newStatus === "todo") {
+  95 | |                           setIsChecking(false);
+  96 | |                       }
+  97 | |                   }}
+  98 | |               />
+  99 | |               <div className="task-row-content">
+ 100 | |                   <div className="task-row-line1">
+ 101 | |                       <span className="task-row-title">
+ 102 | |                           {isPastDue && task.status !== "done" && (
+ 103 | |                               <Icon name={ICON_OVERDUE} size={14} style={{ marginRight: '4px', color: 'var(--p0)', verticalAlign: 'middle' }} />
+ 104 | |                           )}
+ 105 | |                           {task.title}
+ 106 | |                           {task.tabs && (
+ 107 | |                               <button
+ 108 | |                                   className="open-tabs-button"
+ 109 | |                                   title="Open Tabs"
+ 110 | |                                   onPointerDown={(e) => e.stopPropagation()}
+ 111 | |                                   onClick={(e) => {
+ 112 | |                                       e.stopPropagation();
+ 113 | |                                       const urls = task.tabs?.match(/https?:\/\/[^\s"']+/g) || [];
+ 114 | |                                       urls.forEach(url => window.open(url, '_blank'));
+ 115 | |                                   }}
+ 116 | |                                   style={{ 
+ 117 | |                                       cursor: 'pointer', 
+ 118 | |                                       marginLeft: '6px', 
+ 119 | |                                       verticalAlign: 'middle', 
+ 120 | |                                       display: 'inline-flex',
+ 121 | |                                       background: 'none',
+ 122 | |                                       border: 'none',
+ 123 | |                                       padding: 0
+ 124 | |                                   }}
+ 125 | |                               >
+ 126 | |                                   <Icon name={ICON_TABS} size={16} style={{ color: 'var(--accent)' }} />
+ 127 | |                               </button>
+ 128 | |                           )}
+ 129 | |                       </span>
+ 130 | |                       {task.status === "next-up" && (
+ 131 | |                           <span className="status-pill status-nextup">
+ 132 | |                               next up
+ 133 | |                           </span>
+ 134 | |                       )}
+ 135 | |   
+ 136 | |                       <div className="task-row-actions">
+ 137 | |                           <button
+ 138 | |                               onClick={(e) => {
+ 139 | |                                   e.stopPropagation();
+ 140 | |                                   if (e.shiftKey || confirm("Delete task?")) {
+ 141 | |                                       setIsExiting(true);
+ 142 | |                                       setTimeout(() => deleteTask(task.id), TRANSITION_DURATION_MS);
+ 143 | |                                   }
+ 144 | |                               }}
+ 145 | |                               title="Delete"
+ 146 | |                           >
+ 147 | |                               <span
+ 148 | |                                   className="material-symbols-outlined"
+ 149 | |                                   style={{
+ 150 | |                                       fontSize: "18px",
+ 151 | |                                       display: "flex",
+ 152 | |                                       alignItems: "center",
+ 153 | |                                       justifyContent: "center",
+ 154 | |                                   }}
+ 155 | |                               >
+ 156 | |                                   delete
+ 157 | |                               </span>
+ 158 | |                           </button>
+ 159 | |                       </div>
+ 160 | |                   </div>
+ 161 | |                   { (task.est || (task.tags && task.tags.length > 0) || (task.subtasks && task.subtasks.length > 0) || dueStr) && (
+ 162 | |                       <TaskRowLine2 task={task} dueStr={dueStr} overdue={Boolean(overdue)} />
+ 163 | |                   )}
+ 164 | |               </div>
+ 165 | |           </div>
+ 166 | |       );
+ 167 | `-> }
+ 168 |     
+     `----
+
+  ! complexity(complexity): Function 'setupIpcHandlers' has Cognitive Complexity of 16. Maximum allowed is 15. [nested functions: +15, for-of: +1]
+  | 
+  | Breakdown:
+  | >>> Line 10: +1 for 'nested arrow function' [top offender]
+  | >>> Line 20: +1 for 'nested arrow function' [top offender]
+  | >>> Line 29: +1 for 'nested arrow function' [top offender]
+  | >>> Line 37: +1 for 'nested arrow function' [top offender]
+  | >>> Line 46: +1 for 'nested arrow function' [top offender]
+  | >>> Line 47: +1 for 'nested arrow function' [top offender]
+  | >>> Line 50: +1 for 'nested arrow function' [top offender]
+  | >>> Line 53: +1 for 'nested arrow function' [top offender]
+  | >>> Line 54: +1 for 'nested arrow function' [top offender]
+  | >>> Line 55: +1 for 'nested arrow function' [top offender]
+  | >>> Line 67: +1 for 'nested arrow function' [top offender]
+  | >>> Line 72: +1 for 'nested arrow function' [top offender]
+  | >>> Line 77: +1 for 'nested arrow function' [top offender]
+  | >>> Line 82: +1 for 'nested arrow function' [top offender]
+  | >>> Line 83: +1 for 'nested arrow function' [top offender]
+  | >>> Line 90: +1 for 'for-of' [top offender]
+    ,-[electron/ipc.ts:7:8]
+  6 |     
+  7 | ,-> export function setupIpcHandlers() {
+  8 | |       const LAUNCHER_WIDTH = 640;
+  9 | |       const handlers: Record<string, (event: Electron.IpcMainEvent, ...args: unknown[]) => void> = {
+ 10 | |           "log-to-file": (event, level, message) => {
+ 11 | |               const logPath = path.join(APP_ROOT, "taskroot.log");
+ 12 | |               const timestamp = new Date().toISOString();
+ 13 | |               const logLine = `[${timestamp}] [${String(level).toUpperCase()}] ${String(message)}\n`;
+ 14 | |               try {
+ 15 | |                   fs.appendFileSync(logPath, logLine);
+ 16 | |               } catch (err) {
+ 17 | |                   console.error("Failed to write to log file:", err);
+ 18 | |               }
+ 19 | |           },
+ 20 | |           "window-minimize": (event) => {
+ 21 | |               const window = BrowserWindow.fromWebContents(event.sender);
+ 22 | |               if (window === windowManager.win) {
+ 23 | |                   windowManager.win?.minimize();
+ 24 | |                   windowManager.createMiniWindow();
+ 25 | |               } else {
+ 26 | |                   window?.minimize();
+ 27 | |               }
+ 28 | |           },
+ 29 | |           "window-maximize": (event) => {
+ 30 | |               const window = BrowserWindow.fromWebContents(event.sender);
+ 31 | |               if (window?.isMaximized()) {
+ 32 | |                   window?.unmaximize();
+ 33 | |               } else {
+ 34 | |                   window?.maximize();
+ 35 | |               }
+ 36 | |           },
+ 37 | |           "window-close": (event) => {
+ 38 | |               const window = BrowserWindow.fromWebContents(event.sender);
+ 39 | |               if (window === windowManager.win) {
+ 40 | |                   windowManager.win?.hide();
+ 41 | |                   windowManager.createMiniWindow();
+ 42 | |               } else {
+ 43 | |                   window?.close();
+ 44 | |               }
+ 45 | |           },
+ 46 | |           "window-restore-main": () => windowManager.restoreOrCreateMainWindow(),
+ 47 | |           "set-snap-threshold": (event, threshold) => { 
+ 48 | |               if (typeof threshold === 'number') windowManager.snapThreshold = threshold; 
+ 49 | |           },
+ 50 | |           "window-start-drag": (event, offsetX, offsetY) => {
+ 51 | |               if (typeof offsetX === 'number' && typeof offsetY === 'number') windowManager.startDrag(offsetX, offsetY);
+ 52 | |           },
+ 53 | |           "window-drag-tick": () => windowManager.dragTick(),
+ 54 | |           "window-end-drag": () => windowManager.endDrag(),
+ 55 | |           "update-shortcut": (event, shortcut) => {
+ 56 | |               globalShortcut.unregisterAll();
+ 57 | |               if (typeof shortcut === 'string') {
+ 58 | |                   try {
+ 59 | |                       globalShortcut.register(shortcut, () => {
+ 60 | |                           windowManager.toggleLauncher();
+ 61 | |                       });
+ 62 | |                   } catch (err) {
+ 63 | |                       console.error("Failed to register shortcut", err);
+ 64 | |                   }
+ 65 | |               }
+ 66 | |           },
+ 67 | |           "hide-launcher": () => {
+ 68 | |               if (windowManager.launcherWin) {
+ 69 | |                   windowManager.launcherWin.hide();
+ 70 | |               }
+ 71 | |           },
+ 72 | |           "launcher-command": (event, commandData) => {
+ 73 | |               if (windowManager.win && !windowManager.win.isDestroyed()) {
+ 74 | |                   windowManager.win.webContents.send("launcher-command-execute", commandData);
+ 75 | |               }
+ 76 | |           },
+ 77 | |           "launcher-data-update": (event, data) => {
+ 78 | |               if (windowManager.launcherWin && !windowManager.launcherWin.isDestroyed()) {
+ 79 | |                   windowManager.launcherWin.webContents.send("launcher-data-sync", data);
+ 80 | |               }
+ 81 | |           },
+ 82 | |           "reset-minitracker": () => windowManager.resetMinitracker(),
+ 83 | |           "resize-launcher": (event, height) => {
+ 84 | |               if (typeof height === 'number' && windowManager.launcherWin && !windowManager.launcherWin.isDestroyed()) {
+ 85 | |                   windowManager.launcherWin.setContentSize(LAUNCHER_WIDTH, height);
+ 86 | |               }
+ 87 | |           }
+ 88 | |       };
+ 89 | |   
+ 90 | |       for (const [channel, handler] of Object.entries(handlers)) {
+ 91 | |           ipcMain.on(channel, handler);
+ 92 | |       }
+ 93 | `-> }
+    `----
+
+Found 18 warnings and 2 errors.
+Finished in 1.2s on 216 files with 269 rules using 24 threads.
+error: script "lint" exited with code 1

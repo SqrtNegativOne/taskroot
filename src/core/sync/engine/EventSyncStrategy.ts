@@ -27,6 +27,10 @@ export class EventSyncStrategy implements ISyncStrategy<AppEvent> {
         return SyncType.Event;
     }
 
+    extractItem(q: SyncQueueItem): AppEvent | undefined {
+        return q.type === SyncType.Event ? q.item : undefined;
+    }
+
     updateOldMapSnapshot(items: AppEvent[]): void {
         this.context.updateOldEventsMap(items);
     }

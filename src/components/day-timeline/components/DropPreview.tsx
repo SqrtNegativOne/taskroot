@@ -4,23 +4,22 @@ import { hhmmShort } from "../../../core/store/data";
 import type { DragStateTarget } from "../types";
 
 interface DropPreviewProps {
-    target?: DragStateTarget;
+    target: DragStateTarget;
 }
 
 export function DropPreview({ target }: DropPreviewProps) {
-    if (target?.minute === undefined) return;
 
     return (
         <div
             className="day-drop-preview"
             style={{
-                top: `${target.minute * PX_PER_MIN}px`,
+                top: `${(target.minute ?? 0) * PX_PER_MIN}px`,
                 height: `${(target.duration || MINUTES_IN_HOUR) * PX_PER_MIN}px`,
             }}
         >
             <span className="day-drop-preview-label">
-                ▸ {hhmmShort(target.minute)} –{" "}
-                {hhmmShort(target.minute + (target.duration || MINUTES_IN_HOUR))}
+                ▸ {hhmmShort(target.minute ?? 0)} –{" "}
+                {hhmmShort((target.minute ?? 0) + (target.duration || MINUTES_IN_HOUR))}
             </span>
         </div>
     );

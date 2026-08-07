@@ -10,6 +10,7 @@ export interface ISyncStrategy<T extends { id: string; remoteId?: string; update
     processSingleRemoteItem(remote: unknown, localItemsArray: T[], localItemsMap: Map<string, T>): boolean;
     computeDelta(currentItems: T[]): void;
     processPushItem(item: SyncQueueItem): Promise<void>;
+    extractItem(q: SyncQueueItem): T | undefined;
 }
 
 export class Synchronizer<T extends { id: string; remoteId?: string; updatedAt?: number }> {
@@ -112,10 +113,10 @@ export class Synchronizer<T extends { id: string; remoteId?: string; updatedAt?:
             });
             localItemsMap.set(q.item.id, { ...existing, ...partialUpdate });
         } else {
-            // Type assertion is necessary here because q.item is statically typed as AppTask | AppEvent, 
-            // but localItemsMap expects generic type T. At runtime, q.item matches T.
-            // oxlint-disable-next-line typescript/consistent-type-assertions
-            localItemsMap.set(q.item.id, q.item as unknown as T);
+            const extracted = this.strategy.extractItem(q);
+            if (extracted) {
+                localItemsMap.set(q.item.id, extracted);
+            }
         }
         return true;
     }

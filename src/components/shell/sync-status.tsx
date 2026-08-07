@@ -14,7 +14,7 @@ export function SyncStatus() {
     useEffect(() => {
         if (syncStatus === "sync_disabled") {
             if (syncBtnRef.current) syncBtnRef.current.title = "Sync Disabled";
-            return;
+            return undefined;
         }
 
         const updateTitle = () => {

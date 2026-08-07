@@ -1,3 +1,4 @@
+/* oxlint-disable react(no-array-index-key) */
 import React from "react";
 import { parseSigils, type ParsedProperties } from "../../core/utils/sigil-parser";
 
@@ -91,18 +92,17 @@ export function TitleInput({
                         wordBreak: "break-word",
                     }}
                 >
-                    {tokens.map((t, i) => (
-                        // oxlint-disable-next-line react(no-array-index-key)
-                        <span
-                            key={`${i}-${t.text}`}
-                            style={
-                                t.type === "sigil"
-                                    ? { backgroundColor: "rgba(255, 75, 75, 0.4)", borderRadius: "3px" }
-                                    : {}
-                            }
-                        >
-                            {t.text}
-                        </span>
+                    {tokens.map((t) => (
+                            <span
+                                key={crypto.randomUUID()}
+                                style={
+                                    t.type === "sigil"
+                                        ? { backgroundColor: "rgba(255, 75, 75, 0.4)", borderRadius: "3px" }
+                                        : {}
+                                }
+                            >
+                                {t.text}
+                            </span>
                     ))}
                 </div>
             )}

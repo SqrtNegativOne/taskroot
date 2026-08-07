@@ -19,8 +19,8 @@ function getSettings() {
 }
 
 const context = {
-    getLocalData: storeRegistry.getLocalData,
-    setLocalData: storeRegistry.setLocalData,
+    getLocalData: (key: string) => storeRegistry.getLocalData(key),
+    setLocalData: (key: string, data: unknown) => storeRegistry.setLocalData(key, data),
     oldTasksMap,
     oldEventsMap,
     updateOldTasksMap: (tasks: AppTask[]) => {

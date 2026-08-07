@@ -131,7 +131,7 @@ export function DayColumn<T extends DragState = DragState>({
             </div>
             
             <TimeGridBackground isToday={isToday} showLabels={showTimeLabels} />
-            <CurrentTimeLine isToday={isToday} showLabels={showTimeLabels} />
+            {isToday && <CurrentTimeLine showLabels={showTimeLabels} />}
 
             {laid.map(({ event, startMins, endMins, lane, lanes }) => (
                 <EventBlock
@@ -150,8 +150,8 @@ export function DayColumn<T extends DragState = DragState>({
                 />
             ))}
 
-            <CreationPreview preview={createPreview} />
-            <DropPreview target={dropPreview} />
+            {createPreview && <CreationPreview preview={createPreview} />}
+            {dropPreview && dropPreview.minute !== undefined && <DropPreview target={dropPreview} />}
         </div>
     );
 }

@@ -3,7 +3,7 @@ import type { ReadonlyStopwatchContext, ClockDisplayData, ClockActionEffect } fr
 import { splitTime } from "./utils";
 
 export class CounterClockStrategy implements ClockStrategy {
-    getDisplayData({ currentMs = 0, isPristine }: ReadonlyStopwatchContext): ClockDisplayData {
+    getDisplayData({ currentMs, isPristine }: ReadonlyStopwatchContext): ClockDisplayData {
         const { m } = splitTime(currentMs);
         return {
             primaryText: m,

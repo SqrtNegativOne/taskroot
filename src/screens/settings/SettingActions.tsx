@@ -89,7 +89,7 @@ export function ImportTasksButton({ settings }: { settings: Partial<import('../.
                         const newTasks = lines.map((line) => ({
                             id: `t${Date.now()}-${Math.random().toString(ID_RADIX).slice(ID_SUBSTR_START, ID_SUBSTR_END)}`,
                             title: line,
-                            status: "todo",
+                            status: "todo" as const,
                             priority: 1,
                             tags: [],
                             subtasks: [],

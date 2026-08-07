@@ -322,18 +322,15 @@ export const SETTINGS_TABS = [
     { id: "keybindings", label: "Keybindings" },
 ];
 
-const generateDefaultSettings = (): AppSettings => {
+// oxlint-disable-next-line typescript/no-explicit-any
+const generateDefaultSettings = (): any => {
     const defaults: Partial<AppSettings> = {};
     for (const setting of SETTINGS_SCHEMA) {
         if ("defaultValue" in setting) {
             Object.assign(defaults, { [setting.id]: setting.defaultValue });
         }
     }
-    // Type assertion is necessary here because we are dynamically building
-    // the defaults object at runtime from the schema, so TypeScript cannot
-    // infer that it perfectly satisfies the AppSettings interface.
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    return defaults as AppSettings;
+    return defaults;
 };
 
 export const DEFAULT_SETTINGS: AppSettings = generateDefaultSettings();

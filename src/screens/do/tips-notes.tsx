@@ -117,21 +117,21 @@ export function NotesList() {
         <div className="notes">
             <ul className="notes-list">
                 {notes.map((n) => (
-                    <li key={String(n.id)} className="notes-row">
+                    <li key={n.id} className="notes-row">
                         <button
                             className="notes-link"
                             onClick={() => openInObsidian(n)}
                         >
                             <span className="notes-icon">◈</span>
-                            <span className="notes-title">{String(n.title)}</span>
+                            <span className="notes-title">{n.title}</span>
                             <span className="notes-path">
-                                obsidian://{String(n.vault)}/{String(n.path)}
+                                obsidian://{n.vault}/{n.path}
                             </span>
                             <span className="notes-arrow">↗</span>
                         </button>
                         <button
                             className="notes-x"
-                            onClick={() => remove(String(n.id))}
+                            onClick={() => remove(n.id)}
                             title="Remove"
                         >
                             ×

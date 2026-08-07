@@ -1,23 +1,11 @@
 export function ActiveTaskDisplay({
-    settings,
-    state,
     activeTask,
-    running,
-    allowNoTask,
     setSelectorOpen,
 }: {
-    settings: { clockStyle: string };
-    state: { isBreak: boolean };
     activeTask?: { title: string };
-    running: boolean;
-    allowNoTask: boolean;
     setSelectorOpen: (open: boolean) => void;
 }) {
-    const isGuzey = settings.clockStyle === "guzey";
-    const isFlowBreak = state.isBreak;
-    const shouldShowTask = activeTask && (running || isGuzey || isFlowBreak);
-
-    if (shouldShowTask) {
+    if (activeTask) {
         return (
             <button
                 type="button"
@@ -35,16 +23,10 @@ export function ActiveTaskDisplay({
                 <span className="active-task-title">{activeTask.title}</span>
             </button>
         );
-    } else if (
-        allowNoTask &&
-        !activeTask &&
-        (running || isGuzey || isFlowBreak)
-    ) {
-        return (
-            <div className="no-active-task">
-                No active task.
-            </div>
-        );
     }
-    return;
+    return (
+        <div className="no-active-task">
+            No active task.
+        </div>
+    );
 }

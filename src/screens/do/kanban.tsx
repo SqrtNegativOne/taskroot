@@ -56,7 +56,7 @@ export function Kanban() {
                             t.id === task.id
                                 ? {
                                       ...t,
-                                      status: colEl.dataset.kanbanCol,
+                                      status: colEl.dataset.kanbanCol as AppTask["status"],
                                   }
                                 : t,
                         ),

@@ -12,26 +12,33 @@ function handleCreation(currentEvent: AppEvent, actions: SyncQueueItem[]) {
         actions.push({ type: SyncType.Event, action: SyncAction.Create, item: currentEvent });
 }
 
+function getUpdatedFields(currentEvent: AppEvent, oldEvent: AppEvent): (keyof AppEvent)[] {
+    const updatedFields: (keyof AppEvent)[] = [];
+    for (const k of Object.keys(currentEvent) as (keyof AppEvent)[]) {
+        const isIgnored = k === "updatedAt" || k === "etag";
+        if (isIgnored) continue;
+        
+        const isChanged = JSON.stringify(currentEvent[k]) !== JSON.stringify(oldEvent[k]);
+        if (isChanged) {
+            updatedFields.push(k);
+        }
+    }
+    return updatedFields;
+}
+
 function handleUpdateOrMove(
     currentEvent: AppEvent,
     oldEvent: AppEvent,
     actions: SyncQueueItem[]
 ) {
-    if (!(currentEvent.updatedAt && oldEvent.updatedAt && currentEvent.updatedAt > oldEvent.updatedAt))
-        return;
+    const isNewer = currentEvent.updatedAt && oldEvent.updatedAt && currentEvent.updatedAt > oldEvent.updatedAt;
+    if (!isNewer) return;
 
     const targetCalendarId = getTargetCalendarId(currentEvent, oldEvent);
     const isCalendarChange = oldEvent.remoteCollectionId && oldEvent.remoteCollectionId !== targetCalendarId;
     const hasValidTitle = currentEvent.title && currentEvent.title.trim() !== "";
 
-    const updatedFields: (keyof AppEvent)[] = [];
-    // Object.keys returns string[], we know this is (keyof AppEvent)[]
-    for (const k of Object.keys(currentEvent) as (keyof AppEvent)[]) {
-        if (k === "updatedAt" || k === "etag") continue;
-        if (JSON.stringify(currentEvent[k]) !== JSON.stringify(oldEvent[k])) {
-            updatedFields.push(k);
-        }
-    }
+    const updatedFields = getUpdatedFields(currentEvent, oldEvent);
 
     if (isCalendarChange && oldEvent.remoteId) {
         actions.push({
@@ -58,11 +65,12 @@ function handleUpdateOrMove(
     }
 
     if (hasValidTitle) {
+        const hasRemoteId = currentEvent.remoteId !== undefined;
         actions.push({
             type: SyncType.Event,
             action: SyncAction.Update,
             item: currentEvent,
-            ...(currentEvent.remoteId !== undefined ? { remoteId: currentEvent.remoteId } : {}),
+            ...(hasRemoteId ? { remoteId: currentEvent.remoteId } : {}),
             calendarId: targetCalendarId,
             updatedFields
         });

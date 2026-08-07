@@ -49,6 +49,31 @@ function mergeGoogleTaskWithExisting(existing: AppTask, newBase: Partial<AppTask
     };
 }
 
+function buildPartialTaskPayload(updatedFields: (keyof AppTask)[], fullPayload: gapi.client.tasks.Task) {
+    const partialPayload: Partial<gapi.client.tasks.Task> = {};
+    const hasTitleUpdate = updatedFields.includes("title");
+    const titleVal = fullPayload.title;
+    const hasTitle = titleVal !== undefined;
+    if (hasTitleUpdate && hasTitle) partialPayload.title = titleVal;
+
+    const hasNotesUpdate = updatedFields.includes("notes");
+    const notesVal = fullPayload.notes;
+    const hasNotes = notesVal !== undefined;
+    if (hasNotesUpdate && hasNotes) partialPayload.notes = notesVal;
+
+    const hasStatusUpdate = updatedFields.includes("status");
+    const statusVal = fullPayload.status;
+    const hasStatus = statusVal !== undefined;
+    if (hasStatusUpdate && hasStatus) partialPayload.status = statusVal;
+
+    const hasDueUpdate = updatedFields.includes("due");
+    const dueVal = fullPayload.due;
+    const hasDue = dueVal !== undefined;
+    if (hasDueUpdate && hasDue) partialPayload.due = dueVal;
+
+    return partialPayload;
+}
+
 export class GoogleTasksAPI implements ITasksAPI {
     private authManager: IAuthManager;
     constructor(authManager: IAuthManager) {
@@ -86,17 +111,8 @@ export class GoogleTasksAPI implements ITasksAPI {
         if (localTask.etag) headers["If-Match"] = localTask.etag;
 
         const fullPayload = this.toGoogleTask(localTask);
-        let payloadToSubmit: gapi.client.tasks.Task | Partial<gapi.client.tasks.Task> = fullPayload;
-        
-        if (updatedFields && updatedFields.length > 0) {
-            const partialPayload: Partial<gapi.client.tasks.Task> = {};
-            if (updatedFields.includes("title") && fullPayload.title !== undefined) partialPayload.title = fullPayload.title;
-            if (updatedFields.includes("notes") && fullPayload.notes !== undefined) partialPayload.notes = fullPayload.notes;
-            if (updatedFields.includes("status") && fullPayload.status !== undefined) partialPayload.status = fullPayload.status;
-            if (updatedFields.includes("due") && fullPayload.due !== undefined) partialPayload.due = fullPayload.due;
-            
-            payloadToSubmit = partialPayload;
-        }
+        const hasUpdates = updatedFields && updatedFields.length > 0;
+        const payloadToSubmit = hasUpdates ? buildPartialTaskPayload(updatedFields, fullPayload) : fullPayload;
 
         const res = await this.fetchWithAuth(`lists/${tasklistId}/tasks/${remoteId}`, {
             method: "PATCH", headers, body: JSON.stringify(payloadToSubmit)

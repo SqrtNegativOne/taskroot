@@ -176,28 +176,35 @@ export class FakeCalendarAPI implements ICalendarAPI {
         };
     }
 
-    private buildGoogleRecurrenceAndExceptions(localEvent: AppEvent, timeZone: string, baseEventRemoteId?: string) {
-        const recurrence: string[] = [];
-        if (localEvent.rrule) recurrence.push(`RRULE:${localEvent.rrule}`);
+    private buildGoogleExdates(localEvent: AppEvent, timeZone: string, recurrence: string[]) {
+        if (!localEvent.exdates) return;
         
-        if (localEvent.exdates) {
-            for (const exdate of localEvent.exdates) {
-                if (isEventAllDay(localEvent)) {
-                    let dateOnly = exdate;
-                    if (exdate.includes("T")) {
-                        dateOnly = exdate.split("T")[0] || exdate;
-                    }
-                    recurrence.push(`EXDATE;VALUE=DATE:${dateOnly}`);
-                } else {
-                    recurrence.push(`EXDATE;TZID=${timeZone}:${exdate}`);
-                }
+        const isAllDay = isEventAllDay(localEvent);
+        for (const exdate of localEvent.exdates) {
+            if (isAllDay) {
+                const hasTime = exdate.includes("T");
+                const dateOnly = hasTime ? (exdate.split("T")[0] || exdate) : exdate;
+                recurrence.push(`EXDATE;VALUE=DATE:${dateOnly}`);
+            } else {
+                recurrence.push(`EXDATE;TZID=${timeZone}:${exdate}`);
             }
         }
+    }
+
+    private buildGoogleRecurrenceAndExceptions(localEvent: AppEvent, timeZone: string, baseEventRemoteId?: string) {
+        const recurrence: string[] = [];
+        const hasRrule = !!localEvent.rrule;
+        if (hasRrule) recurrence.push(`RRULE:${localEvent.rrule}`);
+        
+        this.buildGoogleExdates(localEvent, timeZone, recurrence);
         
         const result: Partial<gapi.client.calendar.Event> = {};
-        if (recurrence.length > 0) result.recurrence = recurrence;
-        if (baseEventRemoteId) result.recurringEventId = baseEventRemoteId;
-        if (localEvent.originalStartTime) {
+        const hasRecurrence = recurrence.length > 0;
+        if (hasRecurrence) result.recurrence = recurrence;
+        const hasBaseRemoteId = !!baseEventRemoteId;
+        if (hasBaseRemoteId) result.recurringEventId = baseEventRemoteId;
+        const hasOriginalStart = !!localEvent.originalStartTime;
+        if (hasOriginalStart) {
             result.originalStartTime = { dateTime: localEvent.originalStartTime, timeZone };
         }
         return result;

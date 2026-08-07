@@ -27,6 +27,21 @@ export class GoogleCalendarAPI implements ICalendarAPI {
         return data.items || [];
     }
 
+    private mapCalendarItem(c: gapi.client.calendar.CalendarListEntry) {
+        const hasAccessRole = c.accessRole !== undefined;
+        const hasBackgroundColor = c.backgroundColor !== undefined;
+        const hasForegroundColor = c.foregroundColor !== undefined;
+        const hasPrimary = c.primary !== undefined;
+        return {
+            id: c.id ?? "",
+            summary: c.summaryOverride || (c.summary ?? ""),
+            ...(hasAccessRole ? { accessRole: c.accessRole } : {}),
+            ...(hasBackgroundColor ? { backgroundColor: c.backgroundColor } : {}),
+            ...(hasForegroundColor ? { foregroundColor: c.foregroundColor } : {}),
+            ...(hasPrimary ? { primary: c.primary } : {})
+        };
+    }
+
     async fetchCalendars(): Promise<{id: string, summary: string, accessRole?: string, backgroundColor?: string, foregroundColor?: string, primary?: boolean}[]> {
         const def = [{ id: "primary", summary: "Primary Calendar", accessRole: "owner", primary: true }];
         if (!this.authManager.getToken()) return def;
@@ -36,18 +51,13 @@ export class GoogleCalendarAPI implements ICalendarAPI {
         const items = data.items || [];
         const result: {id: string, summary: string, accessRole?: string, backgroundColor?: string, foregroundColor?: string, primary?: boolean}[] = [];
         for (const c of items) {
-            if (c.id && c.summary) {
-                result.push({
-                    id: c.id,
-                    summary: c.summaryOverride || c.summary,
-                    ...(c.accessRole !== undefined ? { accessRole: c.accessRole } : {}),
-                    ...(c.backgroundColor !== undefined ? { backgroundColor: c.backgroundColor } : {}),
-                    ...(c.foregroundColor !== undefined ? { foregroundColor: c.foregroundColor } : {}),
-                    ...(c.primary !== undefined ? { primary: c.primary } : {})
-                });
+            const hasIdAndSummary = c.id && c.summary;
+            if (hasIdAndSummary) {
+                result.push(this.mapCalendarItem(c));
             }
         }
-        return result.length > 0 ? result : def;
+        const hasResults = result.length > 0;
+        return hasResults ? result : def;
     }
 
     async createEvent(localEvent: AppEvent, options?: { baseEventRemoteId?: string, calendarId?: string }): Promise<{ remoteId: string, calendarId: string }> {
@@ -125,28 +135,35 @@ export class GoogleCalendarAPI implements ICalendarAPI {
         };
     }
 
-    private buildGoogleRecurrenceAndExceptions(localEvent: AppEvent, timeZone: string, baseEventRemoteId?: string) {
-        const recurrence: string[] = [];
-        if (localEvent.rrule) recurrence.push(`RRULE:${localEvent.rrule}`);
+    private buildGoogleExdates(localEvent: AppEvent, timeZone: string, recurrence: string[]) {
+        if (!localEvent.exdates) return;
         
-        if (localEvent.exdates) {
-            for (const exdate of localEvent.exdates) {
-                if (isEventAllDay(localEvent)) {
-                    let dateOnly = exdate;
-                    if (exdate.includes("T")) {
-                        dateOnly = exdate.split("T")[0] || exdate;
-                    }
-                    recurrence.push(`EXDATE;VALUE=DATE:${dateOnly}`);
-                } else {
-                    recurrence.push(`EXDATE;TZID=${timeZone}:${exdate}`);
-                }
+        const isAllDay = isEventAllDay(localEvent);
+        for (const exdate of localEvent.exdates) {
+            if (isAllDay) {
+                const hasTime = exdate.includes("T");
+                const dateOnly = hasTime ? (exdate.split("T")[0] || exdate) : exdate;
+                recurrence.push(`EXDATE;VALUE=DATE:${dateOnly}`);
+            } else {
+                recurrence.push(`EXDATE;TZID=${timeZone}:${exdate}`);
             }
         }
+    }
+
+    private buildGoogleRecurrenceAndExceptions(localEvent: AppEvent, timeZone: string, baseEventRemoteId?: string) {
+        const recurrence: string[] = [];
+        const hasRrule = !!localEvent.rrule;
+        if (hasRrule) recurrence.push(`RRULE:${localEvent.rrule}`);
+        
+        this.buildGoogleExdates(localEvent, timeZone, recurrence);
         
         const result: Partial<gapi.client.calendar.Event> = {};
-        if (recurrence.length > 0) result.recurrence = recurrence;
-        if (baseEventRemoteId) result.recurringEventId = baseEventRemoteId;
-        if (localEvent.originalStartTime) {
+        const hasRecurrence = recurrence.length > 0;
+        if (hasRecurrence) result.recurrence = recurrence;
+        const hasBaseRemoteId = !!baseEventRemoteId;
+        if (hasBaseRemoteId) result.recurringEventId = baseEventRemoteId;
+        const hasOriginalStart = !!localEvent.originalStartTime;
+        if (hasOriginalStart) {
             result.originalStartTime = { dateTime: localEvent.originalStartTime, timeZone };
         }
         return result;
@@ -193,43 +210,55 @@ function extractEventTime(googleEvent: gapi.client.calendar.Event) {
     return { startTime: startDate, endTime: endDate }; 
 }
 
+function applyTimeAndTitleUpdates(updatedFields: (keyof AppEvent)[], fullPayload: gapi.client.calendar.Event, partialPayload: Partial<gapi.client.calendar.Event>) {
+    const hasTimeUpdate = updatedFields.includes("startTime") || updatedFields.includes("endTime");
+    
+    const summaryVal = fullPayload.summary;
+    const incSummary = updatedFields.includes("title") && summaryVal !== undefined;
+    if (incSummary) partialPayload.summary = summaryVal;
+
+    const startVal = fullPayload.start;
+    const incStart = hasTimeUpdate && startVal !== undefined;
+    if (incStart) partialPayload.start = startVal;
+
+    const endVal = fullPayload.end;
+    const incEnd = hasTimeUpdate && endVal !== undefined;
+    if (incEnd) partialPayload.end = endVal;
+}
+
+function applyMetadataUpdates(updatedFields: (keyof AppEvent)[], fullPayload: gapi.client.calendar.Event, partialPayload: Partial<gapi.client.calendar.Event>) {
+    const hasTypeOrTaskUpdate = updatedFields.includes("type") || updatedFields.includes("taskId");
+    
+    const extPropsVal = fullPayload.extendedProperties;
+    const incExtProps = hasTypeOrTaskUpdate && extPropsVal !== undefined;
+    if (incExtProps) partialPayload.extendedProperties = extPropsVal;
+    
+    const transpVal = fullPayload.transparency;
+    const incTransp = hasTypeOrTaskUpdate && transpVal !== undefined;
+    if (incTransp) partialPayload.transparency = transpVal;
+}
+
+function applyRecurrenceUpdates(updatedFields: (keyof AppEvent)[], fullPayload: gapi.client.calendar.Event, partialPayload: Partial<gapi.client.calendar.Event>) {
+    const hasRecurrenceUpdate = updatedFields.includes("rrule") || updatedFields.includes("exdates");
+    
+    const recVal = fullPayload.recurrence;
+    const incRecurrence = hasRecurrenceUpdate && recVal !== undefined;
+    if (incRecurrence) partialPayload.recurrence = recVal;
+    
+    const recurIdVal = fullPayload.recurringEventId;
+    const incRecurringId = updatedFields.includes("recurringEventId") && recurIdVal !== undefined;
+    if (incRecurringId) partialPayload.recurringEventId = recurIdVal;
+    
+    const origStartVal = fullPayload.originalStartTime;
+    const incOriginalStart = updatedFields.includes("originalStartTime") && origStartVal !== undefined;
+    if (incOriginalStart) partialPayload.originalStartTime = origStartVal;
+}
+
 function buildPartialEventPayload(updatedFields: (keyof AppEvent)[], fullPayload: gapi.client.calendar.Event) {
-    let partialPayload: Partial<gapi.client.calendar.Event> = {};
-    if (updatedFields.includes("title")) {
-        partialPayload = { ...partialPayload, ...(fullPayload.summary !== undefined ? { summary: fullPayload.summary } : {}) };
-    }
-    if (updatedFields.includes("startTime") || updatedFields.includes("endTime")) {
-        partialPayload = { 
-            ...partialPayload, 
-            ...(fullPayload.start !== undefined ? { start: fullPayload.start } : {}), 
-            ...(fullPayload.end !== undefined ? { end: fullPayload.end } : {}) 
-        };
-    }
-    if (updatedFields.includes("type") || updatedFields.includes("taskId")) {
-        partialPayload = { 
-            ...partialPayload, 
-            ...(fullPayload.extendedProperties !== undefined ? { extendedProperties: fullPayload.extendedProperties } : {}), 
-            ...(fullPayload.transparency !== undefined ? { transparency: fullPayload.transparency } : {}) 
-        };
-    }
-    if (updatedFields.includes("rrule") || updatedFields.includes("exdates")) {
-        partialPayload = { 
-            ...partialPayload, 
-            ...(fullPayload.recurrence !== undefined ? { recurrence: fullPayload.recurrence } : {}) 
-        };
-    }
-    if (updatedFields.includes("recurringEventId")) {
-        partialPayload = { 
-            ...partialPayload, 
-            ...(fullPayload.recurringEventId !== undefined ? { recurringEventId: fullPayload.recurringEventId } : {}) 
-        };
-    }
-    if (updatedFields.includes("originalStartTime")) {
-        partialPayload = { 
-            ...partialPayload, 
-            ...(fullPayload.originalStartTime !== undefined ? { originalStartTime: fullPayload.originalStartTime } : {}) 
-        };
-    }
+    const partialPayload: Partial<gapi.client.calendar.Event> = {};
+    applyTimeAndTitleUpdates(updatedFields, fullPayload, partialPayload);
+    applyMetadataUpdates(updatedFields, fullPayload, partialPayload);
+    applyRecurrenceUpdates(updatedFields, fullPayload, partialPayload);
     return partialPayload;
 }
 

@@ -34,6 +34,39 @@ function isDraftEvent(draft: AppTask | AppEvent | undefined): draft is AppEvent 
     return !!draft && "startTime" in draft;
 }
 
+function useRecurringActionInterceptor() {
+    const [recurringPrompt, setRecurringPrompt] = React.useState<{
+        actionType: "edit" | "delete";
+        onConfirm: (mode: RecurringMode) => void;
+    } | undefined>(undefined);
+
+    const interceptRecurringAction = React.useCallback((
+        event: AppEvent, 
+        actionType: "edit" | "delete", 
+        _updatesOrNone: Partial<AppEvent> | undefined, 
+        executeImmediately: (mode: RecurringMode) => void
+    ) => {
+        const isRecurring = !!event.rrule || !!event["isInstance"];
+        if (isRecurring) {
+            setRecurringPrompt({
+                actionType,
+                onConfirm: (mode) => {
+                    executeImmediately(mode);
+                    setRecurringPrompt(undefined);
+                }
+            });
+        } else {
+            executeImmediately("instance");
+        }
+    }, []);
+
+    const closeRecurringPrompt = React.useCallback(() => {
+        setRecurringPrompt(undefined);
+    }, []);
+
+    return { recurringPrompt, interceptRecurringAction, closeRecurringPrompt };
+}
+
 export function PlanScreen() {
 
     // Data state (persisted)
@@ -77,34 +110,31 @@ export function PlanScreen() {
 
     const { hydratedEvents, getEventFilterValues } = usePlanEvents(displayTasks, displayEvents, anchor);
 
-
-    const [recurringPrompt, setRecurringPrompt] = React.useState<{
-        actionType: "edit" | "delete";
-        onConfirm: (mode: RecurringMode) => void;
-    } | undefined>(undefined);
-
-    const interceptRecurringAction = React.useCallback((
-        event: AppEvent, 
-        actionType: "edit" | "delete", 
-        _updatesOrNone: Partial<AppEvent> | undefined, 
-        executeImmediately: (mode: RecurringMode) => void
-    ) => {
-        const isRecurring = !!event.rrule || !!event["isInstance"];
-        if (isRecurring) {
-            setRecurringPrompt({
-                actionType,
-                onConfirm: (mode) => {
-                    executeImmediately(mode);
-                    setRecurringPrompt(undefined);
-                }
-            });
-        } else {
-            executeImmediately("instance");
-        }
-    }, []);
+    const { recurringPrompt, interceptRecurringAction, closeRecurringPrompt } = useRecurringActionInterceptor();
 
     const { createEvent, onAddTask, onAddEvent, onResizeEvent, onMoveEvent, onDeleteTask } = usePlanActions(timelineDate, setInspectorState, hydratedEvents, interceptRecurringAction);
     const { onTaskDragStart, onEventDragStart, dragState, setDragState } = useDragAndDrop(timelineDate, setInspectorState, createEvent, interceptRecurringAction);
+
+    const activeDragIdProp = dragState?.task?.id !== undefined ? { activeDragId: dragState.task.id } : {};
+    const dragStateProp = dragState !== undefined ? { dragState } : {};
+    const inspectorStateProp = inspectorState !== undefined ? { inspectorState } : {};
+    
+    const isDragging = dragState && (dragState.task || dragState.event);
+    const dragGhostTaskProp = dragState?.task !== undefined ? { task: dragState.task } : {};
+    const dragGhostEventProp = dragState?.event !== undefined ? { event: dragState.event } : {};
+    
+    const isRecurringPromptOpen = !!recurringPrompt;
+    const recurringPromptActionType = recurringPrompt?.actionType || "edit";
+    const recurringPromptConfirm = recurringPrompt?.onConfirm || (() => {});
+
+    const closeInspector = React.useCallback(() => setInspectorState(undefined), []);
+    const onEventClick = React.useCallback((ev: AppEvent) => {
+        setInspectorState({
+            type: "event",
+            id: ev.id,
+        });
+    }, []);
+    const onDropToTime = React.useCallback(() => {}, []);
 
     return (
         <>
@@ -125,7 +155,7 @@ export function PlanScreen() {
                         query={query}
                         setQuery={setQuery}
                         onDragStart={onTaskDragStart}
-                        {...(dragState?.task?.id !== undefined ? { activeDragId: dragState.task.id } : {})}
+                        {...activeDragIdProp}
                         onAddTask={onAddTask}
                         onDeleteTask={onDeleteTask}
                     />
@@ -157,7 +187,7 @@ export function PlanScreen() {
                                     />
                                 }
                                 today={TODAY}
-                                {...(dragState !== undefined ? { dragState } : {})}
+                                {...dragStateProp}
                                 onEventDragStart={onEventDragStart}
                                 onAddEvent={onAddEvent}
                             />
@@ -180,26 +210,21 @@ export function PlanScreen() {
                                 today={TODAY}
                                 timelineDate={timelineDate}
                                 setTimelineDate={setTimelineDate}
-                                {...(dragState !== undefined ? { dragState } : {})}
+                                {...dragStateProp}
                                 setDragState={setDragState}
                                 onResizeEvent={onResizeEvent}
                                 onMoveEvent={onMoveEvent}
-                                onEventClick={(ev: AppEvent) =>
-                                    setInspectorState({
-                                        type: "event",
-                                        id: ev.id,
-                                    })
-                                }
+                                onEventClick={onEventClick}
                                 onAddEvent={onAddEvent}
-                                onDropToTime={() => {}}
+                                onDropToTime={onDropToTime}
                             />
                         </SplitPane>
                     </div>
                 </SplitPane>
 
                 <InspectorPane
-                    {...(inspectorState !== undefined ? { inspectorState } : {})}
-                    onClose={() => setInspectorState(undefined)}
+                    {...inspectorStateProp}
+                    onClose={closeInspector}
                     tasks={tasks}
                     setTasks={setTasks}
                     events={hydratedEvents}
@@ -209,10 +234,10 @@ export function PlanScreen() {
                 />
             </main>
 
-            {dragState && (dragState.task || dragState.event) && (
+            {isDragging && (
                 <DragGhost
-                    {...(dragState.task !== undefined ? { task: dragState.task } : {})}
-                    {...(dragState.event !== undefined ? { event: dragState.event } : {})}
+                    {...dragGhostTaskProp}
+                    {...dragGhostEventProp}
                     x={dragState.pointerX}
                     y={dragState.pointerY}
                     ghostStyle="bracket"
@@ -220,10 +245,10 @@ export function PlanScreen() {
             )}
 
             <RecurringActionModal 
-                isOpen={!!recurringPrompt} 
-                actionType={recurringPrompt?.actionType || "edit"} 
-                onConfirm={recurringPrompt?.onConfirm || (() => {})} 
-                onCancel={() => setRecurringPrompt(undefined)} 
+                isOpen={isRecurringPromptOpen} 
+                actionType={recurringPromptActionType} 
+                onConfirm={recurringPromptConfirm} 
+                onCancel={closeRecurringPrompt} 
             />
         </>
     );

@@ -82,7 +82,7 @@ export class FakeTasksAPI implements ITasksAPI {
         }
     }
 
-    toLocalTask(googleTask: gapi.client.tasks.Task, existing: AppTask | undefined = undefined): AppTask | { id: string; _deleted: boolean; updatedAt: number; } {
+    toLocalTask(googleTask: gapi.client.tasks.Task, existing?: AppTask | undefined): AppTask | { id: string; _deleted: boolean; updatedAt: number; } {
         if (googleTask.deleted) {
             const id = existing?.id || googleTask.id;
             if (!id) throw new Error("Deleted Google task missing ID");

@@ -110,7 +110,7 @@ export class GoogleTasksAPI implements ITasksAPI {
         if (!res.ok) throw new Error(`Failed to delete task: ${res.status} ${await res.text()}`);
     }
 
-    toLocalTask(googleTask: gapi.client.tasks.Task, existing: AppTask | undefined = undefined): AppTask | { id: string; _deleted: boolean; updatedAt: number; } {
+    toLocalTask(googleTask: gapi.client.tasks.Task, existing?: AppTask | undefined): AppTask | { id: string; _deleted: boolean; updatedAt: number; } {
         if (googleTask.deleted) {
             const id = existing?.id || googleTask.id;
             if (!id) throw new Error("Deleted Google task missing ID");

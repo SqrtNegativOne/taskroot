@@ -34,7 +34,7 @@ export function TaskSelectorItem({
             onPointerEnter={() => {
                 if (selectedIndex !== idx) {
                     setSelectedIndex(idx);
-                    import("cuelume").then(({ play }) => play("tick"));
+                    void import("cuelume").then(({ play }) => play("tick"));
                 }
             }}
             onClick={() => startWithTask(task.id)}
@@ -49,7 +49,7 @@ export function TaskSelectorItem({
                     if (isExiting) return;
                     setIsChecking(true);
                     setIsExiting(true);
-                    import("cuelume").then(({ play }) => play("success"));
+                    void import("cuelume").then(({ play }) => play("success"));
                     setTimeout(() => {
                         updateTask(task.id, { status: "done" });
                     }, FADE_OUT_DURATION_MS);

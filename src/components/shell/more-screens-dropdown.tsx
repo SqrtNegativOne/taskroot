@@ -43,7 +43,7 @@ export function MoreScreensDropdown() {
                             className="dd-item"
                             onClick={() => {
                                 setDropdownOpen(false);
-                                navigate(`/${screen}`);
+                                void navigate(`/${screen}`);
                             }}
                             data-cuelume-hover="tick"
                             data-cuelume-toggle

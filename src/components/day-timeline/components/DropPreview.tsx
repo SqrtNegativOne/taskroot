@@ -8,7 +8,7 @@ interface DropPreviewProps {
 }
 
 export function DropPreview({ target }: DropPreviewProps) {
-    if (!target || target.minute === undefined) return;
+    if (target?.minute === undefined) return;
 
     return (
         <div

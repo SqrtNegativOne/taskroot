@@ -20,7 +20,7 @@ export const canEditEvent = (ev: AppEvent | undefined, calendars: readonly {id: 
 };
 
 export const setupPointerDrag = (
-    e: React.PointerEvent<Element> | React.MouseEvent<Element, MouseEvent>,
+    e: React.PointerEvent | React.MouseEvent<Element>,
     onMove: (ev: PointerEvent | MouseEvent) => void,
     onDrop: (active: boolean) => void
 ) => {
@@ -64,7 +64,7 @@ export function useDragAndDrop(
     const dragRef = useRef<PlanDragState | undefined>(undefined);
     dragRef.current = dragState;
 
-    const onTaskDragStart = (e: React.PointerEvent<Element> | React.MouseEvent<Element, MouseEvent>, task: AppTask) => {
+    const onTaskDragStart = (e: React.PointerEvent | React.MouseEvent<Element>, task: AppTask) => {
         e.preventDefault();
         setupPointerDrag(e, (ev) => {
             setDragState({ task, pointerX: ev.clientX, pointerY: ev.clientY, target: resolveDropTarget(document.elementFromPoint(ev.clientX, ev.clientY) || undefined, ev.clientY, task.est || MINUTES_IN_HOUR) });
@@ -82,7 +82,7 @@ export function useDragAndDrop(
         });
     };
 
-    const onEventDragStart = (e: React.PointerEvent<Element> | React.MouseEvent<Element, MouseEvent>, eventToMove: AppEvent, task?: AppTask) => {
+    const onEventDragStart = (e: React.PointerEvent | React.MouseEvent<Element>, eventToMove: AppEvent, task?: AppTask) => {
         if (!canEditEvent(eventToMove, calendars)) {
             e.preventDefault();
             e.stopPropagation();

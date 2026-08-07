@@ -110,7 +110,7 @@ export function InspectorPane({
     const isOpen = !!(inspectorState && currentItem);
 
     const updateTask = React.useCallback((id: string, updates: Partial<AppTask>) => {
-        if (isNew && draftRef.current && draftRef.current.id === id) {
+        if (isNew && draftRef.current?.id === id) {
             if (isAppTask(draftRef.current)) {
                 const next: AppTask = { ...draftRef.current, ...updates };
                 draftRef.current = next;
@@ -122,7 +122,7 @@ export function InspectorPane({
     }, [setTasks, isNew]);
 
     const updateEvent = React.useCallback((id: string, updates: Partial<AppEvent>) => {
-        if (isNew && draftRef.current && draftRef.current.id === id) {
+        if (isNew && draftRef.current?.id === id) {
             if (isAppEvent(draftRef.current)) {
                 const next: AppEvent = { ...draftRef.current, ...updates };
                 draftRef.current = next;

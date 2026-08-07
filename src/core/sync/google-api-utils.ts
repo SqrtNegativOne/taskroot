@@ -15,7 +15,11 @@ export async function fetchWithRateLimitAndAuth(
     authManager: IAuthManager,
     options: RequestInit = {}
 ): Promise<Response> {
-    const getOpts = (t: string) => ({ ...options, headers: { ...options.headers, Authorization: `Bearer ${t}` } });
+    const getOpts = (t: string) => {
+        const headers = new Headers(options.headers);
+        headers.set("Authorization", `Bearer ${t}`);
+        return { ...options, headers };
+    };
     let token = authManager.getToken();
     if (!token) throw new Error("Unauthorized");
     

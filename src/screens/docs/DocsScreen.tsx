@@ -5,10 +5,10 @@ import { useMemo } from 'react';
 const docs: Record<string, string> = import.meta.glob('../../../docs/*.md', { query: '?raw', import: 'default', eager: true });
 
 function LinkRenderer({ href, children }: { href?: string, children?: React.ReactNode }) {
-    if (href && href.startsWith('./')) {
+    if (href?.startsWith('./')) {
         return <Link to={`/docs/${href.replace('./', '')}`}>{children}</Link>;
     }
-    if (href && href.startsWith('/docs/')) {
+    if (href?.startsWith('/docs/')) {
         return <Link to={href}>{children}</Link>;
     }
     return <a href={href} target="_blank" rel="noreferrer">{children}</a>;

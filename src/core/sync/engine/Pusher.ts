@@ -25,7 +25,7 @@ export class Pusher {
 
     trigger() {
         if (syncState.isPushing) return;
-        this.processPushQueue();
+        void this.processPushQueue();
     }
 
     private async processPushQueue() {

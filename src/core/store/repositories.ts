@@ -72,7 +72,7 @@ function injectUpdatedAt<T extends { id?: string; updatedAt?: number }>(result: 
 
     let mutated = false;
     const mapped = result.map((newItem) => {
-        if (!newItem || !newItem.id) return newItem;
+        if (!newItem?.id) return newItem;
 
         if (!prev) {
             if (newItem.updatedAt) return newItem;

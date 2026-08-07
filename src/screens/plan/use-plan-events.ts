@@ -52,7 +52,7 @@ export function usePlanEvents(tasks: AppTask[], events: AppEvent[], anchor: Date
             }
             return [];
         },
-        [allEventTags, events],
+        [allEventTags, calendars],
     );
 
     return { hydratedEvents, getEventFilterValues };

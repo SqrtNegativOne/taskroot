@@ -11,7 +11,7 @@ const launcherCommandHandlers: Record<string, (
     setTasks: ReturnType<typeof useTasks>[1]
 ) => void> = {
     NAVIGATE: (payload, navigate) => {
-        if (payload?.route) navigate(`/${payload.route}`);
+        if (payload?.route) void navigate(`/${payload.route}`);
     },
     RESET_MINITRACKER: () => {
         window.electronAPI?.resetMinitracker();
@@ -29,10 +29,10 @@ const launcherCommandHandlers: Record<string, (
             due: properties.day ? getDueDateFromSigil(properties.day) : undefined
         };
         setTasks((prev) => [newTask, ...prev]);
-        navigate('/plan');
+        void navigate('/plan');
     },
     PLAN_TASK_EXISTING: (_payload, navigate) => {
-        navigate('/plan');
+        void navigate('/plan');
     },
     DO_TASK: (payload, navigate, setTasks) => {
         if (!payload?.taskName) return;
@@ -47,14 +47,14 @@ const launcherCommandHandlers: Record<string, (
             due: properties.day ? getDueDateFromSigil(properties.day) : undefined
         };
         setTasks((prev) => [newTask, ...prev]);
-        navigate('/do');
+        void navigate('/do');
     },
     DO_TASK_EXISTING: (payload, navigate, setTasks) => {
         if (!payload?.taskId) return;
         setTasks((prev) => prev.map(t =>
             t.id === payload.taskId ? { ...t, status: 'doing' } : (t.status === 'doing' ? { ...t, status: 'todo' } : t)
         ));
-        navigate('/do');
+        void navigate('/do');
     },
     ADD_TASK: (payload, _navigate, setTasks) => {
         if (!payload?.taskName) return;
@@ -96,7 +96,7 @@ export function useAppIntegration() {
         const api = window.electronAPI;
         if (api?.onDeepLink) {
             api.onDeepLink((route: string) => {
-                navigate(`/${route}`);
+                void navigate(`/${route}`);
             });
         }
     }, [navigate]);

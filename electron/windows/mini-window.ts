@@ -48,7 +48,7 @@ export class MiniWindowController {
 
         this.dragger = new WindowDragger(this.win, DRAG_START_BOUNDS);
 
-        this.win.loadURL(this.url);
+        void this.win.loadURL(this.url);
 
         this.win.on("close", (e) => {
             if (!this.isQuitting) {

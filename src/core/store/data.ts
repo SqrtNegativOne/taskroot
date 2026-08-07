@@ -66,7 +66,7 @@ export const dueLabel = (dueStr: string | null | undefined, today: Date): string
     if (diff === -1) return "yesterday";
     if (diff < 0) return `${-diff}d ago`;
     if (diff < DAYS_IN_WEEK) return `${diff}d`;
-    return `${d.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 };
 
 export const MONTHS = [

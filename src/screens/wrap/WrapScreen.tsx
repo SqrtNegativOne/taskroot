@@ -36,7 +36,7 @@ function calculateUntrackedTime(logEvents: HydratedEvent[], wake: number, sleep:
 }
 
 const handleSleep = () => {
-    if (window.electronAPI && window.electronAPI.shutdownPC) {
+    if (window.electronAPI?.shutdownPC) {
         window.electronAPI.shutdownPC();
     } else {
         alert("PC would shutdown now!");

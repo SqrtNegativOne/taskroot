@@ -34,7 +34,7 @@ export const storeRegistry = {
 
 if (typeof window !== "undefined") {
     window.addEventListener("storage", (e) => {
-        if (e.key && e.key.startsWith("taskroot_")) {
+        if (e.key?.startsWith("taskroot_")) {
             const key = e.key.replace("taskroot_", "");
             const set = updaters.get(key);
             if (set && e.newValue !== null) {

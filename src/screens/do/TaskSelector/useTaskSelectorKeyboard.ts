@@ -26,13 +26,13 @@ export function useTaskSelectorKeyboard({
             e.preventDefault();
             if (sortedTasks.length > 0) {
                 setSelectedIndex((prev) => (prev + 1) % sortedTasks.length);
-                import("cuelume").then(({ play }) => play("tick"));
+                void import("cuelume").then(({ play }) => play("tick"));
             }
         } else if (e.key === "ArrowUp") {
             e.preventDefault();
             if (sortedTasks.length > 0) {
                 setSelectedIndex((prev) => (prev - 1 + sortedTasks.length) % sortedTasks.length);
-                import("cuelume").then(({ play }) => play("tick"));
+                void import("cuelume").then(({ play }) => play("tick"));
             }
         }
     };

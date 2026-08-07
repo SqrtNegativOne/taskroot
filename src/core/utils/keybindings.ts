@@ -35,6 +35,6 @@ export const handleSettingsKeydown = (
 
     if (isKeyMatch(e, parsedKb)) {
         e.preventDefault();
-        navigate("/settings");
+        void navigate("/settings");
     }
 };

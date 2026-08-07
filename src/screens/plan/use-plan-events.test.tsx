@@ -3,7 +3,7 @@ import { renderHook } from "@testing-library/react";
 import { usePlanEvents } from "./use-plan-events";
 
 vi.mock("../../core/store/hooks", () => ({
-    useCalendars: vi.fn(() => [[
+    useCalendars: vi.fn<() => unknown[]>(() => [[
         { id: "cal1", summary: "Routine" },
         { id: "cal2", summary: "Work" }
     ]])

@@ -44,7 +44,7 @@ function AppRouter() {
 
 export function App() {
     React.useEffect(() => {
-        import("cuelume").then(({ bind }) => bind());
+        void import("cuelume").then(({ bind }) => bind());
     }, []);
 
     if (window.location.search.includes("minitracker=true")) {

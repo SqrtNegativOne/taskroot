@@ -58,7 +58,7 @@ function initializeApp() {
     if (VITE_DEV_SERVER_URL) {
         windowManager.setMainUrl(VITE_DEV_SERVER_URL);
         windowManager.setMiniWindowUrl(`${VITE_DEV_SERVER_URL}?minitracker=true`);
-        win.loadURL(VITE_DEV_SERVER_URL);
+        void win.loadURL(VITE_DEV_SERVER_URL);
         windowManager.createMiniWindow();
         windowManager.createLauncherWindow();
     } else {
@@ -66,7 +66,7 @@ function initializeApp() {
             const mainUrl = `http://localhost:${port}`;
             windowManager.setMainUrl(mainUrl);
             windowManager.setMiniWindowUrl(`${mainUrl}?minitracker=true`);
-            win.loadURL(mainUrl);
+            void win.loadURL(mainUrl);
             windowManager.createMiniWindow();
             windowManager.createLauncherWindow();
         });

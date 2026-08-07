@@ -29,7 +29,7 @@ export const api = {
         const keysToRemove: string[] = [];
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
-            if (key && key.startsWith("taskroot_")) {
+            if (key?.startsWith("taskroot_")) {
                 keysToRemove.push(key);
             }
         }

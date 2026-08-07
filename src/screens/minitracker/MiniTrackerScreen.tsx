@@ -191,7 +191,7 @@ export function MiniTrackerScreen() {
     useEffect(() => {
         if (window.electronAPI?.onSnapped) {
             window.electronAPI.onSnapped(() => {
-                import("cuelume").then(({ play }) => play("toggle"));
+                void import("cuelume").then(({ play }) => play("toggle"));
             });
         }
     }, []);

@@ -110,7 +110,7 @@ export function parseSigils(title: string): ParseResult {
             const nextWord = parts[i+2];
             const combined = part + nextSpace + nextWord;
             const durMatch = combined.match(DURATION_REGEX);
-            if (durMatch && durMatch[0] === combined) {
+            if (durMatch?.[0] === combined) {
                 const val = parseInt(durMatch[1], 10);
                 const unit = durMatch[2].toLowerCase();
                 properties.duration = unit.startsWith("h") ? val * MINUTES_IN_HOUR : val;

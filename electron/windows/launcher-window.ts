@@ -36,7 +36,7 @@ export class LauncherWindowController {
             webPreferences: defaultWebPreferences,
         });
 
-        this.win.loadURL(`${this.url}?launcher=true`);
+        void this.win.loadURL(`${this.url}?launcher=true`);
 
         this.win.on('blur', () => {
             this.win?.hide();

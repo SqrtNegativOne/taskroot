@@ -69,7 +69,7 @@ export class Synchronizer<T extends { id: string; remoteId?: string; updatedAt?:
         
         if (q.action === SyncAction.Delete) {
             return this.applyQueueDelete(q, localItemsMap);
-        } else if ((q.action === SyncAction.Update || q.action === SyncAction.Create || q.action === SyncAction.Move) && q.item && q.item.id) {
+        } else if ((q.action === SyncAction.Update || q.action === SyncAction.Create || q.action === SyncAction.Move) && q.item?.id) {
             return this.applyQueueUpsert(q, localItemsMap);
         }
         return false;
@@ -77,7 +77,7 @@ export class Synchronizer<T extends { id: string; remoteId?: string; updatedAt?:
 
     private applyQueueDelete(q: SyncQueueItem, localItemsMap: Map<string, T>): boolean {
         let updated = false;
-        if (q.item && q.item.id) {
+        if (q.item?.id) {
             localItemsMap.delete(q.item.id);
             updated = true;
         }

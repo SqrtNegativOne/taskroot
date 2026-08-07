@@ -75,9 +75,9 @@ export function TaskRow({
 
                     if (newStatus === "done") {
                         setIsChecking(true);
-                        import("cuelume").then(({ play }) => play("success"));
+                        void import("cuelume").then(({ play }) => play("success"));
                     } else {
-                        import("cuelume").then(({ play }) => play("release"));
+                        void import("cuelume").then(({ play }) => play("release"));
                     }
 
                     if (isRemoving) {

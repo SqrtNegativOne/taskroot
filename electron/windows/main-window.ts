@@ -44,7 +44,7 @@ export class MainWindowController {
         } else {
             this.createMainWindow();
             if (this.mainUrl) {
-                this.win?.loadURL(this.mainUrl);
+                void this.win?.loadURL(this.mainUrl);
             }
         }
     }

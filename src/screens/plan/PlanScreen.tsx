@@ -47,7 +47,7 @@ export function PlanScreen() {
 
     // UI state — calendar
     const [settings] = useSettings();
-    const [view, setView] = React.useState<"month" | "week">(
+    const [view, setView] = React.useState<string>(
         settings.defaultCalendarView || "month",
     );
     const [anchor, setAnchor] = React.useState(new Date(TODAY));
@@ -138,7 +138,7 @@ export function PlanScreen() {
                         >
                             <DateGrid
                                 view={view}
-                                setView={(v: string) => setView(v === "month" ? "month" : "week")}
+                                setView={setView}
                                 anchor={anchor}
                                 setAnchor={setAnchor}
                                 events={hydratedEvents}

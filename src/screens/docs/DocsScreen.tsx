@@ -41,7 +41,7 @@ export function DocsScreen() {
                 color: "var(--fg)",
             }}
         >
-            <div style={{ maxWidth: "800px", width: "100%" }}>
+            <div style={{ maxWidth: "800px", width: "100%", fontSize: "1.1rem", lineHeight: "1.6" }}>
                 <Markdown
                     components={{
                         a: LinkRenderer

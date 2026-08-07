@@ -7,6 +7,8 @@ import { ANIMATION_DELAY_MS } from "./constants";
 
 
 
+import { DateGridView } from "./index";
+
 export function CalendarHeader({
     titleLabel,
     today,
@@ -18,8 +20,8 @@ export function CalendarHeader({
 }: {
     titleLabel: string;
     today: Date | number | string;
-    view: string;
-    setView: (view: string) => void;
+    view: DateGridView;
+    setView: (view: DateGridView) => void;
     setAnchor: (date: Date) => void;
     shift: (n: number) => void;
     filterMenu: React.ReactNode;
@@ -121,7 +123,7 @@ export function CalendarHeader({
                                 overflow: "hidden"
                             }}
                         >
-                            {["month", "1 week", "3 weeks"].map((mode) => (
+                            {[DateGridView.Month, DateGridView.OneWeek, DateGridView.ThreeWeeks].map((mode) => (
                                 <button
                                     key={mode}
                                     onClick={() => {
@@ -131,8 +133,8 @@ export function CalendarHeader({
                                     style={{
                                         padding: "8px 12px",
                                         textAlign: "left",
-                                        background: view === mode || (view === "week" && mode === "1 week") ? "var(--accent-soft)" : "transparent",
-                                        color: view === mode || (view === "week" && mode === "1 week") ? "var(--accent)" : "var(--fg)",
+                                        background: view === mode || (view === DateGridView.Week && mode === DateGridView.OneWeek) ? "var(--accent-soft)" : "transparent",
+                                        color: view === mode || (view === DateGridView.Week && mode === DateGridView.OneWeek) ? "var(--accent)" : "var(--fg)",
                                         border: "none",
                                         cursor: "pointer",
                                         fontSize: "0.9em",

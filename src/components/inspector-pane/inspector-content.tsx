@@ -55,13 +55,13 @@ export function InspectorPaneContent({
                         parseMode={true}
                         onPropertiesParsed={(props) => {
                             if (currentTask) {
-                                const updates: Partial<AppTask> = {};
+                                const updates: Partial<{ -readonly [K in keyof AppTask]: AppTask[K] }> = {};
                                 if (props.priority !== undefined) updates.priority = props.priority;
                                 if (props.tags) updates.tags = [...(currentTask.tags || []), ...props.tags];
                                 if (props.duration !== undefined) updates.est = props.duration;
                                 if (props.day) {
                                     import('../../core/utils/sigil-parser').then(m => {
-                                        const newDue = m.getDueDateFromSigil(props.day as string);
+                                        const newDue = m.getDueDateFromSigil(String(props.day));
                                         updateTask(currentTask.id, { ...updates, due: newDue });
                                         return true;
                                     }).catch(() => false);

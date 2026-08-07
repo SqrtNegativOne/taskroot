@@ -12,7 +12,7 @@ import type { AppEvent, AppTask } from "../../core/domain/models";
 import { DragGhost, type PlanDragState } from "./drag-helpers";
 import { usePlanActions } from "./use-plan-actions";
 import { useDragAndDrop } from "./use-drag-and-drop";
-import { DateGrid } from "./date-grid";
+import { DateGrid, DateGridView } from "./date-grid";
 
 import { useTasks, useEvents, useSettings, useTaskQuery, useTaskFilters, useTaskSort, useCalFilters, useCalSort, useTimeFilters, useTimeSort } from "../../core/store/hooks";
 
@@ -47,8 +47,8 @@ export function PlanScreen() {
 
     // UI state — calendar
     const [settings] = useSettings();
-    const [view, setView] = React.useState<string>(
-        settings.defaultCalendarView || "month",
+    const [view, setView] = React.useState<DateGridView>(
+        settings.defaultCalendarView === "week" ? DateGridView.Week : DateGridView.Month,
     );
     const [anchor, setAnchor] = React.useState(new Date(TODAY));
     const [timelineDate, setTimelineDate] = React.useState(new Date(TODAY));

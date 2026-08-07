@@ -21,6 +21,13 @@ const DAYS_IN_CALENDAR_GRID = 42;
 const DAYS_IN_WEEK = 7;
 const DAYS_IN_THREE_WEEKS = 21;
 
+export const DateGridView = {
+    Month: "month",
+    Week: "week",
+    OneWeek: "1 week",
+    ThreeWeeks: "3 weeks"
+} as const;
+export type DateGridView = typeof DateGridView[keyof typeof DateGridView];
 
 
 export function DateGrid({
@@ -38,8 +45,8 @@ export function DateGrid({
     onEventDragStart,
     onAddEvent,
 }: {
-    view: string;
-    setView: (v: string) => void;
+    view: DateGridView;
+    setView: (v: DateGridView) => void;
     anchor: Date;
     setAnchor: (d: Date) => void;
     events: HydratedEvent[];
@@ -123,15 +130,15 @@ export function DateGrid({
     );
 }
 
-function buildMonthOrWeekCells(anchor: Date, view: string) {
-    if (view === "1 week" || view === "week") {
+function buildMonthOrWeekCells(anchor: Date, view: DateGridView) {
+    if (view === DateGridView.OneWeek || view === DateGridView.Week) {
         const start = startOfWeek(anchor);
         return Array.from({ length: 7 }, (_, i) => ({
             date: addDays(start, i),
             outOfMonth: false,
         }));
     }
-    if (view === "3 weeks") {
+    if (view === DateGridView.ThreeWeeks) {
         const start = startOfWeek(anchor);
         return Array.from({ length: 21 }, (_, i) => ({
             date: addDays(start, i),

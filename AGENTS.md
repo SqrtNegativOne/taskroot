@@ -79,3 +79,4 @@ Taskroot is a web-based and desktop task management app focusing on planning, ex
 - When you have too much inter-dependent state (e.g., toggling the stopwatch needs to know about selectorOpen, running, currentMs, timeLogs, etc.), consider useReducer.
 - ALWAYS run `bun oxlint`, `npm run test`, and `bun run build` before committing. If any of these fail or give you a warning, fix the issue before committing.
 - If `bun run build` gives you a warning, fix it. Never be silent about warnings; always inform the user about them.
+- In the program, errors are data; not exceptional in any way. Don't return `null` or `False` when an error happens; be specific.

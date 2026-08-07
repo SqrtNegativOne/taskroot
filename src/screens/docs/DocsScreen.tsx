@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 
 const docs: Record<string, string> = import.meta.glob('../../../docs/*.md', { query: '?raw', import: 'default', eager: true });
 
-function LinkRenderer({ href, children }: { href?: string, children: React.ReactNode }) {
+function LinkRenderer({ href, children }: { href?: string, children?: React.ReactNode }) {
     if (href && href.startsWith('./')) {
         return <Link to={`/docs/${href.replace('./', '')}`}>{children}</Link>;
     }

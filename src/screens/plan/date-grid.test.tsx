@@ -4,7 +4,7 @@ import "../../../vitest-setup.ts";
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import { expect, test } from "vitest";
-import { DateGrid } from "./date-grid";
+import { DateGrid, DateGridView } from "./date-grid";
 import { hydrateEvents } from "../../core/domain/events";
 import { createMockAppEvent } from "../../core/utils/testUtils";
 import { ymd } from "../../core/store/data";
@@ -51,7 +51,7 @@ test("filters events by category correctly", () => {
 
     render(
         <DateGrid
-            view="month"
+            view={DateGridView.Month}
             setView={() => {}}
             anchor={today}
             setAnchor={() => {}}
@@ -102,7 +102,7 @@ test("filters out events by category correctly using 'is not'", () => {
 
     render(
         <DateGrid
-            view="month"
+            view={DateGridView.Month}
             setView={() => {}}
             anchor={today}
             setAnchor={() => {}}

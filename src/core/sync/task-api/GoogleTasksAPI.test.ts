@@ -145,5 +145,21 @@ describe("GoogleTasksAPI", () => {
             expect(localTask._deleted).toBe(true);
             expect(localTask.id).toBe("t456");
         });
+
+        it("parses sigils and strips them from the title", () => {
+            const googleTask = {
+                id: "g123",
+                title: "Buy milk !! #errands tom",
+                status: "needsAction",
+            };
+            const localTask = googleTasksAPI.toLocalTask(googleTask);
+            if ('_deleted' in localTask) throw new Error("Expected AppTask");
+            
+            expect(localTask.title).toBe("Buy milk");
+            expect(localTask.priority).toBe(3);
+            expect(localTask.tags).toContain("errands");
+            // Due date should be tomorrow, but we can just check if it's set or rely on the parser test
+            // Note that `hasSigils` is true, so `updatedAt` is bumped to Date.now() which is > googleTask.updated
+        });
     });
 });

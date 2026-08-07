@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useSettings, useTasks, useEvents } from "../store/hooks";
 import type { AppTask } from "../domain/models";
 import { handleSettingsKeydown } from "./keybindings";
+import { parseSigils, getDueDateFromSigil } from "./sigil-parser";
 
 const launcherCommandHandlers: Record<string, (
     payload: Record<string, string> | undefined,
@@ -17,7 +18,16 @@ const launcherCommandHandlers: Record<string, (
     },
     PLAN_TASK: (payload, navigate, setTasks) => {
         if (!payload?.taskName) return;
-        const newTask: AppTask = { id: crypto.randomUUID(), title: payload.taskName, status: 'todo' };
+        const { cleanTitle, properties } = parseSigils(payload.taskName);
+        const newTask: AppTask = { 
+            id: crypto.randomUUID(), 
+            title: cleanTitle || "New Task", 
+            status: 'todo',
+            priority: properties.priority,
+            tags: properties.tags,
+            est: properties.duration,
+            due: properties.day ? getDueDateFromSigil(properties.day) : undefined
+        };
         setTasks((prev) => [newTask, ...prev]);
         navigate('/plan');
     },
@@ -26,7 +36,16 @@ const launcherCommandHandlers: Record<string, (
     },
     DO_TASK: (payload, navigate, setTasks) => {
         if (!payload?.taskName) return;
-        const newTask: AppTask = { id: crypto.randomUUID(), title: payload.taskName, status: 'doing' };
+        const { cleanTitle, properties } = parseSigils(payload.taskName);
+        const newTask: AppTask = { 
+            id: crypto.randomUUID(), 
+            title: cleanTitle || "New Task", 
+            status: 'doing',
+            priority: properties.priority,
+            tags: properties.tags,
+            est: properties.duration,
+            due: properties.day ? getDueDateFromSigil(properties.day) : undefined
+        };
         setTasks((prev) => [newTask, ...prev]);
         navigate('/do');
     },
@@ -39,7 +58,16 @@ const launcherCommandHandlers: Record<string, (
     },
     ADD_TASK: (payload, _navigate, setTasks) => {
         if (!payload?.taskName) return;
-        const newTask: AppTask = { id: crypto.randomUUID(), title: payload.taskName, status: 'todo' };
+        const { cleanTitle, properties } = parseSigils(payload.taskName);
+        const newTask: AppTask = { 
+            id: crypto.randomUUID(), 
+            title: cleanTitle || "New Task", 
+            status: 'todo',
+            priority: properties.priority,
+            tags: properties.tags,
+            est: properties.duration,
+            due: properties.day ? getDueDateFromSigil(properties.day) : undefined
+        };
         setTasks((prev) => [newTask, ...prev]);
     }
 };

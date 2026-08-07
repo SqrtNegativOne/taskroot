@@ -4,6 +4,7 @@ import { ConflictError } from "../errors";
 import type { AppTask } from "../../domain/models";
 import type { IAuthManager } from "../auth/types";
 import type { ITasksAPI } from "./types";
+import { parseSigils } from "../../utils/sigil-parser";
 
 export const MAX_RETRIES = 3;
 
@@ -31,6 +32,19 @@ function getGoogleTaskBase(googleTask: gapi.client.tasks.Task) {
         status: googleTask.status === "completed" ? "done" as const : "todo" as const,
         updatedAt: googleTask.updated ? new Date(googleTask.updated).getTime() : Date.now(),
         etag: googleTask.etag,
+    };
+}
+
+function mergeGoogleTaskWithExisting(existing: AppTask, newBase: Partial<AppTask>, properties: import("../../utils/sigil-parser").ParsedProperties, due: string | undefined): AppTask {
+    const status = existing.status === "doing" && newBase.status === "todo" ? "doing" : newBase.status;
+    return { 
+        ...existing, 
+        ...newBase, 
+        status, 
+        due: due || existing.due,
+        priority: properties.priority ?? existing.priority,
+        tags: properties.tags ? Array.from(new Set([...(existing.tags || []), ...properties.tags])) : existing.tags,
+        est: properties.duration ?? existing.est,
     };
 }
 
@@ -107,12 +121,23 @@ export class GoogleTasksAPI implements ITasksAPI {
         const due = parseGoogleTaskDue(googleTask.due);
         const base = getGoogleTaskBase(googleTask);
 
+        const { cleanTitle, properties } = parseSigils(base.title);
+        const hasSigils = cleanTitle !== base.title;
+
+        // If sigils were found, we bump updatedAt so it pushes the cleanTitle back to Google Tasks
+        const updatedAt = hasSigils ? Date.now() : base.updatedAt;
+
+        const newBase = { ...base, title: cleanTitle, updatedAt };
+
         if (existing) {
-            const status = existing.status === "doing" && base.status === "todo" ? "doing" : base.status;
-            return { ...existing, ...base, status, due: due || existing.due };
+            return mergeGoogleTaskWithExisting(existing, newBase, properties, due);
         }
         return {
-            id, ...base, priority: 1, tags: [], subtasks: [], parent_task: undefined, est: 0,
+            id, ...newBase, 
+            priority: properties.priority ?? 1, 
+            tags: properties.tags || [], 
+            subtasks: [], parent_task: undefined, 
+            est: properties.duration || 0,
             added: new Date().toISOString(), isDraft: false, due,
         };
     }

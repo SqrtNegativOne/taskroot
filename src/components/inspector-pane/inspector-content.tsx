@@ -52,6 +52,28 @@ export function InspectorPaneContent({
                         onChange={handleTitleChange}
                         disabled={Boolean(currentEvent?.taskId) || isReadOnlyCalendar}
                         onEnter={onPaneClose}
+                        parseMode={true}
+                        onPropertiesParsed={(props) => {
+                            if (currentTask) {
+                                const updates: Partial<AppTask> = {};
+                                if (props.priority !== undefined) updates.priority = props.priority;
+                                if (props.tags) updates.tags = [...(currentTask.tags || []), ...props.tags];
+                                if (props.duration !== undefined) updates.est = props.duration;
+                                if (props.day) {
+                                    import('../../core/utils/sigil-parser').then(m => {
+                                        const newDue = m.getDueDateFromSigil(props.day as string);
+                                        updateTask(currentTask.id, { ...updates, due: newDue });
+                                        return true;
+                                    }).catch(() => false);
+                                    return; // early return because we handle update asynchronously
+                                }
+                                if (Object.keys(updates).length > 0) updateTask(currentTask.id, updates);
+                            } else if (currentEvent && !isReadOnlyCalendar) {
+                                // For events, we could theoretically apply duration, day, time, but they aren't straight forward updates yet.
+                                // We'll just strip the sigils for now, which TitleInput handles via onBlur and cleanTitle.
+                                // If they want us to update startTime/endTime based on 'props.duration' or 'props.time' we can do it here later.
+                            }
+                        }}
                         style={{
                             fontSize: "24px",
                             fontWeight: "normal",

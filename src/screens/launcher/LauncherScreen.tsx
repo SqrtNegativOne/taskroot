@@ -3,6 +3,7 @@ import type { AppTask, AppEvent } from '../../core/domain/models';
 import { search } from './search';
 import { parseCommands } from './commandParser';
 import type { CommandOption } from './commandParser';
+import { parseSigils } from '../../core/utils/sigil-parser';
 
 import './launcher.css';
 
@@ -126,7 +127,30 @@ export function LauncherScreen() {
 
     return (
         <div className="launcher-container" data-launcher="true">
-            <div className="launcher-input-row">
+            <div className="launcher-input-row" style={{ position: "relative" }}>
+                <div
+                    className="launcher-input"
+                    style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        color: "transparent",
+                        pointerEvents: "none",
+                        whiteSpace: "pre-wrap",
+                        overflow: "hidden",
+                        border: "none",
+                        background: "transparent",
+                        margin: 0,
+                        wordBreak: "break-word",
+                    }}
+                >
+                    {parseSigils(query).tokens.map((t, i) => (
+                        // oxlint-disable-next-line react(no-array-index-key)
+                        <span key={`${i}-${t.text}`} style={t.type === "sigil" ? { backgroundColor: "rgba(255, 75, 75, 0.4)", borderRadius: "3px" } : {}}>{t.text}</span>
+                    ))}
+                </div>
                 <input
                     ref={inputRef}
                     type="text"
@@ -136,6 +160,7 @@ export function LauncherScreen() {
                     placeholder="Search or command..."
                     className="launcher-input"
                     spellCheck={false}
+                    style={{ background: "transparent", position: "relative" }}
                 />
             </div>
             <div className="launcher-results" style={{ display: options.length > 0 ? 'block' : 'none' }}>

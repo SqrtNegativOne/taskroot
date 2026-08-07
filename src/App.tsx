@@ -34,7 +34,7 @@ function AppRouter() {
                     <Route path="/stats" element={<StatsScreen />} />
                     <Route path="/recap" element={<RecapScreen />} />
                     <Route path="/dev" element={<DevScreen />} />
-                    <Route path="/docs" element={<DocsScreen />} />
+                    <Route path="/docs/*" element={<DocsScreen />} />
                 </Route>
                 <Route path="*" element={<Navigate to="/plan" replace />} />
             </Routes>

@@ -49,7 +49,15 @@ Taskroot is a web-based and desktop task management app focusing on planning, ex
 - Prefer inline exports over bottom exports.
 - Remember that you may not need a useEffect. useEffect is an escape hatch for when you need to imperatively run code after a render. If you can do it declaratively, do it declaratively.
 - Keep all React components pure and functional.
+- Use Red-Green Test Driven Development.
+    - Write tests first as a contract and to make it clear what you are doing.
+    - Once they are written, do not modify them, unless there is something truly wrong wit them.
+    - Only after the tests are written, should you start writing code.
 - Code should be self-documenting. If you feel the need to make a comment, consider refactoring the code to make it more readable instead.
+    - To explain why a particular variable is used, replace it with a constant.
+    - Use variables to name parts of expressions, so conditions read like a comment does. You can also consider moving them to their own function.
+    - Types can also help remove comments.
+    - If your code is doing something nonobvious for performance reasons... you can use comments.
 - Strongly type your code. Don't use shortcuts. A list of nonexhaustive shortcuts given below:
   - Do not use `any` or `Function` type ever.
   - Never use `as` type assertions unless absolutely necessary. If you find yourself needing to use `as`, consider refactoring the code to avoid it. If you must use `as`, you must include a comment in the code before it explaining why it is necessary. `as const` is fine obviously.

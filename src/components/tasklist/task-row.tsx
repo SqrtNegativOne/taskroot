@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { TODAY, parseYMD, durationLabel, dueLabel } from "../../core/store/data";
-import type { AppTask, AppFilter } from "../../core/domain/models";
+import { type AppTask, type AppFilter, isAppTaskStatus } from "../../core/domain/models";
 import { checkTaskAgainstFilters } from "./filters";
 import { Icon } from "../icon";
 import { ICON_OVERDUE, ICON_TABS } from "../../core/utils/icons";
@@ -97,81 +97,110 @@ export function TaskRow({
                 }}
             />
             <div className="task-row-content">
-                <div className="task-row-line1">
-                    <span className="task-row-title">
-                        {isPastDue && task.status !== "done" && (
-                            <Icon name={ICON_OVERDUE} size={14} style={{ marginRight: '4px', color: 'var(--p0)', verticalAlign: 'middle' }} />
-                        )}
-                        {task.title}
-                        {task.tabs && (
-                            <button
-                                className="open-tabs-button"
-                                title="Open Tabs"
-                                onPointerDown={(e) => e.stopPropagation()}
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    const urls = task.tabs?.match(/https?:\/\/[^\s"']+/g) || [];
-                                    urls.forEach(url => window.open(url, '_blank'));
-                                }}
-                                style={{ 
-                                    cursor: 'pointer', 
-                                    marginLeft: '6px', 
-                                    verticalAlign: 'middle', 
-                                    display: 'inline-flex',
-                                    background: 'none',
-                                    border: 'none',
-                                    padding: 0
-                                }}
-                            >
-                                <Icon name={ICON_TABS} size={16} style={{ color: 'var(--accent)' }} />
-                            </button>
-                        )}
-                    </span>
-                    {task.status === "next-up" && (
-                        <span className="status-pill status-nextup">
-                            next up
-                        </span>
-                    )}
-                    <select
-                        className="status-select"
-                        value={task.status || "todo"}
-                        onChange={(e) => updateTask(task.id, { status: e.target.value as AppTask["status"] })}
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <option value="todo">todo</option>
-                        <option value="doing">doing</option>
-                        <option value="next-up">next up</option>
-                        <option value="done">done</option>
-                    </select>
-
-                    <div className="task-row-actions">
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                if (e.shiftKey || confirm("Delete task?")) {
-                                    setIsExiting(true);
-                                    setTimeout(() => deleteTask(task.id), TRANSITION_DURATION_MS);
-                                }
-                            }}
-                            title="Delete"
-                        >
-                            <span
-                                className="material-symbols-outlined"
-                                style={{
-                                    fontSize: "18px",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                }}
-                            >
-                                delete
-                            </span>
-                        </button>
-                    </div>
-                </div>
+                <TaskRowLine1 
+                    task={task} 
+                    isPastDue={isPastDue} 
+                    updateTask={updateTask} 
+                    deleteTask={deleteTask} 
+                    setIsExiting={setIsExiting} 
+                />
                 { (task.est || (task.tags && task.tags.length > 0) || (task.subtasks && task.subtasks.length > 0) || dueStr) && (
                     <TaskRowLine2 task={task} dueStr={dueStr} overdue={Boolean(overdue)} />
                 )}
+            </div>
+        </div>
+    );
+}
+
+function TaskRowLine1({
+    task,
+    isPastDue,
+    updateTask,
+    deleteTask,
+    setIsExiting,
+}: {
+    task: AppTask;
+    isPastDue?: boolean;
+    updateTask: (id: string, updates: Partial<AppTask>) => void;
+    deleteTask: (id: string) => void;
+    setIsExiting: (exiting: boolean) => void;
+}) {
+    return (
+        <div className="task-row-line1">
+            <span className="task-row-title">
+                {isPastDue && task.status !== "done" && (
+                    <Icon name={ICON_OVERDUE} size={14} style={{ marginRight: '4px', color: 'var(--p0)', verticalAlign: 'middle' }} />
+                )}
+                {task.title}
+                {task.tabs && (
+                    <button
+                        className="open-tabs-button"
+                        title="Open Tabs"
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            const urls = task.tabs?.match(/https?:\/\/[^\s"']+/g) || [];
+                            urls.forEach((url) => window.open(url, '_blank'));
+                        }}
+                        style={{
+                            cursor: 'pointer',
+                            marginLeft: '6px',
+                            verticalAlign: 'middle',
+                            display: 'inline-flex',
+                            background: 'none',
+                            border: 'none',
+                            padding: 0,
+                        }}
+                    >
+                        <Icon name={ICON_TABS} size={16} style={{ color: 'var(--accent)' }} />
+                    </button>
+                )}
+            </span>
+            {task.status === "next-up" && (
+                <span className="status-pill status-nextup">
+                    next up
+                </span>
+            )}
+            <select
+                className="status-select"
+                value={task.status || "todo"}
+                onChange={(e) => {
+                    const val = e.target.value;
+                    if (isAppTaskStatus(val)) {
+                        updateTask(task.id, { status: val });
+                    }
+                }}
+                onClick={(e) => e.stopPropagation()}
+            >
+                <option value="todo">todo</option>
+                <option value="doing">doing</option>
+                <option value="next-up">next up</option>
+                <option value="done">done</option>
+            </select>
+
+            <div className="task-row-actions">
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        if (e.shiftKey || confirm("Delete task?")) {
+                            setIsExiting(true);
+                            setTimeout(() => deleteTask(task.id), TRANSITION_DURATION_MS);
+                        }
+                    }}
+                    title="Delete"
+                >
+                    <span
+                        className="material-symbols-outlined"
+                        style={{
+                            fontSize: "18px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                        }}
+                    >
+                        delete
+                    </span>
+                </button>
             </div>
         </div>
     );

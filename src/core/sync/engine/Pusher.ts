@@ -4,6 +4,7 @@ import { SyncType } from "./types";
 import { syncState } from "../SyncState";
 import { ConflictError } from "../errors";
 import type { AppTask, AppEvent } from "../../domain/models";
+import type { SyncQueueItem } from "./types";
 
 export class Pusher {
     private pushQueue = new SyncQueue();
@@ -28,6 +29,25 @@ export class Pusher {
         void this.processPushQueue();
     }
 
+    private handlePushError(e: unknown, taskOrEvent: SyncQueueItem): boolean {
+        if (e instanceof ConflictError) {
+            console.warn(`ETag conflict on push: ${e.message}. Dropping push to let poller resolve.`);
+            this.pushQueue.remove(taskOrEvent);
+            return false;
+        }
+
+        console.error("Push failed", e);
+        if (e instanceof Error && (e.message.includes("403") || e.message.includes("404") || e.message.includes("400"))) {
+            this.pushQueue.remove(taskOrEvent);
+            const itemName = taskOrEvent.item.title || "Unknown item";
+            syncState.error = `Sync ${taskOrEvent.action} item "${itemName}" discarded because of error: ${e.message}`;
+            return false;
+        }
+        
+        syncState.error = e instanceof Error ? e.message : "Error syncing item to Google.";
+        return true;
+    }
+
     private async processPushQueue() {
         if (this.pushQueue.length === 0) return;
         syncState.isPushing = true;
@@ -49,22 +69,8 @@ export class Pusher {
                 await sync.processPushItem(taskOrEvent);
                 this.pushQueue.remove(taskOrEvent);
             } catch (e: unknown) {
-                if (e instanceof ConflictError) {
-                    console.warn(`ETag conflict on push: ${e.message}. Dropping push to let poller resolve.`);
-                    this.pushQueue.remove(taskOrEvent);
-                    continue;
-                }
-
-                console.error("Push failed", e);
-                if (e instanceof Error && (e.message.includes("403") || e.message.includes("404") || e.message.includes("400"))) {
-                    this.pushQueue.remove(taskOrEvent);
-                    const itemName = taskOrEvent.item.title || "Unknown item";
-                    syncState.error = `Sync ${taskOrEvent.action} item "${itemName}" discarded because of error: ${e.message}`;
-                    continue;
-                }
-                
-                syncState.error = e instanceof Error ? e.message : "Error syncing item to Google.";
-                break;
+                const shouldBreak = this.handlePushError(e, taskOrEvent);
+                if (shouldBreak) break;
             }
         }
 

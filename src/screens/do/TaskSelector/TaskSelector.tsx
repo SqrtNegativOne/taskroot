@@ -121,39 +121,86 @@ export function TaskSelector({
             />
 
             {pendingTasks.length === 0 ? (
-                <div className={`task-selector-overlay ${isClosing ? "is-closing" : "floating-menu"}`}>
-                    <div className="task-selector-empty-msg">
-                        Create some tasks to start working on them.
-                    </div>
-                </div>
+                <EmptyTaskState isClosing={isClosing} />
             ) : (
-                <div className={`task-selector-overlay ${isClosing ? "is-closing" : "floating-menu"}`}>
-                    <div className="task-selector-content">
-                        <input
-                            ref={searchInputRef}
-                            className="modern-task-input"
-                            placeholder="Type a task"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            onKeyDown={handleKeyDown}
-                        />
-
-                        <div className={`task-selector-divider ${searchQuery.trim().length > 0 ? "has-search" : ""}`}>
-                            <div className="task-selector-divider-dot" />
-                        </div>
-
-                        <div className="modern-task-list">
-                            <TaskSearchResults
-                                sortedTasks={sortedTasks}
-                                startWithTask={startWithTask}
-                                selectedIndex={selectedIndex}
-                                setSelectedIndex={setSelectedIndex}
-                                updateTask={updateTask}
-                            />
-                        </div>
-                    </div>
-                </div>
+                <TaskSelectorContent
+                    isClosing={isClosing}
+                    searchInputRef={searchInputRef}
+                    searchQuery={searchQuery}
+                    setSearchQuery={setSearchQuery}
+                    handleKeyDown={handleKeyDown}
+                    sortedTasks={sortedTasks}
+                    startWithTask={startWithTask}
+                    selectedIndex={selectedIndex}
+                    setSelectedIndex={setSelectedIndex}
+                    updateTask={updateTask}
+                />
             )}
         </>
+    );
+}
+
+function EmptyTaskState({ isClosing }: { isClosing: boolean }) {
+    return (
+        <div className={`task-selector-overlay ${isClosing ? "is-closing" : "floating-menu"}`}>
+            <div className="task-selector-empty-msg">
+                Create some tasks to start working on them.
+            </div>
+        </div>
+    );
+}
+
+interface TaskSelectorContentProps {
+    isClosing: boolean;
+    searchInputRef: React.RefObject<HTMLInputElement | null>;
+    searchQuery: string;
+    setSearchQuery: (query: string) => void;
+    handleKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+    sortedTasks: AppTask[];
+    startWithTask: (taskId: string) => void;
+    selectedIndex: number;
+    setSelectedIndex: (index: number) => void;
+    updateTask: (id: string, updates: Partial<AppTask>) => void;
+}
+
+function TaskSelectorContent({
+    isClosing,
+    searchInputRef,
+    searchQuery,
+    setSearchQuery,
+    handleKeyDown,
+    sortedTasks,
+    startWithTask,
+    selectedIndex,
+    setSelectedIndex,
+    updateTask,
+}: TaskSelectorContentProps) {
+    return (
+        <div className={`task-selector-overlay ${isClosing ? "is-closing" : "floating-menu"}`}>
+            <div className="task-selector-content">
+                <input
+                    ref={searchInputRef}
+                    className="modern-task-input"
+                    placeholder="Type a task"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                />
+
+                <div className={`task-selector-divider ${searchQuery.trim().length > 0 ? "has-search" : ""}`}>
+                    <div className="task-selector-divider-dot" />
+                </div>
+
+                <div className="modern-task-list">
+                    <TaskSearchResults
+                        sortedTasks={sortedTasks}
+                        startWithTask={startWithTask}
+                        selectedIndex={selectedIndex}
+                        setSelectedIndex={setSelectedIndex}
+                        updateTask={updateTask}
+                    />
+                </div>
+            </div>
+        </div>
     );
 }

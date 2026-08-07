@@ -5,23 +5,59 @@ export const DRAG_THRESHOLD_PX = 4;
 export const MAX_RETRIES = 3;
 
 
+function processFilterItem(f: AppFilter, req: Record<string, Set<string | number>>, excl: Record<string, Set<string | number>>) {
+    if (!f.column) return;
+    if (f.value === undefined || f.value === null || f.value === "") return;
+    
+    const values = Array.isArray(f.value) ? f.value : [f.value];
+    if (values.length === 0) return;
+    
+    if (f.operator === "is not") {
+        if (!excl[f.column]) excl[f.column] = new Set();
+        for (const v of values) excl[f.column].add(v);
+    } else {
+        if (!req[f.column]) req[f.column] = new Set();
+        for (const v of values) req[f.column].add(v);
+    }
+}
+
 function processFilters(filters: AppFilter[]) {
     const req: Record<string, Set<string | number>> = {};
     const excl: Record<string, Set<string | number>> = {};
     for (const f of filters) {
-        if (!f.column || (!f.value && f.value !== 0)) continue;
-        const values = Array.isArray(f.value) ? f.value : [f.value];
-        if (values.length === 0) continue;
-        
-        if (f.operator === "is not") {
-            if (!excl[f.column]) excl[f.column] = new Set();
-            values.forEach(v => excl[f.column].add(v));
-        } else {
-            if (!req[f.column]) req[f.column] = new Set();
-            values.forEach(v => req[f.column].add(v));
-        }
+        processFilterItem(f, req, excl);
     }
     return { req, excl };
+}
+
+const FALLBACKS: Record<string, (string | number)[]> = {
+    status: ["todo", "next-up", "doing", "done"],
+    priority: [1, 2, MAX_RETRIES, DRAG_THRESHOLD_PX, 0],
+};
+
+function processSingleValueCol(
+    col: string,
+    reqCol: Set<string | number> | undefined,
+    exclCol: Set<string | number> | undefined,
+    defaults: Record<string, unknown>
+) {
+    if (reqCol?.size === 1) {
+        const val = Array.from(reqCol)[0];
+        if (!exclCol || !exclCol.has(val)) {
+            defaults[col] = val;
+        }
+        return;
+    }
+    
+    const fallbacks = FALLBACKS[col];
+    if (exclCol && fallbacks) {
+        for (const fallback of fallbacks) {
+            if (!exclCol.has(fallback)) {
+                defaults[col] = fallback;
+                break;
+            }
+        }
+    }
 }
 
 function processSingleValueCols(
@@ -29,27 +65,9 @@ function processSingleValueCols(
     excl: Record<string, Set<string | number>>,
     defaults: Record<string, unknown>
 ) {
-    const FALLBACKS: Record<string, (string | number)[]> = {
-        status: ["todo", "next-up", "doing", "done"],
-        priority: [1, 2, MAX_RETRIES, DRAG_THRESHOLD_PX, 0],
-    };
     const singleValueCols = ["status", "priority"];
     for (const col of singleValueCols) {
-        if (req[col]) {
-            if (req[col].size === 1) {
-                const val = Array.from(req[col])[0];
-                if (!excl[col] || !excl[col].has(val)) {
-                    defaults[col] = val;
-                }
-            }
-        } else if (excl[col] && FALLBACKS[col]) {
-            for (const fallback of FALLBACKS[col]) {
-                if (!excl[col].has(fallback)) {
-                    defaults[col] = fallback;
-                    break;
-                }
-            }
-        }
+        processSingleValueCol(col, req[col], excl[col], defaults);
     }
 }
 

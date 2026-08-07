@@ -1,7 +1,7 @@
 import { MINUTES_IN_HOUR } from "../../core/utils/constants";
 const MAX_PRIORITY = 4;
 import React from "react";
-import type { AppTask } from "../../core/domain/models";
+import { type AppTask, isAppTaskStatus } from "../../core/domain/models";
 import { TaskStatusSelect } from "./inspector-shared";
 
 
@@ -20,11 +20,14 @@ export function TaskInspector({ task, updateTask }: TaskInspectorProps) {
                     <label htmlFor={`status-${task.id}`}>Status</label>
                     <TaskStatusSelect
                         value={task.status || "todo"}
-                        onChange={(e) =>
-                            updateTask(task.id, {
-                                status: e.target.value as AppTask["status"],
-                            })
-                        }
+                        onChange={(e) => {
+                            const val = e.target.value;
+                            if (isAppTaskStatus(val)) {
+                                updateTask(task.id, {
+                                    status: val,
+                                });
+                            }
+                        }}
                     />
                 </div>
                 <div className="inspector-field">

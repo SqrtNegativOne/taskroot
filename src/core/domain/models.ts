@@ -4,6 +4,10 @@ export function isYmdString(s: unknown): s is YmdString {
     return typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
 }
 
+export function isAppTaskStatus(s: unknown): s is AppTask["status"] {
+    return typeof s === "string" && ["todo", "next-up", "doing", "done"].includes(s);
+}
+
 export interface AppTask {
     readonly id: string;
     readonly title: string;

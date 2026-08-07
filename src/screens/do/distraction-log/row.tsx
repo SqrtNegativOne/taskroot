@@ -34,73 +34,19 @@ export function DLogRow({
                 const isEditing =
                     editingCell?.rowId === row.id &&
                     editingCell?.colId === col.id;
-                const val = typeof row[col.id] === "string" ? row[col.id] : undefined;
                 return (
-                    <button
-                        type="button"
+                    <DLogCell
                         key={col.id}
-                        className={`dlog-cell dlog-cell-${col.type} ${isEditing ? "is-editing" : ""}`}
-                        style={{ width: col.width, border: "none", background: "none", font: "inherit", color: "inherit", padding: 0, textAlign: "left", cursor: "text" }}
-                        onClick={() => {
-                            if (col.type === "text")
-                                setEditingCell({
-                                    rowId: row.id,
-                                    colId: col.id,
-                                });
-                            else if (col.type === "status")
-                                setStatusEditor(row.id);
-                        }}
-                    >
-                        {col.type === "text" &&
-                            (isEditing ? (
-                                <input
-                                    ref={(r) => { if (r && isEditing) r.focus(); }}
-                                    className="dlog-cell-input"
-                                    defaultValue={typeof val === 'string' ? val : ""}
-                                    onBlur={(e) => {
-                                        updateRow(row.id, {
-                                            [col.id]: e.target.value,
-                                        });
-                                        setEditingCell(undefined);
-                                    }}
-                                    onKeyDown={(e) => {
-                                        if (e.key === "Enter" && e.currentTarget instanceof HTMLElement) {
-                                            e.currentTarget.blur();
-                                        }
-                                        if (e.key === "Escape" && e.currentTarget instanceof HTMLElement) {
-                                            e.currentTarget.blur();
-                                            setEditingCell(undefined);
-                                        }
-                                    }}
-                                />
-                            ) : (
-                                typeof val === 'string' && val ? val : (
-                                    <span className="dim">click to edit</span>
-                                )
-                            ))}
-                        {col.type === "status" && (
-                            <StatusCell
-                                value={typeof val === 'string' ? val : undefined}
-                                statuses={statuses}
-                                open={statusEditor === row.id}
-                                onClose={() => setStatusEditor(undefined)}
-                                onChange={(v: string) => {
-                                    updateRow(row.id, { [col.id]: v });
-                                    setStatusEditor(undefined);
-                                }}
-                                onAdd={(label: string, color: string) => {
-                                    const newId = addStatus(label, color);
-                                    if (newId)
-                                        updateRow(row.id, { [col.id]: newId });
-                                }}
-                            />
-                        )}
-                        {col.type === "datetime" && (
-                            <span className="dlog-datetime">
-                                {formatDateTime(typeof val === 'string' ? val : undefined)}
-                            </span>
-                        )}
-                    </button>
+                        col={col}
+                        row={row}
+                        isEditing={isEditing}
+                        setEditingCell={setEditingCell}
+                        statusEditor={statusEditor}
+                        setStatusEditor={setStatusEditor}
+                        updateRow={updateRow}
+                        statuses={statuses}
+                        addStatus={addStatus}
+                    />
                 );
             })}
             <div className="dlog-cell dlog-cell-actions">
@@ -117,4 +63,115 @@ export function DLogRow({
             </div>
         </div>
     );
+}
+
+export interface DLogCellProps {
+    col: DistractionColumn;
+    row: DistractionRow;
+    isEditing: boolean;
+    setEditingCell: (cell?: EditingCell) => void;
+    statusEditor?: string;
+    setStatusEditor: (id?: string) => void;
+    updateRow: (id: string, patch: Partial<DistractionRow>) => void;
+    statuses: DistractionStatus[];
+    addStatus: (label: string, color: string) => string | undefined;
+}
+
+function DLogCell({
+    col,
+    row,
+    isEditing,
+    setEditingCell,
+    statusEditor,
+    setStatusEditor,
+    updateRow,
+    statuses,
+    addStatus,
+}: DLogCellProps) {
+    const val = typeof row[col.id] === "string" ? (row[col.id] as string) : undefined;
+    return (
+        <button
+            type="button"
+            className={`dlog-cell dlog-cell-${col.type} ${isEditing ? "is-editing" : ""}`}
+            style={{ width: col.width, border: "none", background: "none", font: "inherit", color: "inherit", padding: 0, textAlign: "left", cursor: "text" }}
+            onClick={() => {
+                if (col.type === "text")
+                    setEditingCell({ rowId: row.id, colId: col.id });
+                else if (col.type === "status")
+                    setStatusEditor(row.id);
+            }}
+        >
+            {col.type === "text" && (
+                <DLogTextCell 
+                    val={val} 
+                    isEditing={isEditing} 
+                    rowId={row.id} 
+                    colId={col.id} 
+                    updateRow={updateRow} 
+                    setEditingCell={setEditingCell} 
+                />
+            )}
+            {col.type === "status" && (
+                <StatusCell
+                    value={val}
+                    statuses={statuses}
+                    open={statusEditor === row.id}
+                    onClose={() => setStatusEditor(undefined)}
+                    onChange={(v: string) => {
+                        updateRow(row.id, { [col.id]: v });
+                        setStatusEditor(undefined);
+                    }}
+                    onAdd={(label: string, color: string) => {
+                        const newId = addStatus(label, color);
+                        if (newId) updateRow(row.id, { [col.id]: newId });
+                    }}
+                />
+            )}
+            {col.type === "datetime" && (
+                <span className="dlog-datetime">
+                    {formatDateTime(val)}
+                </span>
+            )}
+        </button>
+    );
+}
+
+function DLogTextCell({ 
+    val, 
+    isEditing, 
+    rowId, 
+    colId, 
+    updateRow, 
+    setEditingCell 
+}: { 
+    val?: string, 
+    isEditing: boolean, 
+    rowId: string, 
+    colId: string, 
+    updateRow: (id: string, patch: Partial<DistractionRow>) => void, 
+    setEditingCell: (cell?: EditingCell) => void 
+}) {
+    if (isEditing) {
+        return (
+            <input
+                ref={(r) => { if (r) r.focus(); }}
+                className="dlog-cell-input"
+                defaultValue={val || ""}
+                onBlur={(e) => {
+                    updateRow(rowId, { [colId]: e.target.value });
+                    setEditingCell(undefined);
+                }}
+                onKeyDown={(e) => {
+                    if (e.key === "Enter" && e.currentTarget instanceof HTMLElement) {
+                        e.currentTarget.blur();
+                    }
+                    if (e.key === "Escape" && e.currentTarget instanceof HTMLElement) {
+                        e.currentTarget.blur();
+                        setEditingCell(undefined);
+                    }
+                }}
+            />
+        );
+    }
+    return val ? <>{val}</> : <span className="dim">click to edit</span>;
 }

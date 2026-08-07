@@ -98,6 +98,25 @@ export function expandEventsForView(
     return flattenedInstances;
 }
 
+function applyInstanceUpdate(events: AppEvent[], baseEvent: AppEvent, instanceEvent: HydratedEvent, updates: Partial<AppEvent>) {
+    if (instanceEvent.recurringEventId) {
+        return events.map(e => e.id === instanceEvent.id ? { ...e, ...updates } : e);
+    }
+    const compactStartTime = instanceEvent.startTime.replace(/[-:]/g, "");
+    const newExdates = [...(baseEvent.exdates || []), compactStartTime];
+    const overrideEvent: AppEvent = {
+        ...baseEvent, ...updates,
+        id: `e${Date.now()}_${crypto.randomUUID()}`,
+        recurringEventId: baseEvent.id,
+        originalStartTime: instanceEvent.startTime,
+        rrule: undefined, exdates: undefined,
+    };
+    return [
+        ...events.map((e) => (e.id === baseEvent.id ? { ...e, exdates: newExdates } : e)),
+        overrideEvent
+    ];
+}
+
 export function applyRecurringUpdate(
     events: AppEvent[],
     instanceEvent: HydratedEvent,
@@ -112,42 +131,20 @@ export function applyRecurringUpdate(
         return events.map((e) => (e.id === baseId ? { ...e, ...updates } : e));
     }
 
-    if (mode === "all") {
-        return events.map((e) => (e.id === baseId ? { ...e, ...updates } : e));
-    }
-    
     if (mode === "instance") {
-        if (instanceEvent.recurringEventId) {
-             // It's already an exception override, just update it
-             return events.map(e => e.id === instanceEvent.id ? { ...e, ...updates } : e);
-        }
-        
-        // Google exdate is YYYYMMDDTHHMMSS (no dashes)
-        const compactStartTime = instanceEvent.startTime.replace(/[-:]/g, "");
-        const newExdates = [...(baseEvent.exdates || []), compactStartTime];
-        
-        const overrideEvent: AppEvent = {
-            ...baseEvent,
-            ...updates,
-            id: `e${Date.now()}_${crypto.randomUUID()}`,
-            recurringEventId: baseId,
-            originalStartTime: instanceEvent.startTime,
-            rrule: undefined,
-            exdates: undefined,
-        };
+        return applyInstanceUpdate(events, baseEvent, instanceEvent, updates);
+    }
+    
+    return events.map((e) => (e.id === baseId ? { ...e, ...updates } : e));
+}
 
-        return [
-            ...events.map((e) => (e.id === baseId ? { ...e, exdates: newExdates } : e)),
-            overrideEvent
-        ];
+function applyInstanceDelete(events: AppEvent[], baseEvent: AppEvent, instanceEvent: HydratedEvent) {
+    if (instanceEvent.recurringEventId) {
+        return events.filter(e => e.id !== instanceEvent.id);
     }
-    
-    if (mode === "following") {
-        // Complex, fallback to 'all' for now if user chooses it
-        return events.map((e) => (e.id === baseId ? { ...e, ...updates } : e));
-    }
-    
-    return events;
+    const compactStartTime = instanceEvent.startTime.replace(/[-:]/g, "");
+    const newExdates = [...(baseEvent.exdates || []), compactStartTime];
+    return events.map((e) => (e.id === baseEvent.id ? { ...e, exdates: newExdates } : e));
 }
 
 export function applyRecurringDelete(
@@ -163,23 +160,9 @@ export function applyRecurringDelete(
         return events.filter((e) => e.id !== baseId);
     }
 
-    if (mode === "all") {
-        return events.filter((e) => e.id !== baseId && e.recurringEventId !== baseId);
-    }
-    
     if (mode === "instance") {
-        if (instanceEvent.recurringEventId) {
-             return events.filter(e => e.id !== instanceEvent.id);
-        } else {
-             const compactStartTime = instanceEvent.startTime.replace(/[-:]/g, "");
-             const newExdates = [...(baseEvent.exdates || []), compactStartTime];
-             return events.map((e) => (e.id === baseId ? { ...e, exdates: newExdates } : e));
-        }
+        return applyInstanceDelete(events, baseEvent, instanceEvent);
     }
     
-    if (mode === "following") {
-        return events.filter((e) => e.id !== baseId && e.recurringEventId !== baseId);
-    }
-
-    return events;
+    return events.filter((e) => e.id !== baseId && e.recurringEventId !== baseId);
 }

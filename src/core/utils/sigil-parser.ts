@@ -88,55 +88,16 @@ function processToken(part: string, properties: ParsedProperties): boolean {
     return false;
 }
 
-export function parseSigils(title: string): ParseResult {
-    const properties: ParsedProperties = {};
-    const tokens: Token[] = [];
-    
-    // We will find all potential sigils using a regex that splits on whitespace boundaries.
-    // However, phrases like "for 8m" or "in 1h" have spaces in them.
-    // Let's first tokenize by whitespace.
-    const parts = title.split(/(\s+)/);
-    const cleanParts: string[] = [];
-    
-    for (let i = 0; i < parts.length; i++) {
-        const part = parts[i];
-        if (part.trim() === "") {
-            tokens.push({ type: "text", text: part });
-            continue;
-        }
-        // Check 2-word sigils like "for 8m" or "in 1h"
-        if (i + 2 < parts.length && (part.toLowerCase() === "for" || part.toLowerCase() === "in")) {
-            const nextSpace = parts[i+1];
-            const nextWord = parts[i+2];
-            const combined = part + nextSpace + nextWord;
-            const durMatch = combined.match(DURATION_REGEX);
-            if (durMatch?.[0] === combined) {
-                const val = parseInt(durMatch[1], 10);
-                const unit = durMatch[2].toLowerCase();
-                properties.duration = unit.startsWith("h") ? val * MINUTES_IN_HOUR : val;
-                tokens.push({ type: "sigil", text: combined });
-                i += 2;
-                continue;
-            }
-        }
-
-        if (processToken(part, properties)) {
-            tokens.push({ type: "sigil", text: part });
-        } else {
-            tokens.push({ type: "text", text: part });
-            cleanParts.push(part);
-        }
-    }
-    
-    // cleanTitle should only contain the text parts, properly spaced.
-    const cleanTitle = tokens
+function mergeTextTokens(tokens: Token[]): string {
+    return tokens
         .filter(t => t.type === "text")
         .map(t => t.text)
         .join("")
         .replace(/\s+/g, " ")
         .trim();
-    
-    // Group adjacent text tokens
+}
+
+function mergeAdjacentTokens(tokens: Token[]): Token[] {
     const mergedTokens: Token[] = [];
     for (const t of tokens) {
         if (mergedTokens.length > 0 && mergedTokens[mergedTokens.length - 1].type === t.type) {
@@ -145,6 +106,53 @@ export function parseSigils(title: string): ParseResult {
             mergedTokens.push({ ...t });
         }
     }
+    return mergedTokens;
+}
+
+function processDurationSigil(parts: string[], i: number, properties: ParsedProperties, tokens: Token[]): boolean {
+    const part = parts[i];
+    if (i + 2 < parts.length && (part.toLowerCase() === "for" || part.toLowerCase() === "in")) {
+        const nextSpace = parts[i+1];
+        const nextWord = parts[i+2];
+        const combined = part + nextSpace + nextWord;
+        const durMatch = combined.match(DURATION_REGEX);
+        if (durMatch?.[0] === combined) {
+            const val = parseInt(durMatch[1], 10);
+            const unit = durMatch[2].toLowerCase();
+            properties.duration = unit.startsWith("h") ? val * MINUTES_IN_HOUR : val;
+            tokens.push({ type: "sigil", text: combined });
+            return true;
+        }
+    }
+    return false;
+}
+
+export function parseSigils(title: string): ParseResult {
+    const properties: ParsedProperties = {};
+    const tokens: Token[] = [];
+    const parts = title.split(/(\s+)/);
+    
+    for (let i = 0; i < parts.length; i++) {
+        const part = parts[i];
+        if (part.trim() === "") {
+            tokens.push({ type: "text", text: part });
+            continue;
+        }
+        
+        if (processDurationSigil(parts, i, properties, tokens)) {
+            i += 2;
+            continue;
+        }
+
+        if (processToken(part, properties)) {
+            tokens.push({ type: "sigil", text: part });
+        } else {
+            tokens.push({ type: "text", text: part });
+        }
+    }
+    
+    const cleanTitle = mergeTextTokens(tokens);
+    const mergedTokens = mergeAdjacentTokens(tokens);
 
     return { cleanTitle, properties, tokens: mergedTokens };
 }

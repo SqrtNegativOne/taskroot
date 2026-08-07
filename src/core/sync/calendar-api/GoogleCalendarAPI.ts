@@ -128,10 +128,14 @@ export class GoogleCalendarAPI implements ICalendarAPI {
     private buildGoogleRecurrenceAndExceptions(localEvent: AppEvent, timeZone: string, baseEventRemoteId?: string) {
         const recurrence: string[] = [];
         if (localEvent.rrule) recurrence.push(`RRULE:${localEvent.rrule}`);
-        if (localEvent.exdates && localEvent.exdates.length > 0) {
+        
+        if (localEvent.exdates) {
             for (const exdate of localEvent.exdates) {
                 if (isEventAllDay(localEvent)) {
-                    const dateOnly = exdate.includes("T") ? exdate.split("T")[0] : exdate;
+                    let dateOnly = exdate;
+                    if (exdate.includes("T")) {
+                        dateOnly = exdate.split("T")[0];
+                    }
                     recurrence.push(`EXDATE;VALUE=DATE:${dateOnly}`);
                 } else {
                     recurrence.push(`EXDATE;TZID=${timeZone}:${exdate}`);
@@ -139,11 +143,13 @@ export class GoogleCalendarAPI implements ICalendarAPI {
             }
         }
         
-        return {
-            ...(recurrence.length > 0 ? { recurrence } : {}),
-            ...(baseEventRemoteId ? { recurringEventId: baseEventRemoteId } : {}),
-            ...(localEvent.originalStartTime ? { originalStartTime: { dateTime: localEvent.originalStartTime, timeZone } } : {})
-        };
+        const result: Partial<gapi.client.calendar.Event> = {};
+        if (recurrence.length > 0) result.recurrence = recurrence;
+        if (baseEventRemoteId) result.recurringEventId = baseEventRemoteId;
+        if (localEvent.originalStartTime) {
+            result.originalStartTime = { dateTime: localEvent.originalStartTime, timeZone };
+        }
+        return result;
     }
 
     toLocalEvent(googleEvent: gapi.client.calendar.Event, calendarId = "primary") {

@@ -65,7 +65,7 @@ describe("GoogleTasksAPI", () => {
                 etag: "version-1",
             });
 
-            expect(receivedHeaders).toHaveProperty("If-Match", "version-1");
+            expect(new Headers(receivedHeaders).get("If-Match")).toBe("version-1");
         });
 
         it("throws ConflictError when API returns 412", async () => {
@@ -81,26 +81,26 @@ describe("GoogleTasksAPI", () => {
 
     describe("toGoogleTask", () => {
         it("prepends Taskroot Task ID to notes if not present", () => {
-            const localTask = {
+            const localTask: import("../../domain/models").AppTask = {
                 id: "t123",
                 title: "Buy milk",
                 status: "todo",
                 notes: "2 percent",
             };
-            const googleTask = googleTasksAPI.toGoogleTask(localTask as import("../../domain/models").AppTask);
+            const googleTask = googleTasksAPI.toGoogleTask(localTask);
 
             expect(googleTask.notes).toBe("Taskroot Task ID: t123\n2 percent");
             expect(googleTask.status).toBe("needsAction");
         });
 
         it("does not prepend if already present", () => {
-            const localTask = {
+            const localTask: import("../../domain/models").AppTask = {
                 id: "t123",
                 title: "Buy milk",
                 status: "done",
                 notes: "Taskroot Task ID: t123\n2 percent",
             };
-            const googleTask = googleTasksAPI.toGoogleTask(localTask as import("../../domain/models").AppTask);
+            const googleTask = googleTasksAPI.toGoogleTask(localTask);
 
             expect(googleTask.notes).toBe("Taskroot Task ID: t123\n2 percent");
             expect(googleTask.status).toBe("completed");

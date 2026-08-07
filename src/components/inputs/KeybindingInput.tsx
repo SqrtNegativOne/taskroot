@@ -38,14 +38,22 @@ export function KeybindingInput({ value, onChange }: KeybindingInputProps) {
                     if (evt.metaKey) parts.push("Meta");
                     if (evt.altKey) parts.push("Alt");
                     if (evt.shiftKey) parts.push("Shift");
-                    if (!["Control", "Meta", "Alt", "Shift"].includes(evt.key)) {
-                        parts.push(
-                            evt.key === " " ? "Space" : evt.key.length === 1 ? evt.key.toUpperCase() : evt.key
-                        );
-                        onChange(parts.join("+"));
-                        setIsRecording(false);
-                        window.removeEventListener("keydown", handler);
+                    
+                    if (["Control", "Meta", "Alt", "Shift"].includes(evt.key)) {
+                        return;
                     }
+
+                    let keyName = evt.key;
+                    if (keyName === " ") {
+                        keyName = "Space";
+                    } else if (keyName.length === 1) {
+                        keyName = keyName.toUpperCase();
+                    }
+                    parts.push(keyName);
+
+                    onChange(parts.join("+"));
+                    setIsRecording(false);
+                    window.removeEventListener("keydown", handler);
                 };
                 window.addEventListener("keydown", handler);
             }}

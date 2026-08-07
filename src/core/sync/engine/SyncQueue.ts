@@ -28,7 +28,39 @@ export class SyncQueue {
         }
     }
 
-    // oxlint-disable-next-line eslint/complexity
+    private handleUpdateTransition(transition: string, item: SyncQueueItem, indices: { create: number, update: number, move: number }) {
+        if (transition === "create->update") {
+            this.queue[indices.create].item = item.item;
+        } else if (transition === "update->update") {
+            this.queue[indices.update] = item;
+        } else if (transition === "move->update") {
+            this.queue[indices.move].item = item.item;
+            this.queue.push(item);
+        } else if (transition === "move+update->update") {
+            this.queue[indices.move].item = item.item;
+            this.queue.splice(indices.update, 1);
+            this.queue.push(item);
+        } else if (transition === "delete->update") {
+            console.warn("Attempted to update a deleted item. Ignoring.");
+        }
+    }
+
+    private handleMoveTransition(transition: string, item: SyncQueueItem, indices: { create: number, update: number, move: number }) {
+        if (transition === "create->move") {
+            this.queue[indices.create].item = item.item;
+        } else if (transition === "update->move") {
+            this.queue[indices.update].item = item.item;
+            this.queue.push(item);
+        } else if (transition === "move->move") {
+            this.queue[indices.move] = item;
+        } else if (transition === "move+update->move") {
+            this.queue[indices.update].item = item.item;
+            this.queue[indices.move] = item;
+        } else if (transition === "delete->move") {
+            console.warn("Attempted to move a deleted item. Ignoring.");
+        }
+    }
+
     private handleTransition(
         transition: string, 
         item: SyncQueueItem, 
@@ -41,79 +73,63 @@ export class SyncQueue {
             }
        };
 
-        switch (transition) {
-            case "create->create":
-            case "update->create":
-            case "move->create":
-            case "move+update->create":
+        if (item.action === SyncAction.Create) {
+            if (transition === "delete->create") {
+                removeAllExisting();
+                this.queue.push(item);
+            } else {
                 console.warn("Attempted to recreate an item that already exists in the queue.");
-                return;
-            case "delete->create":
-                removeAllExisting();
+            }
+        } else if (item.action === SyncAction.Update) {
+            this.handleUpdateTransition(transition, item, indices);
+        } else if (item.action === SyncAction.Move) {
+            this.handleMoveTransition(transition, item, indices);
+        } else if (item.action === SyncAction.Delete) {
+            if (transition === "delete->delete") return;
+            removeAllExisting();
+            if (transition !== "create->delete" && item.remoteId) {
                 this.queue.push(item);
-                break;
-
-            case "create->update":
-                this.queue[indices.create].item = item.item;
-                break;
-            case "update->update":
-                this.queue[indices.update] = item;
-                break;
-            case "move->update":
-                this.queue[indices.move].item = item.item;
-                this.queue.push(item);
-                break;
-            case "move+update->update":
-                this.queue[indices.move].item = item.item;
-                this.queue.splice(indices.update, 1);
-                this.queue.push(item);
-                break;
-            case "delete->update":
-                console.warn("Attempted to update a deleted item. Ignoring.");
-                return;
-
-            case "create->move":
-                this.queue[indices.create].item = item.item;
-                break;
-            case "update->move":
-                this.queue[indices.update].item = item.item;
-                this.queue.push(item);
-                break;
-            case "move->move":
-                this.queue[indices.move] = item;
-                break;
-            case "move+update->move":
-                this.queue[indices.update].item = item.item;
-                this.queue[indices.move] = item;
-                break;
-            case "delete->move":
-                console.warn("Attempted to move a deleted item. Ignoring.");
-                return;
-
-            case "create->delete":
-                removeAllExisting();
-                break;
-            case "update->delete":
-            case "move->delete":
-            case "move+update->delete":
-                removeAllExisting();
-                if (item.remoteId) this.queue.push(item);
-                break;
-            case "delete->delete":
-                return;
+            }
         }
     }
 
+    private determineExistingState(indices: { create: number, update: number, move: number, delete: number }) {
+        if (indices.create !== -1) return "create";
+        if (indices.delete !== -1) return "delete";
+        if (indices.update !== -1 && indices.move !== -1) return "move+update";
+        if (indices.update !== -1) return "update";
+        if (indices.move !== -1) return "move";
+        return "";
+    }
+
+    private updateIndicesForExisting(i: number, action: SyncAction, existingIndices: number[], indices: { create: number, update: number, move: number, delete: number }) {
+        existingIndices.push(i);
+        switch (action) {
+            case SyncAction.Create: indices.create = i; break;
+            case SyncAction.Update: indices.update = i; break;
+            case SyncAction.Move: indices.move = i; break;
+            case SyncAction.Delete: indices.delete = i; break;
+        }
+    }
+
+    private getExistingIndicesAndStates(item: SyncQueueItem) {
+        const existingIndices: number[] = [];
+        const indices = { create: -1, update: -1, move: -1, delete: -1 };
+        
+        for (let i = 0; i < this.queue.length; i++) {
+            const q = this.queue[i];
+            if (q.type === item.type && q.item?.id === item.item?.id) {
+                this.updateIndicesForExisting(i, q.action, existingIndices, indices);
+            }
+        }
+        return { existingIndices, indices };
+    }
+
     push(item: SyncQueueItem) {
+        const { existingIndices, indices } = this.getExistingIndicesAndStates(item);
 
-        const existingIndices = this.queue
-            .map((q, index) => (q.type === item.type && q.item?.id === item.item?.id ? index : -1))
-            .filter((index) => index !== -1);
-
-        // Brand new action
         if (existingIndices.length === 0) {
             if (item.action === SyncAction.Delete && !item.remoteId) {
-                // This item wasn't synced to Google yet, so we don't even need to add a delete action for it.
                 return;
             }
             this.queue.push(item);
@@ -121,28 +137,9 @@ export class SyncQueue {
             return;
         }
 
-        // Determine existing state
-        let existingState = "";
-        const indices = { create: -1, update: -1, move: -1, delete: -1 };
-
-        for (const index of existingIndices) {
-            const action = this.queue[index].action;
-            if (action === SyncAction.Create) indices.create = index;
-            if (action === SyncAction.Update) indices.update = index;
-            if (action === SyncAction.Move) indices.move = index;
-            if (action === SyncAction.Delete) indices.delete = index;
-        }
-
-        if (indices.create !== -1) existingState = "create";
-        else if (indices.delete !== -1) existingState = "delete";
-        else if (indices.update !== -1 && indices.move !== -1) existingState = "move+update";
-        else if (indices.update !== -1) existingState = "update";
-        else if (indices.move !== -1) existingState = "move";
-        
+        const existingState = this.determineExistingState(indices);
         const transition = `${existingState}->${item.action}`;
-        
         this.handleTransition(transition, item, existingIndices, indices);
-
         this.save();
     }
 

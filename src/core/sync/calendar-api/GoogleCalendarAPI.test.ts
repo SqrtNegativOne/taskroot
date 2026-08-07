@@ -77,7 +77,7 @@ describe("GoogleCalendarAPI", () => {
                 etag: "version-1",
             }));
 
-            expect(receivedHeaders).toHaveProperty("If-Match", "version-1");
+            expect(new Headers(receivedHeaders).get("If-Match")).toBe("version-1");
         });
 
         it("throws ConflictError when API returns 412", async () => {

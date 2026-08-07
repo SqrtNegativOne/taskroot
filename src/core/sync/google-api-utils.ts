@@ -10,13 +10,25 @@ export interface GoogleApiErrorResponse {
     };
 }
 
+async function checkRateLimit(res: Response) {
+    if (res.status === HTTP_TOO_MANY_REQUESTS) return true;
+    const clone = res.clone();
+    try {
+        const data: GoogleApiErrorResponse = await clone.json();
+        return data?.error?.errors?.some(e => e.reason === "rateLimitExceeded" || e.reason === "userRateLimitExceeded") ?? false;
+    } catch {
+        return false;
+    }
+}
+
 export async function fetchWithRateLimitAndAuth(
     url: string,
     authManager: IAuthManager,
     options: RequestInit = {}
 ): Promise<Response> {
     const getOpts = (t: string) => {
-        const headers = { ...(options.headers as Record<string, string> || {}), Authorization: `Bearer ${t}` };
+        const headers = new Headers(options.headers);
+        headers.set("Authorization", `Bearer ${t}`);
         return { ...options, headers };
     };
     let token = authManager.getToken();
@@ -34,28 +46,19 @@ export async function fetchWithRateLimitAndAuth(
     let attempts = 0;
     const maxAttempts = 3;
     while ((res.status === HTTP_FORBIDDEN || res.status === HTTP_TOO_MANY_REQUESTS) && attempts < maxAttempts) {
-        const clone = res.clone();
-        try {
-            // Google API error shapes vary, so we define a structural type to extract rate limit reasons.
-            // Necessary for parsing rate limit errors sequentially
-            // eslint-disable-next-line no-await-in-loop
-            const data: GoogleApiErrorResponse = await clone.json();
-            const isRateLimit = res.status === HTTP_TOO_MANY_REQUESTS || (data?.error?.errors?.some(e => e.reason === "rateLimitExceeded" || e.reason === "userRateLimitExceeded"));
-            if (isRateLimit) {
-                attempts++;
-                const delay = Math.pow(2, attempts) * MS_PER_SECOND + Math.random() * MS_PER_SECOND;
-                // Necessary for exponential backoff delay
-                // eslint-disable-next-line no-await-in-loop
-                await new Promise(resolve => setTimeout(resolve, delay));
-                // Necessary for sequential retry of the failed request
-                // eslint-disable-next-line no-await-in-loop
-                res = await fetchWithTimeout(url, getOpts(token));
-            } else {
-                break;
-            }
-        } catch {
-            break;
-        }
+        // Necessary for parsing rate limit errors sequentially
+        // eslint-disable-next-line no-await-in-loop
+        const isRateLimit = await checkRateLimit(res);
+        if (!isRateLimit) break;
+
+        attempts++;
+        const delay = Math.pow(2, attempts) * MS_PER_SECOND + Math.random() * MS_PER_SECOND;
+        // Necessary for exponential backoff delay
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise(resolve => setTimeout(resolve, delay));
+        // Necessary for sequential retry of the failed request
+        // eslint-disable-next-line no-await-in-loop
+        res = await fetchWithTimeout(url, getOpts(token));
     }
     return res;
 }

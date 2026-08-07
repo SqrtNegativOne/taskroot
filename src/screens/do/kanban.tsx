@@ -1,7 +1,7 @@
 import React from "react";
 import { durationLabel } from "../../core/store/data";
 import { useTasks } from "../../core/store/hooks";
-import type { AppTask } from "../../core/domain/models";
+import { type AppTask, isAppTaskStatus } from "../../core/domain/models";
 
 // Kanban board — pulls tasks from the shared store, drag between columns to change status.
 
@@ -47,16 +47,17 @@ export function Kanban() {
             if (active) {
                 const el = document.elementFromPoint(ev.clientX, ev.clientY);
                 const colEl = el instanceof Element ? el.closest("[data-kanban-col]") : undefined;
+                const newStatus = colEl instanceof HTMLElement ? colEl.dataset.kanbanCol : undefined;
                 if (
-                    colEl instanceof HTMLElement &&
-                    colEl.dataset.kanbanCol !== task.status
+                    newStatus !== task.status &&
+                    isAppTaskStatus(newStatus)
                 ) {
                     setTasks((ts: AppTask[]) =>
                         ts.map((t) =>
                             t.id === task.id
                                 ? {
                                       ...t,
-                                      status: colEl.dataset.kanbanCol as AppTask["status"],
+                                      status: newStatus,
                                   }
                                 : t,
                         ),

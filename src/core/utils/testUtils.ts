@@ -40,17 +40,20 @@ export class MockFetch {
         this.routes = [];
     }
 
+    private matchRoute(route: { pattern: string | RegExp; method: string; response: Response | ((url: string, init?: RequestInit) => Response | Promise<Response>) }, urlStr: string, reqMethod: string, init?: RequestInit) {
+        if (route.method !== reqMethod) return undefined;
+        const matches = typeof route.pattern === "string" ? urlStr.includes(route.pattern) : route.pattern.test(urlStr);
+        if (!matches) return undefined;
+        return typeof route.response === "function" ? route.response(urlStr, init) : route.response;
+    }
+
     handler = async (input: RequestInfo | URL, init?: RequestInit & { timeout?: number }): Promise<Response> => {
         const urlStr = typeof input === "string" ? input : (input instanceof URL ? input.toString() : input.url);
         const reqMethod = (init?.method || (input instanceof Request ? input.method : "GET")).toUpperCase();
 
         for (const route of [...this.routes].toReversed()) {
-            if (route.method === reqMethod) {
-                const matches = typeof route.pattern === "string" ? urlStr.includes(route.pattern) : route.pattern.test(urlStr);
-                if (matches) {
-                    return typeof route.response === "function" ? route.response(urlStr, init) : route.response;
-                }
-            }
+            const res = this.matchRoute(route, urlStr, reqMethod, init);
+            if (res) return res;
         }
         return new Response("Not Found", { status: 404 });
     };

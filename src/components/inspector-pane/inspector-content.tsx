@@ -1,6 +1,7 @@
 import React from "react";
 import type { AppEvent, AppTask } from "../../core/domain/models";
 import type { CalendarData } from "../../core/store/repositories";
+import type { ParsedProperties } from "../../core/utils/sigil-parser";
 import { TitleInput, DescriptionInput } from "../inputs";
 import { TaskInspector } from "./inspector-task";
 import { EventInspector } from "./inspector-event";
@@ -39,6 +40,29 @@ export function InspectorPaneContent({
     updateEvent,
     isNew,
 }: InspectorPaneContentProps) {
+    const handlePropertiesParsed = (props: ParsedProperties) => {
+        if (currentEvent && !isReadOnlyCalendar) return;
+        if (!currentTask) return;
+        
+        const updates: Partial<{ -readonly [K in keyof AppTask]: AppTask[K] }> = {};
+        if (props.priority !== undefined) updates.priority = props.priority;
+        if (props.tags) updates.tags = [...(currentTask.tags || []), ...props.tags];
+        if (props.duration !== undefined) updates.est = props.duration;
+        
+        if (props.day) {
+            import('../../core/utils/sigil-parser').then(m => {
+                const newDue = m.getDueDateFromSigil(String(props.day));
+                updateTask(currentTask.id, { ...updates, due: newDue });
+                return undefined;
+            }).catch(() => {});
+            return;
+        }
+        
+        if (Object.keys(updates).length > 0) {
+            updateTask(currentTask.id, updates);
+        }
+    };
+
     return (
         <React.Fragment key={currentItem.id}>
             <InspectorPaneHeader handleClose={onPaneClose} handleDelete={onPaneDelete} isReadOnlyCalendar={isReadOnlyCalendar} />
@@ -53,27 +77,7 @@ export function InspectorPaneContent({
                         disabled={Boolean(currentEvent?.taskId) || isReadOnlyCalendar}
                         onEnter={onPaneClose}
                         parseMode={true}
-                        onPropertiesParsed={(props) => {
-                            if (currentTask) {
-                                const updates: Partial<{ -readonly [K in keyof AppTask]: AppTask[K] }> = {};
-                                if (props.priority !== undefined) updates.priority = props.priority;
-                                if (props.tags) updates.tags = [...(currentTask.tags || []), ...props.tags];
-                                if (props.duration !== undefined) updates.est = props.duration;
-                                if (props.day) {
-                                    import('../../core/utils/sigil-parser').then(m => {
-                                        const newDue = m.getDueDateFromSigil(String(props.day));
-                                        updateTask(currentTask.id, { ...updates, due: newDue });
-                                        return true;
-                                    }).catch(() => false);
-                                    return; // early return because we handle update asynchronously
-                                }
-                                if (Object.keys(updates).length > 0) updateTask(currentTask.id, updates);
-                            } else if (currentEvent && !isReadOnlyCalendar) {
-                                // For events, we could theoretically apply duration, day, time, but they aren't straight forward updates yet.
-                                // We'll just strip the sigils for now, which TitleInput handles via onBlur and cleanTitle.
-                                // If they want us to update startTime/endTime based on 'props.duration' or 'props.time' we can do it here later.
-                            }
-                        }}
+                        onPropertiesParsed={handlePropertiesParsed}
                         style={{
                             fontSize: "24px",
                             fontWeight: "normal",

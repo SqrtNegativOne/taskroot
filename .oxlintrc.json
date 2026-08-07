@@ -1,6 +1,7 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": ["react", "typescript", "oxc", "vitest", "jsx-a11y", "promise", "react-perf", "unicorn", "import"],
+  "jsPlugins": ["oxlint-plugin-complexity"],
   "categories": {
     "correctness": "error",
     "suspicious": "error"
@@ -15,7 +16,7 @@
     "max-params": ["warn", 4],
     "max-lines-per-function": ["warn", 100],
     "max-classes-per-file": ["warn", 1],
-    "complexity": ["warn", 15],
+    "complexity/complexity": ["warn", { "cyclomatic": 15, "cognitive": 15 }],
     "max-lines": ["warn", 300],
 
     "unicorn/no-null": "error",

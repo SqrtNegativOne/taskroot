@@ -32,7 +32,7 @@ export function StatusCell({
     const [newColor, setNewColor] = React.useState("var(--tag-purple)");
 
     React.useEffect(() => {
-        if (!open) return;
+        if (!open) return undefined;
         const onDoc = (e: PointerEvent) => {
             if (popRef.current && !(e.target instanceof Node && popRef.current.contains(e.target))) onClose();
         };

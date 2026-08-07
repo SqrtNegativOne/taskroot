@@ -58,6 +58,7 @@ function useCurrentItem(
             return { currentTask: undefined, currentEvent, currentItem: currentEvent, isCurrentTask: false, isNew: false };
         }
     }
+    throw new Error(`Unhandled state type: ${JSON.stringify(currentState)}`);
 }
 
 export function InspectorPane({

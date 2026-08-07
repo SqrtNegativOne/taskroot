@@ -43,6 +43,7 @@ export function TaskSelector({
     };
 
     useEffect(() => {
+        let timer: ReturnType<typeof setTimeout>;
         if (selectorOpen) {
             setVisible(true);
             setIsClosing(false);
@@ -51,12 +52,14 @@ export function TaskSelector({
         } else if (visible) {
             setIsClosing(true);
             document.body.classList.remove("modal-open");
-            const timer = setTimeout(() => {
+            timer = setTimeout(() => {
                 setVisible(false);
                 setIsClosing(false);
             }, ANIMATION_DELAY_MS);
-            return () => clearTimeout(timer);
         }
+        return () => {
+            if (timer) clearTimeout(timer);
+        };
     }, [selectorOpen, visible]);
 
     // Cleanup class on unmount
@@ -103,7 +106,7 @@ export function TaskSelector({
         startWithTask,
     });
 
-    if (!visible && !isClosing) return;
+    if (!visible && !isClosing) return <></>;
 
     const needsBlur = !activeTask && !allowNoTask;
 

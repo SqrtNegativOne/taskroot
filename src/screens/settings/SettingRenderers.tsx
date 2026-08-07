@@ -30,7 +30,7 @@ export interface SettingRendererProps {
 }
 
 export const SelectSetting = ({ setting, val, settings, setSettings }: SettingRendererProps) => {
-    if (setting.type !== "select") return;
+    if (setting.type !== "select") throw new Error("Expected select setting");
     return (
         <div style={{ display: "flex", gap: "12px", alignItems: "center", color: "var(--fg)" }}>
             <SegmentedControl
@@ -57,7 +57,7 @@ export const TimeSetting = ({ setting, val, settings, setSettings }: SettingRend
 );
 
 export const NumberSetting = ({ setting, val, settings, setSettings }: SettingRendererProps) => {
-    if (setting.type !== "number") return;
+    if (setting.type !== "number") throw new Error("Expected number setting");
     return (
         <div style={{ display: "flex", gap: "12px", alignItems: "center", color: "var(--fg)" }}>
             <NumberInput
@@ -85,8 +85,8 @@ export const KeybindingSetting = ({ setting, val, settings, setSettings }: Setti
 );
 
 export const CustomSetting = ({ setting, settings, setSettings }: SettingRendererProps) => {
-    if (setting.type !== "custom") return;
-    return setting.render?.({ settings, setSettings }) || undefined;
+    if (setting.type !== "custom") throw new Error("Expected custom setting");
+    return setting.render?.({ settings, setSettings }) || <></>;
 };
 
 

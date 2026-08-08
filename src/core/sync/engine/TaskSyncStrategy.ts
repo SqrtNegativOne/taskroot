@@ -5,6 +5,8 @@ import type { ITasksAPI } from "../task-api/types";
 import type { AppTask } from "../../domain/models";
 import { resolveConflict } from "./conflict-resolver";
 import { computeTaskDeltaActions } from "./task-differ";
+import { ResultAsync, okAsync } from "neverthrow";
+import { toSyncError, type SyncError } from "../errors";
 
 export class TaskSyncStrategy implements ISyncStrategy<AppTask> {
     private context: ISyncEngineContext;
@@ -35,8 +37,8 @@ export class TaskSyncStrategy implements ISyncStrategy<AppTask> {
         this.context.updateOldTasksMap(items);
     }
 
-    async fetchRemoteItems(): Promise<unknown[] | undefined> {
-        return await this.tasksAPI.fetchTasks();
+    fetchRemoteItems(): ResultAsync<unknown[] | undefined, SyncError> {
+        return this.tasksAPI.fetchTasks();
     }
 
     processSingleRemoteItem(
@@ -81,7 +83,9 @@ export class TaskSyncStrategy implements ISyncStrategy<AppTask> {
     private actionHandlers: Record<string, (item: SyncQueueItem) => Promise<void>> = {
         [SyncAction.Create]: async (taskOrEvent) => {
             if (taskOrEvent.type !== SyncType.Task) return;
-            const gid = await this.tasksAPI.createTask(taskOrEvent.item);
+            const gidResult = await this.tasksAPI.createTask(taskOrEvent.item);
+            if (gidResult.isErr()) throw gidResult.error;
+            const gid = gidResult.value;
             if (gid) {
                 const tasks = this.context.getLocalData<AppTask[]>("tasks");
                 const idx = tasks.findIndex((t) => t.id === taskOrEvent.item.id);
@@ -91,7 +95,8 @@ export class TaskSyncStrategy implements ISyncStrategy<AppTask> {
                     this.context.setLocalData("tasks", tasks);
                     this.context.updateOldTasksMap(tasks);
                 } else {
-                    await this.tasksAPI.deleteTask(gid);
+                    const deleteResult = await this.tasksAPI.deleteTask(gid);
+                    if (deleteResult.isErr()) throw deleteResult.error;
                 }
             }
         },
@@ -102,7 +107,8 @@ export class TaskSyncStrategy implements ISyncStrategy<AppTask> {
             const gid = currentTask?.remoteId || taskOrEvent.remoteId;
 
             if (gid) {
-                await this.tasksAPI.updateTask(gid, taskOrEvent.item, taskOrEvent.updatedFields);
+                const updateResult = await this.tasksAPI.updateTask(gid, taskOrEvent.item, taskOrEvent.updatedFields);
+                if (updateResult.isErr()) throw updateResult.error;
             }
         },
         [SyncAction.Delete]: async (taskOrEvent) => {
@@ -112,14 +118,21 @@ export class TaskSyncStrategy implements ISyncStrategy<AppTask> {
             const gid = taskOrEvent.remoteId;
             
             if (gid) {
-                await this.tasksAPI.deleteTask(gid);
+                const deleteResult = await this.tasksAPI.deleteTask(gid);
+                if (deleteResult.isErr()) throw deleteResult.error;
             }
         }
     };
 
-    async processPushItem(taskOrEvent: SyncQueueItem) {
-        if (taskOrEvent.type !== SyncType.Task) return;
+    processPushItem(taskOrEvent: SyncQueueItem): ResultAsync<void, SyncError> {
+        if (taskOrEvent.type !== SyncType.Task) return okAsync(undefined);
         const handler = this.actionHandlers[taskOrEvent.action];
-        if (handler) await handler(taskOrEvent);
+        if (handler) {
+            return ResultAsync.fromPromise(
+                handler(taskOrEvent),
+                e => toSyncError(e)
+            );
+        }
+        return okAsync(undefined);
     }
 }

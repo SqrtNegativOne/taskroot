@@ -1,10 +1,11 @@
 import { HTTP_PRECONDITION_FAILED } from "../../utils/constants";
 import { fetchWithRateLimitAndAuth } from "../google-api-utils";
-import { ConflictError } from "../errors";
+import { ConflictError, ApiError, toSyncError, type SyncError } from "../errors";
 import type { AppTask } from "../../domain/models";
 import type { IAuthManager } from "../auth/types";
 import type { ITasksAPI } from "./types";
 import { parseSigils } from "../../utils/sigil-parser";
+import { ResultAsync } from "neverthrow";
 
 export const MAX_RETRIES = 3;
 
@@ -80,37 +81,48 @@ export class GoogleTasksAPI implements ITasksAPI {
         this.authManager = authManager;
     }
 
-    private async fetchWithAuth(endpoint: string, options: RequestInit = {}) {
+    private fetchWithAuth(endpoint: string, options: RequestInit = {}) {
         return fetchWithRateLimitAndAuth(`https://tasks.googleapis.com/tasks/v1/${endpoint}`, this.authManager, options);
     }
 
-    async fetchTasks(tasklistId = "@default", pageToken = "", accumulated: gapi.client.tasks.Task[] = []): Promise<gapi.client.tasks.Task[] | undefined> {
-        const result = await this.fetchWithAuth(`lists/${tasklistId}/tasks?showCompleted=true&showHidden=true&maxResults=100${pageToken ? `&pageToken=${pageToken}` : ""}`);
-        if (result.isErr()) throw result.error;
-        const res = result.value;
-        if (!res.ok) { console.warn(`Failed to fetch google tasks`); return undefined; }
-        const data: gapi.client.tasks.Tasks = await res.json();
-        if (data.items) accumulated.push(...data.items);
-        
-        if (data.nextPageToken) {
-            return this.fetchTasks(tasklistId, data.nextPageToken, accumulated);
-        }
-        return accumulated;
+    fetchTasks(tasklistId = "@default", pageToken = "", accumulated: gapi.client.tasks.Task[] = []): ResultAsync<gapi.client.tasks.Task[] | undefined, SyncError> {
+        return this.fetchWithAuth(`lists/${tasklistId}/tasks?showCompleted=true&showHidden=true&maxResults=100${pageToken ? `&pageToken=${pageToken}` : ""}`)
+            .andThen(res => 
+                ResultAsync.fromPromise(
+                    (async () => {
+                        if (!res.ok) { console.warn(`Failed to fetch google tasks`); return undefined; }
+                        const data: gapi.client.tasks.Tasks = await res.json();
+                        if (data.items) accumulated.push(...data.items);
+                        
+                        if (data.nextPageToken) {
+                            const nextRes = await this.fetchTasks(tasklistId, data.nextPageToken, accumulated);
+                            if (nextRes.isErr()) throw nextRes.error;
+                            return nextRes.value;
+                        }
+                        return accumulated;
+                    })(),
+                    e => toSyncError(e)
+                )
+            );
     }
 
-    async createTask(localTask: AppTask, tasklistId = "@default") {
-        const result = await this.fetchWithAuth(`lists/${tasklistId}/tasks`, {
+    createTask(localTask: AppTask, tasklistId = "@default"): ResultAsync<string, SyncError> {
+        return this.fetchWithAuth(`lists/${tasklistId}/tasks`, {
             method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(this.toGoogleTask(localTask))
-        });
-        if (result.isErr()) throw result.error;
-        const res = result.value;
-        if (!res.ok) throw new Error(`Failed to create task: ${res.status} ${await res.text()}`);
-        const data: gapi.client.tasks.Task = await res.json();
-        if (!data.id) throw new Error("Task created but no ID returned");
-        return data.id;
+        }).andThen(res => 
+            ResultAsync.fromPromise(
+                (async () => {
+                    if (!res.ok) throw new ApiError(`Failed to create task: ${res.status} ${await res.text()}`, res.status);
+                    const data: gapi.client.tasks.Task = await res.json();
+                    if (!data.id) throw new ApiError("Task created but no ID returned", res.status);
+                    return data.id;
+                })(),
+                e => toSyncError(e)
+            )
+        );
     }
 
-    async updateTask(remoteId: string, localTask: AppTask, updatedFields?: (keyof AppTask)[], tasklistId = "@default") {
+    updateTask(remoteId: string, localTask: AppTask, updatedFields?: (keyof AppTask)[], tasklistId = "@default"): ResultAsync<void, SyncError> {
         const headers: Record<string, string> = { "Content-Type": "application/json" };
         if (localTask.etag) headers["If-Match"] = localTask.etag;
 
@@ -118,21 +130,29 @@ export class GoogleTasksAPI implements ITasksAPI {
         const hasUpdates = updatedFields && updatedFields.length > 0;
         const payloadToSubmit = hasUpdates ? buildPartialTaskPayload(updatedFields, fullPayload) : fullPayload;
 
-        const result = await this.fetchWithAuth(`lists/${tasklistId}/tasks/${remoteId}`, {
+        return this.fetchWithAuth(`lists/${tasklistId}/tasks/${remoteId}`, {
             method: "PATCH", headers, body: JSON.stringify(payloadToSubmit)
-        });
-        if (result.isErr()) throw result.error;
-        const res = result.value;
-        
-        if (res.status === HTTP_PRECONDITION_FAILED) throw new ConflictError(`ETag conflict on task: ${localTask.title}`);
-        if (!res.ok) throw new Error(`Failed to update task: ${res.status} ${await res.text()}`);
+        }).andThen(res => 
+            ResultAsync.fromPromise(
+                (async () => {
+                    if (res.status === HTTP_PRECONDITION_FAILED) throw new ConflictError(`ETag conflict on task: ${localTask.title}`);
+                    if (!res.ok) throw new ApiError(`Failed to update task: ${res.status} ${await res.text()}`, res.status);
+                })(),
+                e => toSyncError(e)
+            )
+        );
     }
 
-    async deleteTask(remoteId: string, tasklistId = "@default") {
-        const result = await this.fetchWithAuth(`lists/${tasklistId}/tasks/${remoteId}`, { method: "DELETE" });
-        if (result.isErr()) throw result.error;
-        const res = result.value;
-        if (!res.ok) throw new Error(`Failed to delete task: ${res.status} ${await res.text()}`);
+    deleteTask(remoteId: string, tasklistId = "@default"): ResultAsync<void, SyncError> {
+        return this.fetchWithAuth(`lists/${tasklistId}/tasks/${remoteId}`, { method: "DELETE" })
+            .andThen(res => 
+                ResultAsync.fromPromise(
+                    (async () => {
+                        if (!res.ok) throw new ApiError(`Failed to delete task: ${res.status} ${await res.text()}`, res.status);
+                    })(),
+                    e => toSyncError(e)
+                )
+            );
     }
 
     toLocalTask(googleTask: gapi.client.tasks.Task, existing?: AppTask): AppTask | { id: string; _deleted: boolean; updatedAt: number; } {

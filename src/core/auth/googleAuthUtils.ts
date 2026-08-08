@@ -1,5 +1,5 @@
 import { fetchWithTimeout } from "../store/api";
-import { ResultAsync } from "neverthrow";
+import { ResultAsync, ok, err } from "neverthrow";
 
 export function loadRemoteIdentityScript(): ResultAsync<void, Error> {
     return ResultAsync.fromPromise(
@@ -45,8 +45,8 @@ export function requestGoogleAuthCode(): ResultAsync<string, Error> {
                     },
                 });
                 client.requestCode();
-            } catch (err) {
-                reject(err);
+            } catch (e) {
+                reject(e);
             }
         }),
         (e) => e instanceof Error ? e : new Error(String(e))
@@ -70,18 +70,18 @@ export function exchangeAuthCodeForTokens(code: string): ResultAsync<{ accessTok
         body: params.toString(),
     }).andThen(res => 
         ResultAsync.fromPromise(
-            res.json().then(data => {
-                if (data.access_token) {
-                    return {
-                        accessToken: data.access_token,
-                        refreshToken: data.refresh_token,
-                    };
-                } else {
-                    throw new Error(data.error_description || data.error || "Failed to exchange token");
-                }
-            }),
+            res.json(),
             (e) => e instanceof Error ? e : new Error(String(e))
-        )
+        ).andThen(data => {
+            if (data.access_token) {
+                return ok({
+                    accessToken: data.access_token,
+                    refreshToken: data.refresh_token,
+                });
+            } else {
+                return err(new Error(data.error_description || data.error || "Failed to exchange token"));
+            }
+        })
     );
 }
 

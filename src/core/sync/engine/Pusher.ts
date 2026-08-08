@@ -58,18 +58,18 @@ export class Pusher {
                 this.pushQueue.shift();
                 continue;
             }
-            try {
-                const sync = this.synchronizers[taskOrEvent.type];
-                if (!sync || !sync.isSyncEnabled()) {
-                    this.pushQueue.remove(taskOrEvent);
-                    continue;
-                }
-                
-                await sync.processPushItem(taskOrEvent);
+            const sync = this.synchronizers[taskOrEvent.type];
+            if (!sync || !sync.isSyncEnabled()) {
                 this.pushQueue.remove(taskOrEvent);
-            } catch (e: unknown) {
-                const shouldBreak = this.handlePushError(e, taskOrEvent);
+                continue;
+            }
+            
+            const result = await sync.processPushItem(taskOrEvent);
+            if (result.isErr()) {
+                const shouldBreak = this.handlePushError(result.error, taskOrEvent);
                 if (shouldBreak) break;
+            } else {
+                this.pushQueue.remove(taskOrEvent);
             }
         }
 

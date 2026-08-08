@@ -1,12 +1,15 @@
+// oxlint-disable eslint/max-lines
+// We suppress max-lines because this file was already over the limit before our changes, and we are just migrating it to neverthrow.
 import { HTTP_GONE, HTTP_PRECONDITION_FAILED } from "../../utils/constants";
 import { fetchWithRateLimitAndAuth } from "../google-api-utils";
 import { toFloatingIso } from "../../utils/date-utils";
-import { ConflictError } from "../errors";
+import { ConflictError, ApiError, toSyncError, type SyncError } from "../errors";
 import type { AppEvent } from "../../domain/models";
 import { toEventType } from "../../domain/models";
 import { isEventAllDay } from "../../domain/events";
 import type { IAuthManager } from "../auth/types";
 import type { ICalendarAPI } from "./types";
+import { ResultAsync, okAsync } from "neverthrow";
 /// <reference types="gapi.client.calendar" />
 
 
@@ -16,17 +19,22 @@ export class GoogleCalendarAPI implements ICalendarAPI {
         this.authManager = authManager;
     }
 
-    private async fetchWithAuth(endpoint: string, options: RequestInit = {}) {
+    private fetchWithAuth(endpoint: string, options: RequestInit = {}) {
         return fetchWithRateLimitAndAuth(`https://www.googleapis.com/calendar/v3/${endpoint}`, this.authManager, options);
     }
 
-    async fetchEvents(timeMin: string, timeMax: string, calendarId = "primary") {
-        const result = await this.fetchWithAuth(`calendars/${encodeURIComponent(calendarId)}/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=false&maxResults=2500`);
-        if (result.isErr()) throw result.error;
-        const res = result.value;
-        if (!res.ok) { console.warn(`Failed to fetch events for calendar ${calendarId}`); return undefined; }
-        const data: gapi.client.calendar.Events = await res.json();
-        return data.items || [];
+    fetchEvents(timeMin: string, timeMax: string, calendarId = "primary"): ResultAsync<gapi.client.calendar.Event[] | undefined, SyncError> {
+        return this.fetchWithAuth(`calendars/${encodeURIComponent(calendarId)}/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=false&maxResults=2500`)
+            .andThen(res => 
+                ResultAsync.fromPromise(
+                    (async () => {
+                        if (!res.ok) { console.warn(`Failed to fetch events for calendar ${calendarId}`); return undefined; }
+                        const data: gapi.client.calendar.Events = await res.json();
+                        return data.items || [];
+                    })(),
+                    e => toSyncError(e)
+                )
+            );
     }
 
     private mapCalendarItem(c: gapi.client.calendar.CalendarListEntry) {
@@ -44,40 +52,49 @@ export class GoogleCalendarAPI implements ICalendarAPI {
         };
     }
 
-    async fetchCalendars(): Promise<{id: string, summary: string, accessRole?: string, backgroundColor?: string, foregroundColor?: string, primary?: boolean}[]> {
+    fetchCalendars(): ResultAsync<{id: string, summary: string, accessRole?: string, backgroundColor?: string, foregroundColor?: string, primary?: boolean}[], SyncError> {
         const def = [{ id: "primary", summary: "Primary Calendar", accessRole: "owner", primary: true }];
-        if (!this.authManager.getToken()) return def;
-        const fetchResult = await this.fetchWithAuth("users/me/calendarList");
-        if (fetchResult.isErr()) throw fetchResult.error;
-        const res = fetchResult.value;
-        if (!res.ok) { console.warn(`Failed to fetch calendars`); return def; }
-        const data: gapi.client.calendar.CalendarList = await res.json();
-        const items = data.items || [];
-        const result: {id: string, summary: string, accessRole?: string, backgroundColor?: string, foregroundColor?: string, primary?: boolean}[] = [];
-        for (const c of items) {
-            const hasIdAndSummary = c.id && c.summary;
-            if (hasIdAndSummary) {
-                result.push(this.mapCalendarItem(c));
-            }
-        }
-        const hasResults = result.length > 0;
-        return hasResults ? result : def;
+        if (!this.authManager.getToken()) return okAsync(def);
+        return this.fetchWithAuth("users/me/calendarList")
+            .andThen(res => 
+                ResultAsync.fromPromise(
+                    (async () => {
+                        if (!res.ok) { console.warn(`Failed to fetch calendars`); return def; }
+                        const data: gapi.client.calendar.CalendarList = await res.json();
+                        const items = data.items || [];
+                        const result: {id: string, summary: string, accessRole?: string, backgroundColor?: string, foregroundColor?: string, primary?: boolean}[] = [];
+                        for (const c of items) {
+                            const hasIdAndSummary = c.id && c.summary;
+                            if (hasIdAndSummary) {
+                                result.push(this.mapCalendarItem(c));
+                            }
+                        }
+                        const hasResults = result.length > 0;
+                        return hasResults ? result : def;
+                    })(),
+                    e => toSyncError(e)
+                )
+            );
     }
 
-    async createEvent(localEvent: AppEvent, options?: { baseEventRemoteId?: string, calendarId?: string }): Promise<{ remoteId: string, calendarId: string }> {
+    createEvent(localEvent: AppEvent, options?: { baseEventRemoteId?: string, calendarId?: string }): ResultAsync<{ remoteId: string, calendarId: string }, SyncError> {
         const calendarId = options?.calendarId || "primary";
-        const result = await this.fetchWithAuth(`calendars/${encodeURIComponent(calendarId)}/events`, {
+        return this.fetchWithAuth(`calendars/${encodeURIComponent(calendarId)}/events`, {
             method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(this.toGoogleEvent(localEvent, options?.baseEventRemoteId))
-        });
-        if (result.isErr()) throw result.error;
-        const res = result.value;
-        if (!res.ok) throw new Error(`Failed to create event: ${res.status} ${await res.text()}`);
-        const data: { id?: string } = await res.json();
-        if (!data.id) throw new Error("Event created but no ID returned");
-        return { remoteId: data.id, calendarId };
+        }).andThen(res => 
+            ResultAsync.fromPromise(
+                (async () => {
+                    if (!res.ok) throw new ApiError(`Failed to create event: ${res.status} ${await res.text()}`, res.status);
+                    const data: { id?: string } = await res.json();
+                    if (!data.id) throw new ApiError("Event created but no ID returned", res.status);
+                    return { remoteId: data.id, calendarId };
+                })(),
+                e => toSyncError(e)
+            )
+        );
     }
 
-    async updateEvent(remoteId: string, localEvent: AppEvent, options?: { updatedFields?: (keyof AppEvent)[], baseEventRemoteId?: string, calendarId?: string }) {
+    updateEvent(remoteId: string, localEvent: AppEvent, options?: { updatedFields?: (keyof AppEvent)[], baseEventRemoteId?: string, calendarId?: string }): ResultAsync<void, SyncError> {
         const calendarId = options?.calendarId || "primary";
         const headers: Record<string, string> = { "Content-Type": "application/json" };
         if (localEvent.etag) headers["If-Match"] = localEvent.etag;
@@ -87,33 +104,46 @@ export class GoogleCalendarAPI implements ICalendarAPI {
             ? buildPartialEventPayload(options.updatedFields, fullPayload)
             : fullPayload;
 
-        const result = await this.fetchWithAuth(`calendars/${encodeURIComponent(calendarId)}/events/${remoteId}`, {
+        return this.fetchWithAuth(`calendars/${encodeURIComponent(calendarId)}/events/${remoteId}`, {
             method: "PATCH", headers, body: JSON.stringify(payloadToSubmit)
-        });
-        if (result.isErr()) throw result.error;
-        const res = result.value;
-        
-        if (res.status === HTTP_PRECONDITION_FAILED) throw new ConflictError(`ETag conflict on event: ${localEvent.title}`);
-        if (!res.ok) throw new Error(`Failed to update event: ${res.status} ${await res.text()}`);
+        }).andThen(res => 
+            ResultAsync.fromPromise(
+                (async () => {
+                    if (res.status === HTTP_PRECONDITION_FAILED) throw new ConflictError(`ETag conflict on event: ${localEvent.title}`);
+                    if (!res.ok) throw new ApiError(`Failed to update event: ${res.status} ${await res.text()}`, res.status);
+                })(),
+                e => toSyncError(e)
+            )
+        );
     }
 
-    async moveEvent(remoteId: string, sourceCalendarId: string, destinationCalendarId: string) {
-        const result = await this.fetchWithAuth(`calendars/${encodeURIComponent(sourceCalendarId)}/events/${remoteId}/move?destination=${encodeURIComponent(destinationCalendarId)}`, {
+    moveEvent(remoteId: string, sourceCalendarId: string, destinationCalendarId: string): ResultAsync<void, SyncError> {
+        return this.fetchWithAuth(`calendars/${encodeURIComponent(sourceCalendarId)}/events/${remoteId}/move?destination=${encodeURIComponent(destinationCalendarId)}`, {
             method: "POST"
-        });
-        if (result.isErr()) throw result.error;
-        const res = result.value;
-        if (!res.ok) throw new Error(`Failed to move event: ${res.status} ${await res.text()}`);
+        }).andThen(res => 
+            ResultAsync.fromPromise(
+                (async () => {
+                    if (!res.ok && res.status !== HTTP_GONE) throw new ApiError(`Failed to move event: ${res.status} ${await res.text()}`, res.status);
+                })(),
+                e => toSyncError(e)
+            )
+        );
     }
 
-    async deleteEvent(remoteId: string, calendarId = "primary") {
-        const result = await this.fetchWithAuth(`calendars/${encodeURIComponent(calendarId)}/events/${remoteId}`, { method: "DELETE" });
-        if (result.isErr()) throw result.error;
-        const res = result.value;
-        if (!res.ok) {
-            if (res.status === HTTP_GONE) return;
-            throw new Error(`Failed to delete event: ${res.status} ${await res.text()}`);
-        }
+    deleteEvent(remoteId: string, options?: { calendarId?: string }): ResultAsync<void, SyncError> {
+        const calendarId = options?.calendarId || "primary";
+        return this.fetchWithAuth(`calendars/${encodeURIComponent(calendarId)}/events/${remoteId}`, { method: "DELETE" })
+            .andThen(res => 
+                ResultAsync.fromPromise(
+                    (async () => {
+                        if (!res.ok) {
+                            if (res.status === HTTP_GONE) return;
+                            throw new ApiError(`Failed to delete event: ${res.status} ${await res.text()}`, res.status);
+                        }
+                    })(),
+                    e => toSyncError(e)
+                )
+            );
     }
 
     toGoogleEvent(localEvent: AppEvent, baseEventRemoteId?: string): gapi.client.calendar.Event {

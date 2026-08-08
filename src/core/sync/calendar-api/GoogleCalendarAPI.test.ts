@@ -50,16 +50,16 @@ describe("GoogleCalendarAPI", () => {
             expect(requestUrl).toContain("singleEvents=false");
             expect(requestUrl).toContain("maxResults=2500");
 
-            expect(events).toHaveLength(1);
+            expect(events._unsafeUnwrap()).toHaveLength(1);
         });
 
         it("throws Unauthorized on 401 if refresh fails", async () => {
             mockFetch.mock("GET", "https://www.googleapis.com/calendar/v3/calendars/primary/events", new Response(undefined, { status: 401 }));
             fakeAuthManager.setWillRefreshSuccess(false);
 
-            await expect(
-                googleCalendarAPI.fetchEvents("start", "end"),
-            ).rejects.toThrow("Unauthorized");
+            const result = await googleCalendarAPI.fetchEvents("start", "end");
+            expect(result.isErr()).toBe(true);
+            expect(result._unsafeUnwrapErr().message).toBe("Unauthorized");
         });
     });
 
@@ -83,11 +83,13 @@ describe("GoogleCalendarAPI", () => {
         it("throws ConflictError when API returns 412", async () => {
             mockFetch.mock("PATCH", "https://www.googleapis.com/calendar/v3/calendars/primary/events/goog-1", new Response(undefined, { status: HTTP_PRECONDITION_FAILED }));
 
-            await expect(googleCalendarAPI.updateEvent("goog-1", createMockAppEvent({
+            const result = await googleCalendarAPI.updateEvent("goog-1", createMockAppEvent({
                 id: "e1",
                 title: "Buy milk",
                 etag: "version-1",
-            }))).rejects.toThrow(ConflictError);
+            }));
+            expect(result.isErr()).toBe(true);
+            expect(result._unsafeUnwrapErr()).toBeInstanceOf(ConflictError);
         });
     });
 

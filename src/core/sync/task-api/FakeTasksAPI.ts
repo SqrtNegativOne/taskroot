@@ -1,6 +1,8 @@
 import { ConflictError } from "../errors";
 import type { AppTask } from "../../domain/models";
 import type { ITasksAPI } from "./types";
+import { ResultAsync, okAsync, errAsync } from "neverthrow";
+import { type SyncError, UnknownError } from "../errors";
 
 /// <reference types="gapi.client.tasks" />
 
@@ -41,11 +43,11 @@ export class FakeTasksAPI implements ITasksAPI {
         return crypto.randomUUID();
     }
 
-    async fetchTasks(tasklistId = "@default"): Promise<gapi.client.tasks.Task[] | undefined> {
-        return this.tasks[tasklistId] || [];
+    fetchTasks(tasklistId = "@default"): ResultAsync<gapi.client.tasks.Task[] | undefined, SyncError> {
+        return okAsync(this.tasks[tasklistId] || []);
     }
 
-    async createTask(localTask: AppTask, tasklistId = "@default"): Promise<string> {
+    createTask(localTask: AppTask, tasklistId = "@default"): ResultAsync<string, SyncError> {
         if (!this.tasks[tasklistId]) this.tasks[tasklistId] = [];
         const remoteId = "fake-g-id-" + crypto.randomUUID();
         const googleTask = this.toGoogleTask(localTask);
@@ -53,18 +55,18 @@ export class FakeTasksAPI implements ITasksAPI {
         googleTask.etag = this.generateEtag();
         googleTask.updated = new Date().toISOString();
         this.tasks[tasklistId].push(googleTask);
-        return remoteId;
+        return okAsync(remoteId);
     }
 
-    async updateTask(remoteId: string, localTask: AppTask, _updatedFields?: (keyof AppTask)[], tasklistId = "@default"): Promise<void> {
+    updateTask(remoteId: string, localTask: AppTask, _updatedFields?: (keyof AppTask)[], tasklistId = "@default"): ResultAsync<void, SyncError> {
         if (!this.tasks[tasklistId]) this.tasks[tasklistId] = [];
         const index = this.tasks[tasklistId].findIndex(t => t.id === remoteId);
-        if (index === -1) throw new Error("Task not found");
+        if (index === -1) return errAsync(new UnknownError("Task not found"));
         
         const existingTask = this.tasks[tasklistId]?.[index];
-        if (!existingTask) throw new Error("Task not found");
+        if (!existingTask) return errAsync(new UnknownError("Task not found"));
         if (localTask.etag && existingTask.etag !== localTask.etag) {
-            throw new ConflictError(`ETag conflict on task: ${localTask.title}`);
+            return errAsync(new ConflictError(`ETag conflict on task: ${localTask.title}`));
         }
         
         const updatedTask = this.toGoogleTask(localTask);
@@ -72,10 +74,11 @@ export class FakeTasksAPI implements ITasksAPI {
         updatedTask.etag = this.generateEtag();
         updatedTask.updated = new Date().toISOString();
         this.tasks[tasklistId][index] = updatedTask;
+        return okAsync(undefined);
     }
 
-    async deleteTask(remoteId: string, tasklistId = "@default"): Promise<void> {
-        if (!this.tasks[tasklistId]) return;
+    deleteTask(remoteId: string, tasklistId = "@default"): ResultAsync<void, SyncError> {
+        if (!this.tasks[tasklistId]) return okAsync(undefined);
         const index = this.tasks[tasklistId].findIndex(t => t.id === remoteId);
         if (index !== -1) {
         const t = this.tasks[tasklistId]?.[index];
@@ -85,6 +88,7 @@ export class FakeTasksAPI implements ITasksAPI {
             t.updated = new Date().toISOString();
         }
         }
+        return okAsync(undefined);
     }
 
     toLocalTask(googleTask: gapi.client.tasks.Task, existing?: AppTask): AppTask | { id: string; _deleted: boolean; updatedAt: number; } {

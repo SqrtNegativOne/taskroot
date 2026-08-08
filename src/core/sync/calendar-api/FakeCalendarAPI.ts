@@ -4,6 +4,8 @@ import type { AppEvent } from "../../domain/models";
 import { toEventType } from "../../domain/models";
 import { isEventAllDay } from "../../domain/events";
 import type { ICalendarAPI } from "./types";
+import { ResultAsync, okAsync, errAsync } from "neverthrow";
+import { type SyncError, UnknownError } from "../errors";
 
 /// <reference types="gapi.client.calendar" />
 
@@ -79,15 +81,15 @@ export class FakeCalendarAPI implements ICalendarAPI {
         return crypto.randomUUID();
     }
 
-    async fetchEvents(_timeMin: string, _timeMax: string, calendarId = "primary"): Promise<gapi.client.calendar.Event[] | undefined> {
-        return this.calendars[calendarId] || [];
+    fetchEvents(_timeMin: string, _timeMax: string, calendarId = "primary"): ResultAsync<gapi.client.calendar.Event[] | undefined, SyncError> {
+        return okAsync(this.calendars[calendarId] || []);
     }
 
-    async fetchCalendars(): Promise<{id: string, summary: string, accessRole?: string, backgroundColor?: string, foregroundColor?: string, primary?: boolean}[]> {
-        return [{ id: "primary", summary: "Primary Calendar", accessRole: "owner", primary: true }];
+    fetchCalendars(): ResultAsync<{id: string, summary: string, accessRole?: string, backgroundColor?: string, foregroundColor?: string, primary?: boolean}[], SyncError> {
+        return okAsync([{ id: "primary", summary: "Primary Calendar", accessRole: "owner", primary: true }]);
     }
 
-    async createEvent(localEvent: AppEvent, options?: { baseEventRemoteId?: string, calendarId?: string }): Promise<{ remoteId: string, calendarId: string }> {
+    createEvent(localEvent: AppEvent, options?: { baseEventRemoteId?: string, calendarId?: string }): ResultAsync<{ remoteId: string, calendarId: string }, SyncError> {
         const calendarId = options?.calendarId || "primary";
         if (!this.calendars[calendarId]) this.calendars[calendarId] = [];
         const remoteId = "fake-g-id-" + crypto.randomUUID();
@@ -96,19 +98,19 @@ export class FakeCalendarAPI implements ICalendarAPI {
         googleEvent.etag = this.generateEtag();
         googleEvent.updated = new Date().toISOString();
         this.calendars[calendarId].push(googleEvent);
-        return { remoteId, calendarId };
+        return okAsync({ remoteId, calendarId });
     }
 
-    async updateEvent(remoteId: string, localEvent: AppEvent, options?: { updatedFields?: (keyof AppEvent)[], baseEventRemoteId?: string, calendarId?: string }): Promise<void> {
+    updateEvent(remoteId: string, localEvent: AppEvent, options?: { updatedFields?: (keyof AppEvent)[], baseEventRemoteId?: string, calendarId?: string }): ResultAsync<void, SyncError> {
         const calendarId = options?.calendarId || "primary";
         if (!this.calendars[calendarId]) this.calendars[calendarId] = [];
         const index = this.calendars[calendarId].findIndex(e => e.id === remoteId);
-        if (index === -1) throw new Error("Event not found");
+        if (index === -1) return errAsync(new UnknownError("Event not found"));
         
         const existingEvent = this.calendars[calendarId][index];
-        if (!existingEvent) throw new Error("Event not found");
+        if (!existingEvent) return errAsync(new UnknownError("Event not found"));
         if (localEvent.etag && existingEvent.etag !== localEvent.etag) {
-            throw new ConflictError(`ETag conflict on event: ${localEvent.title}`);
+            return errAsync(new ConflictError(`ETag conflict on event: ${localEvent.title}`));
         }
         
         const updatedEvent = this.toGoogleEvent(localEvent, options?.baseEventRemoteId);
@@ -116,24 +118,27 @@ export class FakeCalendarAPI implements ICalendarAPI {
         updatedEvent.etag = this.generateEtag();
         updatedEvent.updated = new Date().toISOString();
         this.calendars[calendarId][index] = updatedEvent;
+        return okAsync(undefined);
     }
 
-    async moveEvent(remoteId: string, sourceCalendarId: string, destinationCalendarId: string): Promise<void> {
-        if (!this.calendars[sourceCalendarId]) return;
+    moveEvent(remoteId: string, sourceCalendarId: string, destinationCalendarId: string): ResultAsync<void, SyncError> {
+        if (!this.calendars[sourceCalendarId]) return okAsync(undefined);
         const index = this.calendars[sourceCalendarId].findIndex(e => e.id === remoteId);
-        if (index === -1) throw new Error("Event not found");
+        if (index === -1) return errAsync(new UnknownError("Event not found"));
 
         const event = this.calendars[sourceCalendarId].splice(index, 1)[0];
-        if (!event) return;
+        if (!event) return okAsync(undefined);
         event.etag = this.generateEtag();
         event.updated = new Date().toISOString();
 
         if (!this.calendars[destinationCalendarId]) this.calendars[destinationCalendarId] = [];
         this.calendars[destinationCalendarId].push(event);
+        return okAsync(undefined);
     }
 
-    async deleteEvent(remoteId: string, calendarId = "primary"): Promise<void> {
-        if (!this.calendars[calendarId]) return;
+    deleteEvent(remoteId: string, options?: { calendarId?: string }): ResultAsync<void, SyncError> {
+        const calendarId = options?.calendarId || "primary";
+        if (!this.calendars[calendarId]) return okAsync(undefined);
         const index = this.calendars[calendarId].findIndex(e => e.id === remoteId);
         if (index !== -1) {
             const ev = this.calendars[calendarId][index];
@@ -143,6 +148,7 @@ export class FakeCalendarAPI implements ICalendarAPI {
                 ev.updated = new Date().toISOString();
             }
         }
+        return okAsync(undefined);
     }
 
     toGoogleEvent(localEvent: AppEvent, baseEventRemoteId?: string): gapi.client.calendar.Event {

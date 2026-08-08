@@ -76,32 +76,37 @@ export class Poller {
         }, MS_PER_SECOND);
     }
 
+    private handlePollError(e: Error) {
+        console.error("Poller poll error:", e);
+        if (e.message === "Unauthorized") {
+            syncState.error = "Failed to refresh session. You may need to log out and log back in.";
+        } else {
+            syncState.error = e.message || "Error during synchronization";
+        }
+    }
+
     async poll() {
         if (syncState.isPolling) return;
         syncState.isPolling = true;
         syncState.error = undefined;
 
-        try {
-            await this.taskSync.poll();
-            await this.eventSync.poll();
-            this.pusher.trigger();
-        } catch (e: unknown) {
-            console.error("Poller poll error:", e);
-            if (e instanceof Error && e.message === "Unauthorized") {
-                // If token bouncer couldn't refresh, it throws Unauthorized
-                syncState.error = "Failed to refresh session. You may need to log out and log back in.";
-            } else if (e instanceof Error) {
-                syncState.error = e.message || "Error during synchronization";
+        const taskResult = await this.taskSync.poll();
+        if (taskResult.isErr()) {
+            this.handlePollError(taskResult.error);
+        } else {
+            const eventResult = await this.eventSync.poll();
+            if (eventResult.isErr()) {
+                this.handlePollError(eventResult.error);
             } else {
-                syncState.error = "Error during synchronization";
+                this.pusher.trigger();
             }
-        } finally {
-            syncState.isPolling = false;
-            const settings = this.getSettings();
-            syncState.nextSyncTime = Date.now() + (settings.syncInterval || MIN_POLL_INTERVAL_MINUTES) * MINUTES_IN_HOUR * MS_PER_SECOND;
-            if (!syncState.initialSyncComplete) {
-                syncState.initialSyncComplete = true;
-            }
+        }
+
+        syncState.isPolling = false;
+        const settings = this.getSettings();
+        syncState.nextSyncTime = Date.now() + (settings.syncInterval || MIN_POLL_INTERVAL_MINUTES) * MINUTES_IN_HOUR * MS_PER_SECOND;
+        if (!syncState.initialSyncComplete) {
+            syncState.initialSyncComplete = true;
         }
     }
 }

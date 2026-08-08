@@ -33,7 +33,9 @@ describe("GoogleTasksAPI", () => {
                 }
             });
 
-            const tasks = await googleTasksAPI.fetchTasks();
+            const result = await googleTasksAPI.fetchTasks();
+            expect(result.isOk()).toBe(true);
+            const tasks = result._unsafeUnwrap();
 
             expect(requestCount).toBe(2);
             expect(tasks).toHaveLength(2);
@@ -45,9 +47,9 @@ describe("GoogleTasksAPI", () => {
             mockFetch.mock("GET", "https://tasks.googleapis.com/tasks/v1/lists/@default/tasks", new Response(undefined, { status: 401 }));
             fakeAuthManager.setWillRefreshSuccess(false);
 
-            await expect(googleTasksAPI.fetchTasks()).rejects.toThrow(
-                "Unauthorized",
-            );
+            const result = await googleTasksAPI.fetchTasks();
+            expect(result.isErr()).toBe(true);
+            expect(result._unsafeUnwrapErr().message).toBe("Unauthorized");
         });
     });
 
@@ -71,11 +73,13 @@ describe("GoogleTasksAPI", () => {
         it("throws ConflictError when API returns 412", async () => {
             mockFetch.mock("PATCH", "https://tasks.googleapis.com/tasks/v1/lists/@default/tasks/g123", new Response(undefined, { status: HTTP_PRECONDITION_FAILED }));
 
-            await expect(googleTasksAPI.updateTask("g123", {
+            const result = await googleTasksAPI.updateTask("g123", {
                 id: "t123",
                 title: "Buy milk",
                 etag: "version-1",
-            })).rejects.toThrow(ConflictError);
+            });
+            expect(result.isErr()).toBe(true);
+            expect(result._unsafeUnwrapErr()).toBeInstanceOf(ConflictError);
         });
     });
 

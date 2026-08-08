@@ -1,15 +1,17 @@
 import type { ISyncEngineContext, SyncQueueItem } from "./types";
 import { SyncAction, SyncType } from "./types";
+import { ResultAsync, okAsync } from "neverthrow";
+import { toSyncError, type SyncError } from "../errors";
 
 export interface ISyncStrategy<T extends { id: string; remoteId?: string | undefined; updatedAt?: number | undefined }> {
     isSyncEnabled(): boolean;
     getLocalStoreKey(): string;
     getSyncType(): SyncType;
     updateOldMapSnapshot(items: T[]): void;
-    fetchRemoteItems(): Promise<unknown[] | undefined>;
+    fetchRemoteItems(): ResultAsync<unknown[] | undefined, SyncError>;
     processSingleRemoteItem(remote: unknown, localItemsArray: T[], localItemsMap: Map<string, T>): boolean;
     computeDelta(currentItems: T[]): void;
-    processPushItem(item: SyncQueueItem): Promise<void>;
+    processPushItem(item: SyncQueueItem): ResultAsync<void, SyncError>;
     extractItem(q: SyncQueueItem): T | undefined;
 }
 
@@ -26,33 +28,40 @@ export class Synchronizer<T extends { id: string; remoteId?: string | undefined;
         return this.strategy.isSyncEnabled();
     }
 
-    async poll() {
-        if (!this.isSyncEnabled()) return;
+    poll(): ResultAsync<void, SyncError> {
+        if (!this.isSyncEnabled()) return okAsync(undefined);
 
-        const localItems = this.context.getLocalData<T[]>(this.strategy.getLocalStoreKey());
-        this.strategy.updateOldMapSnapshot(localItems);
+        return ResultAsync.fromPromise(
+            (async () => {
+                const localItems = this.context.getLocalData<T[]>(this.strategy.getLocalStoreKey());
+                this.strategy.updateOldMapSnapshot(localItems);
+                
+                const remoteItemsResult = await this.strategy.fetchRemoteItems();
+                if (remoteItemsResult.isErr()) throw remoteItemsResult.error;
+                const remoteItems = remoteItemsResult.value;
+                if (!remoteItems) return;
 
-        const remoteItems = await this.strategy.fetchRemoteItems();
-        if (!remoteItems) return;
+                let updated = false;
+                const localItemsMap = new Map<string, T>(localItems.map((item) => [item.id, item]));
 
-        let updated = false;
-        const localItemsMap = new Map<string, T>(localItems.map((item) => [item.id, item]));
+                for (const remote of remoteItems) {
+                    if (this.strategy.processSingleRemoteItem(remote, localItems, localItemsMap)) {
+                        updated = true;
+                    }
+                }
 
-        for (const remote of remoteItems) {
-            if (this.strategy.processSingleRemoteItem(remote, localItems, localItemsMap)) {
-                updated = true;
-            }
-        }
+                if (this.applyOptimisticOverlay(localItemsMap)) {
+                    updated = true;
+                }
 
-        if (this.applyOptimisticOverlay(localItemsMap)) {
-            updated = true;
-        }
-
-        if (updated) {
-            const newItems = Array.from(localItemsMap.values());
-            this.context.setLocalData(this.strategy.getLocalStoreKey(), newItems);
-            this.strategy.updateOldMapSnapshot(newItems);
-        }
+                if (updated) {
+                    const newItems = Array.from(localItemsMap.values());
+                    this.context.setLocalData(this.strategy.getLocalStoreKey(), newItems);
+                    this.strategy.updateOldMapSnapshot(newItems);
+                }
+            })(),
+            (e) => toSyncError(e)
+        );
     }
 
     protected applyOptimisticOverlay(localItemsMap: Map<string, T>): boolean {
@@ -125,7 +134,7 @@ export class Synchronizer<T extends { id: string; remoteId?: string | undefined;
         this.strategy.computeDelta(currentItems);
     }
 
-    processPushItem(item: SyncQueueItem) {
+    processPushItem(item: SyncQueueItem): ResultAsync<void, SyncError> {
         return this.strategy.processPushItem(item);
     }
 }

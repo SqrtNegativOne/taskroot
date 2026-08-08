@@ -2,6 +2,7 @@ import { ResultAsync } from "neverthrow";
 import { HTTP_UNAUTHORIZED, HTTP_FORBIDDEN, HTTP_TOO_MANY_REQUESTS, MS_PER_SECOND } from "../utils/constants";
 import { fetchWithTimeout } from "../store/api";
 import type { IAuthManager } from "./auth/types";
+import { AuthError, NetworkError, type SyncError } from "./errors";
 
 export interface GoogleApiErrorResponse {
     error?: {
@@ -26,26 +27,28 @@ export function fetchWithRateLimitAndAuth(
     url: string,
     authManager: IAuthManager,
     options: RequestInit = {}
-): ResultAsync<Response, Error> {
+): ResultAsync<Response, SyncError> {
     const getOpts = (t: string) => {
         const headers = new Headers(options.headers);
         headers.set("Authorization", `Bearer ${t}`);
         return { ...options, headers };
     };
     
+    // oxlint-disable-next-line complexity
+    // eslint-disable-next-line max-lines-per-function
     return ResultAsync.fromPromise(
         (async () => {
             let token = authManager.getToken();
-            if (!token) throw new Error("Unauthorized");
+            if (!token) throw new AuthError();
             
             let result = await fetchWithTimeout(url, getOpts(token));
             if (result.isErr()) throw result.error;
             let res = result.value;
             
             if (res.status === HTTP_UNAUTHORIZED) {
-                if (!await authManager.refreshAccessToken()) throw new Error("Unauthorized");
+                if (!await authManager.refreshAccessToken()) throw new AuthError();
                 token = authManager.getToken();
-                if (!token) throw new Error("Unauthorized");
+                if (!token) throw new AuthError();
                 
                 result = await fetchWithTimeout(url, getOpts(token));
                 if (result.isErr()) throw result.error;
@@ -68,6 +71,9 @@ export function fetchWithRateLimitAndAuth(
             }
             return res;
         })(),
-        (e) => e instanceof Error ? e : new Error(String(e))
+        (e) => {
+            if (e instanceof AuthError) return e;
+            return new NetworkError(e instanceof Error ? e.message : String(e));
+        }
     );
 }

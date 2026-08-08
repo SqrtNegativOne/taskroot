@@ -85,7 +85,9 @@ export class GoogleTasksAPI implements ITasksAPI {
     }
 
     async fetchTasks(tasklistId = "@default", pageToken = "", accumulated: gapi.client.tasks.Task[] = []): Promise<gapi.client.tasks.Task[] | undefined> {
-        const res = await this.fetchWithAuth(`lists/${tasklistId}/tasks?showCompleted=true&showHidden=true&maxResults=100${pageToken ? `&pageToken=${pageToken}` : ""}`);
+        const result = await this.fetchWithAuth(`lists/${tasklistId}/tasks?showCompleted=true&showHidden=true&maxResults=100${pageToken ? `&pageToken=${pageToken}` : ""}`);
+        if (result.isErr()) throw result.error;
+        const res = result.value;
         if (!res.ok) { console.warn(`Failed to fetch google tasks`); return undefined; }
         const data: gapi.client.tasks.Tasks = await res.json();
         if (data.items) accumulated.push(...data.items);
@@ -97,9 +99,11 @@ export class GoogleTasksAPI implements ITasksAPI {
     }
 
     async createTask(localTask: AppTask, tasklistId = "@default") {
-        const res = await this.fetchWithAuth(`lists/${tasklistId}/tasks`, {
+        const result = await this.fetchWithAuth(`lists/${tasklistId}/tasks`, {
             method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(this.toGoogleTask(localTask))
         });
+        if (result.isErr()) throw result.error;
+        const res = result.value;
         if (!res.ok) throw new Error(`Failed to create task: ${res.status} ${await res.text()}`);
         const data: gapi.client.tasks.Task = await res.json();
         if (!data.id) throw new Error("Task created but no ID returned");
@@ -114,16 +118,20 @@ export class GoogleTasksAPI implements ITasksAPI {
         const hasUpdates = updatedFields && updatedFields.length > 0;
         const payloadToSubmit = hasUpdates ? buildPartialTaskPayload(updatedFields, fullPayload) : fullPayload;
 
-        const res = await this.fetchWithAuth(`lists/${tasklistId}/tasks/${remoteId}`, {
+        const result = await this.fetchWithAuth(`lists/${tasklistId}/tasks/${remoteId}`, {
             method: "PATCH", headers, body: JSON.stringify(payloadToSubmit)
         });
+        if (result.isErr()) throw result.error;
+        const res = result.value;
         
         if (res.status === HTTP_PRECONDITION_FAILED) throw new ConflictError(`ETag conflict on task: ${localTask.title}`);
         if (!res.ok) throw new Error(`Failed to update task: ${res.status} ${await res.text()}`);
     }
 
     async deleteTask(remoteId: string, tasklistId = "@default") {
-        const res = await this.fetchWithAuth(`lists/${tasklistId}/tasks/${remoteId}`, { method: "DELETE" });
+        const result = await this.fetchWithAuth(`lists/${tasklistId}/tasks/${remoteId}`, { method: "DELETE" });
+        if (result.isErr()) throw result.error;
+        const res = result.value;
         if (!res.ok) throw new Error(`Failed to delete task: ${res.status} ${await res.text()}`);
     }
 

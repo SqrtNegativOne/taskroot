@@ -24,6 +24,7 @@
     "chroma-js": "^3.2.0",
     "cuelume": "^0.1.2",
     "fuse.js": "^7.5.0",
+    "neverthrow": "^8.2.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-markdown": "^10.1.0",

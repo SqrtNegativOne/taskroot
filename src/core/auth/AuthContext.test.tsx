@@ -4,11 +4,14 @@ import { render, screen, act } from "@testing-library/react";
 import { useAuth } from "./useAuth";
 import { AuthProvider } from "./AuthContext";
 
-vi.mock("./googleAuthUtils", () => ({
-    loadRemoteIdentityScript: vi.fn<(...args: never[]) => unknown>().mockResolvedValue(undefined),
-    requestGoogleAuthCode: vi.fn<(...args: never[]) => unknown>().mockResolvedValue("test-code"),
-    exchangeAuthCodeForTokens: vi.fn<(...args: never[]) => unknown>().mockResolvedValue({ accessToken: "test-token", refreshToken: "test-refresh" }),
-}));
+vi.mock("./googleAuthUtils", async () => {
+    const { okAsync } = await import("neverthrow");
+    return {
+        loadRemoteIdentityScript: vi.fn<(...args: never[]) => unknown>().mockReturnValue(okAsync(undefined)),
+        requestGoogleAuthCode: vi.fn<(...args: never[]) => unknown>().mockReturnValue(okAsync("test-code")),
+        exchangeAuthCodeForTokens: vi.fn<(...args: never[]) => unknown>().mockReturnValue(okAsync({ accessToken: "test-token", refreshToken: "test-refresh" })),
+    };
+});
 
 vi.mock("../utils/notifications", () => ({
     useNotification: () => ({

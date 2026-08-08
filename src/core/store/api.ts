@@ -1,27 +1,31 @@
+import { ResultAsync } from "neverthrow";
 
 export const API_TIMEOUT_MS = 15000;
 
-export async function fetchWithTimeout(
+export function fetchWithTimeout(
     resource: RequestInfo | URL,
     options: RequestInit & { timeout?: number } = {},
-) {
+): ResultAsync<Response, Error> {
     const { timeout = API_TIMEOUT_MS, ...rest } = options;
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), timeout);
-    try {
-        const response = await fetch(resource, {
+    
+    return ResultAsync.fromPromise(
+        fetch(resource, {
             ...rest,
             signal: controller.signal,
-        });
-        clearTimeout(id);
-        return response;
-    } catch (error: unknown) {
-        clearTimeout(id);
-        if (error instanceof Error && error.name === "AbortError") {
-            throw new Error("Request timed out", { cause: error });
+        }).then((res) => {
+            clearTimeout(id);
+            return res;
+        }),
+        (error: unknown) => {
+            clearTimeout(id);
+            if (error instanceof Error && error.name === "AbortError") {
+                return new Error("Request timed out", { cause: error });
+            }
+            return error instanceof Error ? error : new Error(String(error));
         }
-        throw error;
-    }
+    );
 }
 
 export const api = {

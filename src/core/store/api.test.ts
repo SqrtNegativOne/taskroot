@@ -27,19 +27,17 @@ describe("api.ts", () => {
                 )
             );
 
-            const promise = fetchWithTimeout("https://example.com", {
+            const resultPromise = fetchWithTimeout("https://example.com", {
                 timeout: 1000,
             });
-
-            const p = promise.catch(e => e);
 
             // Fast forward timers and flush microtasks
             await vi.advanceTimersByTimeAsync(1500);
 
-
-            const err = await p;
-            expect(err).toBeInstanceOf(Error);
-            expect((err).message).toBe("Request timed out");
+            const result = await resultPromise;
+            expect(result.isErr()).toBe(true);
+            expect(result._unsafeUnwrapErr()).toBeInstanceOf(Error);
+            expect(result._unsafeUnwrapErr().message).toBe("Request timed out");
             expect(global.fetch).toHaveBeenCalledOnce();
         });
     });

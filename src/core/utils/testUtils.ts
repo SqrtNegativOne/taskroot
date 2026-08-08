@@ -1,4 +1,5 @@
 import type { AppEvent, AppTask } from "../domain/models";
+import { ResultAsync } from "neverthrow";
 
 let nextId = 1;
 export function createMockAppEvent(overrides: Partial<AppEvent> = {}): AppEvent {
@@ -47,15 +48,20 @@ export class MockFetch {
         return typeof route.response === "function" ? route.response(urlStr, init) : route.response;
     }
 
-    handler = async (input: RequestInfo | URL, init?: RequestInit & { timeout?: number }): Promise<Response> => {
-        const urlStr = typeof input === "string" ? input : (input instanceof URL ? input.toString() : input.url);
-        const reqMethod = (init?.method || (input instanceof Request ? input.method : "GET")).toUpperCase();
+    handler = (input: RequestInfo | URL, init?: RequestInit & { timeout?: number }): ResultAsync<Response, Error> => {
+        return ResultAsync.fromPromise(
+            (async () => {
+                const urlStr = typeof input === "string" ? input : (input instanceof URL ? input.toString() : input.url);
+                const reqMethod = (init?.method || (input instanceof Request ? input.method : "GET")).toUpperCase();
 
-        for (const route of [...this.routes].toReversed()) {
-            const res = this.matchRoute(route, urlStr, reqMethod, init);
-            if (res) return res;
-        }
-        return new Response("Not Found", { status: 404 });
+                for (const route of [...this.routes].toReversed()) {
+                    const res = this.matchRoute(route, urlStr, reqMethod, init);
+                    if (res) return res;
+                }
+                return new Response("Not Found", { status: 404 });
+            })(),
+            (e) => e instanceof Error ? e : new Error(String(e))
+        );
     };
 }
 

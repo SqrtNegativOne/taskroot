@@ -22,11 +22,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const { notify } = useNotification();
 
     const loginWithGoogle = React.useCallback(async () => {
-        try {
-            await loadRemoteIdentityScript();
-            const code = await requestGoogleAuthCode();
-            const tokens = await exchangeAuthCodeForTokens(code);
+        const result = await loadRemoteIdentityScript()
+            .andThen(() => requestGoogleAuthCode())
+            .andThen((code) => exchangeAuthCodeForTokens(code));
 
+        if (result.isOk()) {
+            const tokens = result.value;
             if (tokens.accessToken) {
                 localStorage.setItem("google_access_token", tokens.accessToken);
                 if (tokens.refreshToken) {
@@ -34,10 +35,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                 }
                 window.location.reload(); // Reload to start sync
             }
-        } catch (error: unknown) {
-            console.error("Error signing in with Google:", error);
-            const message = error instanceof Error ? error.message : String(error);
-            notify(`Sign in failed: ${message}`, "error");
+        } else {
+            console.error("Error signing in with Google:", result.error);
+            notify(`Sign in failed: ${result.error.message}`, "error");
         }
     }, [notify]);
 

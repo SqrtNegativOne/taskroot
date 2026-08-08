@@ -21,7 +21,9 @@ export class GoogleCalendarAPI implements ICalendarAPI {
     }
 
     async fetchEvents(timeMin: string, timeMax: string, calendarId = "primary") {
-        const res = await this.fetchWithAuth(`calendars/${encodeURIComponent(calendarId)}/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=false&maxResults=2500`);
+        const result = await this.fetchWithAuth(`calendars/${encodeURIComponent(calendarId)}/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=false&maxResults=2500`);
+        if (result.isErr()) throw result.error;
+        const res = result.value;
         if (!res.ok) { console.warn(`Failed to fetch events for calendar ${calendarId}`); return undefined; }
         const data: gapi.client.calendar.Events = await res.json();
         return data.items || [];
@@ -45,7 +47,9 @@ export class GoogleCalendarAPI implements ICalendarAPI {
     async fetchCalendars(): Promise<{id: string, summary: string, accessRole?: string, backgroundColor?: string, foregroundColor?: string, primary?: boolean}[]> {
         const def = [{ id: "primary", summary: "Primary Calendar", accessRole: "owner", primary: true }];
         if (!this.authManager.getToken()) return def;
-        const res = await this.fetchWithAuth("users/me/calendarList");
+        const fetchResult = await this.fetchWithAuth("users/me/calendarList");
+        if (fetchResult.isErr()) throw fetchResult.error;
+        const res = fetchResult.value;
         if (!res.ok) { console.warn(`Failed to fetch calendars`); return def; }
         const data: gapi.client.calendar.CalendarList = await res.json();
         const items = data.items || [];
@@ -62,9 +66,11 @@ export class GoogleCalendarAPI implements ICalendarAPI {
 
     async createEvent(localEvent: AppEvent, options?: { baseEventRemoteId?: string, calendarId?: string }): Promise<{ remoteId: string, calendarId: string }> {
         const calendarId = options?.calendarId || "primary";
-        const res = await this.fetchWithAuth(`calendars/${encodeURIComponent(calendarId)}/events`, {
+        const result = await this.fetchWithAuth(`calendars/${encodeURIComponent(calendarId)}/events`, {
             method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(this.toGoogleEvent(localEvent, options?.baseEventRemoteId))
         });
+        if (result.isErr()) throw result.error;
+        const res = result.value;
         if (!res.ok) throw new Error(`Failed to create event: ${res.status} ${await res.text()}`);
         const data: { id?: string } = await res.json();
         if (!data.id) throw new Error("Event created but no ID returned");
@@ -81,23 +87,29 @@ export class GoogleCalendarAPI implements ICalendarAPI {
             ? buildPartialEventPayload(options.updatedFields, fullPayload)
             : fullPayload;
 
-        const res = await this.fetchWithAuth(`calendars/${encodeURIComponent(calendarId)}/events/${remoteId}`, {
+        const result = await this.fetchWithAuth(`calendars/${encodeURIComponent(calendarId)}/events/${remoteId}`, {
             method: "PATCH", headers, body: JSON.stringify(payloadToSubmit)
         });
+        if (result.isErr()) throw result.error;
+        const res = result.value;
         
         if (res.status === HTTP_PRECONDITION_FAILED) throw new ConflictError(`ETag conflict on event: ${localEvent.title}`);
         if (!res.ok) throw new Error(`Failed to update event: ${res.status} ${await res.text()}`);
     }
 
     async moveEvent(remoteId: string, sourceCalendarId: string, destinationCalendarId: string) {
-        const res = await this.fetchWithAuth(`calendars/${encodeURIComponent(sourceCalendarId)}/events/${remoteId}/move?destination=${encodeURIComponent(destinationCalendarId)}`, {
+        const result = await this.fetchWithAuth(`calendars/${encodeURIComponent(sourceCalendarId)}/events/${remoteId}/move?destination=${encodeURIComponent(destinationCalendarId)}`, {
             method: "POST"
         });
+        if (result.isErr()) throw result.error;
+        const res = result.value;
         if (!res.ok) throw new Error(`Failed to move event: ${res.status} ${await res.text()}`);
     }
 
     async deleteEvent(remoteId: string, calendarId = "primary") {
-        const res = await this.fetchWithAuth(`calendars/${encodeURIComponent(calendarId)}/events/${remoteId}`, { method: "DELETE" });
+        const result = await this.fetchWithAuth(`calendars/${encodeURIComponent(calendarId)}/events/${remoteId}`, { method: "DELETE" });
+        if (result.isErr()) throw result.error;
+        const res = result.value;
         if (!res.ok) {
             if (res.status === HTTP_GONE) return;
             throw new Error(`Failed to delete event: ${res.status} ${await res.text()}`);

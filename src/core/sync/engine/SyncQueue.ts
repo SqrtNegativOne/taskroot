@@ -1,5 +1,26 @@
 import type { SyncQueueItem } from "./types";
 import { SyncAction } from "./types";
+import { Result, ok } from "neverthrow";
+
+const safeGetItem = Result.fromThrowable(
+    (key: string) => localStorage.getItem(key),
+    (e) => e instanceof Error ? e : new Error(String(e))
+);
+
+const safeParse = Result.fromThrowable(
+    JSON.parse,
+    (e) => e instanceof Error ? e : new Error(String(e))
+);
+
+const safeStringify = Result.fromThrowable(
+    JSON.stringify,
+    (e) => e instanceof Error ? e : new Error(String(e))
+);
+
+const safeSetItem = Result.fromThrowable(
+    (key: string, value: string) => localStorage.setItem(key, value),
+    (e) => e instanceof Error ? e : new Error(String(e))
+);
 
 export class SyncQueue {
     private queue: SyncQueueItem[] = [];
@@ -9,23 +30,23 @@ export class SyncQueue {
     }
 
     private load() {
-        try {
-            const saved = localStorage.getItem("taskroot_sync_queue");
-            if (saved) {
-                this.queue = JSON.parse(saved);
-            }
-        } catch (e) {
-            console.error("Failed to load SyncQueue from localStorage", e);
-            this.queue = [];
-        }
+        safeGetItem("taskroot_sync_queue")
+            .andThen((saved) => (saved ? safeParse(saved) : ok(undefined)))
+            .map((parsed) => {
+                if (parsed) this.queue = parsed;
+            })
+            .mapErr((e) => {
+                console.error("Failed to load SyncQueue from localStorage", e);
+                this.queue = [];
+            });
     }
 
     private save() {
-        try {
-            localStorage.setItem("taskroot_sync_queue", JSON.stringify(this.queue));
-        } catch (e) {
-            console.error("Failed to save SyncQueue to localStorage", e);
-        }
+        safeStringify(this.queue)
+            .andThen((stringified) => safeSetItem("taskroot_sync_queue", stringified))
+            .mapErr((e) => {
+                console.error("Failed to save SyncQueue to localStorage", e);
+            });
     }
 
     private handleUpdateTransition(transition: string, item: SyncQueueItem, indices: { create: number, update: number, move: number }) {

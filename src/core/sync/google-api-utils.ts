@@ -23,6 +23,30 @@ async function checkRateLimit(res: Response) {
     }
 }
 
+async function executeFetch(url: string, token: string, getOpts: (t: string) => RequestInit): Promise<Response> {
+    const result = await fetchWithTimeout(url, getOpts(token));
+    if (result.isErr()) throw result.error;
+    return result.value;
+}
+
+async function fetchWithRetryOnUnauthorized(
+    url: string,
+    authManager: IAuthManager,
+    getOpts: (t: string) => RequestInit
+): Promise<{ res: Response; token: string }> {
+    let token = authManager.getToken();
+    if (!token) throw new AuthError();
+    
+    let res = await executeFetch(url, token, getOpts);
+    if (res.status === HTTP_UNAUTHORIZED) {
+        if (!(await authManager.refreshAccessToken())) throw new AuthError();
+        token = authManager.getToken();
+        if (!token) throw new AuthError();
+        res = await executeFetch(url, token, getOpts);
+    }
+    return { res, token };
+}
+
 export function fetchWithRateLimitAndAuth(
     url: string,
     authManager: IAuthManager,
@@ -33,40 +57,23 @@ export function fetchWithRateLimitAndAuth(
         headers.set("Authorization", `Bearer ${t}`);
         return { ...options, headers };
     };
-    
 
     return ResultAsync.fromPromise(
         (async () => {
-            let token = authManager.getToken();
-            if (!token) throw new AuthError();
-            
-            let result = await fetchWithTimeout(url, getOpts(token));
-            if (result.isErr()) throw result.error;
-            let res = result.value;
-            
-            if (res.status === HTTP_UNAUTHORIZED) {
-                if (!await authManager.refreshAccessToken()) throw new AuthError();
-                token = authManager.getToken();
-                if (!token) throw new AuthError();
-                
-                result = await fetchWithTimeout(url, getOpts(token));
-                if (result.isErr()) throw result.error;
-                res = result.value;
-            }
+            const authResult = await fetchWithRetryOnUnauthorized(url, authManager, getOpts);
+            let res = authResult.res;
+            const token = authResult.token;
             
             let attempts = 0;
             const maxAttempts = 3;
             while ((res.status === HTTP_FORBIDDEN || res.status === HTTP_TOO_MANY_REQUESTS) && attempts < maxAttempts) {
-                const isRateLimit = await checkRateLimit(res);
-                if (!isRateLimit) break;
+                if (!(await checkRateLimit(res))) break;
         
                 attempts++;
                 const delay = Math.pow(2, attempts) * MS_PER_SECOND + Math.random() * MS_PER_SECOND;
                 await new Promise(resolve => setTimeout(resolve, delay));
                 
-                result = await fetchWithTimeout(url, getOpts(token));
-                if (result.isErr()) throw result.error;
-                res = result.value;
+                res = await executeFetch(url, token, getOpts);
             }
             return res;
         })(),

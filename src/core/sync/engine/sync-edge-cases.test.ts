@@ -5,7 +5,8 @@ import { SyncQueue } from "./SyncQueue";
 
 import type { ISyncEngineContext } from "./types";
 import { SyncType, SyncAction } from "./types";
-import { type AppTask, type AppEvent } from "../../domain/models";
+import { type AppEvent, type AppTask } from "../../domain/models";
+import { DEFAULT_SETTINGS } from "../../store/settingsSchema";
 import { FakeTasksAPI } from "../task-api/FakeTasksAPI";
 describe("Sync Engine - Edge Cases (Partial Payload & Merging)", () => {
     let mockContext: ISyncEngineContext;
@@ -33,7 +34,7 @@ describe("Sync Engine - Edge Cases (Partial Payload & Merging)", () => {
                 mockContext.oldTasksMap = new Map(tasks.map(t => [t.id, t]));
             }),
             updateOldEventsMap: vi.fn<(events: AppEvent[]) => void>(),
-            getSettings: () => ({ enableTasksSync: true }),
+            getSettings: () => ({ ...DEFAULT_SETTINGS, enableTasksSync: true }),
             pushQueue,
             notifyError: vi.fn<(msg: string) => void>(),
             updateStatus: vi.fn<(problem?: boolean, isSyncing?: boolean) => void>()
@@ -93,7 +94,7 @@ describe("Sync Engine - Edge Cases (Partial Payload & Merging)", () => {
         // and we expect the resulting local task to have BOTH the local title edit AND the remote due date.
         await synchronizer.poll();
 
-        const resultingTasks = mockContext.getLocalData<AppTask[]>("tasks");
+        const resultingTasks = mockContext.getLocalData("tasks");
         expect(resultingTasks).toHaveLength(1);
         const finalTask = resultingTasks[0];
 
@@ -153,7 +154,7 @@ describe("Sync Engine - Edge Cases (Partial Payload & Merging)", () => {
         // 4. Poller runs.
         await synchronizer.poll();
 
-        const resultingTasks = mockContext.getLocalData<AppTask[]>("tasks");
+        const resultingTasks = mockContext.getLocalData("tasks");
         expect(resultingTasks).toHaveLength(1);
         const finalTask = resultingTasks[0];
 

@@ -1,4 +1,5 @@
 import { storeRegistry } from "../store/storeRegistry";
+import { repos } from "../store/repositories";
 import { syncState } from "./SyncState";
 import { Synchronizer } from "./engine/Synchronizer";
 import { TaskSyncStrategy } from "./engine/TaskSyncStrategy";
@@ -14,13 +15,26 @@ import type { AppTask, AppEvent } from "../domain/models";
 const oldTasksMap = new Map<string, AppTask>();
 const oldEventsMap = new Map<string, AppEvent>();
 
-function getSettings() {
-    return storeRegistry.getLocalData("settings") || { enableCalendarSync: true, enableTasksSync: true };
+import type { AppSettings } from "../store/settingsSchema";
+
+function getSettings(): AppSettings {
+    const res = storeRegistry.getLocalData<AppSettings>("settings");
+    return res.isOk() && res.value !== undefined ? res.value : repos.settings.initial;
 }
 
 const context = {
-    getLocalData: (key: string) => storeRegistry.getLocalData(key),
-    setLocalData: (key: string, data: unknown) => storeRegistry.setLocalData(key, data),
+    getLocalData: <K extends keyof typeof repos>(key: K): (typeof repos)[K]["initial"] => {
+        const repo = repos[key];
+        const res = repo.get();
+        if (res.isOk()) {
+            return res.value;
+        }
+        return repo.initial;
+    },
+    setLocalData: <K extends keyof typeof repos>(key: K, data: (typeof repos)[K]["initial"]) => {
+        // oxlint-disable-next-line consistent-type-assertions, no-unsafe-type-assertion, typescript/no-explicit-any
+        (repos[key].setFromRemote as any)(data);
+    },
     oldTasksMap,
     oldEventsMap,
     updateOldTasksMap: (tasks: AppTask[]) => {
@@ -48,6 +62,20 @@ const eventStrategy = new EventSyncStrategy(context, calendarApi);
 export const eventSync = new Synchronizer<AppEvent>(context, eventStrategy);
 
 export const pusher: Pusher = new Pusher(taskSync, eventSync);
+
+repos.tasks.subscribe((next, _prev, source) => {
+    if (source === "local") {
+        taskSync.computeDelta(next);
+        pusher.trigger();
+    }
+});
+
+repos.events.subscribe((next, _prev, source) => {
+    if (source === "local") {
+        eventSync.computeDelta(next);
+        pusher.trigger();
+    }
+});
 
 const hasAuth = () => !!googleAuth.getToken() || !!localStorage.getItem("google_refresh_token");
 export const poller: Poller = new Poller(taskSync, eventSync, pusher, { getSettings, hasAuth });

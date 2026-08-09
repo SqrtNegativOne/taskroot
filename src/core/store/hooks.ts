@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { storeRegistry } from "./storeRegistry";
 import { Repository, repos } from "./repositories";
 
 
@@ -8,16 +7,10 @@ export function useRepository<T>(repo: Repository<T>): [T, (val: T | ((prev: T) 
     const [isLoaded, setIsLoaded] = useState(false);
 
     useEffect(() => {
-        const updater = () => {
-            const res = repo.get();
-            if (res.isErr()) {
-                console.error(`Failed to get data for ${repo.key}:`, res.error);
-                setVal(repo.initial);
-            } else {
-                setVal(res.value);
-            }
+        const updater = (next: T) => {
+            setVal(next);
         };
-        const unregister = storeRegistry.registerUpdater(repo.key, updater);
+        const unregister = repo.subscribe(updater);
         setIsLoaded(true);
         return unregister;
     }, [repo, repo.key]);

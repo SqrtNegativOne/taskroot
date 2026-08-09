@@ -6,6 +6,7 @@ import { SyncQueue } from "./SyncQueue";
 import type { ISyncEngineContext } from "./types";
 import { SyncType, SyncAction } from "./types";
 import type { AppEvent, AppTask } from "../../domain/models";
+import { DEFAULT_SETTINGS } from "../../store/settingsSchema";
 import { FakeCalendarAPI } from "../calendar-api/FakeCalendarAPI";
 
 describe("Event Sync Engine - Edge Cases (Partial Payload & Merging)", () => {
@@ -34,7 +35,7 @@ describe("Event Sync Engine - Edge Cases (Partial Payload & Merging)", () => {
             updateOldEventsMap: vi.fn<(events: AppEvent[]) => void>((events: AppEvent[]) => {
                 mockContext.oldEventsMap = new Map(events.map(e => [e.id, e]));
             }),
-            getSettings: () => ({ enableEventsSync: true }),
+            getSettings: () => ({ ...DEFAULT_SETTINGS, enableCalendarSync: true }),
             pushQueue,
             notifyError: vi.fn<(msg: string) => void>(),
             updateStatus: vi.fn<(problem?: boolean, isSyncing?: boolean) => void>()
@@ -95,7 +96,7 @@ describe("Event Sync Engine - Edge Cases (Partial Payload & Merging)", () => {
         await synchronizer.poll();
 
         // 5. Verify the merged result
-        const localEvents = mockContext.getLocalData<AppEvent[]>("events");
+        const localEvents = mockContext.getLocalData("events");
         expect(localEvents).toHaveLength(1);
         
         const mergedEvent = localEvents[0];
@@ -162,7 +163,7 @@ describe("Event Sync Engine - Edge Cases (Partial Payload & Merging)", () => {
         // 4. Poller runs.
         await synchronizer.poll();
 
-        const resultingEvents = mockContext.getLocalData<AppEvent[]>("events");
+        const resultingEvents = mockContext.getLocalData("events");
         expect(resultingEvents).toHaveLength(1);
         const finalEvent = resultingEvents[0];
 

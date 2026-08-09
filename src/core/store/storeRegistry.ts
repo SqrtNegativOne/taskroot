@@ -36,7 +36,7 @@ const safeParse = Result.fromThrowable(
 );
 
 export const storeRegistry = {
-    registerUpdater(key: string, updater: (val: unknown) => void) {
+    onExternalChange(key: string, updater: (val: unknown) => void) {
         if (!updaters.has(key)) {
             updaters.set(key, new Set());
         }
@@ -47,36 +47,37 @@ export const storeRegistry = {
         };
     },
     
-    setLocalData(key: string, data: unknown): Result<void, SerializationError | QuotaExceededError | Error> {
+    setLocalData(key: string, data: unknown, silent: boolean = false): Result<void, SerializationError | QuotaExceededError | Error> {
         return safeStringify(data)
             .andThen((stringified) => safeSetItem(`taskroot_${key}`, stringified))
             .map(() => {
+                if (silent) return;
                 const set = updaters.get(key);
-                if (set) {
+                if (set)
                     set.forEach((updater) => updater(data));
-                }
             });
     },
     
-    getLocalData(key: string): Result<unknown, DataCorruptionError> {
-        return safeGetItem(`taskroot_${key}`)
+    getLocalData<T = unknown>(key: string): Result<T, DataCorruptionError> {
+        const res: Result<T, DataCorruptionError> = safeGetItem(`taskroot_${key}`)
             .andThen((saved) => (saved ? safeParse(saved) : ok(undefined)));
+        return res;
     }
 };
 
-if (typeof window !== "undefined") {
-    window.addEventListener("storage", (e) => {
-        if (e.key?.startsWith("taskroot_")) {
-            const key = e.key.replace("taskroot_", "");
-            const set = updaters.get(key);
-            if (set && e.newValue !== null) {
-                safeParse(e.newValue).map((data) => {
-                    set.forEach((updater) => updater(data));
-                }).mapErr((err) => {
-                    console.error("Failed to parse storage event", err);
-                });
-            }
-        }
-    });
-}
+if (typeof window === "undefined")
+    throw new Error("storeRegistry can only be used in a browser environment");
 
+window.addEventListener("storage", (e) => {
+    if (!(e.key?.startsWith("taskroot_"))) return;
+    const key = e.key.replace("taskroot_", "");
+    const set = updaters.get(key);
+    
+    if (!set || !e.newValue) return;
+    
+    safeParse(e.newValue).map((data) => {
+        set.forEach((updater) => updater(data));
+    }).mapErr((err) => {
+        console.error("Failed to parse storage event", err);
+    });
+});

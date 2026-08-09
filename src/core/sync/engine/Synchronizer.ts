@@ -33,7 +33,9 @@ export class Synchronizer<T extends { id: string; remoteId?: string | undefined;
 
         return ResultAsync.fromPromise(
             (async () => {
-                const localItems = this.context.getLocalData<T[]>(this.strategy.getLocalStoreKey());
+                // T[] cannot be strictly inferred from the string returned by getLocalStoreKey
+                // oxlint-disable-next-line consistent-type-assertions, no-unsafe-type-assertion
+                const localItems = this.context.getLocalData(this.strategy.getLocalStoreKey() as keyof typeof import("../../store/repositories").repos) as unknown as T[];
                 this.strategy.updateOldMapSnapshot(localItems);
                 
                 const remoteItemsResult = await this.strategy.fetchRemoteItems();
@@ -56,7 +58,8 @@ export class Synchronizer<T extends { id: string; remoteId?: string | undefined;
 
                 if (updated) {
                     const newItems = Array.from(localItemsMap.values());
-                    this.context.setLocalData(this.strategy.getLocalStoreKey(), newItems);
+                    // oxlint-disable-next-line consistent-type-assertions, no-unsafe-type-assertion
+                    this.context.setLocalData(this.strategy.getLocalStoreKey() as keyof typeof import("../../store/repositories").repos, newItems as never);
                     this.strategy.updateOldMapSnapshot(newItems);
                 }
             })(),

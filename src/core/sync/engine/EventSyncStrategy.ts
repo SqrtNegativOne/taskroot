@@ -18,7 +18,7 @@ export class EventSyncStrategy implements ISyncStrategy<AppEvent> {
     }
 
     isSyncEnabled(): boolean {
-        return this.context.getSettings()["enableCalendarSync"] !== false;
+        return this.context.getSettings().enableCalendarSync ?? true;
     }
 
     getLocalStoreKey(): string {
@@ -48,7 +48,7 @@ export class EventSyncStrategy implements ISyncStrategy<AppEvent> {
                 const calendarsResult = await this.calendarAPI.fetchCalendars();
                 if (calendarsResult.isErr()) throw calendarsResult.error;
                 const calendars = calendarsResult.value;
-                const prevCalendars = this.context.getLocalData<{id: string, summary: string, accessRole: string, active: boolean, backgroundColor?: string, foregroundColor?: string, primary?: boolean}[]>("calendars") || [];
+                const prevCalendars = this.context.getLocalData("calendars") || [];
                 this.context.setLocalData(
                     "calendars",
                     calendars.map((c) => {
@@ -106,7 +106,7 @@ export class EventSyncStrategy implements ISyncStrategy<AppEvent> {
         [SyncAction.Create]: async (taskOrEvent) => {
             if (taskOrEvent.type !== SyncType.Event) return;
             const targetCalendarId = taskOrEvent.item.remoteCollectionId || "primary";
-            const eventsData = this.context.getLocalData<AppEvent[]>("events");
+            const eventsData = this.context.getLocalData("events");
             const baseEventRemoteId = taskOrEvent.item.recurringEventId ? eventsData.find(e => e.id === taskOrEvent.item.recurringEventId)?.remoteId : undefined;
             const resResult = await this.calendarAPI.createEvent(
                 taskOrEvent.item,
@@ -118,7 +118,7 @@ export class EventSyncStrategy implements ISyncStrategy<AppEvent> {
             if (resResult.isErr()) throw resResult.error;
             const res = resResult.value;
             if (res) {
-                const events = this.context.getLocalData<AppEvent[]>("events");
+                const events = this.context.getLocalData("events");
                 const idx = events.findIndex((e) => e.id === taskOrEvent.item.id);
                 const e = events[idx];
                 if (idx !== -1 && e) {
@@ -137,12 +137,12 @@ export class EventSyncStrategy implements ISyncStrategy<AppEvent> {
         },
         [SyncAction.Update]: async (taskOrEvent) => {
             if (taskOrEvent.type !== SyncType.Event) return;
-            const events = this.context.getLocalData<AppEvent[]>("events");
+            const events = this.context.getLocalData("events");
             const currentEvent = events.find((e) => e.id === taskOrEvent.item.id);
             const gid = currentEvent?.remoteId || taskOrEvent.remoteId;
 
             if (gid) {
-                const eventsData = this.context.getLocalData<AppEvent[]>("events");
+                const eventsData = this.context.getLocalData("events");
                 const baseEventRemoteId = taskOrEvent.item.recurringEventId ? eventsData.find(e => e.id === taskOrEvent.item.recurringEventId)?.remoteId : undefined;
                 const updateResult = await this.calendarAPI.updateEvent(
                     gid,

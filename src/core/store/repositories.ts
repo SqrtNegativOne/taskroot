@@ -1,6 +1,6 @@
 import { storeRegistry } from "./storeRegistry";
 
-import { taskSync, eventSync, pusher } from "../sync";
+
 import { SETTINGS_SCHEMA, DEFAULT_SETTINGS } from "./settingsSchema";
 import type { AppSettings } from "./settingsSchema";
 import type { AppTask, AppEvent } from "../domain/models";
@@ -28,6 +28,8 @@ export class Repository<T> {
     private interceptor?: ((next: T, prev?: T) => T) | undefined;
     private onDelta?: ((result: T, prev: T) => void) | undefined;
 
+    private subscribers: Array<(next: T, prev?: T, source?: "local" | "remote") => void> = [];
+
     constructor(
         key: string,
         initial: T,
@@ -42,6 +44,20 @@ export class Repository<T> {
         this.parser = options?.parser;
         this.interceptor = options?.interceptor;
         this.onDelta = options?.onDelta;
+
+        storeRegistry.onExternalChange(this.key, () => {
+            const res = this.get();
+            if (res.isOk()) {
+                this.subscribers.forEach(cb => cb(res.value, undefined, "remote"));
+            }
+        });
+    }
+
+    subscribe(callback: (next: T, prev?: T, source?: "local" | "remote") => void) {
+        this.subscribers.push(callback);
+        return () => {
+            this.subscribers = this.subscribers.filter(cb => cb !== callback);
+        };
     }
 
     get(): Result<T, DataCorruptionError> {
@@ -68,11 +84,20 @@ export class Repository<T> {
         const next = isUpdater(newValOrUpdater) ? newValOrUpdater(prev) : newValOrUpdater;
         const mutated = this.interceptor ? this.interceptor(next, prev) : next;
         
-        return storeRegistry.setLocalData(this.key, mutated).map(() => {
+        return storeRegistry.setLocalData(this.key, mutated, true).map(() => {
             if (this.onDelta) {
                 this.onDelta(mutated, prev);
             }
+            this.subscribers.forEach(cb => cb(mutated, prev, "local"));
             return mutated;
+        });
+    }
+
+    setFromRemote(newVal: T): Result<T, SerializationError | QuotaExceededError | Error> {
+        // Skips interceptors and onDelta, writes silently, then fires subscribers with "remote"
+        return storeRegistry.setLocalData(this.key, newVal, true).map(() => {
+            this.subscribers.forEach(cb => cb(newVal, undefined, "remote"));
+            return newVal;
         });
     }
 }
@@ -149,13 +174,10 @@ function propagateTaskTitleToEvents(next: AppTask[], prev: AppTask[]) {
 
 function onTasksDelta(result: AppTask[], prev?: AppTask[]) {
     if (prev) propagateTaskTitleToEvents(result, prev);
-    taskSync.computeDelta(result);
-    pusher.trigger();
 }
 
-function onEventsDelta(result: AppEvent[], _prev: AppEvent[]) {
-    eventSync.computeDelta(result);
-    pusher.trigger();
+function onEventsDelta(_result: AppEvent[], _prev: AppEvent[]) {
+    // No-op for now, can be removed entirely if unneeded
 }
 
 function parseEvents(parsed: unknown): AppEvent[] {

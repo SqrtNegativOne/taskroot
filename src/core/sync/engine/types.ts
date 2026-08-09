@@ -1,4 +1,6 @@
 import type { AppTask, AppEvent } from "../../domain/models";
+import type { AppSettings } from "../../store/settingsSchema";
+import { repos } from "../../store/repositories";
 
 export const SyncType = {
     Task: "task",
@@ -34,13 +36,13 @@ export type SyncQueueItem =
       };
 
 export interface ISyncEngineContext {
-    getLocalData: <T = unknown>(key: string) => T;
-    setLocalData: <T = unknown>(key: string, data: T) => void;
+    getLocalData: <K extends keyof typeof repos>(key: K) => (typeof repos)[K]["initial"];
+    setLocalData: <K extends keyof typeof repos>(key: K, data: (typeof repos)[K]["initial"]) => void;
     oldTasksMap: Map<string, AppTask>;
     oldEventsMap: Map<string, AppEvent>;
     updateOldTasksMap: (tasks: AppTask[]) => void;
     updateOldEventsMap: (events: AppEvent[]) => void;
-    getSettings: () => Record<string, unknown>;
+    getSettings: () => AppSettings;
     pushQueue: import('./SyncQueue').SyncQueue;
     notifyError: (msg: string) => void;
     updateStatus: (problem?: boolean, isSyncing?: boolean) => void;

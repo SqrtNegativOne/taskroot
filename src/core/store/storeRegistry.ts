@@ -1,6 +1,39 @@
+import { Result, ok } from "neverthrow";
+import { QuotaExceededError, SerializationError, DataCorruptionError } from "./errors";
+
 // A simple registry to let Sync modules update the local store (React state + localStorage)
 type BivariantUpdater = { bivariantHack(data: unknown): void }["bivariantHack"];
 const updaters = new Map<string, Set<BivariantUpdater>>();
+
+const safeStringify = Result.fromThrowable(
+    JSON.stringify,
+    (e) => new SerializationError(e instanceof Error ? e.message : String(e))
+);
+
+const safeSetItem = Result.fromThrowable(
+    (key: string, value: string) => localStorage.setItem(key, value),
+    (e: unknown) => {
+        if (e && typeof e === "object" && "name" in e) {
+            if (e.name === "QuotaExceededError" || e.name === "NS_ERROR_DOM_QUOTA_REACHED") {
+                return new QuotaExceededError();
+            }
+        }
+        if (e instanceof Error && e.message.toLowerCase().includes("quota")) {
+            return new QuotaExceededError();
+        }
+        return e instanceof Error ? e : new Error(String(e));
+    }
+);
+
+const safeGetItem = Result.fromThrowable(
+    (key: string) => localStorage.getItem(key),
+    (e) => new DataCorruptionError(e instanceof Error ? e.message : String(e))
+);
+
+const safeParse = Result.fromThrowable(
+    JSON.parse,
+    (e) => new DataCorruptionError(e instanceof Error ? e.message : String(e))
+);
 
 export const storeRegistry = {
     registerUpdater(key: string, updater: (val: unknown) => void) {
@@ -14,21 +47,20 @@ export const storeRegistry = {
         };
     },
     
-    setLocalData(key: string, data: unknown) {
-        localStorage.setItem(`taskroot_${key}`, JSON.stringify(data));
-        const set = updaters.get(key);
-        if (set) {
-            set.forEach((updater) => updater(data));
-        }
+    setLocalData(key: string, data: unknown): Result<void, SerializationError | QuotaExceededError | Error> {
+        return safeStringify(data)
+            .andThen((stringified) => safeSetItem(`taskroot_${key}`, stringified))
+            .map(() => {
+                const set = updaters.get(key);
+                if (set) {
+                    set.forEach((updater) => updater(data));
+                }
+            });
     },
     
-    getLocalData(key: string) {
-        try {
-            const saved = localStorage.getItem(`taskroot_${key}`);
-            return saved ? JSON.parse(saved) : [];
-        } catch {
-            return [];
-        }
+    getLocalData(key: string): Result<unknown, DataCorruptionError> {
+        return safeGetItem(`taskroot_${key}`)
+            .andThen((saved) => (saved ? safeParse(saved) : ok(undefined)));
     }
 };
 
@@ -38,13 +70,13 @@ if (typeof window !== "undefined") {
             const key = e.key.replace("taskroot_", "");
             const set = updaters.get(key);
             if (set && e.newValue !== null) {
-                try {
-                    const data = JSON.parse(e.newValue);
+                safeParse(e.newValue).map((data) => {
                     set.forEach((updater) => updater(data));
-                } catch (err) {
+                }).mapErr((err) => {
                     console.error("Failed to parse storage event", err);
-                }
+                });
             }
         }
     });
 }
+

@@ -34,8 +34,7 @@ export function fetchWithRateLimitAndAuth(
         return { ...options, headers };
     };
     
-    // oxlint-disable-next-line complexity
-    // eslint-disable-next-line max-lines-per-function
+
     return ResultAsync.fromPromise(
         (async () => {
             let token = authManager.getToken();

@@ -16,11 +16,14 @@ export interface RestItem { readonly id: string; readonly title: string; readonl
 export interface CalendarData { readonly id: string; readonly summary: string; readonly active: boolean; readonly accessRole?: string; readonly backgroundColor?: string; readonly foregroundColor?: string; readonly primary?: boolean; }
 export interface TestKeyData { readonly count: number; }
 
+import { Result, ok } from "neverthrow";
+import { QuotaExceededError, SerializationError, DataCorruptionError } from "./errors";
+
 const isUpdater = <T>(v: T | ((prev: T) => T)): v is ((prev: T) => T) => typeof v === "function";
 
 export class Repository<T> {
     public key: string;
-    private initial: T;
+    public initial: T;
     private parser?: ((saved: unknown) => T) | undefined;
     private interceptor?: ((next: T, prev?: T) => T) | undefined;
     private onDelta?: ((result: T, prev: T) => void) | undefined;
@@ -41,29 +44,36 @@ export class Repository<T> {
         this.onDelta = options?.onDelta;
     }
 
-    get(): T {
-        try {
-            const saved = localStorage.getItem(`taskroot_${this.key}`);
-            const parsed = saved ? JSON.parse(saved) : this.initial;
-            if (this.parser) return this.parser(parsed);
-            return parsed;
-        } catch {
-            if (this.parser) return this.parser(this.initial);
-            return this.initial;
-        }
+    get(): Result<T, DataCorruptionError> {
+        return storeRegistry.getLocalData(this.key).andThen((data) => {
+            const raw = (data === null || data === undefined) ? this.initial : data;
+            // T is erased at runtime. Without a parser provided, we have no runtime way
+            // to validate if the parsed JSON matches T. We must blindly trust the data here.
+            // oxlint-disable-next-line consistent-type-assertions, no-unsafe-type-assertion
+            if (!this.parser) return ok(raw as T);
+            
+            const safeParser = Result.fromThrowable(
+                this.parser,
+                (e) => new DataCorruptionError(e instanceof Error ? e.message : String(e))
+            );
+            return safeParser(raw);
+        });
     }
 
-    set(newValOrUpdater: T | ((prev: T) => T)): T {
-        const prev = this.get();
+    set(newValOrUpdater: T | ((prev: T) => T)): Result<T, SerializationError | QuotaExceededError | Error> {
+        const prevRes = this.get();
+        // If there's corruption, fallback to initial for the update calculation
+        const prev = prevRes.isOk() ? prevRes.value : this.initial;
+        
         const next = isUpdater(newValOrUpdater) ? newValOrUpdater(prev) : newValOrUpdater;
         const mutated = this.interceptor ? this.interceptor(next, prev) : next;
         
-        storeRegistry.setLocalData(this.key, mutated);
-        
-        if (this.onDelta) {
-            this.onDelta(mutated, prev);
-        }
-        return mutated;
+        return storeRegistry.setLocalData(this.key, mutated).map(() => {
+            if (this.onDelta) {
+                this.onDelta(mutated, prev);
+            }
+            return mutated;
+        });
     }
 }
 
@@ -127,7 +137,9 @@ function propagateTaskTitleToEvents(next: AppTask[], prev: AppTask[]) {
     if (renamedTasks.length === 0) return;
 
     const titleById = new Map(renamedTasks.map((t) => [t.id, t.title]));
-    const events = repos.events.get();
+    const eventsRes = repos.events.get();
+    const events = eventsRes.isOk() ? eventsRes.value : repos.events.initial;
+    
     const updated = events.map((ev) => {
         const newTitle = ev.taskId ? titleById.get(ev.taskId) : undefined;
         return newTitle !== undefined ? Object.assign({}, ev, { title: newTitle }) : ev;

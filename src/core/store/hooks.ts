@@ -4,11 +4,19 @@ import { Repository, repos } from "./repositories";
 
 
 export function useRepository<T>(repo: Repository<T>): [T, (val: T | ((prev: T) => T)) => void, boolean] {
-    const [val, setVal] = useState<T>(() => repo.get());
+    const [val, setVal] = useState<T>(() => repo.get().unwrapOr(repo.initial));
     const [isLoaded, setIsLoaded] = useState(false);
 
     useEffect(() => {
-        const updater = () => setVal(repo.get());
+        const updater = () => {
+            const res = repo.get();
+            if (res.isErr()) {
+                console.error(`Failed to get data for ${repo.key}:`, res.error);
+                setVal(repo.initial);
+            } else {
+                setVal(res.value);
+            }
+        };
         const unregister = storeRegistry.registerUpdater(repo.key, updater);
         setIsLoaded(true);
         return unregister;
@@ -16,7 +24,10 @@ export function useRepository<T>(repo: Repository<T>): [T, (val: T | ((prev: T) 
 
     const readVal: T = val;
     const setter = (newVal: T | ((prev: T) => T)) => {
-        repo.set(newVal);
+        const setRes = repo.set(newVal);
+        if (setRes.isErr()) {
+            console.error(`Failed to set data for ${repo.key}:`, setRes.error);
+        }
     };
     return [readVal, setter, isLoaded];
 }

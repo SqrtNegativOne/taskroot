@@ -49,7 +49,7 @@ export function ExportDataButton() {
     );
 }
 
-export function ImportTasksButton({ settings }: { settings: Partial<import('../../core/store/settingsSchema').AppSettings> }) {
+export function ImportTasksButton({ settings }: { settings: Partial<Record<string, unknown>> }) {
     const [ingestText, setIngestText] = useState("");
     const [, setTasks] = useTasks();
 
@@ -95,10 +95,12 @@ export function ImportTasksButton({ settings }: { settings: Partial<import('../.
                             subtasks: [],
 
                             est:
-                                settings.defaultTaskDuration === 0 ||
-                                settings.defaultTaskDuration === undefined
+                                settings["defaultTaskDuration"] === 0 ||
+                                settings["defaultTaskDuration"] === undefined
                                     ? undefined
-                                    : settings.defaultTaskDuration,
+                                    : typeof settings["defaultTaskDuration"] === "number"
+                                        ? settings["defaultTaskDuration"]
+                                        : undefined,
                             added: new Date().toISOString(),
                         }));
                         setTasks((ts) => [...newTasks, ...(ts || [])]);

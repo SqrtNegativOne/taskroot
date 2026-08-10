@@ -1,17 +1,9 @@
 import React from "react";
+import type { AppNote } from "../../core/domain/models";
 
 import { useNotes, useTips } from "../../core/store/hooks";
 
 const TIP_DURATION_MS = 2200;
-
-
-
-export type AppNote = {
-    id: string;
-    title: string;
-    vault: string;
-    path: string;
-}
 
 // Tips list + Notes (Obsidian placeholder)
 

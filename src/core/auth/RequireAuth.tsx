@@ -1,10 +1,16 @@
 import React from "react";
 import { useAuth } from "./useAuth";
 import { useNotification } from "../utils/notifications";
-import { LoginScreen } from "../../screens/login/LoginScreen";
-import { LoginTitleBar } from "../../components/shell";
 
-export function RequireAuth({ children }: { children: React.ReactNode }) {
+export function RequireAuth({
+    children,
+    loginFallback,
+    titleBar,
+}: {
+    children: React.ReactNode;
+    loginFallback: React.ReactNode;
+    titleBar?: React.ReactNode;
+}) {
     const { user, loading } = useAuth();
     const { notify } = useNotification();
     const notified = React.useRef(false);
@@ -25,7 +31,7 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
     if (loading) {
         return (
             <div className="app">
-                <LoginTitleBar />
+                {titleBar}
                 <div style={{ display: "flex", flex: 1, justifyContent: "center", alignItems: "center" }}>
                     Loading...
                 </div>
@@ -35,6 +41,6 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
     
     const hasGoogleToken = !!localStorage.getItem("google_access_token");
 
-    if (!user || !hasGoogleToken) return <LoginScreen />;
+    if (!user || !hasGoogleToken) return <>{loginFallback}</>;
     return <>{children}</>;
 }

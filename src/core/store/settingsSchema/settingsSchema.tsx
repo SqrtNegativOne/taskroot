@@ -1,11 +1,5 @@
 /* oxlint-disable max-lines -- It's nice to have all the settings in one file. */
 
-import {
-    ExportDataButton,
-    ImportTasksButton,
-    LogoutButton,
-    ClearAllDataButton,
-} from "../../../screens/settings/SettingActions";
 import type { SettingSchema, AppSettings } from "./settingsTypes";
 export type * from "./settingsTypes";
 
@@ -159,7 +153,6 @@ const SETTINGS_CONFIG: Record<string, Record<string, ConfigItem[]>> = {
                 description: "Sign out of your Google account.",
                 keywords: ["logout", "signout", "google", "account"],
                 type: "custom",
-                render: () => <LogoutButton />,
             },
         ],
         "Data Management": [
@@ -169,7 +162,6 @@ const SETTINGS_CONFIG: Record<string, Record<string, ConfigItem[]>> = {
                 description: "It stands for Jason's Object Notation.",
                 keywords: ["export", "backup", "json", "data"],
                 type: "custom",
-                render: () => <ExportDataButton />,
             },
             {
                 id: "importTasks",
@@ -178,7 +170,6 @@ const SETTINGS_CONFIG: Record<string, Record<string, ConfigItem[]>> = {
                     "Paste in tasks separated by newlines. They will be added as new tasks to the top of your list.",
                 keywords: ["import", "bulk", "tasks", "add", "text"],
                 type: "custom",
-                render: (props) => <ImportTasksButton {...props} />,
             },
         ],
         "Danger Zone": [
@@ -189,7 +180,6 @@ const SETTINGS_CONFIG: Record<string, Record<string, ConfigItem[]>> = {
                     "Permanently delete all your tasks, settings, logs, and other data from both this device and the cloud. This cannot be undone.",
                 keywords: ["delete", "clear", "wipe", "reset", "factory", "all"],
                 type: "custom",
-                render: () => <ClearAllDataButton />,
                 danger: true,
             },
         ],

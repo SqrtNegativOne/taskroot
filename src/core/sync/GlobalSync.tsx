@@ -3,15 +3,14 @@ import { useEvents, useSettings, useTasks } from "../store/hooks";
 import { purgeOrphanedData } from "../store/repositories";
 import { syncState, poller } from "./index";
 import { useNotification } from "../utils/notifications";
-import { LoginTitleBar } from "../../components/shell";
 
-export function GlobalSyncLoading({ syncMessage }: { syncMessage: string | null }) {
+export function GlobalSyncLoading({ syncMessage, titleBar }: { syncMessage: string | null; titleBar?: React.ReactNode }) {
     if (window.location.search.includes("minitracker=true")) {
         return <></>;
     }
     return (
         <div className="app">
-            <LoginTitleBar />
+            {titleBar}
             <div style={{ display: "flex", flex: 1, justifyContent: "center", alignItems: "center", flexDirection: "column", background: "var(--bg)", color: "var(--fg)", fontFamily: "var(--sans)" }}>
             <div
                 style={{
@@ -42,7 +41,7 @@ export function GlobalSyncLoading({ syncMessage }: { syncMessage: string | null 
     );
 }
 
-export function GlobalSync({ children }: { children: React.ReactNode }) {
+export function GlobalSync({ children, titleBar }: { children: React.ReactNode; titleBar?: React.ReactNode }) {
     const [, , tasksLoaded] = useTasks();
     const [, , eventsLoaded] = useEvents();
     const [settings] = useSettings();
@@ -78,7 +77,7 @@ export function GlobalSync({ children }: { children: React.ReactNode }) {
     }, [notify]);
 
     if (!tasksLoaded || !eventsLoaded || !initialSyncDone) {
-        return <GlobalSyncLoading syncMessage={syncMessage} />;
+        return <GlobalSyncLoading syncMessage={syncMessage} titleBar={titleBar} />;
     }
 
     return <>{children}</>;

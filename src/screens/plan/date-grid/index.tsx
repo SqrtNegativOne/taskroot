@@ -12,22 +12,15 @@ import {
     DOW_SHORT,
 } from "../../../core/store/data";
 import { CalendarHeader } from "./calendar-header";
+import { DAYS_IN_WEEK, DateGridView } from "./constants";
+export { DateGridView } from "./constants";
 import { DayCell } from "./day-cell";
 import { filterEvents, sortEvents } from "../../../core/domain/filters";
 import type { HydratedEvent } from "../../../core/domain/events";
 import type { AppFilter } from "../../../core/domain/models";
 
 const DAYS_IN_CALENDAR_GRID = 42;
-const DAYS_IN_WEEK = 7;
 const DAYS_IN_THREE_WEEKS = 21;
-
-export const DateGridView = {
-    Month: "month",
-    Week: "week",
-    OneWeek: "1 week",
-    ThreeWeeks: "3 weeks"
-} as const;
-export type DateGridView = typeof DateGridView[keyof typeof DateGridView];
 
 
 export function DateGrid({

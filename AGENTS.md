@@ -51,6 +51,7 @@ Taskroot is a web-based and desktop task management app focusing on planning, ex
 - Keep all React components pure and functional.
 - Any object that represents state should be readonly.
 - If you want a component to return nothing, try not to return a null. Conditionally include or exclude the component in the parent's tsx (so React doesn't unnecessarily mount that component, run its `useEffect`s, initialize its state, only to render nothing).
+
 - Use Red-Green Test Driven Development.
     - Write tests first as a contract and to make it clear what you are doing.
     - Once they are written, do not modify them, unless there is something truly wrong wit them.

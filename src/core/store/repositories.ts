@@ -3,8 +3,7 @@ import { storeRegistry } from "./storeRegistry";
 
 import { SETTINGS_SCHEMA, DEFAULT_SETTINGS } from "./settingsSchema";
 import type { AppSettings } from "./settingsSchema";
-import type { AppTask, AppEvent } from "../domain/models";
-import type { AppNote } from "../../screens/do/tips-notes";
+import type { AppTask, AppEvent, AppNote } from "../domain/models";
 import { DEFAULT_STATUSES, DEFAULT_DISTRACTION_COLUMNS, REST_CHECKLIST_DEFAULTS } from "./data";
 
 export interface DistractionRow { readonly id: string; readonly [key: string]: unknown; }

@@ -5,7 +5,9 @@ import { NotificationProvider } from "./core/utils/notifications";
 import { AppLayout } from "./components/AppLayout";
 import { RequireAuth } from "./core/auth/RequireAuth";
 import { GlobalSync } from "./core/sync/GlobalSync";
-import { useAppIntegration } from "./core/utils/useAppIntegration";
+import { useAppIntegration } from "./useAppIntegration";
+import { LoginScreen } from "./screens/login/LoginScreen";
+import { LoginTitleBar } from "./components/shell";
 
 const PlanScreen        = React.lazy(() => import("./screens/plan/PlanScreen").then(m => ({ default: m.PlanScreen })));
 const DoScreen          = React.lazy(() => import("./screens/do/DoScreen").then(m => ({ default: m.DoScreen })));
@@ -66,8 +68,8 @@ export function App() {
     return (
         <NotificationProvider>
             <AuthProvider>
-                <RequireAuth>
-                    <GlobalSync>
+                <RequireAuth loginFallback={<LoginScreen />} titleBar={<LoginTitleBar />}>
+                    <GlobalSync titleBar={<LoginTitleBar />}>
                         <AppRouter />
                     </GlobalSync>
                 </RequireAuth>

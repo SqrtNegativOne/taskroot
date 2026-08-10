@@ -1,9 +1,9 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useSettings, useTasks, useEvents } from "../store/hooks";
-import type { AppTask } from "../domain/models";
-import { handleSettingsKeydown } from "./keybindings";
-import { parseSigils, getDueDateFromSigil } from "./sigil-parser";
+import { useSettings, useTasks, useEvents } from "./core/store/hooks";
+import type { AppTask } from "./core/domain/models";
+import { handleSettingsKeydown } from "./core/utils/keybindings";
+import { parseSigils, getDueDateFromSigil } from "./core/utils/sigil-parser";
 
 const launcherCommandHandlers: Record<string, (
     payload: Record<string, string> | undefined,

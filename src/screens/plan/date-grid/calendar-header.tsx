@@ -7,7 +7,7 @@ import { ANIMATION_DELAY_MS } from "./constants";
 
 
 
-import { DateGridView } from "./index";
+import { DateGridView } from "./constants";
 
 export function CalendarHeader({
     titleLabel,

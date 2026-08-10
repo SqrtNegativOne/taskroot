@@ -35,6 +35,16 @@ export type SyncQueueItem =
           updatedFields?: (keyof AppEvent)[];
       };
 
+export interface ISyncQueue {
+    push(item: SyncQueueItem): void;
+    shift(): SyncQueueItem | undefined;
+    remove(item: SyncQueueItem): void;
+    peek(): SyncQueueItem | undefined;
+    readonly length: number;
+    getItems(): SyncQueueItem[];
+    clear(): void;
+}
+
 export interface ISyncEngineContext {
     getLocalData: <K extends keyof typeof repos>(key: K) => (typeof repos)[K]["initial"];
     setLocalData: <K extends keyof typeof repos>(key: K, data: (typeof repos)[K]["initial"]) => void;
@@ -43,7 +53,7 @@ export interface ISyncEngineContext {
     updateOldTasksMap: (tasks: AppTask[]) => void;
     updateOldEventsMap: (events: AppEvent[]) => void;
     getSettings: () => AppSettings;
-    pushQueue: import('./SyncQueue').SyncQueue;
+    pushQueue: ISyncQueue;
     notifyError: (msg: string) => void;
     updateStatus: (problem?: boolean, isSyncing?: boolean) => void;
 }

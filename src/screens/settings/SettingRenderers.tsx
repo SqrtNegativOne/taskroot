@@ -8,6 +8,8 @@ import {
     ToggleSwitch,
     KeybindingInput,
 } from "../../components/inputs";
+import { CUSTOM_RENDERS } from "./custom-renders";
+
 
 function minToTime(m: number) {
     if (typeof m !== "number" || isNaN(m)) return "";
@@ -86,7 +88,9 @@ export const KeybindingSetting = ({ setting, val, settings, setSettings }: Setti
 
 export const CustomSetting = ({ setting, settings, setSettings }: SettingRendererProps) => {
     if (setting.type !== "custom") throw new Error("Expected custom setting");
-    return setting.render?.({ settings, setSettings }) || <></>;
+    const render = setting.render ?? CUSTOM_RENDERS[setting.id];
+    const settingsRecord: Record<string, unknown> = { ...settings };
+    return render?.({ settings: settingsRecord, setSettings }) ?? <></>;
 };
 
 

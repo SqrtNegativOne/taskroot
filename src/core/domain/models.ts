@@ -95,3 +95,10 @@ export interface AppEvent {
 export function toEventType(raw: string | undefined, fallback: AppEvent['type']): AppEvent['type'] {
     return (raw === "info" || raw === "busy" || raw === "log") ? raw : fallback;
 }
+
+export interface AppNote {
+    readonly id: string;
+    readonly title: string;
+    readonly vault: string;
+    readonly path: string;
+}

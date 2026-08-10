@@ -80,9 +80,14 @@ export interface TextareaSettingSchema<K extends keyof AppSettings = keyof AppSe
     placeholder?: string;
 }
 
+export type CustomSettingRenderProps = {
+    settings: Partial<Record<string, unknown>>;
+    setSettings: Dispatch<SetStateAction<AppSettings>>;
+};
+
 export interface CustomSettingSchema extends BaseSettingSchema<"custom"> {
     id: string; // Not tied to AppSettings state
-    render?: (props: { settings: AppSettings; setSettings: Dispatch<SetStateAction<AppSettings>> }) => ReactNode;
+    render?: (props: CustomSettingRenderProps) => ReactNode;
 }
 
 export interface ActionSettingSchema extends BaseSettingSchema<"action"> {

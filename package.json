@@ -46,6 +46,7 @@
     "electron": "^30.0.0",
     "happy-dom": "^20.11.0",
     "jsdom": "^29.1.1",
+    "madge": "^8.0.0",
     "oxlint": "^1.71.0",
     "oxlint-plugin-complexity": "^2.1.6",
     "oxlint-tsgolint": "7",

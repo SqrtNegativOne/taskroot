@@ -83,3 +83,4 @@ Taskroot is a web-based and desktop task management app focusing on planning, ex
 - ALWAYS run `bun run lint`, `npm run test`, and `bun run build` before committing. If any of these fail or give you a warning, fix the issue before committing.
 - If `bun run build` gives you a warning, fix it. Never be silent about warnings; always inform the user about them.
 - In the program, errors are data; not exceptional in any way. Don't return `null` or `False` when an error happens; be specific. We use `neverthrow` to handle errors in a functional way.
+- The compiler throws an error if there are per-function circular dependencies, but try not to have per-file or per-folder circular dependencies either.

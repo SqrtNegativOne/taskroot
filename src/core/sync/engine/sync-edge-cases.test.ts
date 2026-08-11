@@ -8,26 +8,18 @@ import { SyncType, SyncAction } from "./types";
 import { type AppEvent, type AppTask } from "../../domain/models";
 import { DEFAULT_SETTINGS } from "../../store/settingsSchema";
 import { FakeTasksAPI } from "../task-api/FakeTasksAPI";
+import { repos } from "../../store/repositories";
 describe("Sync Engine - Edge Cases (Partial Payload & Merging)", () => {
     let mockContext: ISyncEngineContext;
     let pushQueue: SyncQueue;
-    let localData: Map<string, unknown>;
     let tasksAPI: FakeTasksAPI;
     let synchronizer: Synchronizer<AppTask>;
 
     beforeEach(() => {
         localStorage.clear();
-        localData = new Map();
         pushQueue = new SyncQueue();
         
         mockContext = {
-            getLocalData(key: string) {
-                const val = localData.get(key);
-                return val !== undefined ? val : JSON.parse("[]");
-            },
-            setLocalData(key: string, data: unknown) {
-                localData.set(key, data);
-            },
             oldTasksMap: new Map(),
             oldEventsMap: new Map(),
             updateOldTasksMap: vi.fn<(tasks: AppTask[]) => void>((tasks: AppTask[]) => {
@@ -60,7 +52,7 @@ describe("Sync Engine - Edge Cases (Partial Payload & Merging)", () => {
             tags: [],
             subtasks: []
         };
-        mockContext.setLocalData("tasks", [initialTask]);
+        repos.tasks.setFromRemote([initialTask]);
         mockContext.updateOldTasksMap([initialTask]);
 
         // 2. User edits title locally at t1
@@ -94,7 +86,7 @@ describe("Sync Engine - Edge Cases (Partial Payload & Merging)", () => {
         // and we expect the resulting local task to have BOTH the local title edit AND the remote due date.
         await synchronizer.poll();
 
-        const resultingTasks = mockContext.getLocalData("tasks");
+        const resultingTasks = repos.tasks.get().unwrapOr([]);
         expect(resultingTasks).toHaveLength(1);
         const finalTask = resultingTasks[0];
 
@@ -121,7 +113,7 @@ describe("Sync Engine - Edge Cases (Partial Payload & Merging)", () => {
             tags: [],
             subtasks: []
         };
-        mockContext.setLocalData("tasks", [initialTask]);
+        repos.tasks.setFromRemote([initialTask]);
         mockContext.updateOldTasksMap([initialTask]);
 
         // 2. User edits status locally at t1
@@ -154,7 +146,7 @@ describe("Sync Engine - Edge Cases (Partial Payload & Merging)", () => {
         // 4. Poller runs.
         await synchronizer.poll();
 
-        const resultingTasks = mockContext.getLocalData("tasks");
+        const resultingTasks = repos.tasks.get().unwrapOr([]);
         expect(resultingTasks).toHaveLength(1);
         const finalTask = resultingTasks[0];
 

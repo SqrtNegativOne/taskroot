@@ -1,11 +1,10 @@
-import { MS_PER_SECOND, MINUTES_IN_HOUR } from "../../utils/constants";
+import { MS_PER_SECOND, MINUTES_IN_HOUR, STARTUP_ERROR_DELAY_MS } from "../../utils/constants";
 import { syncState } from "../SyncState";
 import type { Synchronizer } from "./Synchronizer";
 import { Pusher } from "./Pusher";
 import type { AppTask, AppEvent } from "../../domain/models";
 
 export const MIN_POLL_INTERVAL_MINUTES = 5;
-export const LONG_PRESS_DELAY_MS = 1500;
 
 
 export class Poller {
@@ -47,7 +46,8 @@ export class Poller {
             if (!offline && (settings.enableCalendarSync !== false || settings.enableTasksSync !== false)) {
                 setTimeout(() => {
                     syncState.error = "Sync is paused: No authorization token found. Please log out and log in again to authorize.";
-                }, LONG_PRESS_DELAY_MS);
+                    syncState.checkConnectivity();
+                }, STARTUP_ERROR_DELAY_MS);
             }
         }
 
@@ -83,6 +83,7 @@ export class Poller {
         } else {
             syncState.error = e.message || "Error during synchronization";
         }
+        syncState.checkConnectivity();
     }
 
     async poll() {

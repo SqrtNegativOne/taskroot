@@ -23,18 +23,6 @@ function getSettings(): AppSettings {
 }
 
 const context = {
-    getLocalData: <K extends keyof typeof repos>(key: K): (typeof repos)[K]["initial"] => {
-        const repo = repos[key];
-        const res = repo.get();
-        if (res.isOk()) {
-            return res.value;
-        }
-        return repo.initial;
-    },
-    setLocalData: <K extends keyof typeof repos>(key: K, data: (typeof repos)[K]["initial"]) => {
-        // oxlint-disable-next-line consistent-type-assertions, no-unsafe-type-assertion, typescript/no-explicit-any
-        (repos[key].setFromRemote as any)(data);
-    },
     oldTasksMap,
     oldEventsMap,
     updateOldTasksMap: (tasks: AppTask[]) => {

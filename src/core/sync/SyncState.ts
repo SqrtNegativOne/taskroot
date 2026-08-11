@@ -51,15 +51,15 @@ class SyncStateStore {
     set error(val: string | undefined) {
         if (this._error !== val) {
             this._error = val;
-            if (val) {
-                fetch('https://example.com', { mode: 'no-cors', cache: 'no-store' })
-                    .then(() => { this.isOffline = false; return undefined; })
-                    .catch(() => { this.isOffline = true; return undefined; });
-            } else {
-                this.isOffline = false;
-            }
+            if (!val) this.isOffline = false;
             this.notify();
         }
+    }
+
+    checkConnectivity() {
+        fetch('https://www.googleapis.com/robots.txt', { mode: 'no-cors', cache: 'no-store' })
+            .then(() => { this.isOffline = false; return undefined; })
+            .catch(() => { this.isOffline = true; return undefined; });
     }
 
     get info() { return this._info; }

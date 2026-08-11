@@ -41,10 +41,12 @@ export class Pusher {
             this.pushQueue.remove(taskOrEvent);
             const itemName = taskOrEvent.item.title || "Unknown item";
             syncState.error = `Sync ${taskOrEvent.action} item "${itemName}" discarded because of error: ${e.message}`;
+            syncState.checkConnectivity();
             return false;
         }
         
         syncState.error = e instanceof Error ? e.message : "Error syncing item to Google.";
+        syncState.checkConnectivity();
         return true;
     }
 

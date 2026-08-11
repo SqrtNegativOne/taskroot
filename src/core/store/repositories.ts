@@ -44,7 +44,8 @@ export class Repository<T> {
         this.interceptor = options?.interceptor;
         this.onDelta = options?.onDelta;
 
-        storeRegistry.onExternalChange(this.key, () => {
+        window.addEventListener("storage", (e) => {
+            if (e.key !== `taskroot_${this.key}` || !e.newValue) return;
             const res = this.get();
             if (res.isOk()) {
                 this.subscribers.forEach(cb => cb(res.value, undefined, "remote"));
@@ -83,7 +84,7 @@ export class Repository<T> {
         const next = isUpdater(newValOrUpdater) ? newValOrUpdater(prev) : newValOrUpdater;
         const mutated = this.interceptor ? this.interceptor(next, prev) : next;
         
-        return storeRegistry.setLocalData(this.key, mutated, true).map(() => {
+        return storeRegistry.setLocalData(this.key, mutated).map(() => {
             if (this.onDelta) {
                 this.onDelta(mutated, prev);
             }
@@ -94,7 +95,7 @@ export class Repository<T> {
 
     setFromRemote(newVal: T): Result<T, SerializationError | QuotaExceededError | Error> {
         // Skips interceptors and onDelta, writes silently, then fires subscribers with "remote"
-        return storeRegistry.setLocalData(this.key, newVal, true).map(() => {
+        return storeRegistry.setLocalData(this.key, newVal).map(() => {
             this.subscribers.forEach(cb => cb(newVal, undefined, "remote"));
             return newVal;
         });
@@ -175,10 +176,6 @@ function onTasksDelta(result: AppTask[], prev?: AppTask[]) {
     if (prev) propagateTaskTitleToEvents(result, prev);
 }
 
-function onEventsDelta(_result: AppEvent[], _prev: AppEvent[]) {
-    // No-op for now, can be removed entirely if unneeded
-}
-
 function parseEvents(parsed: unknown): AppEvent[] {
     if (!Array.isArray(parsed)) return [];
     
@@ -190,7 +187,7 @@ function parseEvents(parsed: unknown): AppEvent[] {
 export const repos = {
     settings: new Repository<AppSettings>("settings", DEFAULT_SETTINGS, { parser: parseSettings }),
     tasks: new Repository<AppTask[]>("tasks", [], { interceptor: (next, prev) => injectUpdatedAt<AppTask>(next, prev), onDelta: onTasksDelta }),
-    events: new Repository<AppEvent[]>("events", [], { parser: parseEvents, interceptor: (next, prev) => injectUpdatedAt<AppEvent>(next, prev), onDelta: onEventsDelta }),
+    events: new Repository<AppEvent[]>("events", [], { parser: parseEvents, interceptor: (next, prev) => injectUpdatedAt<AppEvent>(next, prev) }),
     distractions: new Repository<DistractionRow[]>("distractions", []),
     distractionStatuses: new Repository<DistractionStatus[]>("distractionStatuses", DEFAULT_STATUSES),
     distractionColumns: new Repository<DistractionColumn[]>("distractionColumns", DEFAULT_DISTRACTION_COLUMNS),

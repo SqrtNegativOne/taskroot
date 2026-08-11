@@ -23,3 +23,5 @@ export const HTTP_PRECONDITION_FAILED = 412;
 export const HTTP_TOO_MANY_REQUESTS = 429;
 
 export const HTTP_INTERNAL_ERROR = 500;
+
+export const STARTUP_ERROR_DELAY_MS = 1500;

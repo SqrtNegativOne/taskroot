@@ -3,6 +3,7 @@ import type { ISyncEngineContext, SyncQueueItem } from "./types";
 import { SyncAction, SyncType } from "./types";
 import type { ITasksAPI } from "../task-api/types";
 import type { AppTask } from "../../domain/models";
+import { repos } from "../../store/repositories";
 import { resolveConflict } from "./conflict-resolver";
 import { computeTaskDeltaActions } from "./task-differ";
 import { ResultAsync, okAsync } from "neverthrow";
@@ -21,8 +22,12 @@ export class TaskSyncStrategy implements ISyncStrategy<AppTask> {
         return this.context.getSettings().enableTasksSync ?? true;
     }
 
-    getLocalStoreKey(): string {
-        return "tasks";
+    getLocalItems(): AppTask[] {
+        return repos.tasks.get().unwrapOr(repos.tasks.initial);
+    }
+
+    setLocalItems(items: AppTask[]): void {
+        repos.tasks.setFromRemote(items);
     }
 
     getSyncType(): SyncType {
@@ -87,13 +92,14 @@ export class TaskSyncStrategy implements ISyncStrategy<AppTask> {
             if (gidResult.isErr()) throw gidResult.error;
             const gid = gidResult.value;
             if (gid) {
-                const tasks = this.context.getLocalData("tasks");
+                const tasks = repos.tasks.get().unwrapOr(repos.tasks.initial);
                 const idx = tasks.findIndex((t) => t.id === taskOrEvent.item.id);
                 const t = tasks[idx];
                 if (idx !== -1 && t) {
-                    tasks[idx] = { ...t, remoteId: gid };
-                    this.context.setLocalData("tasks", tasks);
-                    this.context.updateOldTasksMap(tasks);
+                    const updated = [...tasks];
+                    updated[idx] = { ...t, remoteId: gid };
+                    repos.tasks.setFromRemote(updated);
+                    this.context.updateOldTasksMap(updated);
                 } else {
                     const deleteResult = await this.tasksAPI.deleteTask(gid);
                     if (deleteResult.isErr()) throw deleteResult.error;
@@ -102,7 +108,7 @@ export class TaskSyncStrategy implements ISyncStrategy<AppTask> {
         },
         [SyncAction.Update]: async (taskOrEvent) => {
             if (taskOrEvent.type !== SyncType.Task) return;
-            const tasks = this.context.getLocalData("tasks");
+            const tasks = repos.tasks.get().unwrapOr(repos.tasks.initial);
             const currentTask = tasks.find((t) => t.id === taskOrEvent.item.id);
             const gid = currentTask?.remoteId || taskOrEvent.remoteId;
 

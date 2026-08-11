@@ -5,7 +5,8 @@ import { toSyncError, type SyncError } from "../errors";
 
 export interface ISyncStrategy<T extends { id: string; remoteId?: string | undefined; updatedAt?: number | undefined }> {
     isSyncEnabled(): boolean;
-    getLocalStoreKey(): string;
+    getLocalItems(): T[];
+    setLocalItems(items: T[]): void;
     getSyncType(): SyncType;
     updateOldMapSnapshot(items: T[]): void;
     fetchRemoteItems(): ResultAsync<unknown[] | undefined, SyncError>;
@@ -33,9 +34,7 @@ export class Synchronizer<T extends { id: string; remoteId?: string | undefined;
 
         return ResultAsync.fromPromise(
             (async () => {
-                // T[] cannot be strictly inferred from the string returned by getLocalStoreKey
-                // oxlint-disable-next-line consistent-type-assertions, no-unsafe-type-assertion
-                const localItems = this.context.getLocalData(this.strategy.getLocalStoreKey() as keyof typeof import("../../store/repositories").repos) as unknown as T[];
+                const localItems = this.strategy.getLocalItems();
                 this.strategy.updateOldMapSnapshot(localItems);
                 
                 const remoteItemsResult = await this.strategy.fetchRemoteItems();
@@ -58,8 +57,7 @@ export class Synchronizer<T extends { id: string; remoteId?: string | undefined;
 
                 if (updated) {
                     const newItems = Array.from(localItemsMap.values());
-                    // oxlint-disable-next-line consistent-type-assertions, no-unsafe-type-assertion
-                    this.context.setLocalData(this.strategy.getLocalStoreKey() as keyof typeof import("../../store/repositories").repos, newItems as never);
+                    this.strategy.setLocalItems(newItems);
                     this.strategy.updateOldMapSnapshot(newItems);
                 }
             })(),

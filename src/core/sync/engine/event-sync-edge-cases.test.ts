@@ -8,27 +8,19 @@ import { SyncType, SyncAction } from "./types";
 import type { AppEvent, AppTask } from "../../domain/models";
 import { DEFAULT_SETTINGS } from "../../store/settingsSchema";
 import { FakeCalendarAPI } from "../calendar-api/FakeCalendarAPI";
+import { repos } from "../../store/repositories";
 
 describe("Event Sync Engine - Edge Cases (Partial Payload & Merging)", () => {
     let mockContext: ISyncEngineContext;
     let pushQueue: SyncQueue;
-    let localData: Map<string, unknown>;
     let calendarAPI: FakeCalendarAPI;
     let synchronizer: Synchronizer<AppEvent>;
 
     beforeEach(() => {
         localStorage.clear();
-        localData = new Map();
         pushQueue = new SyncQueue();
         
         mockContext = {
-            getLocalData(key: string) {
-                const val = localData.get(key);
-                return val !== undefined ? val : JSON.parse("[]");
-            },
-            setLocalData(key: string, data: unknown) {
-                localData.set(key, data);
-            },
             oldTasksMap: new Map(),
             oldEventsMap: new Map(),
             updateOldTasksMap: vi.fn<(tasks: AppTask[]) => void>(),
@@ -60,7 +52,7 @@ describe("Event Sync Engine - Edge Cases (Partial Payload & Merging)", () => {
             etag: "v1",
             type: "busy"
         };
-        mockContext.setLocalData("events", [initialEvent]);
+        repos.events.setFromRemote([initialEvent]);
         mockContext.updateOldEventsMap([initialEvent]);
 
         // 2. User edits title locally at t1
@@ -96,7 +88,7 @@ describe("Event Sync Engine - Edge Cases (Partial Payload & Merging)", () => {
         await synchronizer.poll();
 
         // 5. Verify the merged result
-        const localEvents = mockContext.getLocalData("events");
+        const localEvents = repos.events.get().unwrapOr([]);
         expect(localEvents).toHaveLength(1);
         
         const mergedEvent = localEvents[0];
@@ -127,7 +119,7 @@ describe("Event Sync Engine - Edge Cases (Partial Payload & Merging)", () => {
             etag: "v1",
             type: "busy"
         };
-        mockContext.setLocalData("events", [initialEvent]);
+        repos.events.setFromRemote([initialEvent]);
         mockContext.updateOldEventsMap([initialEvent]);
 
         // 2. User edits description locally at t1
@@ -163,7 +155,7 @@ describe("Event Sync Engine - Edge Cases (Partial Payload & Merging)", () => {
         // 4. Poller runs.
         await synchronizer.poll();
 
-        const resultingEvents = mockContext.getLocalData("events");
+        const resultingEvents = repos.events.get().unwrapOr([]);
         expect(resultingEvents).toHaveLength(1);
         const finalEvent = resultingEvents[0];
 

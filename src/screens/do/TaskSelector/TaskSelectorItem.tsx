@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import type { AppTask } from "../../../core/domain/models";
+import { editing } from "../../../core/domain/models";
 import { TaskCircle } from "../../../components/task-circle";
 
 const FADE_OUT_DURATION_MS = 400;
@@ -11,7 +12,7 @@ export interface TaskSelectorItemProps {
     selectedIndex: number;
     setSelectedIndex: (idx: number) => void;
     startWithTask: (id: string) => void;
-    updateTask: (id: string, updates: Partial<AppTask>) => void;
+    updateTask: (id: string, transform: (task: AppTask) => AppTask) => void;
 }
 
 export function TaskSelectorItem({
@@ -51,7 +52,7 @@ export function TaskSelectorItem({
                     setIsExiting(true);
                     void import("cuelume").then(({ play }) => play("success"));
                     setTimeout(() => {
-                        updateTask(task.id, { status: "done" });
+                        updateTask(task.id, t => editing(t).set('status', 'done').done());
                     }, FADE_OUT_DURATION_MS);
                 }}
                 ariaLabel={`Complete ${task.title}`}

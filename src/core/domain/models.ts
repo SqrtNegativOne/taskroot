@@ -33,6 +33,39 @@ export interface AppTask {
     readonly [key: string]: unknown;
 }
 
+/** Resolves to the union of keys whose type includes `undefined` (i.e. optional fields). */
+export type OptionalKeysOf<T> = {
+    [K in keyof T]-?: undefined extends T[K] ? K : never;
+}[keyof T];
+
+/**
+ * Returns a fluent builder for producing an updated copy of `item`.
+ * Use `.set(key, value)` to update a field and `.clear(key)` to remove an
+ * optional field (key deleted from the object entirely — not set to `undefined`).
+ * Call `.done()` to retrieve the final value.
+ *
+ * Works for any object with a string `id`. Generic — no AppTask-specific logic here.
+ */
+export function editing<T extends { readonly id: string }>(item: T): {
+    set<K extends keyof T>(key: K, value: T[K]): ReturnType<typeof editing<T>>;
+    clear(key: OptionalKeysOf<T>): ReturnType<typeof editing<T>>;
+    done(): T;
+} {
+    return {
+        set<K extends keyof T>(key: K, value: T[K]) {
+            return editing<T>({ ...item, [key]: value });
+        },
+        clear(key: OptionalKeysOf<T>) {
+            const { [key]: _dropped, ...rest } = item;
+            // Safe: key is constrained to OptionalKeysOf<T>, meaning the cleared key
+            // is already optional in T. The remaining spread therefore still satisfies T.
+            // oxlint-disable-next-line consistent-type-assertions, no-unsafe-type-assertion
+            return editing<T>(rest as T);
+        },
+        done: () => item,
+    };
+}
+
 export interface AppFilter {
     readonly id?: string;
     readonly column: string;

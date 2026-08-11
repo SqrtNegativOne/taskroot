@@ -6,7 +6,7 @@ export interface TaskSearchResultsProps {
     startWithTask: (id: string) => void;
     selectedIndex: number;
     setSelectedIndex: (idx: number) => void;
-    updateTask: (id: string, updates: Partial<AppTask>) => void;
+    updateTask: (id: string, transform: (task: AppTask) => AppTask) => void;
 }
 
 export function TaskSearchResults({

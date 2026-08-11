@@ -57,14 +57,17 @@ export function TaskListPane({
         return set;
     }, [events, tasks]);
 
-    const updateTask = (id: string, updates: Partial<AppTask>) =>
-        setTasks((ts) =>
-            ts.map((t) => {
-                if (t.id === id) return { ...t, ...updates };
-                if (updates.status === "doing" && t.status === "doing") return { ...t, status: "todo" };
+    const updateTask = (id: string, transform: (task: AppTask) => AppTask) =>
+        setTasks((ts) => {
+            const target = ts.find(t => t.id === id);
+            const newStatus = target ? transform(target).status : undefined;
+            const becomingDoing = newStatus === "doing";
+            return ts.map((t) => {
+                if (t.id === id) return transform(t);
+                if (becomingDoing && t.status === "doing") return { ...t, status: "todo" as const };
                 return t;
-            }),
-        );
+            });
+        });
     const deleteTask = (id: string) => {
         if (onDeleteTask) {
             onDeleteTask(id);

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { TODAY, parseYMD, durationLabel, dueLabel } from "../../core/store/data";
-import { type AppTask, type AppFilter, isAppTaskStatus } from "../../core/domain/models";
+import { type AppTask, type AppFilter, isAppTaskStatus, editing } from "../../core/domain/models";
 import { checkTaskAgainstFilters } from "./filters";
 import { Icon } from "../icon";
 import { ICON_OVERDUE, ICON_TABS } from "../../core/utils/icons";
@@ -13,7 +13,7 @@ export interface TaskRowProps {
     task: AppTask;
     onDragStart?: (e: React.PointerEvent<HTMLDivElement> | React.MouseEvent<HTMLDivElement>, task: AppTask) => void;
     dragging?: boolean;
-    updateTask: (id: string, updates: Partial<AppTask>) => void;
+    updateTask: (id: string, transform: (task: AppTask) => AppTask) => void;
     deleteTask: (id: string) => void;
     filters: AppFilter[];
     isPastDue?: boolean;
@@ -63,9 +63,9 @@ export function TaskRow({
                     e.preventDefault();
                     e.stopPropagation();
                     if (task.status !== "doing") {
-                        updateTask(task.id, { status: "doing" });
+                        updateTask(task.id, t => editing(t).set('status', 'doing').done());
                     } else {
-                        updateTask(task.id, { status: "todo" });
+                        updateTask(task.id, t => editing(t).set('status', 'todo').done());
                     }
                 }}
                 onClick={(e) => {
@@ -83,14 +83,14 @@ export function TaskRow({
                     if (isRemoving) {
                         setIsExiting(true);
                         setTimeout(() => {
-                            updateTask(task.id, { status: newStatus });
+                            updateTask(task.id, t => editing(t).set('status', newStatus).done());
                             setIsChecking(false);
                             setIsExiting(false);
                         }, TRANSITION_DURATION_MS);
                         return;
                     }
 
-                    updateTask(task.id, { status: newStatus });
+                    updateTask(task.id, t => editing(t).set('status', newStatus).done());
                     if (newStatus === "todo") {
                         setIsChecking(false);
                     }
@@ -121,7 +121,7 @@ function TaskRowLine1({
 }: {
     task: AppTask;
     isPastDue?: boolean;
-    updateTask: (id: string, updates: Partial<AppTask>) => void;
+    updateTask: (id: string, transform: (task: AppTask) => AppTask) => void;
     deleteTask: (id: string) => void;
     setIsExiting: (exiting: boolean) => void;
 }) {
@@ -167,7 +167,7 @@ function TaskRowLine1({
                 onChange={(e) => {
                     const val = e.target.value;
                     if (isAppTaskStatus(val)) {
-                        updateTask(task.id, { status: val });
+                        updateTask(task.id, t => editing(t).set('status', val).done());
                     }
                 }}
                 onClick={(e) => e.stopPropagation()}

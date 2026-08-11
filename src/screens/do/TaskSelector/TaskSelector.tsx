@@ -38,8 +38,8 @@ export function TaskSelector({
     const searchInputRef = useRef<HTMLInputElement>(null);
     const [, setTasks] = useTasks();
 
-    const updateTask = (id: string, updates: Partial<AppTask>) => {
-        setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, ...updates } : t)));
+    const updateTask = (id: string, transform: (task: AppTask) => AppTask) => {
+        setTasks((prev) => prev.map((t) => (t.id === id ? transform(t) : t)));
     };
 
     useEffect(() => {
@@ -160,7 +160,7 @@ interface TaskSelectorContentProps {
     startWithTask: (taskId: string) => void;
     selectedIndex: number;
     setSelectedIndex: (index: number) => void;
-    updateTask: (id: string, updates: Partial<AppTask>) => void;
+    updateTask: (id: string, transform: (task: AppTask) => AppTask) => void;
 }
 
 function TaskSelectorContent({

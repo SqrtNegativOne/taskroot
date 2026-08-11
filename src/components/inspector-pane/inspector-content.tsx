@@ -1,11 +1,26 @@
 import React from "react";
 import type { AppEvent, AppTask } from "../../core/domain/models";
+import { editing } from "../../core/domain/models";
 import type { CalendarData } from "../../core/store/repositories";
 import type { ParsedProperties } from "../../core/utils/sigil-parser";
 import { TitleInput, DescriptionInput } from "../inputs";
 import { TaskInspector } from "./inspector-task";
 import { EventInspector } from "./inspector-event";
 import { InspectorPaneHeader } from "./inspector-shared";
+
+function buildSigilTransform(
+    props: ParsedProperties,
+    existingTags: readonly string[] | undefined,
+): (task: AppTask) => AppTask {
+    return (task: AppTask): AppTask => {
+        let next = task;
+        if (props.priority !== undefined) next = editing(next).set('priority', props.priority).done();
+        const newTags = props.tags ? [...(existingTags || []), ...props.tags] : undefined;
+        if (newTags) next = editing(next).set('tags', newTags).done();
+        if (props.duration !== undefined) next = editing(next).set('est', props.duration).done();
+        return next;
+    };
+}
 
 export interface InspectorPaneContentProps {
     currentItem: AppTask | AppEvent;
@@ -19,7 +34,7 @@ export interface InspectorPaneContentProps {
     onPaneDelete: () => void;
     handleTitleChange: (t: string) => void;
     handleDescChange: (d: string) => void;
-    updateTask: (id: string, updates: Partial<AppTask>) => void;
+    updateTask: (id: string, transform: (task: AppTask) => AppTask) => void;
     updateEvent: (id: string, updates: Partial<AppEvent>) => void;
     isNew: boolean;
 }
@@ -43,23 +58,20 @@ export function InspectorPaneContent({
     const handlePropertiesParsed = (props: ParsedProperties) => {
         if (currentEvent && !isReadOnlyCalendar) return;
         if (!currentTask) return;
-        
-        const updates: Partial<{ -readonly [K in keyof AppTask]: AppTask[K] }> = {};
-        if (props.priority !== undefined) updates.priority = props.priority;
-        if (props.tags) updates.tags = [...(currentTask.tags || []), ...props.tags];
-        if (props.duration !== undefined) updates.est = props.duration;
-        
+
+        const baseTransform = buildSigilTransform(props, currentTask.tags);
+
         if (props.day) {
             import('../../core/utils/sigil-parser').then(m => {
                 const newDue = m.getDueDateFromSigil(String(props.day));
-                updateTask(currentTask.id, { ...updates, due: newDue });
+                updateTask(currentTask.id, task => editing(baseTransform(task)).set('due', newDue).done());
                 return undefined;
             }).catch(() => {});
             return;
         }
-        
-        if (Object.keys(updates).length > 0) {
-            updateTask(currentTask.id, updates);
+
+        if (props.priority !== undefined || props.tags || props.duration !== undefined) {
+            updateTask(currentTask.id, baseTransform);
         }
     };
 

@@ -113,15 +113,15 @@ export function InspectorPane({
     const title = getInspectorTitle(currentTask, currentEvent, tasks);
     const isOpen = !!(inspectorState && currentItem);
 
-    const updateTask = React.useCallback((id: string, updates: Partial<AppTask>) => {
+    const updateTask = React.useCallback((id: string, transform: (task: AppTask) => AppTask) => {
         if (isNew && draftRef.current?.id === id) {
             if (isAppTask(draftRef.current)) {
-                const next: AppTask = { ...draftRef.current, ...updates };
+                const next = transform(draftRef.current);
                 draftRef.current = next;
                 setDraftItem(next);
             }
         } else {
-            setTasks((ts) => ts.map((t) => t.id === id ? { ...t, ...updates } : t));
+            setTasks((ts) => ts.map((t) => t.id === id ? transform(t) : t));
         }
     }, [setTasks, isNew]);
 
@@ -149,13 +149,13 @@ export function InspectorPane({
 
     const handleTitleChange = React.useCallback((newTitle: string) => {
         if (!currentItem) return;
-        if (isCurrentTask) updateTask(currentItem.id, { title: newTitle });
+        if (isCurrentTask) updateTask(currentItem.id, task => ({ ...task, title: newTitle }));
         else updateEvent(currentItem.id, { title: newTitle });
     }, [currentItem, isCurrentTask, updateTask, updateEvent]);
 
     const handleDescChange = React.useCallback((desc: string) => {
         if (isReadOnlyCalendar || !currentItem) return;
-        if (isCurrentTask) updateTask(currentItem.id, { description: desc });
+        if (isCurrentTask) updateTask(currentItem.id, task => ({ ...task, description: desc }));
         else updateEvent(currentItem.id, { description: desc });
     }, [currentItem, isCurrentTask, isReadOnlyCalendar, updateTask, updateEvent]);
 
